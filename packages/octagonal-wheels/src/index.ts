@@ -21,6 +21,7 @@ export * as messagepassing from "./messagepassing/index.ts";
 export * as collection from "./collection.ts";
 export * as function from "./function.ts";
 export * as object from "./object.ts";
+export * as path from "./path.ts";
 export * as promises from "./promises.ts";
 export * as string from "./string.ts";
 export * as number from "./number.ts";

@@ -913,6 +913,14 @@
             "import": "./dist/object.js",
             "types": "./dist/object.d.ts"
         },
+        "./path": {
+            "import": "./dist/path.js",
+            "types": "./dist/path.d.ts"
+        },
+        "./path.js": {
+            "import": "./dist/path.js",
+            "types": "./dist/path.d.ts"
+        },
         "./promises": {
             "import": "./dist/promises.js",
             "types": "./dist/promises.d.ts"

@@ -20,6 +20,8 @@ import * as _function from './function.js';
 export { _function as function };
 import * as object from './object.js';
 export { object };
+import * as path from './path.js';
+export { path };
 import * as promises from './promises.js';
 export { promises };
 import * as string from './string.js';
