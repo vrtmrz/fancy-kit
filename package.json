@@ -1,8 +1,16 @@
 {
-  "name": "@vrtmrz/plugin-toolkit-workspace",
+  "name": "@vrtmrz/fancy-kit-workspace",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrtmrz/fancy-kit.git"
+  },
+  "homepage": "https://github.com/vrtmrz/fancy-kit#readme",
+  "bugs": {
+    "url": "https://github.com/vrtmrz/fancy-kit/issues"
+  },
   "workspaces": [
     "packages/*"
   ],
@@ -34,6 +42,8 @@
     "test:e2e:obsidian:local-suite": "tsx test/e2e-obsidian/scripts/local-suite.ts"
   },
   "devDependencies": {
+    "@emnapi/core": "1.11.2",
+    "@emnapi/runtime": "1.11.2",
     "@types/node": "^24.13.3",
     "esbuild": "^0.28.1",
     "jsdom": "^29.1.1",

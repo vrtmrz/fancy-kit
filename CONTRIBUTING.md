@@ -27,6 +27,8 @@ npm run verify:workspace
 
 The gate checks and tests all four packages, builds all publishable artefacts and the showcase, and performs a dry-run pack of every workspace package. Changes confined to one package may use its workspace scripts during iteration, but the final validation should remain proportional to any affected dependants.
 
+The workspace root pins `@emnapi/core` and `@emnapi/runtime` because npm can otherwise resolve the optional `@napi-rs/wasm-runtime` peers differently when creating and consuming the lockfile. Validate dependency changes with a clean `npm ci` before removing those pins.
+
 When a local Obsidian executable and CLI are available, also run:
 
 ```bash

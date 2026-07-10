@@ -944,7 +944,10 @@
         "LICENSE",
         "package.json"
     ],
-    "repository": "",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vrtmrz/octagonal-wheels.git"
+    },
     "author": "vorotamoroz",
     "license": "MIT",
     "devDependencies": {

@@ -5,6 +5,15 @@
   "type": "module",
   "license": "MIT",
   "author": "vorotamoroz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrtmrz/fancy-kit.git",
+    "directory": "packages/obsidian-test-session"
+  },
+  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/obsidian-test-session#readme",
+  "bugs": {
+    "url": "https://github.com/vrtmrz/fancy-kit/issues"
+  },
   "sideEffects": false,
   "publishConfig": {
     "access": "public"

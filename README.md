@@ -1,4 +1,4 @@
-# Vrtmrz plug-in toolkit
+# Fancy Kit
 
 This private npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
@@ -58,9 +58,9 @@ For local consumer migration, build this workspace and install the required pack
 npm run build
 
 # In a consumer repository with this repository checked out as a sibling:
-npm install ../obsidian-plugin-kit/packages/ui-interactions
-npm install ../obsidian-plugin-kit/packages/obsidian-plugin-kit
-npm install -D ../obsidian-plugin-kit/packages/obsidian-test-session
+npm install ../fancy-kit/packages/ui-interactions
+npm install ../fancy-kit/packages/obsidian-plugin-kit
+npm install -D ../fancy-kit/packages/obsidian-test-session
 ```
 
 Install both runtime packages when consuming the plug-in kit so its unpublished `0.0.0` dependency on `@vrtmrz/ui-interactions` is satisfied locally. The test session package is a development dependency.
