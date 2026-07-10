@@ -31,7 +31,7 @@ Consumer previews are immutable GitHub prereleases for migration testing. They a
 
 Build every tarball in one preview from the tagged commit. Attach only the explicitly selected workspace package tarballs and a `SHA256SUMS` file. Record the source commit, package list, validation performed, platform limits, and the consumer workflow that exercised the change in the release notes.
 
-The unpublished scoped packages may retain their temporary `0.0.0` versions in a consumer preview. An `octagonal-wheels` preview must use the next intended version with a prerelease suffix, such as `0.1.47-preview.0`, so its package metadata cannot be confused with the published stable release. Validate the preview in at least one consumer before replacing the prerelease version with the corresponding stable version.
+The unpublished scoped packages use their next intended `0.x` versions in a consumer preview; do not create new `0.0.0` artefacts. The GitHub release remains a prerelease even when those package manifests use `0.1.0`. An `octagonal-wheels` preview must use the next intended version with a prerelease suffix, such as `0.1.47-preview.0`, so its package metadata cannot be confused with the published stable release. Validate the preview in at least one consumer before replacing the prerelease version with the corresponding stable version.
 
 Create the selected artefacts from the workspace root after the complete release gate. Always use a dedicated staging directory outside the repository so generated tarballs cannot be committed accidentally:
 
