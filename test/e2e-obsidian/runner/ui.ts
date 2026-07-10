@@ -39,8 +39,10 @@ export async function preseedTrustedVaultState(port: number, vaultId: string): P
         await page.evaluate((id) => {
             localStorage.setItem(`enable-plugin-${id}`, "true");
         }, vaultId);
-        await page.reload({ waitUntil: "domcontentloaded", timeout: 10000 }).catch(() => undefined);
-        await page.waitForTimeout(1000);
+        // Reloading here can interrupt the vault URI that is still being handled
+        // during startup. localStorage is synchronous, so the active renderer can
+        // continue the original open flow without a reload.
+        await page.waitForTimeout(250);
     });
 }
 
@@ -68,4 +70,76 @@ export async function trustVaultIfPrompted(port: number): Promise<void> {
             }
         }
     });
+}
+
+/** Waits until the active Obsidian renderer exposes a plug-in manifest. */
+export async function waitForPluginCatalogue(
+    port: number,
+    pluginId: string,
+    timeoutMs = Number(process.env.E2E_OBSIDIAN_CLI_READY_TIMEOUT_MS ?? 60000)
+): Promise<void> {
+    await withObsidianPage(port, async (page) => {
+        await page.waitForFunction(
+            (id) => {
+                const obsidianApp = (
+                    globalThis as typeof globalThis & {
+                        app?: { plugins?: { manifests?: Record<string, unknown> } };
+                    }
+                ).app;
+                return obsidianApp?.plugins?.manifests?.[id] !== undefined;
+            },
+            pluginId,
+            { timeout: timeoutMs }
+        );
+    });
+}
+
+/** Enables community plug-ins and reloads one installed plug-in through the active renderer. */
+export async function enableAndReloadPlugin(port: number, pluginId: string): Promise<void> {
+    await withObsidianPage(port, async (page) => {
+        await page.evaluate(async (id) => {
+            const obsidianApp = (
+                globalThis as typeof globalThis & {
+                    app?: {
+                        plugins?: {
+                            plugins: Record<string, unknown>;
+                            setEnable(enabled: boolean): Promise<void>;
+                            unloadPlugin(pluginId: string): Promise<void>;
+                            loadPlugin(pluginId: string): Promise<void>;
+                        };
+                    };
+                }
+            ).app;
+            const plugins = obsidianApp?.plugins;
+            if (plugins === undefined) throw new Error("Obsidian plug-in manager is unavailable");
+            await plugins.setEnable(true);
+            if (plugins.plugins[id] !== undefined) await plugins.unloadPlugin(id);
+            await plugins.loadPlugin(id);
+        }, pluginId);
+    });
+}
+
+/** Waits for, or removes, a stale startup overlay in one Obsidian renderer page. */
+export async function waitForObsidianPageUiIdle(
+    page: Page,
+    timeoutMs = Number(process.env.E2E_OBSIDIAN_UI_IDLE_TIMEOUT_MS ?? 5000)
+): Promise<void> {
+    const startupOverlay = page.locator(".progress-bar-container");
+    const hidden = await startupOverlay
+        .waitFor({ state: "hidden", timeout: timeoutMs })
+        .then(() => true)
+        .catch(() => false);
+    if (hidden) return;
+
+    // Obsidian 1.12.7 can leave the startup shell attached in a fresh,
+    // isolated profile even after the vault and plug-in are fully ready.
+    // Remove only that stale shell so it cannot intercept feature UI input.
+    await startupOverlay.evaluateAll((elements) => {
+        for (const element of elements) element.remove();
+    });
+}
+
+/** Waits until Obsidian's startup progress overlay no longer blocks interaction. */
+export async function waitForObsidianUiIdle(port: number): Promise<void> {
+    await withObsidianPage(port, waitForObsidianPageUiIdle);
 }

@@ -2,7 +2,9 @@
 
 The private showcase plug-in under `apps/obsidian-showcase/` is an interactive catalogue and a fixture for automated UI tests. It runs inside real Obsidian and is not included in a published package.
 
-The E2E runner installs the showcase into a temporary vault and isolated Obsidian profile. It uses `obsidian-cli` for plugin commands and state inspection, and Playwright over Electron's DevTools endpoint for real UI interaction.
+The E2E runner installs the showcase into a temporary vault and isolated Obsidian profile. It uses `obsidian-cli` only to deliver the vault-open URI, then uses Playwright over Electron's DevTools endpoint for readiness, story invocation, state inspection, and real UI interaction.
+
+This suite is local-only. It is intentionally not part of the default CI gate.
 
 ## Commands
 
@@ -49,14 +51,14 @@ For each session, the runner:
 1. creates an isolated vault, HOME, XDG, and Electron user-data directory;
 2. installs the built showcase plugin;
 3. launches Obsidian on a session-specific DevTools port;
-4. enables the showcase and invokes desktop story commands through `obsidian-cli`;
+4. enables the showcase and invokes story commands through the active renderer;
 5. operates the real Modal, SuggestModal, and Notice DOM through Playwright;
 6. reads the story result from the showcase fixture;
 7. terminates Obsidian and removes temporary state unless preservation is enabled.
 
 Scripted `UiInteractions` responses are not configured in this workflow.
 
-Mobile emulation reloads the renderer and temporarily removes the CLI `eval` command. The mobile scenario therefore reacquires the reloaded showcase plugin through Playwright and invokes its fixture methods directly.
+Mobile emulation reloads the renderer. The mobile scenario therefore waits for the replacement renderer, normalises its startup overlay, reacquires the showcase plug-in, and continues through Playwright.
 
 ## Adding a story
 

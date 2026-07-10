@@ -1,5 +1,9 @@
 import type { JSHandle, Locator, Page } from "playwright";
-import { obsidianRemoteDebuggingPort, withObsidianPage } from "../runner/ui.ts";
+import {
+  obsidianRemoteDebuggingPort,
+  waitForObsidianPageUiIdle,
+  withObsidianPage,
+} from "../runner/ui.ts";
 import {
   startShowcaseTestSession,
   stopShowcaseTestSession,
@@ -130,6 +134,7 @@ async function main(): Promise<void> {
           },
           SHOWCASE_PLUGIN_ID,
         );
+        await waitForObsidianPageUiIdle(page);
         const showcasePlugin = await getShowcasePlugin(page);
         try {
           await executeShowcaseStory(showcasePlugin, "prompt-text");

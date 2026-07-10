@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
-import { evalObsidianJson } from "./cli.ts";
 import { discoverObsidianCli, requireObsidianBinary } from "./environment.ts";
 import { startObsidianPluginSession, type ObsidianPluginSession } from "./session.ts";
+import { withObsidianPage } from "./ui.ts";
 import { createTemporaryVault, type TemporaryVault } from "./vault.ts";
 
 export const SHOWCASE_PLUGIN_ID = "vpk-showcase";
@@ -46,30 +46,46 @@ export async function stopShowcaseTestSession(testSession: ShowcaseTestSession):
 
 export async function executeShowcaseStory(session: ObsidianPluginSession, story: string): Promise<void> {
   const commandId = `${SHOWCASE_PLUGIN_ID}:story-${story}`;
-  const executed = await evalObsidianJson<boolean>(
-    session.cliBinary,
-    `JSON.stringify(app.commands.executeCommandById(${JSON.stringify(commandId)}))`,
-    session.cliEnv,
+  const executed = await withObsidianPage(session.remoteDebuggingPort, async (page) =>
+    await page.evaluate((id) => {
+      const obsidianApp = (
+        globalThis as typeof globalThis & {
+          app?: { commands?: { executeCommandById(commandId: string): boolean } };
+        }
+      ).app;
+      return obsidianApp?.commands?.executeCommandById(id) ?? false;
+    }, commandId),
   );
   if (!executed) throw new Error(`Showcase command was not executed: ${commandId}`);
 }
 
 export async function executeShowcaseCommand(session: ObsidianPluginSession, command: string): Promise<void> {
   const commandId = `${SHOWCASE_PLUGIN_ID}:${command}`;
-  const executed = await evalObsidianJson<boolean>(
-    session.cliBinary,
-    `JSON.stringify(app.commands.executeCommandById(${JSON.stringify(commandId)}))`,
-    session.cliEnv,
+  const executed = await withObsidianPage(session.remoteDebuggingPort, async (page) =>
+    await page.evaluate((id) => {
+      const obsidianApp = (
+        globalThis as typeof globalThis & {
+          app?: { commands?: { executeCommandById(commandId: string): boolean } };
+        }
+      ).app;
+      return obsidianApp?.commands?.executeCommandById(id) ?? false;
+    }, commandId),
   );
   if (!executed) throw new Error(`Showcase command was not executed: ${commandId}`);
 }
 
 export async function readShowcaseState(session: ObsidianPluginSession): Promise<ShowcaseState> {
-  const id = JSON.stringify(SHOWCASE_PLUGIN_ID);
-  return await evalObsidianJson<ShowcaseState>(
-    session.cliBinary,
-    `JSON.stringify(app.plugins.plugins[${id}].e2e)`,
-    session.cliEnv,
+  return await withObsidianPage(session.remoteDebuggingPort, async (page) =>
+    await page.evaluate((pluginId) => {
+      const obsidianApp = (
+        globalThis as typeof globalThis & {
+          app?: { plugins?: { plugins?: Record<string, { e2e: ShowcaseState }> } };
+        }
+      ).app;
+      const state = obsidianApp?.plugins?.plugins?.[pluginId]?.e2e;
+      if (state === undefined) throw new Error(`Showcase plug-in is not loaded: ${pluginId}`);
+      return state;
+    }, SHOWCASE_PLUGIN_ID),
   );
 }
 
