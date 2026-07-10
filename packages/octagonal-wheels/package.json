@@ -133,6 +133,14 @@
             "import": "./dist/binary/base64.js",
             "types": "./dist/binary/base64.d.ts"
         },
+        "./binary/arrayBuffer": {
+            "import": "./dist/binary/arrayBuffer.js",
+            "types": "./dist/binary/arrayBuffer.d.ts"
+        },
+        "./binary/arrayBuffer.js": {
+            "import": "./dist/binary/arrayBuffer.js",
+            "types": "./dist/binary/arrayBuffer.d.ts"
+        },
         "./binary/encodedUTF16": {
             "import": "./dist/binary/encodedUTF16.js",
             "types": "./dist/binary/encodedUTF16.d.ts"

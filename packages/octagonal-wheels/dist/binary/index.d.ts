@@ -24,5 +24,6 @@ export declare function decodeBinary(src: string | string[]): ArrayBuffer;
  */
 export declare function encodeBinary(src: Uint8Array<ArrayBuffer> | ArrayBuffer): Promise<string[]>;
 export * from "./base64.ts";
+export * from "./arrayBuffer.ts";
 export * from "./encodedUTF16.ts";
 export * from "./hex.ts";

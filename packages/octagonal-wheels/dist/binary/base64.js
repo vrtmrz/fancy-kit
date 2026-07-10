@@ -159,7 +159,7 @@ async function arrayBufferToBase64Browser(buffer) {
     let idx = 0;
     do {
         const offset = idx * encodeChunkSize;
-        const pBuf = new DataView(buf.buffer, offset, Math.min(encodeChunkSize, buf.byteLength - offset));
+        const pBuf = new DataView(buf.buffer, buf.byteOffset + offset, Math.min(encodeChunkSize, buf.byteLength - offset));
         pieces.push(await arrayBufferToBase64internalBrowser(pBuf));
         idx++;
     } while (idx * encodeChunkSize < bufLen);

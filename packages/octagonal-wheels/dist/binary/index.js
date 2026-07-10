@@ -2,6 +2,7 @@ import { base64ToArrayBuffer, arrayBufferToBase64 } from './base64.js';
 export { arrayBufferToBase64Browser, arrayBufferToBase64Native, arrayBufferToBase64Single, arrayBufferToBase64SingleBrowser, arrayBufferToBase64SingleNative, base64ToArrayBufferBrowser, base64ToArrayBufferInternalBrowser, base64ToArrayBufferNative, base64ToString, base64ToStringBrowser, base64ToStringNative, readString, tryConvertBase64ToArrayBuffer, tryConvertBase64ToArrayBufferBrowser, tryConvertBase64ToArrayBufferNative, writeString } from './base64.js';
 import { _decodeToArrayBuffer, decodeToArrayBuffer } from './encodedUTF16.js';
 export { _encodeBinary, encodeBinaryEach } from './encodedUTF16.js';
+export { toArrayBuffer } from './arrayBuffer.js';
 export { hexStringToUint8Array, hexStringToUint8ArrayBrowser, hexStringToUint8ArrayNative, uint8ArrayToHexString, uint8ArrayToHexStringBrowser, uint8ArrayToHexStringNative } from './hex.js';
 
 /**

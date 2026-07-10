@@ -54,5 +54,6 @@ export async function encodeBinary(src: Uint8Array<ArrayBuffer> | ArrayBuffer): 
 }
 
 export * from "./base64.ts";
+export * from "./arrayBuffer.ts";
 export * from "./encodedUTF16.ts";
 export * from "./hex.ts";

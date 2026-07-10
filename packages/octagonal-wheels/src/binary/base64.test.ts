@@ -108,6 +108,25 @@ describe("Base64", () => {
                     expect(result).to.be.an("array").that.has.lengthOf(1);
                     expect(result[0]).to.equal("SGVsbG8=");
                 });
+
+                it("should encode only the bytes visible through a non-zero-offset view", async () => {
+                    const backing = new Uint8Array([0, 72, 101, 108, 108, 111, 255]);
+                    const view = backing.subarray(1, 6);
+                    const result = await arrayBufferToBase64(view);
+                    expect(result).toEqual(["SGVsbG8="]);
+                });
+
+                it("should preserve a non-zero offset when the browser chunk path is used", async () => {
+                    const payload = Uint8Array.from({ length: 32768 }, (_, index) => index % 251);
+                    const backing = new Uint8Array(payload.byteLength + 17);
+                    backing.fill(255);
+                    backing.set(payload, 11);
+                    const view = backing.subarray(11, 11 + payload.byteLength);
+
+                    const expected = await arrayBufferToBase64Single(payload);
+                    const result = await arrayBufferToBase64(view);
+                    expect(result.join("")).toBe(expected);
+                });
             });
             describe("arrayBufferToBase64Single", () => {
                 it("should return a single base64 string when given a valid ArrayBuffer", async () => {
@@ -132,6 +151,12 @@ describe("Base64", () => {
                     const buffer = new Uint8Array([72, 101, 108, 108, 111]).buffer; // 'Hello' in ASCII
                     const result = await arrayBufferToBase64Single(buffer);
                     expect(result).to.equal("SGVsbG8=");
+                });
+
+                it("should encode only the bytes visible through a non-zero-offset view", async () => {
+                    const backing = new Uint8Array([0, 72, 101, 108, 108, 111, 255]);
+                    const result = await arrayBufferToBase64Single(backing.subarray(1, 6));
+                    expect(result).toBe("SGVsbG8=");
                 });
             });
             describe("writeString", () => {
