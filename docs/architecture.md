@@ -18,7 +18,7 @@ consumer E2E suites and the private showcase
 
 `@vrtmrz/ui-interactions` owns framework-neutral interaction contracts, dispatch, scripted drivers, transcripts, and the App-free harness. It must not import Obsidian or browser APIs.
 
-`@vrtmrz/obsidian-plugin-kit` owns Obsidian-specific Modal, SuggestModal, MarkdownRenderer, Notice, focus, and lifecycle adapters. It may depend on the neutral interaction package. It must not become a cross-platform abstraction layer or contain LiveSync domain behaviour.
+`@vrtmrz/obsidian-plugin-kit` owns Obsidian-specific Modal, SuggestModal, MarkdownRenderer, Notice, focus, lifecycle, and focused Vault adapters. It may expose narrow path-based capabilities and App-free harnesses when they make Obsidian workflows injectable without claiming to be a cross-platform filesystem. It may depend on the neutral interaction package. It must not contain LiveSync domain behaviour.
 
 `octagonal-wheels` owns reusable utilities and structural algorithms that do not express Obsidian UI or LiveSync domain policy. It retains its existing package name, history, version, browser-compatible modules, and independent release lifecycle.
 

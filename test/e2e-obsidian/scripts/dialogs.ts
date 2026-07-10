@@ -65,6 +65,7 @@ async function main(): Promise<void> {
     await withObsidianPage(port, async (page) => {
       const prompt = page.locator(".prompt").last();
       await prompt.waitFor({ state: "visible", timeout: 10_000 });
+      await prompt.getByText("Targets/beta.md", { exact: true }).waitFor();
       await prompt.getByText("Beta", { exact: true }).click();
     });
     await waitForShowcaseState(

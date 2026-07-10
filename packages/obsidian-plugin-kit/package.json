@@ -45,6 +45,10 @@
       "types": "./dist/ui-context.d.ts",
       "import": "./dist/ui-context.js"
     },
+    "./vault": {
+      "types": "./dist/vault.d.ts",
+      "import": "./dist/vault.js"
+    },
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"

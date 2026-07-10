@@ -12,7 +12,7 @@ import {
 
 const VIEW_TYPE = "vpk-showcase-view";
 
-type ShowcaseResult = string | null | { id: string; label: string };
+type ShowcaseResult = string | null | { id: string; label: string; path: string };
 
 class ShowcaseView extends ItemView {
   constructor(leaf: WorkspaceLeaf, private readonly plugin: ShowcasePlugin) {
@@ -148,14 +148,15 @@ export default class ShowcasePlugin extends Plugin {
         break;
       case "pick-one": {
         const items = [
-          { id: "alpha", label: "Alpha" },
-          { id: "beta", label: "Beta" },
-          { id: "gamma", label: "Gamma" },
+          { id: "alpha", label: "Alpha", path: "Targets/alpha.md" },
+          { id: "beta", label: "Beta", path: "Targets/beta.md" },
+          { id: "gamma", label: "Gamma", path: "Targets/gamma.md" },
         ];
         this.setResult(
           await pickOne(this.app, {
             items,
             getText: (item) => item.label,
+            getDescription: (item) => item.path,
             placeholder: "Select a target",
           }),
         );

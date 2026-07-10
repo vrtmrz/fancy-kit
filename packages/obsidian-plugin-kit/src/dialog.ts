@@ -5,6 +5,7 @@ import {
   Modal,
   Setting,
   type App,
+  type FuzzyMatch,
   type TextComponent,
 } from "obsidian";
 import type {
@@ -135,12 +136,14 @@ export function promptPassword(app: App, options: PromptTextOptions): Promise<st
 class PickOneModal<T> extends FuzzySuggestModal<T> {
   private readonly items: readonly T[];
   private readonly itemText: (item: T) => string;
+  private readonly itemDescription?: (item: T) => string | undefined;
   private resolveResult: ((result: T | null) => void) | undefined;
 
   constructor(app: App, options: PickOneOptions<T>, resolveResult: (result: T | null) => void) {
     super(app);
     this.items = options.items;
     this.itemText = options.getText;
+    this.itemDescription = options.getDescription;
     this.resolveResult = resolveResult;
     this.setPlaceholder(options.placeholder ?? "Select an item");
   }
@@ -151,6 +154,14 @@ class PickOneModal<T> extends FuzzySuggestModal<T> {
 
   getItemText(item: T): string {
     return this.itemText(item);
+  }
+
+  override renderSuggestion(match: FuzzyMatch<T>, element: HTMLElement): void {
+    super.renderSuggestion(match, element);
+    const description = this.itemDescription?.(match.item);
+    if (description !== undefined && description !== "") {
+      element.createDiv({ text: description, cls: "suggestion-note" });
+    }
   }
 
   onChooseItem(item: T, _event: MouseEvent | KeyboardEvent): void {
