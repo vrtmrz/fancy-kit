@@ -186,7 +186,11 @@ async function main(): Promise<void> {
           await assertFitsViewport(page, prompt, "typed selector");
           const promptInput = prompt.locator(".prompt-input");
           await promptInput.fill("be");
-          await prompt.getByText("Beta", { exact: true }).waitFor();
+          await prompt
+            .locator(".suggestion-item")
+            .filter({ hasText: "Beta" })
+            .filter({ hasText: "Targets/beta.md" })
+            .waitFor();
           await promptInput.press("Enter");
           await waitForShowcaseState(
             showcasePlugin,
