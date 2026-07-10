@@ -7,26 +7,19 @@ import {
   type App,
   type TextComponent,
 } from "obsidian";
+import type {
+  ConfirmActionOptions,
+  PickOneOptions,
+  PromptTextOptions,
+  ShowMessageOptions,
+} from "@vrtmrz/ui-interactions";
 
-/** Configures a single-line text or password prompt. */
-export interface PromptTextOptions {
-  /** Text displayed in the modal title. */
-  title: string;
-  /** Optional label displayed beside the input. */
-  label?: string;
-  /** Optional explanatory text displayed below the label. */
-  description?: string;
-  /** Placeholder shown when the input is empty. Defaults to an empty string. */
-  placeholder?: string;
-  /** Value placed in the input when the modal opens. Defaults to an empty string. */
-  initialValue?: string;
-  /** Label for the primary submit button. Defaults to `"OK"`. */
-  submitLabel?: string;
-  /** Label for the dismissal button. Defaults to `"Cancel"`. */
-  cancelLabel?: string;
-  /** Whether to select a non-empty initial value after focusing the input. Defaults to `false`. */
-  selectInitialValue?: boolean;
-}
+export type {
+  ConfirmActionOptions,
+  PickOneOptions,
+  PromptTextOptions,
+  ShowMessageOptions,
+} from "@vrtmrz/ui-interactions";
 
 interface TextPromptModalOptions extends PromptTextOptions {
   password: boolean;
@@ -139,16 +132,6 @@ export function promptPassword(app: App, options: PromptTextOptions): Promise<st
   });
 }
 
-/** Configures a fuzzy selector that returns the original selected item. */
-export interface PickOneOptions<T> {
-  /** Candidate items. The selector preserves their object identity. */
-  items: readonly T[];
-  /** Returns searchable and visible text for an item. */
-  getText: (item: T) => string;
-  /** Text shown in the fuzzy-search input. Defaults to `"Select an item"`. */
-  placeholder?: string;
-}
-
 class PickOneModal<T> extends FuzzySuggestModal<T> {
   private readonly items: readonly T[];
   private readonly itemText: (item: T) => string;
@@ -199,24 +182,6 @@ export function pickOne<T>(app: App, options: PickOneOptions<T>): Promise<T | nu
   return new Promise((resolve) => {
     new PickOneModal(app, options, resolve).open();
   });
-}
-
-/** Configures a Markdown message with one or more typed action buttons. */
-export interface ConfirmActionOptions<T extends string> {
-  /** Text displayed in the modal title. */
-  title: string;
-  /** Markdown rendered as the modal body. */
-  message: string;
-  /** Action identifiers returned when their corresponding buttons are selected. */
-  actions: readonly T[];
-  /** Optional visible labels keyed by action identifier. Unmapped actions display their identifier. */
-  labels?: Partial<Record<T, string>>;
-  /** Action styled as primary and selected when {@link timeoutMs} expires. */
-  defaultAction?: T;
-  /** Delay before selecting {@link defaultAction}; ignored when no default action is supplied. */
-  timeoutMs?: number;
-  /** Source path used by Obsidian to resolve relative links in the Markdown body. Defaults to `""`. */
-  sourcePath?: string;
 }
 
 class ActionDialog<T extends string> extends Modal {
@@ -305,18 +270,6 @@ export function confirmAction<const T extends string>(
   return new Promise((resolve) => {
     new ActionDialog(app, options, resolve).open();
   });
-}
-
-/** Configures a one-action informational Markdown modal. */
-export interface ShowMessageOptions {
-  /** Text displayed in the modal title. */
-  title: string;
-  /** Markdown rendered as the modal body. */
-  message: string;
-  /** Label for the close button. Defaults to `"Close"`. */
-  closeLabel?: string;
-  /** Source path used by Obsidian to resolve relative links in the Markdown body. Defaults to `""`. */
-  sourcePath?: string;
 }
 
 /**

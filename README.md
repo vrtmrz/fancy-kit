@@ -5,6 +5,7 @@ This private npm workspace develops small, independently publishable libraries f
 ## Packages
 
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives.
+- [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
 
 ## Workspace applications
 

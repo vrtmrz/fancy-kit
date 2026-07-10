@@ -54,7 +54,7 @@ For each session, the runner:
 6. reads the story result from the showcase fixture;
 7. terminates Obsidian and removes temporary state unless preservation is enabled.
 
-Scripted `UiContext` responses are not configured in this workflow.
+Scripted `UiInteractions` responses are not configured in this workflow.
 
 Mobile emulation reloads the renderer and temporarily removes the CLI `eval` command. The mobile scenario therefore reacquires the reloaded showcase plugin through Playwright and invokes its fixture methods directly.
 

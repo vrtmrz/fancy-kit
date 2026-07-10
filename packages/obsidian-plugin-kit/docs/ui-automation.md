@@ -4,10 +4,10 @@
 
 Obsidian plugins often need to replace prompts and confirmations in automated tests. Storing reserved responses in modal class variables or module globals looks convenient, but makes the result dependent on test order and allows state to leak between parallel tests, plugins, app instances, and vaults.
 
-`UiContext` keeps this state explicit:
+The Obsidian adapter keeps this state explicit:
 
 ```ts
-const ui = createUiContext(app, { driver });
+const ui = createObsidianUi(app, { driver });
 ```
 
 Each test creates its own driver and context. Production code can create a context without a driver; in that case it opens the normal Obsidian UI.
@@ -15,7 +15,7 @@ Each test creates its own driver and context. Production code can create a conte
 ## Reserving responses
 
 ```ts
-import { createUiContext } from "@vrtmrz/obsidian-plugin-kit/ui";
+import { createObsidianUi } from "@vrtmrz/obsidian-plugin-kit/ui";
 import { createScriptedUiDriver } from "@vrtmrz/obsidian-plugin-kit/testing";
 
 const driver = createScriptedUiDriver([
@@ -36,7 +36,7 @@ const driver = createScriptedUiDriver([
   },
 ]);
 
-const ui = createUiContext(app, { driver });
+const ui = createObsidianUi(app, { driver });
 const name = await ui.promptText({ title: "Device name" }, "device-name");
 const target = await ui.pickOne(
   { items, getText: (item) => item.name },
@@ -68,7 +68,7 @@ const driver = createScriptedUiDriver([
 ]);
 ```
 
-Automated values are validated by `UiContext`:
+Automated values are validated by the neutral interaction dispatcher:
 
 - prompt responses must be a string or `null`;
 - selection responses must be `null` or one of the supplied item instances;
@@ -87,4 +87,4 @@ A step with `passthrough: true` records and validates the interaction, then open
 - Do not enable scripted responses from settings, URI parameters, or other production input.
 - Do not use scripted responses to claim real UI coverage.
 
-Use Vitest with `UiContext` for application-flow tests. Use the showcase E2E suite for keyboard, focus, rendering, theme, Modal, SuggestModal, and Notice behaviour in real Obsidian.
+Use `createUiTestHarness` for App-free application-flow tests. Use `createObsidianUi` for mixed tests that may pass through to Obsidian, and use the showcase E2E suite for keyboard, focus, rendering, theme, Modal, SuggestModal, and Notice behaviour in real Obsidian.

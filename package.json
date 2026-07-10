@@ -7,9 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/obsidian-plugin-kit",
     "build:showcase": "node apps/obsidian-showcase/esbuild.config.mjs production",
-    "check": "npm run check --workspaces --if-present",
+    "check": "npm run check --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/ui-interactions && npm run check --workspace @vrtmrz/obsidian-plugin-kit",
     "check:showcase": "tsc -p apps/obsidian-showcase/tsconfig.json",
     "check:e2e": "tsc -p test/e2e-obsidian/tsconfig.json",
     "check:all": "npm run check && npm run check:showcase && npm run check:e2e",

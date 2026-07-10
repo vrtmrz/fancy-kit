@@ -7,6 +7,7 @@ const context = await esbuild.context({
   outfile: "apps/obsidian-showcase/main.js",
   alias: {
     "@vrtmrz/obsidian-plugin-kit": resolve("packages/obsidian-plugin-kit/src/index.ts"),
+    "@vrtmrz/ui-interactions": resolve("packages/ui-interactions/src/index.ts"),
   },
   bundle: true,
   external: ["obsidian"],

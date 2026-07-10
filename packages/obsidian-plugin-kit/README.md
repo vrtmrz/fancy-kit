@@ -10,8 +10,8 @@ Reusable, testable primitives for Obsidian plugins.
 - `@vrtmrz/obsidian-plugin-kit/dialog`: text and password prompts, typed selection, confirmation, and message dialogs.
 - `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
-- `@vrtmrz/obsidian-plugin-kit/ui`: an instance-scoped UI context for application code.
-- `@vrtmrz/obsidian-plugin-kit/testing`: a strict scripted driver for unit and integration tests.
+- `@vrtmrz/obsidian-plugin-kit/ui`: an Obsidian adapter for the neutral `UiInteractions` contract.
+- `@vrtmrz/obsidian-plugin-kit/testing`: framework-neutral scripted drivers and the App-free consumer harness, re-exported for convenience.
 
 ## Dialogs
 
@@ -77,24 +77,43 @@ For totals discovered during an operation, pass `autoComplete: false` and call `
 
 ## Testable UI
 
-`UiContext` lets application code use a test driver without adding response queues to modal classes or global state. Top-level dialog functions always open real Obsidian UI.
+`createObsidianUi` supplies the neutral `UiInteractions` capability with an optional test driver, without adding response queues to modal classes or global state. Top-level dialog functions always open real Obsidian UI.
 
 ```ts
 import { createScriptedUiDriver } from "@vrtmrz/obsidian-plugin-kit/testing";
-import { createUiContext } from "@vrtmrz/obsidian-plugin-kit/ui";
+import { createObsidianUi } from "@vrtmrz/obsidian-plugin-kit/ui";
 
 const driver = createScriptedUiDriver([
   { kind: "promptText", interactionId: "device-name", value: "laptop" },
 ]);
-const ui = createUiContext(app, { driver });
+const ui = createObsidianUi(app, { driver });
 
 await ui.promptText({ title: "Device name" }, "device-name");
 driver.assertDone();
 ```
 
+Application-flow tests that do not need Obsidian can use the App-free harness directly:
+
+```ts
+import { createUiTestHarness } from "@vrtmrz/obsidian-plugin-kit/testing";
+
+const harness = createUiTestHarness([
+  { kind: "confirmAction", value: "apply" },
+]);
+
+await harness.ui.confirmAction({
+  title: "Apply changes",
+  message: "Continue?",
+  actions: ["apply", "cancel"] as const,
+});
+harness.assertDone();
+```
+
 See [UI automation and scripted responses](docs/ui-automation.md) for driver behaviour and guidance on choosing between scripted and real UI tests.
 
 ## Development
+
+From the workspace root:
 
 ```bash
 npm run check:all

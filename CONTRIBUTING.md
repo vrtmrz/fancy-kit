@@ -37,6 +37,8 @@ npm run test:e2e:obsidian:local-suite
 
 Follow [the UI automation guide](packages/obsidian-plugin-kit/docs/ui-automation.md). Scripted responses must remain instance-scoped and must not be enabled through production settings, URI parameters, or other external input.
 
+Keep neutral interaction contracts, driver dispatch, and App-free harnesses in `packages/ui-interactions`. Keep Obsidian Modal, SuggestModal, MarkdownRenderer, Notice, and `App` integration in `packages/obsidian-plugin-kit`.
+
 ## Changes and commits
 
 Keep changes focused and separate unrelated refactors or generated output where practical. Use short, imperative English commit subjects, and describe behavioural compatibility and test evidence in pull requests.

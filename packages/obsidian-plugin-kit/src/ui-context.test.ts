@@ -12,7 +12,7 @@ const dialogMock = vi.hoisted(() => ({
 vi.mock("./dialog.js", () => dialogMock);
 
 import { createScriptedUiDriver } from "./testing.js";
-import { createUiContext } from "./ui-context.js";
+import { createObsidianUi, createUiContext } from "./ui-context.js";
 
 const app = {} as App;
 
@@ -21,6 +21,13 @@ afterEach(() => {
 });
 
 describe("UiContext automation", () => {
+  it("exposes the neutral contract through the explicit Obsidian factory", () => {
+    const ui = createObsidianUi(app);
+    expectTypeOf(ui).toMatchTypeOf<{
+      promptText(options: { title: string }, interactionId?: string): Promise<string | null>;
+    }>();
+  });
+
   it("consumes typed scripted responses and records a transcript", async () => {
     const first = { id: 1, name: "First" };
     const second = { id: 2, name: "Second" };
