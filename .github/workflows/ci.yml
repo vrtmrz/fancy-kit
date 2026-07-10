@@ -25,17 +25,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check TypeScript
-        run: npm run check:all
+      - name: Install Chromium for octagonal-wheels tests
+        run: npm exec --workspace octagonal-wheels -- playwright install --with-deps chromium
 
-      - name: Run unit tests
-        run: npm run test
+      - name: Check workspace
+        run: npm run check:workspace
 
-      - name: Build library
-        run: npm run build
+      - name: Run workspace tests
+        run: npm run test:workspace
+
+      - name: Build workspace packages
+        run: npm run build:workspace
 
       - name: Build showcase
         run: npm run build:showcase
 
       - name: Verify package contents
-        run: npm pack --dry-run --json --workspaces
+        run: npm run pack:workspace

@@ -16,7 +16,11 @@ Reusable, testable primitives for Obsidian plugins.
 ## Dialogs
 
 ```ts
-import { confirmAction, pickOne, promptText } from "@vrtmrz/obsidian-plugin-kit/dialog";
+import {
+  confirmAction,
+  pickOne,
+  promptText,
+} from "@vrtmrz/obsidian-plugin-kit/dialog";
 
 const name = await promptText(this.app, {
   title: "Device name",
@@ -121,3 +125,5 @@ npm run test
 npm run build
 npm run build:showcase
 ```
+
+Run `npm run verify:workspace` before handing off repository-wide changes.

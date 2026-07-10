@@ -4,6 +4,16 @@ Framework-neutral contracts for prompts, typed selection, Markdown actions, and 
 
 The package has no Obsidian or browser dependency. A platform adapter supplies real UI; tests can instead use the App-free harness.
 
+> [!NOTE]
+> This package is under initial development and is not yet published.
+
+## Public entry points
+
+- `@vrtmrz/ui-interactions` exports the interaction contracts and driver-backed dispatcher.
+- `@vrtmrz/ui-interactions/testing` exports the strict scripted driver, transcript, and App-free test harness.
+
+## Test harness
+
 ```ts
 import { createUiTestHarness } from "@vrtmrz/ui-interactions/testing";
 
@@ -16,3 +26,5 @@ harness.assertDone();
 ```
 
 Dismissed prompts, selections, and actions resolve to `null`. An explicitly submitted empty string remains `""`. Typed selection preserves the identity of the selected item.
+
+Scripted responses are FIFO and instance-scoped. Call `assertDone()` at the end of a test to detect expected interactions that did not occur. Production adapters should use `createDrivenUiInteractions` or extend `DrivenUiInteractions`; they must not expose scripted responses through settings or global state.

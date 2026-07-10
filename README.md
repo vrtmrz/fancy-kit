@@ -2,6 +2,8 @@
 
 This private npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
+The scoped packages are currently at `0.0.0` and have not yet been published. The workspace root and showcase application are always private.
+
 ## Packages
 
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives.
@@ -15,6 +17,8 @@ This private npm workspace develops small, independently publishable libraries f
 
 ## Development
 
+For a quick feedback loop while changing the scoped packages or showcase, run:
+
 ```bash
 npm run check:all
 npm run test
@@ -22,11 +26,10 @@ npm run build
 npm run build:showcase
 ```
 
-The default commands above keep the plug-in kit feedback loop small. Validate the complete workspace, including octagonal-wheels, with:
+Before handing off a repository-wide change, validate every package, including octagonal-wheels, and inspect every package tarball with:
 
 ```bash
-npm run check:workspace
-npm run test:workspace
+npm run verify:workspace
 ```
 
 The octagonal-wheels suite uses headless Chromium. Install its local Playwright browser once with:
@@ -35,6 +38,8 @@ The octagonal-wheels suite uses headless Chromium. Install its local Playwright 
 npm exec --workspace octagonal-wheels -- playwright install chromium
 ```
 
+The equivalent individual whole-workspace commands are `check:workspace`, `test:workspace`, `build:workspace`, `build:showcase`, and `pack:workspace`.
+
 Real Obsidian E2E remains a local-only suite and is not a default CI gate:
 
 ```bash
@@ -42,4 +47,4 @@ npm run test:e2e:obsidian:install-appimage
 npm run test:e2e:obsidian:local-suite
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for API documentation, test, and UI automation requirements.
+See [the package architecture](docs/architecture.md), [the release process](docs/releasing.md), and [CONTRIBUTING.md](CONTRIBUTING.md) for package boundaries, publishing order, API documentation, tests, and UI automation requirements.
