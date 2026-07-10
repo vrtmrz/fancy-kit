@@ -34,3 +34,15 @@ npm publish --workspace <package-name>
 The scoped package manifests already request public access. Confirm the npm account, organisation access, package name availability, and authentication immediately before publishing. Publishing is an explicit external action and is never part of the normal build or CI workflow.
 
 After publication, install the exact released version in one consumer, run its build and focused tests, and only then migrate additional consumers.
+
+## Consumption before publication
+
+An npm Git dependency targets this monorepo's private root package, not a selected workspace package. It also lacks the ignored scoped-package build output, so do not use the repository URL directly as an `npm install` specification.
+
+During migration, use one of these temporary flows:
+
+1. build this repository and install the required `packages/<name>` directories through local `file:` dependencies;
+2. in CI, check out an explicit commit SHA, build it, and install package directories from that checkout;
+3. run `npm pack --workspace <package-name>` and install the generated tarball locally or from a controlled build artefact location.
+
+Install `@vrtmrz/ui-interactions` alongside `@vrtmrz/obsidian-plugin-kit` until both have published versions. Treat `@vrtmrz/obsidian-e2e-runner` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.

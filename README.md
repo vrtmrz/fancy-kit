@@ -47,4 +47,24 @@ npm run test:e2e:obsidian:install-appimage
 npm run test:e2e:obsidian:local-suite
 ```
 
+## Consuming packages before registry publication
+
+Do not install this monorepo directly from a Git URL. npm installs the private workspace root from a Git dependency; it does not select an individual package under `packages/`, and the ignored build artefacts for the scoped packages are not present in the Git checkout.
+
+For local consumer migration, build this workspace and install the required package directories:
+
+```bash
+# In this repository:
+npm run build
+
+# In a consumer repository with this repository checked out as a sibling:
+npm install ../obsidian-plugin-kit/packages/ui-interactions
+npm install ../obsidian-plugin-kit/packages/obsidian-plugin-kit
+npm install -D ../obsidian-plugin-kit/packages/obsidian-e2e-runner
+```
+
+Install both runtime packages when consuming the plug-in kit so its unpublished `0.0.0` dependency on `@vrtmrz/ui-interactions` is satisfied locally. The E2E runner is a development dependency.
+
+For another machine or CI, check out this repository at an explicit commit SHA, run `npm ci` and `npm run build`, then install the required package directories from that checkout. Alternatively, create package tarballs with `npm pack --workspace <package-name>` and install the resulting `.tgz` files. Do not commit machine-specific `file:` paths to a long-lived consumer branch unless every checkout deliberately uses the same repository layout.
+
 See [the package architecture](docs/architecture.md), [the release process](docs/releasing.md), and [CONTRIBUTING.md](CONTRIBUTING.md) for package boundaries, publishing order, API documentation, tests, and UI automation requirements.
