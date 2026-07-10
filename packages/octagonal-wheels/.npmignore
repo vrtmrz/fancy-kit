@@ -1,0 +1,9 @@
+/node_modules
+/src
+/coverage
+tsconfig.json
+jsr.json
+doc
+*.test.d.ts
+release.js
+globDist.mjs

@@ -1,0 +1,509 @@
+import { deleteDB, openDB, type IDBPDatabase } from "idb";
+import { ExtendedSimpleStore, type SimpleStoreTransaction } from "./SimpleStoreBase.ts";
+import { promiseWithResolvers } from "../promises.ts";
+import { LOG_LEVEL_VERBOSE, Logger } from "../common/logger.ts";
+import {
+    buildIDBRange,
+    DATABASE_DESTROYED_ERROR,
+    DatabaseTransactionAbortError,
+    DatabaseTransactionError,
+    ErrorDatabaseDestroyed,
+    SIMPLE_STORE_EVENT_TYPES,
+    type SimpleStoreEventTypes,
+    type SimpleStoreEvent,
+    type SimpleStoreEventParams,
+    type SimpleStoreInitialisedEvent,
+    type SimpleStoreClosedEvent,
+    type SimpleStoreDestroyedEvent,
+    type SimpleStoreEventListener,
+    type SimpleStoreOpenedEvent,
+} from "./dbcommon.ts";
+import { FallbackWeakRef } from "../common/polyfill.ts";
+
+/**
+ * Represents a simple store using IndexedDB.
+ * @template T - The type of the values stored in the store.
+ */
+export class SimpleStoreIDBv2<T> extends ExtendedSimpleStore<T, IDBPDatabase<any>> {
+    /**
+     * Map of active database instances.
+     */
+    protected static _activeDBs = new Map<string, FallbackWeakRef<SimpleStoreIDBv2<any>>>();
+
+    /**
+     * Open a SimpleStoreIDB instance.
+     * @param name - The name of the store.
+     * @returns SimpleStoreIDB<U>.
+     */
+    public static override open<U>(name: string, instanceName?: string): SimpleStoreIDBv2<U> {
+        if (!instanceName) {
+            instanceName = name;
+        }
+        if (SimpleStoreIDBv2.hasActiveInstance(instanceName)) {
+            const active = SimpleStoreIDBv2.getActiveInstance<U>(instanceName);
+            if (active) {
+                return active;
+            }
+        }
+        const instance = new SimpleStoreIDBv2<U>(name, instanceName);
+        return instance;
+    }
+
+    /**
+     * Gets the active instance by name.
+     * @param instanceName - The name of the instance.
+     * @returns The active SimpleStoreIDB instance or undefined if not found.
+     */
+    public static override getActiveInstance<T>(instanceName: string): SimpleStoreIDBv2<T> | undefined {
+        const activeRef = SimpleStoreIDBv2._activeDBs.get(instanceName);
+        const active = activeRef?.deref();
+        return active as SimpleStoreIDBv2<T> | undefined;
+    }
+
+    /**
+     * Checks if there is an active instance with the given name.
+     * @param instanceName - The name of the instance.
+     * @returns True if an active instance exists, false otherwise.
+     */
+    public static override hasActiveInstance(instanceName: string): boolean {
+        const active = SimpleStoreIDBv2.getActiveInstance<any>(instanceName);
+        return active !== undefined;
+    }
+
+    /**
+     * Deletes the database with the given instance name.
+     * @param instanceName - The name of the instance.
+     */
+    public static override async deleteDatabase(instanceName: string): Promise<void> {
+        // Close active instance if exists
+        const active = SimpleStoreIDBv2.getActiveInstance<any>(instanceName);
+        active?.closeDatabase();
+        await deleteDB(instanceName, {
+            blocked: (a, b) => {
+                Logger("Delete (by deleteDatabase) blocked for database: " + instanceName, LOG_LEVEL_VERBOSE);
+                Logger(`eventVersion: ${a}, eventBlockedBy: ${JSON.stringify(b)}`, LOG_LEVEL_VERBOSE);
+            },
+        });
+    }
+
+    /**
+     * Gets the name of the store.
+     */
+    get name() {
+        return this._name;
+    }
+
+    _name: string;
+
+    // Instance name for identifying active instances
+    _instanceName: string;
+
+    // The promise that resolves to the IDB database instance
+    private __db!: Promise<IDBPDatabase<any>>;
+    // The actual IDB database instance
+    private _db!: IDBPDatabase<any>;
+
+    /**
+     * Gets the actual IDBDatabase connection.
+     * @returns A promise that resolves to the IDBDatabase instance.
+     */
+    public get db(): Promise<IDBPDatabase<any>> | undefined {
+        return Promise.resolve(this._db);
+    }
+
+    //#region Event Management
+    // Event target for managing event listeners
+    private _et: EventTarget = new EventTarget();
+    private _emit(name: typeof SIMPLE_STORE_EVENT_TYPES.INITIALISED, payload: { reason: string; count: number }): void;
+    private _emit(name: typeof SIMPLE_STORE_EVENT_TYPES.OPENED, payload: { reason: string; count: number }): void;
+    private _emit(name: typeof SIMPLE_STORE_EVENT_TYPES.CLOSED, payload: { reason: string | Error | undefined }): void;
+    private _emit(
+        name: typeof SIMPLE_STORE_EVENT_TYPES.DESTROYED,
+        payload: { reason: string | Error | undefined }
+    ): void;
+    private _emit<U extends SimpleStoreEventParams>(eventName: U["type"], payload?: Omit<U, "type">) {
+        const event = new CustomEvent(eventName, {
+            bubbles: false,
+            cancelable: false,
+            detail: {
+                ...payload,
+                instanceName: this._instanceName,
+                name: this._name,
+                type: eventName,
+            },
+        });
+        this._et.dispatchEvent(event);
+    }
+
+    addEventListener(
+        eventName: typeof SIMPLE_STORE_EVENT_TYPES.INITIALISED,
+        listener: (ev: SimpleStoreInitialisedEvent) => void,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        eventName: typeof SIMPLE_STORE_EVENT_TYPES.CLOSED,
+        listener: (ev: SimpleStoreClosedEvent) => void,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        eventName: typeof SIMPLE_STORE_EVENT_TYPES.DESTROYED,
+        listener: (ev: SimpleStoreDestroyedEvent) => void,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+    addEventListener(
+        eventName: typeof SIMPLE_STORE_EVENT_TYPES.OPENED,
+        listener: (ev: SimpleStoreOpenedEvent) => void,
+        options?: boolean | AddEventListenerOptions
+    ): void;
+
+    addEventListener(
+        eventName: SimpleStoreEventTypes,
+        listener: SimpleStoreEventListener,
+        options?: boolean | AddEventListenerOptions
+    ) {
+        this._et.addEventListener(eventName, listener as EventListenerOrEventListenerObject, options);
+    }
+
+    removeEventListener(
+        eventName: SimpleStoreEventTypes,
+        listener: (ev: SimpleStoreEvent) => void,
+        options?: boolean | EventListenerOptions
+    ) {
+        this._et.removeEventListener(eventName, listener as EventListenerOrEventListenerObject, options);
+    }
+    //#endregion
+
+    private _initCounter = 0;
+    private _openCounter = 0;
+    private prepareDBPromise() {
+        const name = this._name;
+        // Capture this for use in the upgrade function
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _self = this;
+        const _dbPromise = openDB(name, 1, {
+            upgrade(db) {
+                db.createObjectStore(name);
+            },
+            blocking() {
+                Logger("Database blocking upgrade: " + name, LOG_LEVEL_VERBOSE);
+                try {
+                    _self._db.close();
+                    Logger("Database closed for upgrade: " + name, LOG_LEVEL_VERBOSE);
+                } catch (e) {
+                    // May not happen, but just in case
+                    // Coverage kept for safety
+                    Logger(e, LOG_LEVEL_VERBOSE);
+                }
+            },
+            terminated() {
+                // Hard to test, but just in case
+                // Coverage kept for safety
+                Logger("Database terminated: " + name, LOG_LEVEL_VERBOSE);
+                _self.closeDatabase();
+            },
+        });
+        this.__db = _dbPromise;
+        this._emit(SIMPLE_STORE_EVENT_TYPES.INITIALISED, {
+            reason: "Database initialised",
+            count: ++this._initCounter,
+        });
+    }
+
+    /**
+     * @deprecated Use SimpleStoreIDBv2.open(name) instead
+     * @param name - The name of the store.
+     */
+    public constructor(name: string, instanceName?: string);
+    constructor(name: string, instanceName?: string) {
+        if (!instanceName) {
+            instanceName = name;
+        }
+        if (SimpleStoreIDBv2.getActiveInstance(instanceName) !== undefined) {
+            throw new Error(
+                "An active instance with the same name already exists. Use SimpleStoreIDBv2.open(name) to get the existing instance."
+            );
+        }
+        super();
+        this._name = name;
+        this._instanceName = instanceName;
+        this.prepareDBPromise();
+        SimpleStoreIDBv2._activeDBs.set(instanceName, new FallbackWeakRef(this));
+    }
+
+    /**
+     * Checks if the database is not initialised.
+     * @returns True if the database is not initialised, false otherwise.
+     */
+    public isNotInitialised() {
+        return this._db == undefined;
+    }
+
+    /**
+     * Checks if the database is destroyed.
+     * @returns True if the database is destroyed, false otherwise.
+     */
+    public isDestroyed() {
+        return this.__db == undefined;
+    }
+
+    /**
+     * Checks if the database is opened.
+     * @returns True if the database is opened, false otherwise.
+     */
+    public isOpened() {
+        if (this.isNotInitialised()) {
+            return false;
+        }
+        if (this.isDestroyed()) {
+            // May not happen, but just in case
+            // Coverage kept for safety
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Ensures the database is initialized.
+     * @returns
+     */
+    private async ensureDB() {
+        this._db = await this.__db;
+        this._db.addEventListener("versionchange", () => {
+            // This may indicate that another instance is upgrading the database
+            Logger(
+                "Database version change detected, instance released and prepared for next request: " +
+                    this._instanceName,
+                LOG_LEVEL_VERBOSE
+            );
+            this._db = undefined!;
+            this.prepareDBPromise();
+        });
+        this._emit(SIMPLE_STORE_EVENT_TYPES.OPENED, {
+            reason: "Database opened",
+            count: ++this._openCounter,
+        });
+    }
+
+    /**
+     * Processes a callback with database checks (not destroyed, initialised).
+     * @param callback a callback that takes the IDBDatabase and returns a promise
+     * @returns
+     */
+    private _processWithCheck<T>(callback: (db: IDBPDatabase<any>) => Promise<T>, preventError = false): Promise<T> {
+        if (this.isDestroyed() && !preventError) {
+            throw new ErrorDatabaseDestroyed(DATABASE_DESTROYED_ERROR);
+        }
+        if (this.isNotInitialised()) {
+            return this.ensureDB().then(() => {
+                return callback(this._db);
+            });
+        } else {
+            return callback(this._db);
+        }
+    }
+
+    private untrackDatabaseInstance(): void {
+        this._db = undefined!;
+        this.__db = undefined!;
+        SimpleStoreIDBv2._activeDBs.delete(this._instanceName);
+    }
+
+    /**
+     * Closes the database and removes it from active instances.
+     */
+    private closeDatabase(): void {
+        if (this._db) {
+            this._db.close();
+        }
+        // This may called from event listeners.
+        this.untrackDatabaseInstance();
+        this._emit(SIMPLE_STORE_EVENT_TYPES.CLOSED, { reason: "Database closed" });
+    }
+
+    /**
+     * Retrieves the value associated with the specified key.
+     * @param key The key to retrieve from the store.
+     * @returns A promise that resolves to the value associated with the key, or undefined if not found.
+     */
+    public get(key: string): Promise<T | undefined> {
+        return this._processWithCheck((db) => db.get(this.name, key) as Promise<T | undefined>);
+    }
+
+    /**
+     * Stores a value with the specified key.
+     * @param key The key to associate with the value.
+     * @param value The value to store.
+     * @returns A promise that resolves when the operation is complete.
+     */
+    public set(key: string, value: T): Promise<void> {
+        return this._processWithCheck((db) => db.put(this.name, value, key));
+    }
+
+    /**
+     * Deletes the value associated with the specified key.
+     * @param key The key to delete from the store.
+     * @returns A promise that resolves when the operation is complete.
+     */
+    public delete(key: string): Promise<void> {
+        return this._processWithCheck((db) => db.delete(this.name, key));
+    }
+
+    /**
+     * Retrieves an array of keys within the specified range.
+     * @param from The lower bound of the key range.
+     * @param to The upper bound of the key range.
+     * @param count The maximum number of keys to retrieve.
+     * @returns A promise that resolves to an array of keys within the specified range.
+     */
+    public keys(from?: string | undefined, to?: string | undefined, count?: number | undefined): Promise<string[]> {
+        const range = buildIDBRange(from, to);
+        return this.keysIDB(range, count).then((keys) => keys.map((key) => key.toString()));
+    }
+
+    /**
+     * Retrieves an array of keys matching the specified query.
+     * @param query The query to match the keys against.
+     * @param count The maximum number of keys to retrieve.
+     * @returns A promise that resolves to an array of keys matching the query.
+     */
+    public keysIDB(query?: IDBValidKey | IDBKeyRange, count?: number): Promise<IDBValidKey[]> {
+        return this._processWithCheck((db) => {
+            return db.getAllKeys(this.name, query, count);
+        });
+    }
+
+    /**
+     * Clears all key-value pairs in the store.
+     * @returns A promise that resolves when the store is cleared.
+     */
+    public clear(): Promise<void> {
+        return this._processWithCheck((db) => {
+            return db.clear(this.name);
+        });
+    }
+
+    /**
+     * Closes the database and removes it from active instances.
+     * @returns void.
+     */
+    public close(): void {
+        return void this._processWithCheck((db) => {
+            this.closeDatabase();
+            return Promise.resolve();
+        }, true);
+    }
+
+    /**
+     * Destroys the database and removes all data.
+     * Note: This also closes the database if it is open.
+     * @returns A promise that resolves when the database is destroyed.
+     */
+    public destroy(): Promise<void> {
+        return this._processWithCheck(async (db) => {
+            try {
+                this.closeDatabase();
+                const result = await deleteDB(this.name, {
+                    blocked: (a, b) => {
+                        Logger("Delete blocked for database: " + this.name, LOG_LEVEL_VERBOSE);
+                    },
+                });
+                return result;
+            } finally {
+                this._emit(SIMPLE_STORE_EVENT_TYPES.DESTROYED, { reason: "Database destroyed" });
+            }
+        });
+    }
+
+    /**
+     * Begins a transaction and executes the provided callback within the transaction context.
+     * @param callback - The callback function to execute within the transaction.
+     * @returns A promise that resolves when the transaction is complete.
+     * Note: Nested transactions are not supported.
+     * Transaction will be automatically committed unless aborted before the event loop runs.
+     */
+    public beginTransaction(callback: (tx: SimpleStoreTransaction<T>) => void | Promise<void>): Promise<void> {
+        return this._processWithCheck(async (db) => {
+            const p = promiseWithResolvers<void>();
+            let causeOfAbort: Error | undefined = undefined;
+            try {
+                const tx = db.transaction(this.name, "readwrite");
+                const store = tx.objectStore(this.name);
+                let isCommittedOrAborted = false;
+                const transaction = {
+                    get: async (key: string) => {
+                        return await store.get(key);
+                    },
+                    set: async (key: string, value: T) => {
+                        await store.put(value, key);
+                    },
+                    delete: async (key: string) => {
+                        await store.delete(key);
+                    },
+                    keys: async (from?: string | undefined, to?: string | undefined, count?: number | undefined) => {
+                        const range = buildIDBRange(from, to);
+                        return await store.getAllKeys(range, count);
+                    },
+                    commit: () => {
+                        if (isCommittedOrAborted) {
+                            throw new DatabaseTransactionError("Transaction already committed or aborted");
+                        }
+                        isCommittedOrAborted = true;
+                        tx.commit();
+                        // await tx.done;
+                    },
+                    abort: () => {
+                        if (isCommittedOrAborted) {
+                            throw new DatabaseTransactionError("Transaction already committed or aborted");
+                        }
+                        isCommittedOrAborted = true;
+                        tx.abort();
+                    },
+                } satisfies SimpleStoreTransaction<T>;
+                try {
+                    // Run the callback and wait for it to complete
+                    await callback(transaction);
+                    await tx.done;
+                    // Then resolve the promise
+                    p.resolve();
+                } catch (e) {
+                    // If an error occurs, abort the transaction and reject the promise
+                    if (!isCommittedOrAborted) {
+                        // Mark the cause of abort before aborting the transaction
+                        // Actual Error should be automatically caught on the outside
+                        causeOfAbort = e instanceof Error ? e : DatabaseTransactionError.fromError(e);
+                        tx.abort();
+                        await tx.done;
+                    } else {
+                        // Otherwise just throw the error
+                        throw e;
+                    }
+                }
+            } catch (e) {
+                // Handle transaction errors
+                if (e instanceof Error && e.name === "AbortError") {
+                    const abortError = DatabaseTransactionAbortError.fromError(e);
+                    if (causeOfAbort) {
+                        // Attach the original error that caused the abort
+                        abortError.setAbortedError(causeOfAbort);
+                    }
+                    p.reject(abortError);
+                } else {
+                    // Reject with a general transaction error
+                    p.reject(DatabaseTransactionError.fromError(e));
+                }
+            }
+            // Return the promise representing the transaction's completion
+            return p.promise;
+        });
+    }
+
+    commit() {
+        // Noop, just for interface compatibility
+        return;
+    }
+
+    abort() {
+        // Noop, just for interface compatibility
+        throw new DatabaseTransactionError("No active transaction to abort");
+    }
+}
