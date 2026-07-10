@@ -158,14 +158,7 @@ describe("BackedQueue", () => {
                 expect(await store.isAnyInFlight()).toBe(false);
             });
             it("should handle timeout on dequeue", async () => {
-                try {
-                    const dequeueTask = store.dequeue({ timeoutMs: 100 });
-                    // vi.advanceTimersByTime(150);
-                    expect(dequeueTask).rejects.toThrowError(QueueTimeoutError);
-                    await delay(150);
-                } catch (ex) {
-                    console.error("Error in timeout test:", ex);
-                }
+                await expect(store.dequeue({ timeoutMs: 100 })).rejects.toThrowError(QueueTimeoutError);
             });
             it("should dequeue when item is enqueued within timeout", async () => {
                 const dequeueTask = store.dequeue({ timeoutMs: 200 });

@@ -1,5 +1,4 @@
 /// <reference types="@vitest/browser/providers/playwright" />
-/// <reference types="@vitest/browser/providers/webdriverio" />
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -10,6 +9,7 @@ export default defineConfig({
         testTimeout: 10000,
         fileParallelism: false,
         watch: false,
+        silent: 'passed-only',
 
         // environment: "browser",
         include: ['src/**/*.test.ts'],

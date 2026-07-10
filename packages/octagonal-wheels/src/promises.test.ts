@@ -11,15 +11,20 @@ import {
     yieldNextMicrotask,
     yieldRequestIdleCallback,
 } from "./promises.ts";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { extendableDelay } from "./promises.ts";
 
 describe("delay function", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
     it("should resolve with the provided result after the specified delay", async () => {
         const ms = 1000;
         const result = "test";
         const startTime = Date.now();
-        const actualResult = await delay(ms, result);
+        const pendingResult = delay(ms, result);
+        await vi.advanceTimersByTimeAsync(ms);
+        const actualResult = await pendingResult;
         const endTime = Date.now();
         const elapsedTime = endTime - startTime;
         expect(actualResult).to.equal(result);
@@ -29,7 +34,9 @@ describe("delay function", () => {
     it("should resolve with undefined if no result is provided", async () => {
         const ms = 500;
         const startTime = Date.now();
-        const actualResult = await delay(ms);
+        const pendingResult = delay(ms);
+        await vi.advanceTimersByTimeAsync(ms);
+        const actualResult = await pendingResult;
         const endTime = Date.now();
         const elapsedTime = endTime - startTime;
         expect(actualResult).to.be.undefined;
@@ -67,6 +74,9 @@ describe("noop function", () => {
     });
 });
 describe("fireAndForget function", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
     it("should execute the provided promise and do nothing", async () => {
         let executed = false;
         const promise = new Promise<void>((resolve) => {
@@ -79,7 +89,7 @@ describe("fireAndForget function", () => {
         fireAndForget(promise);
 
         // Wait for the promise to be executed
-        await delay(1500);
+        await vi.advanceTimersByTimeAsync(1000);
 
         expect(executed).to.be.true;
     });
@@ -98,7 +108,7 @@ describe("fireAndForget function", () => {
         fireAndForget(promiseFn);
 
         // Wait for the promise to be executed
-        await delay(1500);
+        await vi.advanceTimersByTimeAsync(1000);
 
         expect(executed).to.be.true;
     });
@@ -114,7 +124,7 @@ describe("fireAndForget function", () => {
         fireAndForget(promise);
 
         // Wait for the promise to be executed
-        await delay(1500);
+        await vi.advanceTimersByTimeAsync(1000);
 
         // No assertions needed, as the function should handle the error and do nothing
     });
@@ -128,7 +138,7 @@ describe("fireAndForget function", () => {
         fireAndForget(promiseFn);
 
         // Wait for the promise to be executed
-        await delay(1500);
+        await vi.runAllTimersAsync();
 
         // No assertions needed, as the function should handle the error and do nothing
     });
@@ -182,9 +192,13 @@ describe("isResolved function", () => {
 });
 
 describe("extendableDelay function", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
     it("should resolve with TIMED_OUT_SIGNAL after the specified timeout", async () => {
         const timeout = 1000;
         const { promise } = extendableDelay(timeout, "cancelled");
+        await vi.advanceTimersByTimeAsync(timeout);
         const result = await promise;
         expect(result).to.equal(TIMED_OUT_SIGNAL);
     });
@@ -204,6 +218,7 @@ describe("extendableDelay function", () => {
         const { promise, extend } = extendableDelay(initialTimeout, "cancelled");
         extend(extendedTimeout);
         const startTime = Date.now();
+        await vi.advanceTimersByTimeAsync(extendedTimeout);
         const result = await promise;
         const endTime = Date.now();
         const elapsedTime = endTime - startTime;
@@ -214,6 +229,7 @@ describe("extendableDelay function", () => {
     it("should throw an error if trying to extend after resolution", async () => {
         const timeout = 1000;
         const { promise, extend } = extendableDelay(timeout, "cancelled");
+        await vi.advanceTimersByTimeAsync(timeout);
         await promise;
         expect(() => extend(500)).to.throw("Already resolved!");
     });
@@ -221,6 +237,7 @@ describe("extendableDelay function", () => {
     it("should not throw any errors if trying to cancel after resolution", async () => {
         const timeout = 1000;
         const { promise, cancel } = extendableDelay(timeout, "cancelled");
+        await vi.advanceTimersByTimeAsync(timeout);
         await promise;
         expect(() => cancel("cancelled")).not.throw();
     });

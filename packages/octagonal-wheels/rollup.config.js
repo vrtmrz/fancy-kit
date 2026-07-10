@@ -7,7 +7,6 @@ import fs from "node:fs";
 import { globSync } from "glob";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { platform } from "node:os";
 
 const pkg = JSON.parse(fs.readFileSync("./package.json") + "");
 const LIB_VERSION = pkg?.name + "-" + pkg?.version;
@@ -21,7 +20,6 @@ const banner = `/*!
 
 //type RollupOptions
 export default {
-    platform: "browser",
     input: Object.fromEntries(
         globSync("src/**/*.ts")
             .filter(
@@ -66,6 +64,8 @@ export default {
                 declarationDir: "./dist",
                 outDir: "./dist",
                 sourceMap: true,
+                allowImportingTsExtensions: false,
+                rewriteRelativeImportExtensions: true,
             },
             // noForceEmit: true,
             // platform: "browser",
