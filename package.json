@@ -49,6 +49,7 @@
     "test:e2e:obsidian:smoke": "npm run build:showcase && tsx test/e2e-obsidian/scripts/smoke.ts",
     "test:e2e:obsidian:dialogs": "npm run build:showcase && tsx test/e2e-obsidian/scripts/dialogs.ts",
     "test:e2e:obsidian:progress": "npm run build:showcase && tsx test/e2e-obsidian/scripts/progress.ts",
+    "test:e2e:obsidian:mobile": "npm run build:showcase && tsx test/e2e-obsidian/scripts/mobile.ts",
     "test:e2e:obsidian:local-suite": "tsx test/e2e-obsidian/scripts/local-suite.ts",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",

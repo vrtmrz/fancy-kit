@@ -18,10 +18,11 @@ Run the automated scenarios:
 npm run test:e2e:obsidian:smoke
 npm run test:e2e:obsidian:dialogs
 npm run test:e2e:obsidian:progress
+npm run test:e2e:obsidian:mobile
 npm run test:e2e:obsidian:local-suite
 ```
 
-The catalogue currently covers text and password prompts, typed selection, Markdown dialogs, and progress Notice lifecycle behaviour.
+The catalogue currently covers text and password prompts, typed selection, Markdown dialogs, and progress Notice lifecycle behaviour. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and showcase plugin to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
 
 ## Local prerequisites
 
@@ -47,12 +48,14 @@ For each session, the runner:
 1. creates an isolated vault, HOME, XDG, and Electron user-data directory;
 2. installs the built showcase plugin;
 3. launches Obsidian on a session-specific DevTools port;
-4. enables the showcase and invokes story commands through `obsidian-cli`;
+4. enables the showcase and invokes desktop story commands through `obsidian-cli`;
 5. operates the real Modal, SuggestModal, and Notice DOM through Playwright;
 6. reads the story result from the showcase fixture;
 7. terminates Obsidian and removes temporary state unless preservation is enabled.
 
 Scripted `UiContext` responses are not configured in this workflow.
+
+Mobile emulation reloads the renderer and temporarily removes the CLI `eval` command. The mobile scenario therefore reacquires the reloaded showcase plugin through Playwright and invokes its fixture methods directly.
 
 ## Adding a story
 
