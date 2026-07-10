@@ -1,0 +1,134 @@
+name: Stage npm package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to stage
+        required: true
+        type: choice
+        options:
+          - "@vrtmrz/ui-interactions"
+          - "@vrtmrz/obsidian-plugin-kit"
+          - "@vrtmrz/obsidian-test-session"
+          - octagonal-wheels
+      version:
+        description: Exact version in the selected package manifest
+        required: true
+        type: string
+      dist_tag:
+        description: npm dist-tag assigned when the staged package is approved
+        required: true
+        default: next
+        type: choice
+        options:
+          - next
+          - latest
+      expected_sha:
+        description: Full 40-character commit SHA expected on main
+        required: true
+        type: string
+      confirmation:
+        description: "Type: stage <package>@<version> from <expected-sha>"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-stage
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main' && github.sha == inputs.expected_sha
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out the selected commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Use the reviewed npm CLI
+        run: npm install --global npm@11.18.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for octagonal-wheels tests
+        run: npm exec --workspace octagonal-wheels -- playwright install --with-deps chromium
+
+      - name: Verify workspace and release selection
+        env:
+          PACKAGE_NAME: ${{ inputs.package }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+          DIST_TAG: ${{ inputs.dist_tag }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          npm run verify:workspace
+          node scripts/validate-release-selection.mjs "$PACKAGE_NAME" "$PACKAGE_VERSION" "$DIST_TAG" "$EXPECTED_SHA" "$GITHUB_SHA" "$CONFIRMATION"
+
+      - name: Pack the selected package
+        env:
+          PACKAGE_NAME: ${{ inputs.package }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/npm-package"
+          npm pack --workspace "$PACKAGE_NAME" --pack-destination "$RUNNER_TEMP/npm-package"
+          cd "$RUNNER_TEMP/npm-package"
+          sha256sum ./*.tgz > SHA256SUMS
+          tar -tzf ./*.tgz
+
+      - name: Upload the verified package
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: npm-package
+          path: ${{ runner.temp }}/npm-package
+          if-no-files-found: error
+          retention-days: 7
+
+  stage:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Use an npm CLI with staged publishing
+        run: npm install --global npm@11.18.0
+
+      - name: Download the verified package
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: npm-package
+          path: ${{ runner.temp }}/npm-package
+
+      - name: Verify and stage the package
+        env:
+          DIST_TAG: ${{ inputs.dist_tag }}
+        run: |
+          cd "$RUNNER_TEMP/npm-package"
+          sha256sum --check SHA256SUMS
+          package_file=$(find . -maxdepth 1 -type f -name '*.tgz' -print -quit)
+          test -n "$package_file"
+          npm stage publish "$package_file" --tag "$DIST_TAG"

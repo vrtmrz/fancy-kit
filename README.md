@@ -2,14 +2,14 @@
 
 This private npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
-The scoped packages are versioned at `0.1.0` for consumer validation and have not yet been published to npm. The workspace root and showcase application are always private.
+The scoped packages use independent `0.x` versions. Initial release candidates are published under the npm `next` dist-tag while consumer validation continues. The workspace root and showcase application are always private.
 
 ## Packages
 
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives.
 - [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure.
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
-- [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, imported with its existing history.
+- [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history.
 
 ## Workspace applications
 
@@ -46,6 +46,18 @@ Real Obsidian E2E remains a local-only suite and is not a default CI gate:
 npm run test:e2e:obsidian:install-appimage
 npm run test:e2e:obsidian:local-suite
 ```
+
+## Installing release candidates
+
+Install the scoped packages from the `next` dist-tag during the initial review period:
+
+```bash
+npm install @vrtmrz/ui-interactions@next
+npm install @vrtmrz/obsidian-plugin-kit@next
+npm install -D @vrtmrz/obsidian-test-session@next playwright @types/node
+```
+
+Pin an exact version in a long-lived consumer branch. The plug-in kit declares an exact dependency on the matching UI interactions release.
 
 ## Consuming packages before registry publication
 

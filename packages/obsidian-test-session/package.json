@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/obsidian-test-session",
-  "version": "0.1.0",
+  "version": "0.1.0-rc.0",
   "description": "Isolated real-Obsidian test session infrastructure for plug-in consumers",
   "type": "module",
   "license": "MIT",
@@ -36,9 +36,10 @@
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
-    "prepublishOnly": "npm run check && npm run test && npm run build"
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
   },
   "peerDependencies": {
+    "@types/node": ">=20",
     "playwright": ">=1.50.0"
   }
 }

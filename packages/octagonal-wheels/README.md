@@ -17,8 +17,9 @@ Please keep in mind that all things do not have a generic purpose.
 
 ## Documentation
 
-TypeDoc Documentation is [here](./docs/globals.md)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/vrtmrz/octagonal-wheels) also quite useful!
+The source, issue tracker, and current documentation are maintained in the [Fancy Kit monorepo](https://github.com/vrtmrz/fancy-kit/tree/main/packages/octagonal-wheels).
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/vrtmrz/fancy-kit) is also useful for exploring the repository.
 
 ## Current Coverage
 ```

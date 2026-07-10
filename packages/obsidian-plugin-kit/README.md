@@ -2,8 +2,12 @@
 
 Reusable, testable primitives for Obsidian plugins.
 
-> [!NOTE]
-> This package is under initial development and is not yet published.
+> [!IMPORTANT]
+> This package is in initial `0.x` development. Install the `next` release and pin its exact version while evaluating it.
+
+```bash
+npm install @vrtmrz/obsidian-plugin-kit@next
+```
 
 ## Available modules
 

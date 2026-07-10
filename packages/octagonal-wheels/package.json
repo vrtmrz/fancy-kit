@@ -1,6 +1,6 @@
 {
     "name": "octagonal-wheels",
-    "version": "0.1.47-preview.0",
+    "version": "0.1.48-preview.0",
     "description": "This module is a compilation of wheels that have been reinvented for a specific purpose",
     "type": "module",
     "types": "./dist/index.d.ts",
@@ -25,6 +25,7 @@
         "check": "npm run lint && npm run tsc-check",
         "serverTest:openSSLCompat": "cd ./serverTest && tsx openSSLCompat.ts",
         "releasecheck": "npm run pretty && npm run check",
+        "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs",
         "updateReadme": "node updateReadme.js"
     },
     "exports": {
@@ -946,7 +947,12 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/vrtmrz/octagonal-wheels.git"
+        "url": "git+https://github.com/vrtmrz/fancy-kit.git",
+        "directory": "packages/octagonal-wheels"
+    },
+    "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/octagonal-wheels#readme",
+    "bugs": {
+        "url": "https://github.com/vrtmrz/fancy-kit/issues"
     },
     "author": "vorotamoroz",
     "license": "MIT",
