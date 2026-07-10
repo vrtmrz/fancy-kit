@@ -13,6 +13,8 @@ npm run verify:workspace
 
 Real Obsidian E2E is deliberately local-only. Run `npm run test:e2e:obsidian:local-suite` as an additional release check when a change affects Obsidian UI or the E2E runner.
 
+Current real-Obsidian validation covers Linux only. Do not describe macOS or Windows as supported until the same smoke and lifecycle checks have been run successfully on those platforms.
+
 Inspect the selected package's entry in the `pack:workspace` output. A scoped package tarball should contain its licence, README, compiled `dist` files and emitted maps, and package metadata only. The showcase, tests, private notes, and files outside the package manifest must not leak into it.
 
 ## Version and dependency order

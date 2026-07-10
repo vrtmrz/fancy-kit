@@ -18,6 +18,8 @@ The package owns only generic test infrastructure. Consumer workflows, fixtures,
 
 Set `OBSIDIAN_BINARY` and `OBSIDIAN_CLI` when the executables are outside the built-in discovery paths. Importing the package has no side effects: downloading, extracting, and launching Obsidian require explicit function calls.
 
+The real-Obsidian session and E2E workflows are currently validated on Linux only. macOS and Windows executable discovery paths are implemented but have not been exercised by this project, so they should be treated as unverified rather than supported platforms until consumer smoke tests cover them.
+
 ## Example
 
 ```ts

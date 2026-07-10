@@ -6,6 +6,8 @@ The shared `@vrtmrz/obsidian-e2e-runner` package installs the showcase into a te
 
 This suite is local-only. It is intentionally not part of the default CI gate.
 
+The suite has currently been exercised only on Linux. The shared runner contains macOS and Windows executable discovery paths, but this showcase does not yet claim tested support for either platform.
+
 ## Commands
 
 Open the showcase for manual visual and interaction checks:
