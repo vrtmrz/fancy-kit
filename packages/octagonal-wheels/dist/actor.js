@@ -155,7 +155,6 @@ class Actor {
             throw new Error("The actor has been destroyed");
         }
         // We use a promise chain to ensure that messages are processed sequentially.
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         this.__process = this.__process.finally(() => {
             return this._process(message);
         });

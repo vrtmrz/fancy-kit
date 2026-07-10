@@ -8,7 +8,7 @@ import { fallbackMixedHashEach } from './purejs.js';
 let hashFunc = (str) => fallbackMixedHashEach(str);
 async function initHashFunc() {
     try {
-        const { h32ToString } = await e();
+        const { h32ToString } = await (e)();
         hashFunc = h32ToString;
         Logger(`xxhash for plugin initialised`, LOG_LEVEL_VERBOSE);
     }

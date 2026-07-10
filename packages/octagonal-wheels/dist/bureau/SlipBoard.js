@@ -1,4 +1,4 @@
-import { fireAndForget, promiseWithResolvers, yieldMicrotask, cancelableDelay, TIMED_OUT_SIGNAL } from '../promises.js';
+import { fireAndForget, promiseWithResolvers, cancelableDelay, TIMED_OUT_SIGNAL, yieldMicrotask } from '../promises.js';
 import { RESULT_TIMED_OUT } from '../common/const.js';
 
 const GENERIC_COMPATIBILITY_VALUE = "x-compatibility-value";
