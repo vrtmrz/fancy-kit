@@ -1,4 +1,4 @@
-import { obsidianRemoteDebuggingPort, withObsidianPage } from "../runner/ui.ts";
+import { withObsidianPage } from "@vrtmrz/obsidian-e2e-runner";
 import {
   executeShowcaseStory,
   startShowcaseTestSession,
@@ -11,7 +11,7 @@ async function main(): Promise<void> {
   try {
     testSession = await startShowcaseTestSession();
     const { session } = testSession;
-    const port = obsidianRemoteDebuggingPort();
+    const port = session.remoteDebuggingPort;
 
     await executeShowcaseStory(session, "notice-show");
     await withObsidianPage(port, async (page) => {
@@ -26,17 +26,22 @@ async function main(): Promise<void> {
     await executeShowcaseStory(session, "notice-update");
     await withObsidianPage(port, async (page) => {
       const notice = page.locator(".vpk-keyed-notice");
-      if ((await notice.count()) !== 1) throw new Error("Expected one keyed Notice after update");
+      if ((await notice.count()) !== 1)
+        throw new Error("Expected one keyed Notice after update");
       await notice.getByText("Scanning vault: 2", { exact: true }).waitFor();
       const marker = await notice.getAttribute("data-vpk-e2e-instance");
-      if (marker !== "original") throw new Error("Keyed Notice update replaced the visible DOM element");
+      if (marker !== "original")
+        throw new Error("Keyed Notice update replaced the visible DOM element");
       await notice.waitFor({ state: "hidden", timeout: 5_000 });
     });
 
     await executeShowcaseStory(session, "notice-show");
     await executeShowcaseStory(session, "notice-hide");
     await withObsidianPage(port, async (page) => {
-      await page.locator(".vpk-keyed-notice").last().waitFor({ state: "hidden", timeout: 5_000 });
+      await page
+        .locator(".vpk-keyed-notice")
+        .last()
+        .waitFor({ state: "hidden", timeout: 5_000 });
     });
 
     console.log("Real Obsidian keyed Notice stories passed.");

@@ -1,4 +1,4 @@
-import { obsidianRemoteDebuggingPort, withObsidianPage } from "../runner/ui.ts";
+import { withObsidianPage } from "@vrtmrz/obsidian-e2e-runner";
 import {
   executeShowcaseStory,
   startShowcaseTestSession,
@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   try {
     testSession = await startShowcaseTestSession();
     const { session } = testSession;
-    const port = obsidianRemoteDebuggingPort();
+    const port = session.remoteDebuggingPort;
 
     await executeShowcaseStory(session, "progress-start");
     await withObsidianPage(port, async (page) => {
@@ -33,18 +33,29 @@ async function main(): Promise<void> {
     await executeShowcaseStory(session, "progress-step");
     await waitForShowcaseState(
       session,
-      (state) => state.progressState === "completed" && state.progressValue === 3,
+      (state) =>
+        state.progressState === "completed" && state.progressValue === 3,
       "completed progress state",
     );
     await withObsidianPage(port, async (page) => {
-      await page.locator(".vpk-progress-notice").last().waitFor({ state: "hidden", timeout: 5_000 });
+      await page
+        .locator(".vpk-progress-notice")
+        .last()
+        .waitFor({ state: "hidden", timeout: 5_000 });
     });
 
     await executeShowcaseStory(session, "progress-start");
     await executeShowcaseStory(session, "progress-cancel");
-    await waitForShowcaseState(session, (state) => state.progressState === "cancelled", "cancelled progress state");
+    await waitForShowcaseState(
+      session,
+      (state) => state.progressState === "cancelled",
+      "cancelled progress state",
+    );
     await withObsidianPage(port, async (page) => {
-      await page.locator(".vpk-progress-notice").last().waitFor({ state: "hidden", timeout: 5_000 });
+      await page
+        .locator(".vpk-progress-notice")
+        .last()
+        .waitFor({ state: "hidden", timeout: 5_000 });
     });
 
     console.log("Real Obsidian progress stories passed.");

@@ -39,6 +39,8 @@ Follow [the UI automation guide](packages/obsidian-plugin-kit/docs/ui-automation
 
 Keep neutral interaction contracts, driver dispatch, and App-free harnesses in `packages/ui-interactions`. Keep Obsidian Modal, SuggestModal, MarkdownRenderer, Notice, and `App` integration in `packages/obsidian-plugin-kit`.
 
+Keep local real-Obsidian process, isolated-vault, CLI bootstrap, and CDP readiness infrastructure in `packages/obsidian-e2e-runner`. Consumer stories, fixtures, settings, databases, and assertions remain consumer-owned.
+
 Keep pure utilities and generic structural algorithms in `packages/octagonal-wheels`. Its history is connected as a non-squashed subtree; use `git subtree pull --prefix=packages/octagonal-wheels <octagonal-wheels-repository> main` when deliberately importing upstream changes.
 
 ## Changes and commits

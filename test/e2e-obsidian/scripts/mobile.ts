@@ -1,9 +1,8 @@
 import type { JSHandle, Locator, Page } from "playwright";
 import {
-  obsidianRemoteDebuggingPort,
   waitForObsidianPageUiIdle,
   withObsidianPage,
-} from "../runner/ui.ts";
+} from "@vrtmrz/obsidian-e2e-runner";
 import {
   startShowcaseTestSession,
   stopShowcaseTestSession,
@@ -36,21 +35,30 @@ async function setMobileEmulation(page: Page, enabled: boolean): Promise<void> {
   }, enabled);
 }
 
-async function getShowcasePlugin(page: Page): Promise<JSHandle<ShowcaseTestPlugin>> {
+async function getShowcasePlugin(
+  page: Page,
+): Promise<JSHandle<ShowcaseTestPlugin>> {
   return await page.evaluateHandle((pluginId) => {
-    const plugin = (window as unknown as ObsidianTestWindow).app.plugins?.plugins[pluginId];
-    if (plugin === undefined) throw new Error(`Showcase plugin is not loaded: ${pluginId}`);
+    const plugin = (window as unknown as ObsidianTestWindow).app.plugins
+      ?.plugins[pluginId];
+    if (plugin === undefined)
+      throw new Error(`Showcase plugin is not loaded: ${pluginId}`);
     return plugin;
   }, SHOWCASE_PLUGIN_ID);
 }
 
-async function executeShowcaseStory(plugin: JSHandle<ShowcaseTestPlugin>, story: string): Promise<void> {
+async function executeShowcaseStory(
+  plugin: JSHandle<ShowcaseTestPlugin>,
+  story: string,
+): Promise<void> {
   await plugin.evaluate((instance, storyId) => {
     void instance.runStory(storyId);
   }, story);
 }
 
-async function readShowcaseState(plugin: JSHandle<ShowcaseTestPlugin>): Promise<ShowcaseState> {
+async function readShowcaseState(
+  plugin: JSHandle<ShowcaseTestPlugin>,
+): Promise<ShowcaseState> {
   return await plugin.evaluate((instance) => instance.e2e);
 }
 
@@ -67,18 +75,28 @@ async function waitForShowcaseState(
     if (predicate(state)) return state;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error(`Timed out waiting for ${description}. Last state: ${JSON.stringify(state)}`);
+  throw new Error(
+    `Timed out waiting for ${description}. Last state: ${JSON.stringify(state)}`,
+  );
 }
 
 async function activeModal(page: Page, title: string): Promise<Locator> {
-  const modal = page.locator(".modal-container .modal").filter({ hasText: title }).last();
+  const modal = page
+    .locator(".modal-container .modal")
+    .filter({ hasText: title })
+    .last();
   await modal.waitFor({ state: "visible", timeout: 10_000 });
   return modal;
 }
 
-async function assertFitsViewport(page: Page, element: Locator, description: string): Promise<void> {
+async function assertFitsViewport(
+  page: Page,
+  element: Locator,
+  description: string,
+): Promise<void> {
   const viewport = page.viewportSize();
-  if (viewport === null) throw new Error("Mobile viewport emulation is not active");
+  if (viewport === null)
+    throw new Error("Mobile viewport emulation is not active");
 
   const tolerance = 1;
   const deadline = Date.now() + 3_000;
@@ -95,7 +113,8 @@ async function assertFitsViewport(page: Page, element: Locator, description: str
     box = await element.boundingBox();
   }
 
-  if (box === null) throw new Error(`${description} has no visible bounding box`);
+  if (box === null)
+    throw new Error(`${description} has no visible bounding box`);
   if (
     box.x < -tolerance ||
     box.y < -tolerance ||
@@ -112,7 +131,9 @@ async function assertFitsViewport(page: Page, element: Locator, description: str
     scrollWidth: node.scrollWidth,
   }));
   if (widths.scrollWidth > widths.clientWidth + tolerance) {
-    throw new Error(`${description} overflows horizontally: ${JSON.stringify(widths)}`);
+    throw new Error(
+      `${description} overflows horizontally: ${JSON.stringify(widths)}`,
+    );
   }
 }
 
@@ -120,20 +141,20 @@ async function main(): Promise<void> {
   let testSession: ShowcaseTestSession | undefined;
   try {
     testSession = await startShowcaseTestSession();
-    const port = obsidianRemoteDebuggingPort();
+    const port = testSession.session.remoteDebuggingPort;
 
     await withObsidianPage(port, async (page) => {
       await page.setViewportSize(MOBILE_VIEWPORT);
       await setMobileEmulation(page, true);
       try {
-        await page.waitForFunction(
-          (pluginId) => {
-            const obsidianApp = (window as unknown as ObsidianTestWindow).app;
-            const showcaseLoaded = obsidianApp?.plugins?.plugins[pluginId] !== undefined;
-            return document.body.classList.contains("is-mobile") && showcaseLoaded;
-          },
-          SHOWCASE_PLUGIN_ID,
-        );
+        await page.waitForFunction((pluginId) => {
+          const obsidianApp = (window as unknown as ObsidianTestWindow).app;
+          const showcaseLoaded =
+            obsidianApp?.plugins?.plugins[pluginId] !== undefined;
+          return (
+            document.body.classList.contains("is-mobile") && showcaseLoaded
+          );
+        }, SHOWCASE_PLUGIN_ID);
         await waitForObsidianPageUiIdle(page);
         const showcasePlugin = await getShowcasePlugin(page);
         try {
@@ -154,7 +175,8 @@ async function main(): Promise<void> {
           await page.keyboard.press("Escape");
           await waitForShowcaseState(
             showcasePlugin,
-            (state) => state.lastStory === "prompt-text" && state.lastResult === null,
+            (state) =>
+              state.lastStory === "prompt-text" && state.lastResult === null,
             "mobile prompt cancellation",
           );
 
@@ -168,14 +190,17 @@ async function main(): Promise<void> {
           await promptInput.press("Enter");
           await waitForShowcaseState(
             showcasePlugin,
-            (state) => (state.lastResult as { id?: string } | null)?.id === "beta",
+            (state) =>
+              (state.lastResult as { id?: string } | null)?.id === "beta",
             "mobile keyboard selection result",
           );
 
           await executeShowcaseStory(showcasePlugin, "confirm-action");
           const confirmation = await activeModal(page, "Restore confirmation");
           await assertFitsViewport(page, confirmation, "confirmation dialog");
-          await confirmation.getByRole("button", { name: "Restore", exact: true }).click();
+          await confirmation
+            .getByRole("button", { name: "Restore", exact: true })
+            .click();
           await waitForShowcaseState(
             showcasePlugin,
             (state) => state.lastResult === "restore",
@@ -183,14 +208,20 @@ async function main(): Promise<void> {
           );
 
           await executeShowcaseStory(showcasePlugin, "progress-start");
-          const progressNotice = page.locator(".notice:has(.vpk-progress-notice)").last();
+          const progressNotice = page
+            .locator(".notice:has(.vpk-progress-notice)")
+            .last();
           await progressNotice.waitFor({ state: "visible", timeout: 10_000 });
           await assertFitsViewport(page, progressNotice, "progress Notice");
           await progressNotice.getByText("0 / 3", { exact: true }).waitFor();
 
           await executeShowcaseStory(showcasePlugin, "progress-step");
           await progressNotice.getByText("1 / 3", { exact: true }).waitFor();
-          await assertFitsViewport(page, progressNotice, "updated progress Notice");
+          await assertFitsViewport(
+            page,
+            progressNotice,
+            "updated progress Notice",
+          );
 
           await executeShowcaseStory(showcasePlugin, "progress-cancel");
           await waitForShowcaseState(

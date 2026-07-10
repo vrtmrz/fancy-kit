@@ -5,6 +5,7 @@ This private npm workspace develops small, independently publishable libraries f
 ## Packages
 
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives.
+- [`@vrtmrz/obsidian-e2e-runner`](packages/obsidian-e2e-runner): local real-Obsidian session, bootstrap, and binary preparation infrastructure.
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
 - [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, imported with its existing history.
 

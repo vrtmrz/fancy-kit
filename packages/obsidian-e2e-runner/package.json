@@ -1,0 +1,35 @@
+{
+  "name": "@vrtmrz/obsidian-e2e-runner",
+  "version": "0.0.0",
+  "description": "Local real-Obsidian E2E session runner for plugin consumers",
+  "type": "module",
+  "license": "MIT",
+  "author": "vorotamoroz",
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "prepublishOnly": "npm run check && npm run test && npm run build"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.50.0"
+  }
+}

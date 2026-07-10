@@ -7,10 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/obsidian-plugin-kit",
+    "build": "npm run build --workspace @vrtmrz/obsidian-e2e-runner && npm run build --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/obsidian-plugin-kit",
     "build:octagonal-wheels": "npm run build --workspace octagonal-wheels",
     "build:showcase": "node apps/obsidian-showcase/esbuild.config.mjs production",
-    "check": "npm run check --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/ui-interactions && npm run check --workspace @vrtmrz/obsidian-plugin-kit",
+    "check": "npm run check --workspace @vrtmrz/obsidian-e2e-runner && npm run build --workspace @vrtmrz/obsidian-e2e-runner && npm run check --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/ui-interactions && npm run check --workspace @vrtmrz/obsidian-plugin-kit",
     "check:showcase": "tsc -p apps/obsidian-showcase/tsconfig.json",
     "check:e2e": "tsc -p test/e2e-obsidian/tsconfig.json",
     "check:all": "npm run check && npm run check:showcase && npm run check:e2e",
@@ -18,8 +18,8 @@
     "check:workspace": "npm run check:all && npm run check:octagonal-wheels",
     "dev:showcase": "node apps/obsidian-showcase/esbuild.config.mjs",
     "showcase:open": "npm run build:showcase && tsx test/e2e-obsidian/scripts/debug-ui.ts",
-    "test": "npm run test --workspace @vrtmrz/obsidian-plugin-kit && npm run test --workspace @vrtmrz/ui-interactions && npm run test:e2e:runner",
-    "test:e2e:runner": "vitest run test/e2e-obsidian/runner/*.test.ts",
+    "test": "npm run test --workspace @vrtmrz/obsidian-e2e-runner && npm run test --workspace @vrtmrz/obsidian-plugin-kit && npm run test --workspace @vrtmrz/ui-interactions",
+    "test:e2e:runner": "npm run test --workspace @vrtmrz/obsidian-e2e-runner",
     "test:octagonal-wheels": "npm test --workspace octagonal-wheels",
     "test:workspace": "npm test && npm run test:octagonal-wheels",
     "test:e2e:obsidian:install-appimage": "tsx test/e2e-obsidian/scripts/install-appimage.ts",

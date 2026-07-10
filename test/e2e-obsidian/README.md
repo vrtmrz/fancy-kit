@@ -2,7 +2,7 @@
 
 The private showcase plug-in under `apps/obsidian-showcase/` is an interactive catalogue and a fixture for automated UI tests. It runs inside real Obsidian and is not included in a published package.
 
-The E2E runner installs the showcase into a temporary vault and isolated Obsidian profile. It uses `obsidian-cli` only to deliver the vault-open URI, then uses Playwright over Electron's DevTools endpoint for readiness, story invocation, state inspection, and real UI interaction.
+The shared `@vrtmrz/obsidian-e2e-runner` package installs the showcase into a temporary vault and isolated Obsidian profile. It uses `obsidian-cli` only to deliver the vault-open URI, then uses Playwright over Electron's DevTools endpoint for bootstrap and UI readiness. Showcase story invocation, state, and assertions remain local consumer code.
 
 This suite is local-only. It is intentionally not part of the default CI gate.
 
