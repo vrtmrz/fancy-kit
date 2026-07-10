@@ -35,7 +35,7 @@ npm run test:e2e:obsidian:local-suite
 
 ## UI automation
 
-Follow [the UI automation guide](docs/ui-automation.md). Scripted responses must remain instance-scoped and must not be enabled through production settings, URI parameters, or other external input.
+Follow [the UI automation guide](packages/obsidian-plugin-kit/docs/ui-automation.md). Scripted responses must remain instance-scoped and must not be enabled through production settings, URI parameters, or other external input.
 
 ## Changes and commits
 

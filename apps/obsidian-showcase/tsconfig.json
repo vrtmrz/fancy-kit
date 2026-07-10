@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": "../..",
+    "paths": {
+      "@vrtmrz/obsidian-plugin-kit": ["packages/obsidian-plugin-kit/src/index.ts"]
+    },
+    "strict": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["main.ts", "../../packages/obsidian-plugin-kit/src/**/*.ts"],
+  "exclude": ["../../packages/obsidian-plugin-kit/src/**/*.test.ts"]
+}

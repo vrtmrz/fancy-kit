@@ -29,7 +29,7 @@ export async function startShowcaseTestSession(): Promise<ShowcaseTestSession> {
       cliBinary: cli.binary,
       vault,
       pluginId: SHOWCASE_PLUGIN_ID,
-      artifactRoot: resolve("showcase"),
+      artifactRoot: resolve("apps/obsidian-showcase"),
       startupGraceMs: Number(process.env.E2E_OBSIDIAN_STARTUP_GRACE_MS ?? 1_000),
     });
     return { session, vault };

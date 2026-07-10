@@ -1,9 +1,13 @@
 import esbuild from "esbuild";
+import { resolve } from "node:path";
 
 const production = process.argv[2] === "production";
 const context = await esbuild.context({
-  entryPoints: ["showcase/main.ts"],
-  outfile: "showcase/main.js",
+  entryPoints: ["apps/obsidian-showcase/main.ts"],
+  outfile: "apps/obsidian-showcase/main.js",
+  alias: {
+    "@vrtmrz/obsidian-plugin-kit": resolve("packages/obsidian-plugin-kit/src/index.ts"),
+  },
   bundle: true,
   external: ["obsidian"],
   format: "cjs",

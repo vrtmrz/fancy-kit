@@ -8,7 +8,7 @@ import {
   showMessage,
   showProgressNotice,
   type ProgressNotice,
-} from "../src/index.ts";
+} from "@vrtmrz/obsidian-plugin-kit";
 
 const VIEW_TYPE = "vpk-showcase-view";
 

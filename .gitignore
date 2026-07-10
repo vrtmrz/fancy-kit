@@ -2,7 +2,7 @@ node_modules
 dist
 coverage
 _testdata
-showcase/main.js
+apps/obsidian-showcase/main.js
 *.log
 .DS_Store
 *.local

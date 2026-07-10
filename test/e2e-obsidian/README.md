@@ -1,6 +1,6 @@
 # Real Obsidian showcase and E2E
 
-The private showcase plugin under `showcase/` is an interactive catalogue and a fixture for automated UI tests. It runs inside real Obsidian and is not included in the published package.
+The private showcase plug-in under `apps/obsidian-showcase/` is an interactive catalogue and a fixture for automated UI tests. It runs inside real Obsidian and is not included in a published package.
 
 The E2E runner installs the showcase into a temporary vault and isolated Obsidian profile. It uses `obsidian-cli` for plugin commands and state inspection, and Playwright over Electron's DevTools endpoint for real UI interaction.
 

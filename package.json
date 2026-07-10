@@ -1,67 +1,28 @@
 {
-  "name": "@vrtmrz/obsidian-plugin-kit",
+  "name": "@vrtmrz/plugin-toolkit-workspace",
   "version": "0.0.0",
-  "description": "Reusable, testable primitives for Obsidian plugins",
+  "private": true,
   "type": "module",
-  "license": "MIT",
-  "author": "vorotamoroz",
-  "sideEffects": false,
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "docs",
-    "README.md",
-    "LICENSE"
+  "workspaces": [
+    "packages/*"
   ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./dialog": {
-      "types": "./dist/dialog.d.ts",
-      "import": "./dist/dialog.js"
-    },
-    "./notice": {
-      "types": "./dist/notice.d.ts",
-      "import": "./dist/notice.js"
-    },
-    "./progress": {
-      "types": "./dist/progress.d.ts",
-      "import": "./dist/progress.js"
-    },
-    "./ui": {
-      "types": "./dist/ui-context.d.ts",
-      "import": "./dist/ui-context.js"
-    },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js"
-    }
-  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "build:showcase": "node showcase/esbuild.config.mjs production",
-    "check:showcase": "tsc -p showcase/tsconfig.json",
+    "build": "npm run build --workspaces --if-present",
+    "build:showcase": "node apps/obsidian-showcase/esbuild.config.mjs production",
+    "check": "npm run check --workspaces --if-present",
+    "check:showcase": "tsc -p apps/obsidian-showcase/tsconfig.json",
     "check:e2e": "tsc -p test/e2e-obsidian/tsconfig.json",
     "check:all": "npm run check && npm run check:showcase && npm run check:e2e",
-    "dev:showcase": "node showcase/esbuild.config.mjs",
+    "dev:showcase": "node apps/obsidian-showcase/esbuild.config.mjs",
     "showcase:open": "npm run build:showcase && tsx test/e2e-obsidian/scripts/debug-ui.ts",
+    "test": "npm run test --workspaces --if-present",
     "test:e2e:obsidian:install-appimage": "tsx test/e2e-obsidian/scripts/install-appimage.ts",
     "test:e2e:obsidian:smoke": "npm run build:showcase && tsx test/e2e-obsidian/scripts/smoke.ts",
     "test:e2e:obsidian:dialogs": "npm run build:showcase && tsx test/e2e-obsidian/scripts/dialogs.ts",
     "test:e2e:obsidian:notices": "npm run build:showcase && tsx test/e2e-obsidian/scripts/notices.ts",
     "test:e2e:obsidian:progress": "npm run build:showcase && tsx test/e2e-obsidian/scripts/progress.ts",
     "test:e2e:obsidian:mobile": "npm run build:showcase && tsx test/e2e-obsidian/scripts/mobile.ts",
-    "test:e2e:obsidian:local-suite": "tsx test/e2e-obsidian/scripts/local-suite.ts",
-    "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "prepublishOnly": "npm run check:all && npm run test && npm run build"
-  },
-  "peerDependencies": {
-    "obsidian": ">=1.8.7"
+    "test:e2e:obsidian:local-suite": "tsx test/e2e-obsidian/scripts/local-suite.ts"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
