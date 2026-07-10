@@ -12,6 +12,53 @@ const ui = createObsidianUi(app, { driver });
 
 Each test creates its own driver and context. Production code can create a context without a driver; in that case it opens the normal Obsidian UI.
 
+## Application workflow boundary
+
+Keep the interaction capability at the application boundary instead of importing a modal inside business-flow code. A plug-in instance owns the Obsidian adapter and passes it to a focused workflow:
+
+```ts
+import { createObsidianUi, type UiInteractions } from "@vrtmrz/obsidian-plugin-kit/ui";
+
+async function confirmRestore(ui: UiInteractions): Promise<boolean> {
+  const action = await ui.confirmAction(
+    {
+      title: "Restore confirmation",
+      message: "Restore the selected files?",
+      actions: ["restore", "cancel"] as const,
+      labels: { restore: "Restore", cancel: "Cancel" },
+      defaultAction: "cancel",
+    },
+    "restore-files",
+  );
+  return action === "restore";
+}
+
+const ui = createObsidianUi(app);
+await confirmRestore(ui);
+```
+
+Use stable machine-readable action identifiers and keep visible labels separate. Closing the dialog returns `null`, so application code must map both `null` and an explicit cancel action to its cancellation path.
+
+The same workflow can be tested without constructing an Obsidian `App`:
+
+```ts
+import { createUiTestHarness } from "@vrtmrz/obsidian-plugin-kit/testing";
+
+const harness = createUiTestHarness([
+  {
+    kind: "confirmAction",
+    interactionId: "restore-files",
+    value: "restore",
+  },
+]);
+
+expect(await confirmRestore(harness.ui)).toBe(true);
+expect(harness.transcript[0]?.kind).toBe("confirmAction");
+harness.assertDone();
+```
+
+This shape keeps Obsidian rendering in the adapter, application policy in the consumer workflow, and scripted state in the individual test harness.
+
 ## Reserving responses
 
 ```ts
