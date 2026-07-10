@@ -235,7 +235,7 @@ export class Broadcaster<T extends any[]> extends ChannelBase {
      * @returns a promise that resolves when the broadcast is complete (not means all handlers have completed).
      */
     invoke(...args: T): Promise<void> {
-        this.publish({ type: MessageTypes.BROADCAST, args } as BroadcastMessage<T>);
+        this.publish({ type: MessageTypes.BROADCAST, args });
         return Promise.resolve();
     }
 
@@ -280,7 +280,7 @@ export abstract class MultiCastChannel<T extends any[], U> extends ChannelBase {
         };
         const tearDown = () => {
             // Send BYE message on unregister
-            this.publish({ type: MessageTypes.BYE, id: subId, subId } as ByeMessage);
+            this.publish({ type: MessageTypes.BYE, id: subId, subId });
             this.knownSubscribers.delete(subId);
         };
         const unsubscribe = this.subscribe(listener, options?.signal, tearDown);
@@ -294,7 +294,7 @@ export abstract class MultiCastChannel<T extends any[], U> extends ChannelBase {
 
     // Advertise our subId to other instances
     protected advertiseSubId(subId: string, id: string): void {
-        this.publish({ type: MessageTypes.ADVERTISE, id, subId } as AdvertiseMessage);
+        this.publish({ type: MessageTypes.ADVERTISE, id, subId });
     }
 
     /**
@@ -327,7 +327,7 @@ export abstract class MultiCastChannel<T extends any[], U> extends ChannelBase {
             this.anyAdvertisementKnown = promiseWithResolvers<void>();
             promise = this.anyAdvertisementKnown.promise;
         }
-        this.publish({ type: MessageTypes.REQUEST_AD, id: generateId() } as RequestAdvertiseMessage);
+        this.publish({ type: MessageTypes.REQUEST_AD, id: generateId() });
         return promise;
     }
     /**

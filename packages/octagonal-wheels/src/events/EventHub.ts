@@ -128,7 +128,7 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
         const key = event;
         const controller = this._issueSignal(key, callback);
         this._emitter.addEventListener(key, onEvent, { ...options, signal: controller.signal });
-        return () => this.off<ET, K>(event as EventTypeWithData<ET, K> & EventTypeWithoutData<ET, K>, callback);
+        return () => this.off<ET, K>(event, callback);
     }
 
     /**
@@ -196,7 +196,7 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
         const key = event;
         const controller = this._issueSignal(key, callback);
         this._emitter.addEventListener(key, onEvent, { ...options, signal: controller.signal });
-        return () => this.off<ET, K>(event as EventTypeWithData<ET, K> & EventTypeWithoutData<ET, K>, callback);
+        return () => this.off<ET, K>(event, callback);
     }
 
     /**

@@ -39,6 +39,8 @@ Follow [the UI automation guide](packages/obsidian-plugin-kit/docs/ui-automation
 
 Keep neutral interaction contracts, driver dispatch, and App-free harnesses in `packages/ui-interactions`. Keep Obsidian Modal, SuggestModal, MarkdownRenderer, Notice, and `App` integration in `packages/obsidian-plugin-kit`.
 
+Keep pure utilities and generic structural algorithms in `packages/octagonal-wheels`. Its history is connected as a non-squashed subtree; use `git subtree pull --prefix=packages/octagonal-wheels <octagonal-wheels-repository> main` when deliberately importing upstream changes.
+
 ## Changes and commits
 
 Keep changes focused and separate unrelated refactors or generated output where practical. Use short, imperative English commit subjects, and describe behavioural compatibility and test evidence in pull requests.

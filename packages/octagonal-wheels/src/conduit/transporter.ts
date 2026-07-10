@@ -100,7 +100,7 @@ export function _createTransporter<T extends any[], U>(
         if (error) {
             p.reject(error);
         } else {
-            p.resolve(result as U);
+            p.resolve(result);
         }
     };
 

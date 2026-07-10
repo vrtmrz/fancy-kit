@@ -64,5 +64,5 @@ export function Semaphore(limit: number): SemaphoreObject {
             }
         },
     };
-    return semaphore as SemaphoreObject;
+    return semaphore;
 }

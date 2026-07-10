@@ -214,7 +214,7 @@ function _reactive<T>({ expression, initialValue, isSource }: reactiveParams<T>)
         return r as T;
     }
 
-    return instance as ReactiveValue<T>;
+    return instance;
 }
 
 /**

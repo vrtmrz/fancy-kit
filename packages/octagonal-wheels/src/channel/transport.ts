@@ -1,6 +1,6 @@
 import { LSError } from "../common/error.ts";
 import { LOG_LEVEL_VERBOSE, Logger } from "../common/logger.ts";
-import { MessageTypes, type ResponseMessage, type RequestMessage, generateId } from "./common.ts";
+import { MessageTypes, type ResponseMessage, generateId } from "./common.ts";
 
 /**
  * Transport Interface for Channel Communication
@@ -68,7 +68,7 @@ export function queryViaTransport<T extends any[], U>(
                 commit(msg.error ? LSError.fromError(msg.error) : (msg.result as Awaited<U>));
             }
         });
-        transport.publish(channelName, { type: MessageTypes.REQUEST, id, args, subId: subId } as RequestMessage<T>);
+        transport.publish(channelName, { type: MessageTypes.REQUEST, id, args, subId: subId });
     });
 }
 

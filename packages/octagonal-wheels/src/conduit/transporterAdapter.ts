@@ -159,7 +159,7 @@ export class PostMessageBackbone<T> implements TransporterBackbone<T> {
     dispatchMessage(type: string, message: T): void {
         try {
             this._tx.postMessage(
-                { type, payload: message, key: transporterKey } as TransporterPostMessageEventData<T>,
+                { type, payload: message, key: transporterKey },
                 {
                     // targetOrigin: "*"
                 }

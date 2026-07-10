@@ -1,6 +1,5 @@
 //@ts-ignore
 import { default as xxhashNew } from "../patched_xxhash_wasm/xxhash-wasm.js";
-import type { XXHashAPI } from "xxhash-wasm-102";
 import { Logger, LOG_LEVEL_VERBOSE } from "../common/logger.ts";
 import { fallbackMixedHashEach } from "./purejs.ts";
 
@@ -12,7 +11,7 @@ let hashFunc: (input: string, seed?: number) => string = (str) => fallbackMixedH
 
 async function initHashFunc() {
     try {
-        const { h32ToString } = await (xxhashNew as unknown as () => Promise<XXHashAPI>)();
+        const { h32ToString } = await (xxhashNew)();
         hashFunc = h32ToString;
         Logger(`xxhash for plugin initialised`, LOG_LEVEL_VERBOSE);
     } catch (ex) {

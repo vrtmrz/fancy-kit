@@ -22,7 +22,7 @@ export async function* withConcurrency<T, U>(
     let serial = 0;
     const enqueue = (item: T) => {
         const idx = serial++;
-        const promise = (async () => [idx, (await callback(item)) as U] as [number, U])();
+        const promise = (async () => [idx, (await callback(item))] as [number, U])();
         processes.add(promise);
         mapTaskToPromise.set(idx, promise);
     };
