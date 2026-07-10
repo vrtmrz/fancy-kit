@@ -125,7 +125,7 @@ async function main(): Promise<void> {
         await page.waitForFunction(
           (pluginId) => {
             const obsidianApp = (window as unknown as ObsidianTestWindow).app;
-            const showcaseLoaded = obsidianApp.plugins?.plugins[pluginId] !== undefined;
+            const showcaseLoaded = obsidianApp?.plugins?.plugins[pluginId] !== undefined;
             return document.body.classList.contains("is-mobile") && showcaseLoaded;
           },
           SHOWCASE_PLUGIN_ID,

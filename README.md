@@ -8,6 +8,7 @@ Reusable, testable primitives for Obsidian plugins.
 ## Available modules
 
 - `@vrtmrz/obsidian-plugin-kit/dialog`: text and password prompts, typed selection, confirmation, and message dialogs.
+- `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
 - `@vrtmrz/obsidian-plugin-kit/ui`: an instance-scoped UI context for application code.
 - `@vrtmrz/obsidian-plugin-kit/testing`: a strict scripted driver for unit and integration tests.
@@ -37,6 +38,21 @@ const action = await confirmAction(this.app, {
 ```
 
 Dismissal resolves to `null`. An explicitly submitted empty string remains `""` and is not treated as cancellation. `pickOne` returns the selected item instance rather than a copy.
+
+## Keyed notices
+
+`KeyedNoticeManager` updates one visible Notice per application-defined key and restarts its expiry on every update. Dispose the manager during plug-in unload.
+
+```ts
+import { KeyedNoticeManager } from "@vrtmrz/obsidian-plugin-kit/notice";
+
+const notices = new KeyedNoticeManager();
+notices.show("sync", "Synchronising...");
+notices.show("sync", "Synchronisation complete", { durationMs: 1_000 });
+
+// In the owning plug-in's onunload():
+notices.dispose();
+```
 
 ## Progress
 

@@ -1,5 +1,6 @@
 import { ItemView, Plugin, Setting, type WorkspaceLeaf } from "obsidian";
 import {
+  KeyedNoticeManager,
   confirmAction,
   pickOne,
   promptPassword,
@@ -51,6 +52,11 @@ class ShowcaseView extends ItemView {
       ["Advance progress", "Advance the active progress story by one step.", "progress-step"],
       ["Cancel progress", "Cancel the active progress story.", "progress-cancel"],
     ]);
+    this.section(container, "Notices", [
+      ["Show keyed Notice", "Create a persistent Notice owned by an instance-scoped manager.", "notice-show"],
+      ["Update keyed Notice", "Update the same Notice and start its expiry.", "notice-update"],
+      ["Hide keyed Notice", "Hide and forget the keyed Notice explicitly.", "notice-hide"],
+    ]);
 
     const result = container.createDiv({ cls: "vpk-showcase__result" });
     result.dataset.testid = "showcase-last-result";
@@ -84,6 +90,7 @@ export default class ShowcasePlugin extends Plugin {
   };
 
   private activeProgress: ProgressNotice | undefined;
+  private readonly notices = new KeyedNoticeManager();
 
   override onload(): void {
     this.registerView(VIEW_TYPE, (leaf) => new ShowcaseView(leaf, this));
@@ -99,6 +106,9 @@ export default class ShowcasePlugin extends Plugin {
       "progress-start",
       "progress-step",
       "progress-cancel",
+      "notice-show",
+      "notice-update",
+      "notice-hide",
     ]) {
       this.addCommand({
         id: `story-${story}`,
@@ -110,6 +120,7 @@ export default class ShowcasePlugin extends Plugin {
 
   override onunload(): void {
     this.activeProgress?.hide();
+    this.notices.dispose();
   }
 
   async openShowcase(): Promise<void> {
@@ -198,6 +209,18 @@ export default class ShowcasePlugin extends Plugin {
           this.activeProgress?.progress.value ?? 0,
         );
         this.setResult("cancelled");
+        break;
+      case "notice-show":
+        this.notices.show("showcase-scan", "Scanning vault: 1", { durationMs: false });
+        this.setResult("notice-shown");
+        break;
+      case "notice-update":
+        this.notices.show("showcase-scan", "Scanning vault: 2", { durationMs: 750 });
+        this.setResult("notice-updated");
+        break;
+      case "notice-hide":
+        this.notices.hide("showcase-scan");
+        this.setResult("notice-hidden");
         break;
       default:
         throw new Error(`Unknown showcase story: ${story}`);

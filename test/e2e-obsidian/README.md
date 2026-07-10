@@ -18,11 +18,12 @@ Run the automated scenarios:
 npm run test:e2e:obsidian:smoke
 npm run test:e2e:obsidian:dialogs
 npm run test:e2e:obsidian:progress
+npm run test:e2e:obsidian:notices
 npm run test:e2e:obsidian:mobile
 npm run test:e2e:obsidian:local-suite
 ```
 
-The catalogue currently covers text and password prompts, typed selection, Markdown dialogs, and progress Notice lifecycle behaviour. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and showcase plugin to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
+The catalogue currently covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and showcase plugin to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
 
 ## Local prerequisites
 
