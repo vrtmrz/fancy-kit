@@ -11,7 +11,7 @@ This repository contains four independently versioned packages and one private O
 
 octagonal-wheels             (independent shared utilities)
 
-@vrtmrz/obsidian-e2e-runner  ──peer──> playwright
+@vrtmrz/obsidian-test-session  ──peer──> playwright
           ↑ dev-time
 consumer E2E suites and the private showcase
 ```
@@ -22,11 +22,11 @@ consumer E2E suites and the private showcase
 
 `octagonal-wheels` owns reusable utilities and structural algorithms that do not express Obsidian UI or LiveSync domain policy. It retains its existing package name, history, version, browser-compatible modules, and independent release lifecycle.
 
-`@vrtmrz/obsidian-e2e-runner` is Node-only development infrastructure. It owns local Obsidian binary discovery and preparation, isolated vault and profile state, process lifecycle, CLI bootstrap, and Playwright/CDP readiness. It does not belong in a plug-in runtime bundle.
+`@vrtmrz/obsidian-test-session` is Node-only development infrastructure. It owns local Obsidian binary discovery and preparation, isolated vault and profile state, process lifecycle, CLI bootstrap, and Playwright/CDP readiness. It does not belong in a plug-in runtime bundle.
 
 ## Consumer ownership
 
-Consumers own their settings, fixtures, databases, synchronisation workflows, showcase stories, and assertions. The E2E runner returns `cliEnv` and `remoteDebuggingPort` so a consumer can perform domain-specific CLI or renderer operations without adding those operations to the shared package.
+Consumers own their settings, fixtures, databases, synchronisation workflows, showcase stories, and assertions. The test session package returns `cliEnv` and `remoteDebuggingPort` so a consumer can perform domain-specific CLI or renderer operations without adding those operations to the shared package.
 
 LiveSync replication, database, storage, and platform-neutral service contracts remain in `livesync-commonlib`. Only reusable Obsidian adapters belong in the plug-in kit.
 
@@ -40,4 +40,4 @@ LiveSync replication, database, storage, and platform-neutral service contracts 
 
 ## Private workspace applications
 
-`apps/obsidian-showcase` is a visual catalogue and a real-Obsidian fixture. `test/e2e-obsidian` owns its stories and assertions while consuming the shared E2E runner. Neither directory is published.
+`apps/obsidian-showcase` is a visual catalogue and a real-Obsidian fixture. `test/e2e-obsidian` owns its stories and assertions while consuming the shared test session package. Neither directory is published.

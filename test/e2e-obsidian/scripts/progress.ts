@@ -1,4 +1,4 @@
-import { withObsidianPage } from "@vrtmrz/obsidian-e2e-runner";
+import { withObsidianPage } from "@vrtmrz/obsidian-test-session";
 import {
   executeShowcaseStory,
   startShowcaseTestSession,

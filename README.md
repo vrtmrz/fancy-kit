@@ -7,7 +7,7 @@ The scoped packages are currently at `0.0.0` and have not yet been published. Th
 ## Packages
 
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives.
-- [`@vrtmrz/obsidian-e2e-runner`](packages/obsidian-e2e-runner): local real-Obsidian session, bootstrap, and binary preparation infrastructure.
+- [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure.
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
 - [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, imported with its existing history.
 
@@ -60,10 +60,10 @@ npm run build
 # In a consumer repository with this repository checked out as a sibling:
 npm install ../obsidian-plugin-kit/packages/ui-interactions
 npm install ../obsidian-plugin-kit/packages/obsidian-plugin-kit
-npm install -D ../obsidian-plugin-kit/packages/obsidian-e2e-runner
+npm install -D ../obsidian-plugin-kit/packages/obsidian-test-session
 ```
 
-Install both runtime packages when consuming the plug-in kit so its unpublished `0.0.0` dependency on `@vrtmrz/ui-interactions` is satisfied locally. The E2E runner is a development dependency.
+Install both runtime packages when consuming the plug-in kit so its unpublished `0.0.0` dependency on `@vrtmrz/ui-interactions` is satisfied locally. The test session package is a development dependency.
 
 For another machine or CI, check out this repository at an explicit commit SHA, run `npm ci` and `npm run build`, then install the required package directories from that checkout. Alternatively, create package tarballs with `npm pack --workspace <package-name>` and install the resulting `.tgz` files. Do not commit machine-specific `file:` paths to a long-lived consumer branch unless every checkout deliberately uses the same repository layout.
 

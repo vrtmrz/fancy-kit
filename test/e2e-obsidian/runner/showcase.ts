@@ -7,7 +7,7 @@ import {
   withObsidianPage,
   type ObsidianPluginSession,
   type TemporaryVault,
-} from "@vrtmrz/obsidian-e2e-runner";
+} from "@vrtmrz/obsidian-test-session";
 
 export const SHOWCASE_PLUGIN_ID = "vpk-showcase";
 

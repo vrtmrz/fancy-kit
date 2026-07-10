@@ -2,7 +2,7 @@ import {
   installObsidianAppImage,
   obsidianAppImageArchitecture,
   type ObsidianAppImageArchitecture,
-} from "@vrtmrz/obsidian-e2e-runner";
+} from "@vrtmrz/obsidian-test-session";
 
 function requestedArchitecture(): ObsidianAppImageArchitecture {
   const requested = process.env.E2E_OBSIDIAN_APPIMAGE_ARCH?.trim();

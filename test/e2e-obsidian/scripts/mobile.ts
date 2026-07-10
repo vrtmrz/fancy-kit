@@ -2,7 +2,7 @@ import type { JSHandle, Locator, Page } from "playwright";
 import {
   waitForObsidianPageUiIdle,
   withObsidianPage,
-} from "@vrtmrz/obsidian-e2e-runner";
+} from "@vrtmrz/obsidian-test-session";
 import {
   startShowcaseTestSession,
   stopShowcaseTestSession,

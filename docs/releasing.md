@@ -11,7 +11,7 @@ npm exec --workspace octagonal-wheels -- playwright install chromium
 npm run verify:workspace
 ```
 
-Real Obsidian E2E is deliberately local-only. Run `npm run test:e2e:obsidian:local-suite` as an additional release check when a change affects Obsidian UI or the E2E runner.
+Real Obsidian E2E is deliberately local-only. Run `npm run test:e2e:obsidian:local-suite` as an additional release check when a change affects Obsidian UI or the test session package.
 
 Current real-Obsidian validation covers Linux only. Do not describe macOS or Windows as supported until the same smoke and lifecycle checks have been run successfully on those platforms.
 
@@ -23,7 +23,7 @@ Use a prerelease for the first consumer validation. Do not publish a `0.0.0` pac
 
 `@vrtmrz/ui-interactions` must be versioned and published before a plug-in-kit release that depends on it. Update `@vrtmrz/obsidian-plugin-kit` to the exact intended published UI package version and refresh the root lockfile before packing the kit.
 
-`@vrtmrz/obsidian-e2e-runner` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
+`@vrtmrz/obsidian-test-session` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
 
 ## Publishing one package
 
@@ -47,4 +47,4 @@ During migration, use one of these temporary flows:
 2. in CI, check out an explicit commit SHA, build it, and install package directories from that checkout;
 3. run `npm pack --workspace <package-name>` and install the generated tarball locally or from a controlled build artefact location.
 
-Install `@vrtmrz/ui-interactions` alongside `@vrtmrz/obsidian-plugin-kit` until both have published versions. Treat `@vrtmrz/obsidian-e2e-runner` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.
+Install `@vrtmrz/ui-interactions` alongside `@vrtmrz/obsidian-plugin-kit` until both have published versions. Treat `@vrtmrz/obsidian-test-session` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.

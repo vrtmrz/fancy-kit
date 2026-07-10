@@ -1,6 +1,6 @@
-# Obsidian E2E Runner
+# Obsidian Test Session
 
-`@vrtmrz/obsidian-e2e-runner` provides local, real-Obsidian E2E session infrastructure for plug-in consumers.
+`@vrtmrz/obsidian-test-session` provides local, real-Obsidian test session infrastructure for plug-in consumers.
 
 It creates isolated vault and application state, installs built plug-in artefacts, launches Obsidian, opens the vault through `obsidian-cli`, and uses Playwright over the active Electron renderer for plug-in bootstrap and UI readiness.
 
@@ -29,7 +29,7 @@ import {
   requireObsidianBinary,
   startObsidianPluginSession,
   type ObsidianPluginSession,
-} from "@vrtmrz/obsidian-e2e-runner";
+} from "@vrtmrz/obsidian-test-session";
 
 const vault = await createTemporaryVault({
   prefix: "example-plugin-e2e-",
@@ -69,10 +69,10 @@ Use the lower-level exports only when a consumer needs a different bootstrap seq
 
 ## Preparing a Linux AppImage
 
-Linux consumers can explicitly download and extract a supported Obsidian AppImage. The version defaults to the runner's currently tested release and should be pinned by a consumer that requires repeatability.
+Linux consumers can explicitly download and extract a supported Obsidian AppImage. The version defaults to the package's currently tested release and should be pinned by a consumer that requires repeatability.
 
 ```ts
-import { installObsidianAppImage } from "@vrtmrz/obsidian-e2e-runner";
+import { installObsidianAppImage } from "@vrtmrz/obsidian-test-session";
 
 const prepared = await installObsidianAppImage({ version: "1.12.7" });
 process.env.OBSIDIAN_BINARY = prepared.extractedBinary;
