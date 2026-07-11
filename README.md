@@ -2,7 +2,7 @@
 
 This private npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
-The scoped packages are currently at `0.0.0` and have not yet been published. The workspace root and showcase application are always private.
+The scoped packages are versioned at `0.1.0` for consumer validation and have not yet been published to npm. The workspace root and showcase application are always private.
 
 ## Packages
 
@@ -63,7 +63,7 @@ npm install ../fancy-kit/packages/obsidian-plugin-kit
 npm install -D ../fancy-kit/packages/obsidian-test-session
 ```
 
-Install both runtime packages when consuming the plug-in kit so its unpublished `0.0.0` dependency on `@vrtmrz/ui-interactions` is satisfied locally. The test session package is a development dependency.
+Install both runtime packages when consuming the plug-in kit so its unpublished exact dependency on `@vrtmrz/ui-interactions@0.1.0` is satisfied locally. The test session package is a development dependency.
 
 For another machine or CI, check out this repository at an explicit commit SHA, run `npm ci` and `npm run build`, then install the required package directories from that checkout. Alternatively, create package tarballs with `npm pack --workspace <package-name>` and install the resulting `.tgz` files. Do not commit machine-specific `file:` paths to a long-lived consumer branch unless every checkout deliberately uses the same repository layout.
 

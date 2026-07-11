@@ -11,7 +11,8 @@ Reusable, testable primitives for Obsidian plugins.
 - `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
 - `@vrtmrz/obsidian-plugin-kit/ui`: an Obsidian adapter for the neutral `UiInteractions` contract.
-- `@vrtmrz/obsidian-plugin-kit/testing`: framework-neutral scripted drivers and the App-free consumer harness, re-exported for convenience.
+- `@vrtmrz/obsidian-plugin-kit/vault`: a path-based text Vault capability and Obsidian adapter.
+- `@vrtmrz/obsidian-plugin-kit/testing`: framework-neutral scripted UI drivers plus App-free UI and Vault harnesses.
 
 ## Dialogs
 
@@ -30,6 +31,7 @@ const name = await promptText(this.app, {
 const target = await pickOne(this.app, {
   items: files,
   getText: (file) => file.path,
+  getDescription: (file) => `${file.stat.size} bytes`,
   placeholder: "Select a file",
 });
 
@@ -41,7 +43,7 @@ const action = await confirmAction(this.app, {
 });
 ```
 
-Dismissal resolves to `null`. An explicitly submitted empty string remains `""` and is not treated as cancellation. `pickOne` returns the selected item instance rather than a copy.
+Dismissal resolves to `null`. An explicitly submitted empty string remains `""` and is not treated as cancellation. `pickOne` returns the selected item instance rather than a copy. Its optional secondary description is visible but does not change fuzzy-search matching.
 
 ## Keyed notices
 
@@ -114,6 +116,36 @@ harness.assertDone();
 ```
 
 See [UI automation and scripted responses](docs/ui-automation.md) for driver behaviour and guidance on choosing between scripted and real UI tests.
+
+## Testable Vault workflows
+
+`createObsidianVaultTextAccess` keeps application workflows independent of `TFile` identity while delegating completed text reads and writes to one Obsidian Vault instance:
+
+```ts
+import { createObsidianVaultTextAccess } from "@vrtmrz/obsidian-plugin-kit/vault";
+
+const vault = createObsidianVaultTextAccess(this.app.vault);
+await vault.modifyText("Notes/example.md", "Updated");
+```
+
+App-free tests can supply an isolated in-memory implementation and inspect its operation transcript and final state:
+
+```ts
+import { createVaultTextTestHarness } from "@vrtmrz/obsidian-plugin-kit/testing";
+
+const harness = createVaultTextTestHarness({
+  files: { "Templates/note.md": "# {{title}}" },
+});
+
+await applyTemplate(harness.vault);
+
+expect(harness.transcript).toEqual([
+  { kind: "readText", path: "Templates/note.md" },
+  { kind: "modifyText", path: "Notes/new.md", content: "# New" },
+]);
+```
+
+The capability deliberately excludes deletion, rename, binary files, MetadataCache, and `TFile` lifecycle. Keep those operations consumer-owned until another focused contract has real consumers. Use real-Obsidian E2E for event timing, metadata propagation, and platform behaviour.
 
 ## Development
 

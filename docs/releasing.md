@@ -25,6 +25,27 @@ Use a prerelease for the first consumer validation. Do not publish a `0.0.0` pac
 
 `@vrtmrz/obsidian-test-session` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
 
+## GitHub consumer previews
+
+Consumer previews are immutable GitHub prereleases for migration testing. They are not npm publications and must not run `npm publish`.
+
+Build every tarball in one preview from the tagged commit. Attach only the explicitly selected workspace package tarballs and a `SHA256SUMS` file. Record the source commit, package list, validation performed, platform limits, and the consumer workflow that exercised the change in the release notes.
+
+The unpublished scoped packages use their next intended `0.x` versions in a consumer preview; do not create new `0.0.0` artefacts. The GitHub release remains a prerelease even when those package manifests use `0.1.0`. An `octagonal-wheels` preview must use the next intended version with a prerelease suffix, such as `0.1.47-preview.0`, so its package metadata cannot be confused with the published stable release. Validate the preview in at least one consumer before replacing the prerelease version with the corresponding stable version.
+
+Create the selected artefacts from the workspace root after the complete release gate. Always use a dedicated staging directory outside the repository so generated tarballs cannot be committed accidentally:
+
+```bash
+preview_dir=/tmp/fancy-kit-consumer-preview
+mkdir -p "$preview_dir"
+npm pack --workspace @vrtmrz/ui-interactions --pack-destination "$preview_dir"
+npm pack --workspace @vrtmrz/obsidian-plugin-kit --pack-destination "$preview_dir"
+npm pack --workspace @vrtmrz/obsidian-test-session --pack-destination "$preview_dir"
+npm pack --workspace octagonal-wheels --pack-destination "$preview_dir"
+```
+
+Inspect the tarball contents and package metadata, generate checksums, then create a GitHub prerelease whose tag points at the exact commit used to build them. Keep consumers on the previous preview unless they need the new contract; packages in one consumer should use one preview tag when practical.
+
 ## Publishing one package
 
 After reviewing the version, lockfile, changelog or release notes, checks, and dry-run tarball, publish from the workspace root:

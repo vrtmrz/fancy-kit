@@ -8,3 +8,4 @@ export * from "./dialog.js";
 export * from "./notice.js";
 export * from "./progress.js";
 export * from "./ui-context.js";
+export * from "./vault.js";

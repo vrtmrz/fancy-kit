@@ -24,6 +24,8 @@ export interface PickOneOptions<T> {
   items: readonly T[];
   /** Returns searchable and visible text for an item. */
   getText: (item: T) => string;
+  /** Returns optional secondary visible text for an item. It does not affect search matching. */
+  getDescription?: (item: T) => string | undefined;
   /** Text shown in the search input. Defaults to `"Select an item"`. */
   placeholder?: string;
 }

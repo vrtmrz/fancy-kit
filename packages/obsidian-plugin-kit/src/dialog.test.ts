@@ -7,7 +7,7 @@ interface FakeElement {
   children: FakeElement[];
   setText(value: string): void;
   empty(): void;
-  createDiv(): FakeElement;
+  createDiv(options?: { text?: string; cls?: string }): FakeElement;
 }
 
 interface FakeInput {
@@ -27,10 +27,12 @@ interface FakeButton {
 }
 
 interface FakeModal {
+  contentEl: FakeElement;
   close(): void;
   getItems?(): unknown[];
   getItemText?(item: unknown): string;
   onChooseItem?(item: unknown, event: KeyboardEvent): void;
+  renderSuggestion?(match: { item: unknown; match: unknown }, element: FakeElement): void;
 }
 
 interface FakeComponent {
@@ -61,8 +63,9 @@ vi.mock("obsidian", () => {
       this.children = [];
     }
 
-    createDiv(): ElementMock {
+    createDiv(options?: { text?: string; cls?: string }): ElementMock {
       const child = new ElementMock();
+      child.text = options?.text ?? "";
       this.children.push(child);
       return child;
     }
@@ -105,6 +108,11 @@ vi.mock("obsidian", () => {
     setPlaceholder(placeholder: string): this {
       this.placeholder = placeholder;
       return this;
+    }
+
+    renderSuggestion(match: { item: T }, element: FakeElement): void {
+      const modal = this as unknown as { getItemText(item: T): string };
+      element.createDiv({ text: modal.getItemText(match.item) });
     }
   }
 
@@ -350,6 +358,23 @@ describe("pickOne", () => {
     const result = pickOne(app, { items: [first], getText: (item) => item.name });
     last<FakeModal>(mockState.modals).close();
     await expect(result).resolves.toBeNull();
+  });
+
+  it("renders optional secondary item text", () => {
+    void pickOne(app, {
+      items: [first],
+      getText: (item) => item.name,
+      getDescription: (item) => `Items/${item.name}.md`,
+    });
+    const modal = last<FakeModal>(mockState.modals);
+
+    modal.renderSuggestion?.({ item: first, match: [] }, modal.contentEl);
+
+    expect(modal.getItemText?.(first)).toBe("First");
+    expect(modal.contentEl.children.map((child) => child.text)).toEqual([
+      "First",
+      "Items/First.md",
+    ]);
   });
 });
 

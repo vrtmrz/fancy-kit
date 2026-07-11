@@ -29,7 +29,7 @@
     "showcase:open": "npm run build:showcase && tsx test/e2e-obsidian/scripts/debug-ui.ts",
     "test": "npm run test --workspace @vrtmrz/obsidian-test-session && npm run test --workspace @vrtmrz/obsidian-plugin-kit && npm run test --workspace @vrtmrz/ui-interactions",
     "test:test-session": "npm run test --workspace @vrtmrz/obsidian-test-session",
-    "test:octagonal-wheels": "npm test --workspace octagonal-wheels",
+    "test:octagonal-wheels": "npm test --workspace octagonal-wheels -- --reporter=dot",
     "test:workspace": "npm test && npm run test:octagonal-wheels",
     "pack:workspace": "npm pack --dry-run --json --workspaces",
     "verify:workspace": "npm run check:workspace && npm run test:workspace && npm run build:workspace && npm run build:showcase && npm run pack:workspace",
