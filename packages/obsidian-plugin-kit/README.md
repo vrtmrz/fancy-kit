@@ -9,6 +9,8 @@ Reusable, testable primitives for Obsidian plugins.
 npm install @vrtmrz/obsidian-plugin-kit@next
 ```
 
+Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, and the boundary between direct Obsidian helpers and injected capabilities.
+
 ## Available modules
 
 - `@vrtmrz/obsidian-plugin-kit/dialog`: text and password prompts, typed selection, confirmation, and message dialogs.

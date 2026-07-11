@@ -41,3 +41,13 @@ LiveSync replication, database, storage, and platform-neutral service contracts 
 ## Private workspace applications
 
 `apps/obsidian-showcase` is a visual catalogue and a real-Obsidian fixture. `test/e2e-obsidian` owns its stories and assertions while consuming the shared test session package. Neither directory is published.
+
+## Planned API refinement
+
+The initial public contracts are intentionally small. The following refinements remain candidates and are not current API guarantees:
+
+- make the distinction between a concrete platform adapter and an optional interaction driver more explicit while preserving `UiInteractions` as the neutral application-workflow boundary;
+- consider narrower capability types for workflows that need only part of `UiInteractions`;
+- measure and improve tree-shaking for direct feature imports, including a packed-consumer bundle smoke test.
+
+Any refinement must preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and avoid moving cross-platform abstractions into the plug-in kit.

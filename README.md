@@ -6,7 +6,7 @@ The scoped packages use independent `0.x` versions. Initial release candidates a
 
 ## Packages
 
-- [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives.
+- [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives. See its [usage guide](packages/obsidian-plugin-kit/docs/usage-guide.md) for consumer integration.
 - [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure.
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
 - [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history.
