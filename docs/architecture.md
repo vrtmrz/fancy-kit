@@ -48,6 +48,7 @@ The initial public contracts are intentionally small. The following refinements 
 
 - make the distinction between a concrete platform adapter and an optional interaction driver more explicit while preserving `UiInteractions` as the neutral application-workflow boundary;
 - consider narrower capability types for workflows that need only part of `UiInteractions`;
+- improve scripted-step typing so response callbacks infer a request type from the declared interaction kind;
 - measure and improve tree-shaking for direct feature imports, including a packed-consumer bundle smoke test.
 
 Any refinement must preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and avoid moving cross-platform abstractions into the plug-in kit.

@@ -2,7 +2,7 @@
 
 11th July, 2026
 
-I have moved octagonal-wheels into the Fancy Kit monorepo while preserving its independent package and release history. This preview supports registry and consumer review before `0.1.48` becomes stable. Thank you as always!
+I have moved octagonal-wheels into the Fancy Kit monorepo while preserving its independent package and release history. This preview supports registry and consumer review before `0.1.48` becomes stable. It is good to have these wheels rolling from their new home.
 
 ### Added
 

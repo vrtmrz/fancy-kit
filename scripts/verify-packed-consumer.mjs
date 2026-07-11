@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -157,6 +157,10 @@ async function main() {
         )
         .join("\n")}\n`,
     );
+    await copyFile(
+      join(repositoryRoot, "test", "packed-consumer", "obsidian-plugin-kit-usage.ts"),
+      join(temporaryRoot, "obsidian-plugin-kit-usage.ts"),
+    );
     await writeFile(
       join(temporaryRoot, "tsconfig.json"),
       `${JSON.stringify(
@@ -171,7 +175,7 @@ async function main() {
             target: "ES2022",
             types: ["node"],
           },
-          files: ["public-exports.ts"],
+          files: ["public-exports.ts", "obsidian-plugin-kit-usage.ts"],
         },
         null,
         2,
@@ -192,7 +196,7 @@ async function main() {
     run(process.execPath, ["runtime-imports.mjs"], { cwd: temporaryRoot });
 
     console.log(
-      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, and ${runtimeSafeEntries.length} runtime-safe imports.`,
+      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit usage fixture, and ${runtimeSafeEntries.length} runtime-safe imports.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

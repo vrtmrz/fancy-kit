@@ -1,5 +1,7 @@
 # Releasing packages
 
+This is the developer and maintainer runbook for validating and publishing workspace packages. Repository-specific agent authority and stopping rules belong in `AGENTS.md`.
+
 The workspace root and showcase are private. Publish only an explicitly selected package under `packages/`, and keep package versions independent.
 
 ## Release gate

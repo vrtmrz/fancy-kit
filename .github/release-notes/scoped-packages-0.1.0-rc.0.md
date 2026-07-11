@@ -2,7 +2,7 @@
 
 10th July, 2026
 
-I have extracted and exercised these contracts across several real Obsidian plug-ins. This release candidate is intended for registry-based consumer validation before the first stable `0.1.0` releases. Thank you as always!
+I have extracted and exercised these contracts across several real Obsidian plug-ins. This release candidate is intended for registry-based consumer validation before the first stable `0.1.0` releases. I hope it makes the remaining review straightforward.
 
 ### UI interactions
 

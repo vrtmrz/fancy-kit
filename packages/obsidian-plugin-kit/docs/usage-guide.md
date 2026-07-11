@@ -184,10 +184,12 @@ harness.assertDone();
 A scripted value may be a function of the observed request:
 
 ```ts
+import type { UiInteractionRequest } from "@vrtmrz/obsidian-plugin-kit/ui";
+
 const harness = createUiTestHarness([
   {
     kind: "promptText",
-    value: (request) => {
+    value: (request: UiInteractionRequest) => {
       if (request.kind !== "promptText") throw new Error("Unexpected interaction");
       expect(request.options.title).toBe("Device name");
       return "observed-device";
