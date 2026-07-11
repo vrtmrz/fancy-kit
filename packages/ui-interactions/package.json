@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/ui-interactions",
-  "version": "0.1.0",
+  "version": "0.1.0-rc.0",
   "description": "Framework-neutral UI interaction contracts and test drivers",
   "type": "module",
   "license": "MIT",
@@ -37,6 +37,6 @@
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
-    "prepublishOnly": "npm run check && npm run test && npm run build"
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
   }
 }

@@ -1,5 +1,7 @@
 # Releasing packages
 
+This is the developer and maintainer runbook for validating and publishing workspace packages. Repository-specific agent authority and stopping rules belong in `AGENTS.md`.
+
 The workspace root and showcase are private. Publish only an explicitly selected package under `packages/`, and keep package versions independent.
 
 ## Release gate
@@ -31,7 +33,7 @@ Consumer previews are immutable GitHub prereleases for migration testing. They a
 
 Build every tarball in one preview from the tagged commit. Attach only the explicitly selected workspace package tarballs and a `SHA256SUMS` file. Record the source commit, package list, validation performed, platform limits, and the consumer workflow that exercised the change in the release notes.
 
-The unpublished scoped packages use their next intended `0.x` versions in a consumer preview; do not create new `0.0.0` artefacts. The GitHub release remains a prerelease even when those package manifests use `0.1.0`. An `octagonal-wheels` preview must use the next intended version with a prerelease suffix, such as `0.1.47-preview.0`, so its package metadata cannot be confused with the published stable release. Validate the preview in at least one consumer before replacing the prerelease version with the corresponding stable version.
+The unpublished scoped packages use their next intended `0.x` versions in a consumer preview; do not create new `0.0.0` artefacts. The GitHub release remains a prerelease even when those package manifests use `0.1.0`. An `octagonal-wheels` preview must use the next intended version with a prerelease suffix, such as `0.1.48-preview.0`, so its package metadata cannot be confused with the published stable release. Validate the preview in at least one consumer before staging the corresponding npm release.
 
 Create the selected artefacts from the workspace root after the complete release gate. Always use a dedicated staging directory outside the repository so generated tarballs cannot be committed accidentally:
 
@@ -46,17 +48,46 @@ npm pack --workspace octagonal-wheels --pack-destination "$preview_dir"
 
 Inspect the tarball contents and package metadata, generate checksums, then create a GitHub prerelease whose tag points at the exact commit used to build them. Keep consumers on the previous preview unless they need the new contract; packages in one consumer should use one preview tag when practical.
 
-## Publishing one package
+## Initial npm bootstrap
 
-After reviewing the version, lockfile, changelog or release notes, checks, and dry-run tarball, publish from the workspace root:
+An npm package must exist before npm Trusted Publishing or staged publishing can be configured. Bootstrap each new scoped package once from a reviewed release commit using an interactive npm session with 2FA. Do not put a temporary bypass token in GitHub Actions.
+
+Use an `-rc.0` version and the `next` dist-tag for this one-off publication:
 
 ```bash
-npm publish --workspace <package-name>
+FANCY_KIT_BOOTSTRAP_PUBLISH=1 npm publish --workspace <package-name> --tag next --access public
 ```
 
-The scoped package manifests already request public access. Confirm the npm account, organisation access, package name availability, and authentication immediately before publishing. Publishing is an explicit external action and is never part of the normal build or CI workflow.
+Publish `@vrtmrz/ui-interactions` before `@vrtmrz/obsidian-plugin-kit`, and update the kit to depend on that exact UI release candidate. `@vrtmrz/obsidian-test-session` is independent. Confirm the authenticated npm account, `@vrtmrz` scope ownership, public-package permission, package name, packed contents, and target commit immediately before each command.
 
-After publication, install the exact released version in one consumer, run its build and focused tests, and only then migrate additional consumers.
+The bootstrap release is deliberately a release candidate. Install its exact registry version in one consumer and run the consumer's build and focused tests before preparing a stable package version.
+
+The scoped packages' `prepublishOnly` guard rejects routine manual publication and requires the explicit bootstrap environment variable shown above. It is a procedural safeguard rather than an npm access control: package access settings, 2FA, and the trusted staged workflow remain the security boundary.
+
+## Trusted staged publishing
+
+After a bootstrap package exists, configure its npm Trusted Publisher for:
+
+- GitHub owner and repository: `vrtmrz/fancy-kit`;
+- workflow file: `publish-npm.yml`;
+- environment: `npm`;
+- allowed action: staged publishing only.
+
+Protect the GitHub `npm` environment with a required reviewer and restrict it to the protected `main` branch. Configure the npm package to require 2FA and disallow token publication. The workflow uses a GitHub-hosted runner, OIDC, and `npm stage publish`; it does not hold an npm token or publish directly.
+
+Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the intended dist-tag, the full commit SHA, and the confirmation value shown by the workflow. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
+
+Review the staged package on npm, download it when a final content comparison is useful, then approve it with 2FA. A prerelease version must use `next`. A stable version may remain on `next` for registry-based consumer validation before its dist-tag is promoted to `latest` interactively.
+
+Staged publishing requires npm 11.15.0 or later and Node.js 22.14.0 or later. Trusted publishing automatically records provenance for these public packages from this public repository. See the npm documentation for [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) and [staged publishing](https://docs.npmjs.com/staged-publishing/).
+
+After publication, install the exact released version in one consumer, run its build and focused tests, and only then migrate additional consumers or promote the stable version to `latest`.
+
+## octagonal-wheels releases
+
+`octagonal-wheels` is maintained in this monorepo while retaining its independent package version and release cadence. Its former standalone repository is a read-only signpost to Fancy Kit. Keep the package `repository.directory`, homepage, issue tracker, npm Trusted Publisher, and release workflow pointed at `packages/octagonal-wheels` here.
+
+The npm registry already contains `0.1.47`; the path and byte-view additions therefore use the `0.1.48` release line. The package already exists on npm, so it does not need the interactive bootstrap used for new scoped packages. Stage it through `publish-npm.yml`, review it on npm, and approve it with 2FA like subsequent scoped-package releases.
 
 ## Consumption before publication
 

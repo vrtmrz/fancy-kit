@@ -2,8 +2,14 @@
 
 Reusable, testable primitives for Obsidian plugins.
 
-> [!NOTE]
-> This package is under initial development and is not yet published.
+> [!IMPORTANT]
+> This package is in initial `0.x` development. Install the `next` release and pin its exact version while evaluating it.
+
+```bash
+npm install @vrtmrz/obsidian-plugin-kit@next
+```
+
+Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, and the boundary between direct Obsidian helpers and injected capabilities.
 
 ## Available modules
 

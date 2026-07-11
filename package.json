@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@11.18.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vrtmrz/fancy-kit.git"
@@ -24,7 +25,8 @@
     "check:e2e": "tsc -p test/e2e-obsidian/tsconfig.json",
     "check:all": "npm run check && npm run check:showcase && npm run check:e2e",
     "check:octagonal-wheels": "npm run check --workspace octagonal-wheels",
-    "check:workspace": "npm run check:all && npm run check:octagonal-wheels",
+    "check:release-tools": "node --test scripts/assert-bootstrap-publish.test.mjs scripts/validate-release-selection.test.mjs",
+    "check:workspace": "npm run check:all && npm run check:octagonal-wheels && npm run check:release-tools",
     "dev:showcase": "node apps/obsidian-showcase/esbuild.config.mjs",
     "showcase:open": "npm run build:showcase && tsx test/e2e-obsidian/scripts/debug-ui.ts",
     "test": "npm run test --workspace @vrtmrz/obsidian-test-session && npm run test --workspace @vrtmrz/obsidian-plugin-kit && npm run test --workspace @vrtmrz/ui-interactions",
@@ -32,7 +34,8 @@
     "test:octagonal-wheels": "npm test --workspace octagonal-wheels -- --reporter=dot",
     "test:workspace": "npm test && npm run test:octagonal-wheels",
     "pack:workspace": "npm pack --dry-run --json --workspaces",
-    "verify:workspace": "npm run check:workspace && npm run test:workspace && npm run build:workspace && npm run build:showcase && npm run pack:workspace",
+    "verify:packed-consumer": "node scripts/verify-packed-consumer.mjs",
+    "verify:workspace": "npm run check:workspace && npm run test:workspace && npm run build:workspace && npm run build:showcase && npm run pack:workspace && npm run verify:packed-consumer",
     "test:e2e:obsidian:install-appimage": "tsx test/e2e-obsidian/scripts/install-appimage.ts",
     "test:e2e:obsidian:smoke": "npm run build:showcase && tsx test/e2e-obsidian/scripts/smoke.ts",
     "test:e2e:obsidian:dialogs": "npm run build:showcase && tsx test/e2e-obsidian/scripts/dialogs.ts",

@@ -1,5 +1,7 @@
 # UI automation and scripted responses
 
+For the package-wide integration path, begin with the [usage guide](usage-guide.md). This document provides the detailed UI driver rules.
+
 ## Why an instance-scoped context
 
 Obsidian plugins often need to replace prompts and confirmations in automated tests. Storing reserved responses in modal class variables or module globals looks convenient, but makes the result dependent on test order and allows state to leak between parallel tests, plugins, app instances, and vaults.

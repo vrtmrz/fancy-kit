@@ -9,3 +9,9 @@
 - Preserve documented behavioural contracts when changing an existing API.
 - Keep scripted UI responses instance-scoped through an explicit `UiInteractions` capability and driver; never store them in static members or module globals.
 - Follow `test/e2e-obsidian/README.md` when changing visible Obsidian UI behaviour.
+
+## Release work and user gates
+
+- Treat `docs/releasing.md` as the developer and maintainer runbook. Keep agent-specific coordination, authority, and stopping rules here instead of adding them to that document.
+- Obtain explicit user permission for each push and merge. Also obtain explicit permission before publishing, staging, approving, or promoting an npm release; permission for one operation does not imply permission for the next.
+- When waiting for user review, state what needs review, where to review it, what response will allow work to continue, and which operations remain paused.
