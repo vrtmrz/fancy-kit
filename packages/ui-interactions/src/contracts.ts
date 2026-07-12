@@ -133,7 +133,7 @@ export interface HandledUiInteraction {
 /** Result returned by a {@link UiInteractionDriver}. */
 export type UiInteractionResponse = UiInteractionPassthrough | HandledUiInteraction;
 
-/** Instance-scoped adapter that can observe UI requests and optionally provide responses. */
+/** Instance-scoped driver that can observe UI requests and optionally provide responses. */
 export interface UiInteractionDriver {
   /** Handles or passes through one interaction request. */
   handle(request: UiInteractionRequest): UiInteractionResponse | Promise<UiInteractionResponse>;
