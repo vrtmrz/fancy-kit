@@ -79,9 +79,9 @@ Protect the GitHub `npm` environment with a required reviewer, and use a selecte
 
 After the trusted staged workflow has succeeded once, configure the npm package to require 2FA and disallow token publication. The workflow uses a GitHub-hosted runner, OIDC, and `npm stage publish`; it does not hold an npm token or publish directly.
 
-Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the intended dist-tag, the full commit SHA, and the confirmation value shown by the workflow. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
+Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the full commit SHA, and the confirmation value shown by the workflow. Every staged package uses the `next` dist-tag. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
 
-Review the staged package on npm, download it when a final content comparison is useful, then approve it with 2FA. A prerelease version must use `next`. A stable version may remain on `next` for registry-based consumer validation before its dist-tag is promoted to `latest` interactively.
+Review the staged package on npm, download it when a final content comparison is useful, then approve it with 2FA. Keep both prerelease and stable versions on `next` during registry-based consumer validation. After the stable version passes that validation, promote it separately and interactively with `npm dist-tag add <package>@<version> latest`. Treat promotion as its own release operation; it is not implied by permission to stage or approve the package.
 
 Staged publishing requires npm 11.15.0 or later and Node.js 22.14.0 or later. Trusted publishing automatically records provenance for these public packages from this public repository. See the npm documentation for [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) and [staged publishing](https://docs.npmjs.com/staged-publishing/).
 

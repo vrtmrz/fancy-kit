@@ -36,8 +36,20 @@ test("accepts octagonal-wheels from its monorepo package directory", () => {
   assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/octagonal-wheels");
 });
 
-test("rejects a prerelease sent to latest", () => {
-  assert.throws(() => validateReleaseSelection({ ...base, distTag: "latest" }), /next dist-tag/);
+test("rejects every staged release sent to latest", () => {
+  assert.throws(() => validateReleaseSelection({ ...base, distTag: "latest" }), /must use the next dist-tag/);
+  assert.throws(
+    () => validateReleaseSelection({
+      ...base,
+      expectedVersion: "0.1.0",
+      distTag: "latest",
+      confirmation: `stage @vrtmrz/ui-interactions@0.1.0 from ${sha}`,
+      manifest: { name: "@vrtmrz/ui-interactions", version: "0.1.0" },
+      lockEntry: { version: "0.1.0" },
+      uiManifest: { version: "0.1.0" },
+    }),
+    /must use the next dist-tag/,
+  );
 });
 
 test("rejects non-canonical or malformed release versions", () => {

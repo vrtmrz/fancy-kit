@@ -16,14 +16,6 @@ on:
         description: Exact version in the selected package manifest
         required: true
         type: string
-      dist_tag:
-        description: npm dist-tag assigned when the staged package is approved
-        required: true
-        default: next
-        type: choice
-        options:
-          - next
-          - latest
       expected_sha:
         description: Full 40-character commit SHA expected on main
         required: true
@@ -72,7 +64,7 @@ jobs:
         env:
           PACKAGE_NAME: ${{ inputs.package }}
           PACKAGE_VERSION: ${{ inputs.version }}
-          DIST_TAG: ${{ inputs.dist_tag }}
+          DIST_TAG: next
           EXPECTED_SHA: ${{ inputs.expected_sha }}
           CONFIRMATION: ${{ inputs.confirmation }}
         run: |
@@ -125,7 +117,7 @@ jobs:
 
       - name: Verify and stage the package
         env:
-          DIST_TAG: ${{ inputs.dist_tag }}
+          DIST_TAG: next
         run: |
           cd "$RUNNER_TEMP/npm-package"
           sha256sum --check SHA256SUMS
