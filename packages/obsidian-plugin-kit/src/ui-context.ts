@@ -24,6 +24,8 @@ export type {
   UiInteractionDriver,
   UiInteractionKind,
   UiInteractionRequest,
+  UiInteractionRequestOf,
+  UiInteractionResultOf,
   UiInteractionResponse,
   UiInteractions,
 } from "@vrtmrz/ui-interactions";

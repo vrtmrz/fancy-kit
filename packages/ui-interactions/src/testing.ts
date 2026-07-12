@@ -3,21 +3,57 @@ import type {
   UiInteractionDriver,
   UiInteractionKind,
   UiInteractionRequest,
+  UiInteractionRequestOf,
+  UiInteractionResultOf,
   UiInteractionResponse,
   UiInteractions,
 } from "./contracts.js";
 
-/** One expected interaction and its optional automated response. */
-export interface ScriptedUiStep {
+interface ScriptedUiStepBase<K extends UiInteractionKind> {
   /** Expected interaction kind. A different next request fails the test. */
-  kind: UiInteractionKind;
+  kind: K;
   /** Optional stable identifier that the request must match. */
   interactionId?: string;
-  /** Response value or function that derives one from the observed request. */
-  value?: unknown | ((request: UiInteractionRequest) => unknown | Promise<unknown>);
-  /** Whether to verify this step and then invoke platform UI. Defaults to `false`. */
-  passthrough?: boolean;
 }
+
+type ScriptedUiValue<K extends UiInteractionKind> =
+  | UiInteractionResultOf<K>
+  | ((
+      request: UiInteractionRequestOf<K>,
+    ) => UiInteractionResultOf<K> | Promise<UiInteractionResultOf<K>>);
+
+interface ScriptedUiPassthrough {
+  /** Verifies the request, then invokes platform UI. */
+  passthrough: true;
+  /** A passed-through step cannot also supply an automated result. */
+  value?: never;
+}
+
+interface ScriptedUiHandledStep<K extends UiInteractionKind> {
+  /** Handles the request without platform UI. Omit this property or set it to `false`. */
+  passthrough?: false;
+  /** Result value or function that derives one from the kind-specific observed request. */
+  value: ScriptedUiValue<K>;
+}
+
+interface ScriptedUiHandledMessageStep {
+  /** Handles the request without platform UI. Omit this property or set it to `false`. */
+  passthrough?: false;
+  /** Optional spy callback. An acknowledged message has no result value. */
+  value?: ScriptedUiValue<"showMessage">;
+}
+
+/**
+ * One expected interaction with a kind-specific automated result or explicit pass-through.
+ *
+ * @typeParam K - Interaction kind used to infer the callback request and accepted result.
+ */
+export type ScriptedUiStep<K extends UiInteractionKind = UiInteractionKind> =
+  K extends UiInteractionKind
+    ? ScriptedUiStepBase<K> &
+        (ScriptedUiPassthrough |
+          (K extends "showMessage" ? ScriptedUiHandledMessageStep : ScriptedUiHandledStep<K>))
+    : never;
 
 /** Configures scripted queue behaviour. */
 export interface ScriptedUiDriverOptions {
@@ -60,7 +96,10 @@ export class ScriptedUiDriver implements UiInteractionDriver {
       );
     }
     if (step.passthrough) return { handled: false };
-    const value = typeof step.value === "function" ? await step.value(request) : step.value;
+    const value =
+      typeof step.value === "function"
+        ? await (step.value as (request: UiInteractionRequest) => unknown | Promise<unknown>)(request)
+        : step.value;
     return { handled: true, value };
   }
 

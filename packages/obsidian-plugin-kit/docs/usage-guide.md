@@ -16,6 +16,7 @@ npm install --save-exact @vrtmrz/obsidian-plugin-kit
 | --- | --- |
 | Open one dialog from Obsidian-specific leaf code | Import a function from `@vrtmrz/obsidian-plugin-kit/dialog` |
 | Keep an application workflow independent of Obsidian UI classes | Accept `UiInteractions` and create it with `createObsidianUi` |
+| Limit a workflow to the interactions it uses | Define a local `Pick<UiInteractions, ...>` capability |
 | Test that workflow without Obsidian | Use `createUiTestHarness` |
 | Observe selected interactions while allowing others to open real UI | Pass an instance-scoped driver to `createObsidianUi` |
 | Read and write text through a focused, injectable Vault boundary | Accept `VaultTextAccess` and create it with `createObsidianVaultTextAccess` |
@@ -24,6 +25,27 @@ npm install --save-exact @vrtmrz/obsidian-plugin-kit
 | Display determinate or indeterminate progress | Use `ProgressFragment` or `showProgressNotice` |
 
 Direct dialog functions and `createObsidianUi` render the same Obsidian UI. The distinction is architectural: direct functions are convenient at an Obsidian-specific boundary, while `UiInteractions` allows a workflow to receive a neutral capability that a test can replace.
+
+## Keep workflow capabilities narrow
+
+`createObsidianUi` returns the complete `UiInteractions` adapter for a plug-in composition root. A workflow should accept only the methods it uses. Define that boundary locally with `Pick` and give it a name that reflects the consumer operation:
+
+```ts
+import type { UiInteractions } from "@vrtmrz/obsidian-plugin-kit/ui";
+
+type RestoreConfirmationUi = Pick<UiInteractions, "confirmAction">;
+
+async function confirmRestore(ui: RestoreConfirmationUi): Promise<boolean> {
+  const action = await ui.confirmAction({
+    title: "Restore confirmation",
+    message: "Restore the selected files?",
+    actions: ["restore", "cancel"] as const,
+  });
+  return action === "restore";
+}
+```
+
+The complete Obsidian adapter and the App-free harness both satisfy this structural type, while an unrelated service object does not need to implement prompts or selection. Keep these aliases in the consumer because names such as `RestoreConfirmationUi` express application policy rather than a reusable platform contract. Use the full `UiInteractions` type when code genuinely coordinates every interaction category or when it owns the adapter lifecycle.
 
 ## Compose capabilities at the plug-in boundary
 
@@ -41,8 +63,10 @@ import {
   type VaultTextAccess,
 } from "@vrtmrz/obsidian-plugin-kit/vault";
 
+type TemplateUi = Pick<UiInteractions, "promptText" | "showMessage">;
+
 interface WorkflowServices {
-  ui: UiInteractions;
+  ui: TemplateUi;
   vault: VaultTextAccess;
 }
 
@@ -136,12 +160,14 @@ Dismissal resolves to `null` for prompts, selection, and confirmation. An explic
 
 ### Injected interactions
 
-Application-flow code should accept `UiInteractions` rather than importing an Obsidian dialog directly:
+Application-flow code should accept a narrow `UiInteractions` capability rather than importing an Obsidian dialog directly:
 
 ```ts
 import type { UiInteractions } from "@vrtmrz/obsidian-plugin-kit/ui";
 
-export async function confirmRestore(ui: UiInteractions): Promise<boolean> {
+type RestoreConfirmationUi = Pick<UiInteractions, "confirmAction">;
+
+export async function confirmRestore(ui: RestoreConfirmationUi): Promise<boolean> {
   const action = await ui.confirmAction(
     {
       title: "Restore confirmation",
@@ -181,16 +207,13 @@ expect(harness.transcript[0]?.kind).toBe("confirmAction");
 harness.assertDone();
 ```
 
-A scripted value may be a function of the observed request:
+A scripted value may be a function of the observed request. Its request type is inferred from `kind`, and its return value is checked against that interaction's result:
 
 ```ts
-import type { UiInteractionRequest } from "@vrtmrz/obsidian-plugin-kit/ui";
-
 const harness = createUiTestHarness([
   {
     kind: "promptText",
-    value: (request: UiInteractionRequest) => {
-      if (request.kind !== "promptText") throw new Error("Unexpected interaction");
+    value: (request) => {
       expect(request.options.title).toBe("Device name");
       return "observed-device";
     },

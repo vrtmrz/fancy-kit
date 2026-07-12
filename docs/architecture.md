@@ -38,6 +38,8 @@ LiveSync replication, database, storage, and platform-neutral service contracts 
 - Preserve explicit `null` cancellation semantics when migrating a consumer.
 - Build and pack packages before relying on their declarations or export maps from another repository.
 - Preserve focused imports and `sideEffects: false`. Packed-consumer verification bundles the App-free testing entry and a root-level named Vault import to ensure unrelated Obsidian feature modules do not remain in consumer output.
+- Keep scripted steps discriminated by interaction kind so callbacks receive the matching request type and automated results are checked before runtime validation.
+- Keep the complete `UiInteractions` adapter at the consumer composition root. Workflows that use a subset should define a local, application-named `Pick<UiInteractions, ...>` capability rather than adding consumer policy groupings to this package.
 
 ## Private workspace applications
 
@@ -48,7 +50,5 @@ LiveSync replication, database, storage, and platform-neutral service contracts 
 The initial public contracts are intentionally small. The following refinements remain candidates and are not current API guarantees:
 
 - make the distinction between a concrete platform adapter and an optional interaction driver more explicit while preserving `UiInteractions` as the neutral application-workflow boundary;
-- consider narrower capability types for workflows that need only part of `UiInteractions`;
-- improve scripted-step typing so response callbacks infer a request type from the declared interaction kind;
 
 Any refinement must preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and avoid moving cross-platform abstractions into the plug-in kit.

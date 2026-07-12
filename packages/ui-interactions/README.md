@@ -31,4 +31,4 @@ harness.assertDone();
 
 Dismissed prompts, selections, and actions resolve to `null`. An explicitly submitted empty string remains `""`. Typed selection preserves the identity of the selected item.
 
-Scripted responses are FIFO and instance-scoped. Call `assertDone()` at the end of a test to detect expected interactions that did not occur. Production adapters should use `createDrivenUiInteractions` or extend `DrivenUiInteractions`; they must not expose scripted responses through settings or global state.
+Scripted responses are FIFO and instance-scoped. A step's `kind` determines the request type seen by a response callback and the accepted response value. Call `assertDone()` at the end of a test to detect expected interactions that did not occur. Production adapters should use `createDrivenUiInteractions` or extend `DrivenUiInteractions`; they must not expose scripted responses through settings or global state.

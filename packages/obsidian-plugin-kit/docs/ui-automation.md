@@ -61,6 +61,45 @@ harness.assertDone();
 
 This shape keeps Obsidian rendering in the adapter, application policy in the consumer workflow, and scripted state in the individual test harness.
 
+## Understanding `kind` and `interactionId`
+
+Each scripted step declares the technical interaction category in `kind`. The driver consumes steps in FIFO order and compares that category with the next request made by the workflow. For example, this script expects a text prompt followed by a confirmation:
+
+```ts
+const harness = createUiTestHarness([
+  { kind: "promptText", value: "device-a" },
+  { kind: "confirmAction", value: "save" },
+]);
+```
+
+If the workflow requests `confirmAction` first, the driver fails with `Expected UI interaction promptText, received confirmAction`. This verifies the interaction sequence as well as the returned values.
+
+The optional `interactionId` identifies the application-level purpose of a request. Use a stable identifier such as `device-name` or `restore-files`, independent of translated titles and labels:
+
+```ts
+const step = {
+  kind: "promptText",
+  interactionId: "device-name",
+  value: "laptop",
+} as const;
+```
+
+Here, `promptText` describes how the application interacts with a user, while `device-name` describes why that particular interaction exists. The identifier distinguishes multiple requests with the same kind and makes a mismatch easier to diagnose.
+
+`kind` also determines the callback request type and the statically accepted result:
+
+| `kind` | Automated result | Additional runtime validation |
+| --- | --- | --- |
+| `promptText` | `string \| null` | The result is a string or dismissal. |
+| `promptPassword` | `string \| null` | The result is a string or dismissal. |
+| `pickOne` | selected value or `null` | A non-null result is the identical instance from `options.items`. |
+| `confirmAction` | action string or `null` | A non-null result is present in `options.actions`. |
+| `showMessage` | no result | The result is `undefined`. |
+
+TypeScript can infer a request from its declared kind, but a scripted step is created before the workflow supplies the actual selection items or action literals. Identity for `pickOne` and membership for `confirmAction` therefore remain runtime checks. Runtime validation also protects JavaScript consumers and dynamically assembled scripts.
+
+A handled prompt, selection, or confirmation requires `value`. A message may omit it because acknowledgement has no result. A step with `passthrough: true` must omit `value`: it verifies and records the request, then delegates the response to the platform UI.
+
 ## Reserving responses
 
 ```ts
@@ -117,13 +156,15 @@ const driver = createScriptedUiDriver([
 ]);
 ```
 
-Automated values are validated by the neutral interaction dispatcher:
+The callback request is inferred from `kind`; in this example it is a `promptText` request, so `options` is available without a manual narrowing check. TypeScript also checks the callback result and direct `value` against that interaction kind. A passed-through step cannot provide a value, and handled prompts, selections, and confirmations require one.
+
+Automated values are also validated at runtime by the neutral interaction dispatcher:
 
 - prompt responses must be a string or `null`;
 - selection responses must be `null` or one of the supplied item instances;
 - confirmation responses must be `null` or one of the supplied actions.
 
-This prevents a scripted test from succeeding with a response the real UI could never produce.
+Runtime validation protects JavaScript consumers, dynamically assembled scripts, and other boundaries that may bypass static types. Together, the checks prevent a scripted test from succeeding with a response the real UI could never produce.
 
 ## Passthrough
 
