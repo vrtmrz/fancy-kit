@@ -51,11 +51,8 @@ export function memoWithMap<T extends any[], TResult>(
 
         // If buffer length is exceeded, remove the oldest entry (the first inserted)
         if (cache.size > bufferLength) {
-            // Get the oldest key using Map.keys().next().value
-            const oldestKey = cache.keys().next().value;
-            // The check 'if (oldestKey)' is technically not needed since cache.size > 0,
-            // but it's safe to keep.
-            if (oldestKey) cache.delete(oldestKey);
+            const oldest = cache.keys().next();
+            if (!oldest.done) cache.delete(oldest.value);
         }
 
         return newPromise;
