@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const releaseVersionPattern = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?$/;
 
+export function isReleaseVersion(version) {
+  return releaseVersionPattern.test(version);
+}
+
 export const publishablePackages = Object.freeze({
   "@vrtmrz/ui-interactions": "packages/ui-interactions",
   "@vrtmrz/obsidian-plugin-kit": "packages/obsidian-plugin-kit",
@@ -28,7 +32,7 @@ export function validateReleaseSelection({
 }) {
   const packageDirectory = publishablePackages[packageName];
   if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
-  if (!releaseVersionPattern.test(expectedVersion)) {
+  if (!isReleaseVersion(expectedVersion)) {
     throw new Error(`Invalid semantic version: ${expectedVersion}`);
   }
   if (!/^[0-9a-f]{40}$/.test(expectedSha)) throw new Error("Expected SHA must contain 40 lowercase hexadecimal characters");

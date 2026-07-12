@@ -21,11 +21,64 @@ Inspect the selected package's entry in the `pack:workspace` output. A scoped pa
 
 ## Version and dependency order
 
-Use a prerelease for the first consumer validation. Do not publish a `0.0.0` package.
+Use a prerelease when consumer validation requires a registry version before the stable release. A compatible patch may instead be validated from an immutable local or CI-built tarball before staging the stable version under `next`. Do not publish a `0.0.0` package.
 
 `@vrtmrz/ui-interactions` must be versioned and published before a plug-in-kit release that depends on it. Update `@vrtmrz/obsidian-plugin-kit` to the exact intended published UI package version and refresh the root lockfile before packing the kit.
 
 `@vrtmrz/obsidian-test-session` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
+
+Choose the version deliberately before preparing the release:
+
+- use a patch version for compatible fixes, internal maintenance, and compatible additions;
+- use the next minor version while the packages are in `0.x` when the public contract changes intentionally or consumers must review migration work;
+- add a prerelease suffix, such as `-rc.0`, when registry Consumer validation must precede the stable version.
+
+The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and a plug-in-kit UI dependency that does not match the workspace.
+
+## Preparing a release pull request
+
+Create a release branch from the current `main`, then run the root preparation script with the exact package name and intended version:
+
+```bash
+git switch main
+git pull --ff-only
+git switch -c release-<short-package-name>-<version>
+npm ci
+npm run release:prepare -- <package-name> <version>
+```
+
+`release:prepare` updates the selected package manifest and its workspace lockfile entry together, then runs that package's `build` script. It deliberately does not commit, push, stage, approve, publish, or promote anything.
+
+Review the resulting files before running the complete gate:
+
+```bash
+git status --short
+git diff --check
+npm run verify:workspace
+```
+
+The expected release preparation differs by package:
+
+| Package | Preparation and order | Tracked release output | Additional consumer validation |
+| --- | --- | --- | --- |
+| `@vrtmrz/ui-interactions` | Release before a plug-in-kit version that requires it. | Manifest and root lockfile. Compiled `dist` is ignored. | Exercise the changed contracts through a harness and at least one consuming plug-in. Run the local Obsidian suite when visible UI behaviour changes. |
+| `@vrtmrz/obsidian-plugin-kit` | Keep `@vrtmrz/ui-interactions` pinned to the exact intended published version. | Manifest and root lockfile. Compiled `dist` is ignored. | Build and test representative consuming plug-ins. Run the local Obsidian suite for adapter or visible UI changes. |
+| `@vrtmrz/obsidian-test-session` | Independent of the runtime packages. | Manifest and root lockfile. Compiled `dist` is ignored. | Run the local Obsidian lifecycle suite on each platform whose support is claimed. |
+| `octagonal-wheels` | Retains its independent version history. Release only when its public artefacts change. | Manifest, root lockfile, and any changed tracked files under `packages/octagonal-wheels/dist`. | Install the exact tarball in a relevant web application or plug-in. Use Self-hosted LiveSync when the changed API is consumed there. |
+
+When a new UI interactions version is required by the plug-in kit, prepare and publish UI interactions first. Update the plug-in-kit dependency to that exact published version, refresh the lockfile, and only then prepare the plug-in-kit version.
+
+Stage only the reviewed release files. For `octagonal-wheels`, use `git add -u` for already tracked build output because the general `dist` ignore rule remains in place:
+
+```bash
+git add package-lock.json packages/<package-directory>/package.json
+git add -u packages/octagonal-wheels/dist
+git commit -m "release: prepare <package-name> <version>"
+git push -u origin release-<short-package-name>-<version>
+gh pr create --draft --base main --title "Prepare <package-name> <version>"
+```
+
+Omit the `octagonal-wheels/dist` command for the scoped packages. The release pull request should state the version choice, package and consumer checks, tarball inspection, and any platform limits. Merge it before dispatching staged publishing; the workflow accepts exact commits on `main` only.
 
 ## GitHub consumer previews
 
@@ -81,6 +134,31 @@ After the trusted staged workflow has succeeded once, configure the npm package 
 
 Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the full commit SHA, and the confirmation value shown by the workflow. Every staged package uses the `next` dist-tag. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
 
+The equivalent GitHub CLI dispatch is:
+
+```bash
+sha=$(git rev-parse origin/main)
+gh workflow run publish-npm.yml \
+  --ref main \
+  -f package=<package-name> \
+  -f version=<version> \
+  -f expected_sha="$sha" \
+  -f confirmation="stage <package-name>@<version> from $sha"
+```
+
+After the protected GitHub environment has approved the stage job, inspect the staged entry with npm 11.15.0 or later:
+
+```bash
+npx --yes npm@11.18.0 stage list <package-name> --json
+npx --yes npm@11.18.0 stage view <stage-id> --json
+```
+
+Approve only the reviewed stage ID. Approval publishes the package under `next`; it does not promote `latest`:
+
+```bash
+npx --yes npm@11.18.0 stage approve <stage-id>
+```
+
 Review the staged package on npm, download it when a final content comparison is useful, then approve it with 2FA. Keep both prerelease and stable versions on `next` during registry-based consumer validation. After the stable version passes that validation, promote it separately and interactively with `npm dist-tag add <package>@<version> latest`. Treat promotion as its own release operation; it is not implied by permission to stage or approve the package.
 
 Staged publishing requires npm 11.15.0 or later and Node.js 22.14.0 or later. Trusted publishing automatically records provenance for these public packages from this public repository. See the npm documentation for [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) and [staged publishing](https://docs.npmjs.com/staged-publishing/).
@@ -92,6 +170,8 @@ After publication, install the exact released version in one consumer, run its b
 `octagonal-wheels` is maintained in this monorepo while retaining its independent package version and release cadence. Its former standalone repository is a read-only signpost to Fancy Kit. Keep the package `repository.directory`, homepage, issue tracker, npm Trusted Publisher, and release workflow pointed at `packages/octagonal-wheels` here.
 
 The package already exists on npm, so it does not need the interactive bootstrap used for a new package. Stage releases through `publish-npm.yml`, review them on npm, and approve them with 2FA like subsequent scoped-package releases.
+
+The old standalone build copied package metadata into `dist`. Fancy Kit publishes from `packages/octagonal-wheels` with an explicit `files` list, so that copy step is obsolete. The workspace build and `npm pack --workspace octagonal-wheels` are the authoritative build and package-content checks.
 
 ## Testing unpublished package changes
 
