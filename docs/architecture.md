@@ -28,7 +28,7 @@ consumer E2E suites and the private showcase
 
 Consumers own their settings, fixtures, databases, synchronisation workflows, showcase stories, and assertions. The test session package returns `cliEnv` and `remoteDebuggingPort` so a consumer can perform domain-specific CLI or renderer operations without adding those operations to the shared package.
 
-LiveSync replication, database, storage, and platform-neutral service contracts remain in `livesync-commonlib`. Only reusable Obsidian adapters belong in the plug-in kit.
+LiveSync replication, database, storage composition, and domain-specific service contracts remain in `livesync-commonlib`. Only reusable Obsidian adapters belong in the plug-in kit.
 
 ## Import rules
 
@@ -54,3 +54,16 @@ Keep the three UI roles distinct:
 - `UiInteractionDriver` is an optional, instance-scoped interceptor used to observe a request, provide a scripted response, or pass the request to the adapter.
 
 The driver is not a platform abstraction and does not select a runtime platform. A future platform implementation can satisfy `UiInteractions` without changing workflow code or extending the Obsidian plug-in kit. Preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and keep cross-platform behaviour outside the plug-in kit.
+
+## Rooted storage composition
+
+Fancy Kit does not yet expose a platform-neutral filesystem package. If repeated consumer pilots justify one, keep root acquisition separate from adapter creation:
+
+- the consumer selects and authorises a root, such as a CLI-configured directory, a granted File System Access API directory handle, an Obsidian Vault adapter, a desktop backup directory, or a logical remote key prefix;
+- the consumer passes that root once at its composition root;
+- an explicit platform factory returns an adapter whose operations accept root-relative paths; and
+- the adapter validates path containment without rediscovering, mutating, or requesting its root.
+
+This resembles `createObsidianUi` only in placing concrete construction at the composition root. A storage factory must also bind filesystem authority. It must not open a directory picker, parse command-line arguments, or select a platform automatically. Prefer separate factories such as `createNodeStorage({ rootPath })` and `createFileSystemAccessStorage({ rootHandle })` over a union-typed generic factory; names are illustrative until the neutral contract is designed.
+
+Before extraction, settle lexical and symbolic-link containment, missing and permission errors, metadata fidelity, destructive-operation semantics, and atomicity. Keep absolute paths used by legacy consumers outside the neutral contract. Until those decisions are proven by more than one consumer, LiveSync-specific filesystem composition remains in `livesync-commonlib`, and Obsidian-specific Vault access remains in `@vrtmrz/obsidian-plugin-kit`.
