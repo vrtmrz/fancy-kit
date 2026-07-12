@@ -45,10 +45,12 @@ LiveSync replication, database, storage, and platform-neutral service contracts 
 
 `apps/obsidian-showcase` is a visual catalogue and a real-Obsidian fixture. `test/e2e-obsidian` owns its stories and assertions while consuming the shared test session package. Neither directory is published.
 
-## Planned API refinement
+## UI composition roles
 
-The initial public contracts are intentionally small. The following refinements remain candidates and are not current API guarantees:
+Keep the three UI roles distinct:
 
-- make the distinction between a concrete platform adapter and an optional interaction driver more explicit while preserving `UiInteractions` as the neutral application-workflow boundary;
+- `UiInteractions` is the neutral capability accepted by an application workflow;
+- `createObsidianUi` creates the concrete Obsidian adapter at the consumer composition root; and
+- `UiInteractionDriver` is an optional, instance-scoped interceptor used to observe a request, provide a scripted response, or pass the request to the adapter.
 
-Any refinement must preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and avoid moving cross-platform abstractions into the plug-in kit.
+The driver is not a platform abstraction and does not select a runtime platform. A future platform implementation can satisfy `UiInteractions` without changing workflow code or extending the Obsidian plug-in kit. Preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and keep cross-platform behaviour outside the plug-in kit.
