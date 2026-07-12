@@ -126,14 +126,6 @@
             "import": "./dist/binary/index.js",
             "types": "./dist/binary/index.d.ts"
         },
-        "./binary/base64": {
-            "import": "./dist/binary/base64.js",
-            "types": "./dist/binary/base64.d.ts"
-        },
-        "./binary/base64.js": {
-            "import": "./dist/binary/base64.js",
-            "types": "./dist/binary/base64.d.ts"
-        },
         "./binary/arrayBuffer": {
             "import": "./dist/binary/arrayBuffer.js",
             "types": "./dist/binary/arrayBuffer.d.ts"
@@ -141,6 +133,14 @@
         "./binary/arrayBuffer.js": {
             "import": "./dist/binary/arrayBuffer.js",
             "types": "./dist/binary/arrayBuffer.d.ts"
+        },
+        "./binary/base64": {
+            "import": "./dist/binary/base64.js",
+            "types": "./dist/binary/base64.d.ts"
+        },
+        "./binary/base64.js": {
+            "import": "./dist/binary/base64.js",
+            "types": "./dist/binary/base64.d.ts"
         },
         "./binary/encodedUTF16": {
             "import": "./dist/binary/encodedUTF16.js",
@@ -205,6 +205,14 @@
         "./bureau/SlipBoard.js": {
             "import": "./dist/bureau/SlipBoard.js",
             "types": "./dist/bureau/SlipBoard.d.ts"
+        },
+        "./bureau/StreamInbox": {
+            "import": "./dist/bureau/StreamInbox.js",
+            "types": "./dist/bureau/StreamInbox.d.ts"
+        },
+        "./bureau/StreamInbox.js": {
+            "import": "./dist/bureau/StreamInbox.js",
+            "types": "./dist/bureau/StreamInbox.d.ts"
         },
         "./channel": {
             "import": "./dist/channel/index.js",
