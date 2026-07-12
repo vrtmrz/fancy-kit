@@ -115,7 +115,8 @@ export async function confirmRestore(ui: RestoreConfirmationUi): Promise<boolean
     },
     "restore-files",
   );
-  return action === "restore";
+  const typedAction: "restore" | "cancel" | null = action;
+  return typedAction === "restore";
 }
 
 export async function exerciseAppFreeUi(): Promise<void> {

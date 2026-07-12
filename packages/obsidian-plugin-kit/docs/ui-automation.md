@@ -61,6 +61,40 @@ harness.assertDone();
 
 This shape keeps Obsidian rendering in the adapter, application policy in the consumer workflow, and scripted state in the individual test harness.
 
+### Narrowing a domain operation
+
+`UiInteractions` deliberately describes reusable interaction mechanisms. When a workflow has a smaller domain contract, define that contract in the consumer and adapt the shared capability at its boundary. This gives a mock or spy the exact domain result type without adding application-specific actions to the kit:
+
+```ts
+import { vi } from "vitest";
+import type { UiInteractions } from "@vrtmrz/obsidian-plugin-kit/ui";
+
+type MaintenanceDecision = "apply" | "cancel" | null;
+
+interface MaintenancePrompts {
+  confirmPrerequisites(): Promise<MaintenanceDecision>;
+}
+
+function createMaintenancePrompts(
+  ui: Pick<UiInteractions, "confirmAction">,
+): MaintenancePrompts {
+  return {
+    confirmPrerequisites: () =>
+      ui.confirmAction({
+        title: "Maintenance prerequisites",
+        message: "Apply the required settings and continue?",
+        actions: ["apply", "cancel"] as const,
+        defaultAction: "cancel",
+      }),
+  };
+}
+
+const confirmPrerequisites = vi.fn<MaintenancePrompts["confirmPrerequisites"]>();
+confirmPrerequisites.mockResolvedValueOnce("apply");
+```
+
+The `confirmAction` call itself infers `"apply" | "cancel" | null` from its literal actions. The consumer-owned interface makes that policy explicit for collaborators and test doubles. Keep the generic harness for interaction sequencing and runtime membership checks; use a narrow domain contract when the business operation, rather than the UI mechanism, is what a unit test needs to spy on.
+
 ## Understanding `kind` and `interactionId`
 
 Each scripted step declares the technical interaction category in `kind`. The driver consumes steps in FIFO order and compares that category with the next request made by the workflow. For example, this script expects a text prompt followed by a confirmation:
