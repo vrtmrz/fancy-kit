@@ -2,10 +2,10 @@
 
 This guide describes how to use `@vrtmrz/obsidian-plugin-kit` in an Obsidian plug-in, how to keep application workflows testable, and when to use the direct helpers instead of an injected capability.
 
-The package is in initial `0.x` development. Install the `next` release and pin its exact version while evaluating it:
+The package is in initial `0.x` development. Install the stable release and pin its exact version when controlled upgrades are important:
 
 ```bash
-npm install --save-exact @vrtmrz/obsidian-plugin-kit@next
+npm install --save-exact @vrtmrz/obsidian-plugin-kit
 ```
 
 `obsidian` is a peer dependency. A normal Obsidian plug-in project should already provide it as a development dependency.

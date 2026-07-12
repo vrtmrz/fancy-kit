@@ -15,6 +15,14 @@ Mainly targeted to browsers, Electron Apps, and, Chrome Extensions.
 
 Please keep in mind that all things do not have a generic purpose.
 
+## Installation
+
+The package remains in `0.x` development. Pin an exact version when controlled upgrades are important:
+
+```bash
+npm install --save-exact octagonal-wheels
+```
+
 ## Documentation
 
 The source, issue tracker, and current documentation are maintained in the [Fancy Kit monorepo](https://github.com/vrtmrz/fancy-kit/tree/main/packages/octagonal-wheels).

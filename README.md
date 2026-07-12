@@ -1,8 +1,8 @@
 # Fancy Kit
 
-This private npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
+This npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
-The scoped packages use independent `0.x` versions. Initial release candidates are published under the npm `next` dist-tag while consumer validation continues. The workspace root and showcase application are always private.
+The packages use independent `0.x` versions. Stable releases are available from npm through the default `latest` dist-tag. The workspace root and showcase application are always private.
 
 ## Packages
 
@@ -47,36 +47,18 @@ npm run test:e2e:obsidian:install-appimage
 npm run test:e2e:obsidian:local-suite
 ```
 
-## Installing release candidates
+## Installation
 
-Install the scoped packages from the `next` dist-tag during the initial review period:
-
-```bash
-npm install @vrtmrz/ui-interactions@next
-npm install @vrtmrz/obsidian-plugin-kit@next
-npm install -D @vrtmrz/obsidian-test-session@next playwright @types/node
-```
-
-Pin an exact version in a long-lived consumer branch. The plug-in kit declares an exact dependency on the matching UI interactions release.
-
-## Consuming packages before registry publication
-
-Do not install this monorepo directly from a Git URL. npm installs the private workspace root from a Git dependency; it does not select an individual package under `packages/`, and the ignored build artefacts for the scoped packages are not present in the Git checkout.
-
-For local consumer migration, build this workspace and install the required package directories:
+Install only the packages that a project needs. Exact versions are recommended while the public APIs remain in initial `0.x` development:
 
 ```bash
-# In this repository:
-npm run build
-
-# In a consumer repository with this repository checked out as a sibling:
-npm install ../fancy-kit/packages/ui-interactions
-npm install ../fancy-kit/packages/obsidian-plugin-kit
-npm install -D ../fancy-kit/packages/obsidian-test-session
+npm install --save-exact @vrtmrz/ui-interactions
+npm install --save-exact @vrtmrz/obsidian-plugin-kit
+npm install --save-exact octagonal-wheels
+npm install -D --save-exact @vrtmrz/obsidian-test-session
+npm install -D playwright @types/node
 ```
 
-Install both runtime packages when consuming the plug-in kit so its unpublished exact dependency on `@vrtmrz/ui-interactions@0.1.0` is satisfied locally. The test session package is a development dependency.
-
-For another machine or CI, check out this repository at an explicit commit SHA, run `npm ci` and `npm run build`, then install the required package directories from that checkout. Alternatively, create package tarballs with `npm pack --workspace <package-name>` and install the resulting `.tgz` files. Do not commit machine-specific `file:` paths to a long-lived consumer branch unless every checkout deliberately uses the same repository layout.
+The plug-in kit installs its matching UI interactions dependency automatically. The test session package is development tooling and should not be bundled into an Obsidian plug-in.
 
 See [the package architecture](docs/architecture.md), [the release process](docs/releasing.md), and [CONTRIBUTING.md](CONTRIBUTING.md) for package boundaries, publishing order, API documentation, tests, and UI automation requirements.
