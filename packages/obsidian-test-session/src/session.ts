@@ -9,6 +9,7 @@ import {
   obsidianRemoteDebuggingPort,
   preseedTrustedVaultState,
   trustVaultIfPrompted,
+  waitForObsidianVault,
   waitForObsidianUiIdle,
   waitForPluginCatalogue,
   waitForPluginReady,
@@ -90,11 +91,30 @@ export async function startObsidianPluginSession(
 
   try {
     await preseedTrustedVaultState(remoteDebuggingPort, options.vault.id);
-    await openVaultWithObsidianCli(
-      options.cliBinary,
-      options.vault.path,
-      cliEnv,
-    );
+    try {
+      await openVaultWithObsidianCli(
+        options.cliBinary,
+        options.vault.path,
+        cliEnv,
+      );
+    } catch (cliError) {
+      try {
+        await waitForObsidianVault(
+          remoteDebuggingPort,
+          options.vault.path,
+          Number(baseEnv.E2E_OBSIDIAN_VAULT_TIMEOUT_MS ?? 10_000),
+        );
+      } catch (vaultError) {
+        throw new Error(
+          [
+            cliError instanceof Error ? cliError.message : String(cliError),
+            vaultError instanceof Error
+              ? vaultError.message
+              : String(vaultError),
+          ].join("\n"),
+        );
+      }
+    }
     await trustVaultIfPrompted(remoteDebuggingPort);
     await waitForPluginCatalogue(remoteDebuggingPort, options.pluginId);
     await enableAndReloadPlugin(remoteDebuggingPort, options.pluginId);

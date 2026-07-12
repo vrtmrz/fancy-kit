@@ -43,6 +43,7 @@ const defaultCliCandidatesByPlatform: Partial<
   darwin: [
     "/Applications/Obsidian.app/Contents/MacOS/obsidian-cli",
     "/Applications/Obsidian.app/Contents/Resources/obsidian-cli",
+    "/usr/local/bin/obsidian",
   ],
   linux: [
     "_testdata/obsidian/squashfs-root/obsidian-cli",

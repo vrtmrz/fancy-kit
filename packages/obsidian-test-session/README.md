@@ -24,7 +24,7 @@ npm install -D playwright @types/node
 
 Set `OBSIDIAN_BINARY` and `OBSIDIAN_CLI` when the executables are outside the built-in discovery paths. Importing the package has no side effects: downloading, extracting, and launching Obsidian require explicit function calls.
 
-The real-Obsidian session and E2E workflows are currently validated on Linux only. macOS and Windows executable discovery paths are implemented but have not been exercised by this project, so they should be treated as unverified rather than supported platforms until consumer smoke tests cover them.
+The real-Obsidian session and E2E workflows are validated on Linux and macOS. Windows executable discovery paths are implemented but have not been exercised by this project, so Windows should be treated as unverified rather than supported until consumer smoke tests cover it.
 
 ## Example
 
@@ -64,7 +64,7 @@ try {
 
 ## Session boundary
 
-The high-level session installs built plug-in artefacts, launches an isolated Obsidian process, pre-seeds vault trust, opens the vault through the CLI, enables and reloads the plug-in through CDP, and waits for readiness. It returns:
+The high-level session installs built plug-in artefacts, launches an isolated Obsidian process, pre-seeds vault trust, and asks the CLI to open the vault. When a platform CLI cannot connect to the isolated process, the session continues only after CDP confirms that the renderer opened the exact isolated vault path. It then enables and reloads the plug-in through CDP and waits for readiness. It returns:
 
 - `remoteDebuggingPort` for consumer-owned Playwright operations;
 - `cliEnv` for consumer-owned `obsidian-cli eval` or other CLI commands;
