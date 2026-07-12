@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/obsidian-test-session",
-  "version": "0.1.0-rc.0",
+  "version": "0.1.0",
   "description": "Isolated real-Obsidian test session infrastructure for plug-in consumers",
   "type": "module",
   "license": "MIT",
