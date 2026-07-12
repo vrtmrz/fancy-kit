@@ -54,7 +54,7 @@ export { BackedQueue_index as BackedQueue };
  * @returns The version of the library.
  */
 function libVersion() {
-    return "octagonal-wheels-0.1.48-preview.0";
+    return "octagonal-wheels-0.1.48";
 }
 
 export { libVersion };
