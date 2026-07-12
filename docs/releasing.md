@@ -60,6 +60,8 @@ FANCY_KIT_BOOTSTRAP_PUBLISH=1 npm publish --workspace <package-name> --tag next 
 
 Publish `@vrtmrz/ui-interactions` before `@vrtmrz/obsidian-plugin-kit`, and update the kit to depend on that exact UI release candidate. `@vrtmrz/obsidian-test-session` is independent. Confirm the authenticated npm account, `@vrtmrz` scope ownership, public-package permission, package name, packed contents, and target commit immediately before each command.
 
+npm requires every package to have a `latest` dist-tag. For a package's first publication, the bootstrap release therefore receives `latest` even when `--tag next` is supplied, and npm will reject an attempt to remove that sole `latest` tag. This is expected for the initial release candidate. Leave both tags in place, and replace `latest` with the first reviewed stable release later.
+
 The bootstrap release is deliberately a release candidate. Install its exact registry version in one consumer and run the consumer's build and focused tests before preparing a stable package version.
 
 The scoped packages' `prepublishOnly` guard rejects routine manual publication and requires the explicit bootstrap environment variable shown above. It is a procedural safeguard rather than an npm access control: package access settings, 2FA, and the trusted staged workflow remain the security boundary.
@@ -73,7 +75,9 @@ After a bootstrap package exists, configure its npm Trusted Publisher for:
 - environment: `npm`;
 - allowed action: staged publishing only.
 
-Protect the GitHub `npm` environment with a required reviewer and restrict it to the protected `main` branch. Configure the npm package to require 2FA and disallow token publication. The workflow uses a GitHub-hosted runner, OIDC, and `npm stage publish`; it does not hold an npm token or publish directly.
+Protect the GitHub `npm` environment with a required reviewer, and use a selected-branch policy that permits the `main` branch only. A 'protected branches only' environment policy permits every branch when the repository has no branch protection rules, so it is not a substitute for the explicit `main` policy.
+
+After the trusted staged workflow has succeeded once, configure the npm package to require 2FA and disallow token publication. The workflow uses a GitHub-hosted runner, OIDC, and `npm stage publish`; it does not hold an npm token or publish directly.
 
 Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the intended dist-tag, the full commit SHA, and the confirmation value shown by the workflow. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
 
