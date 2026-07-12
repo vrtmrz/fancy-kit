@@ -1,5 +1,10 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
+import type { ScriptedUiStep } from "./testing.js";
 import { createUiTestHarness } from "./testing.js";
+
+function unsafeStep(step: unknown): ScriptedUiStep {
+  return step as ScriptedUiStep;
+}
 
 describe("createUiTestHarness", () => {
   it("drives a typed application flow without an App or DOM", async () => {
@@ -43,6 +48,7 @@ describe("createUiTestHarness", () => {
         kind: "promptText",
         interactionId: "name",
         value: (request) => {
+          expectTypeOf(request.kind).toEqualTypeOf<"promptText">();
           expect(request.options.title).toBe("Device");
           return "observed";
         },
@@ -56,12 +62,14 @@ describe("createUiTestHarness", () => {
 
   it("rejects automated values that real UI could not return", async () => {
     const item = { id: 1 };
-    const invalidItem = createUiTestHarness([{ kind: "pickOne", value: { id: 1 } }]);
+    const invalidItem = createUiTestHarness([unsafeStep({ kind: "pickOne", value: { id: 1 } })]);
     await expect(
       invalidItem.ui.pickOne({ items: [item], getText: ({ id }) => String(id) }),
     ).rejects.toThrow("one of the supplied items");
 
-    const invalidAction = createUiTestHarness([{ kind: "confirmAction", value: "unknown" }]);
+    const invalidAction = createUiTestHarness([
+      unsafeStep({ kind: "confirmAction", value: "unknown" }),
+    ]);
     await expect(
       invalidAction.ui.confirmAction({
         title: "Confirm",
@@ -70,10 +78,12 @@ describe("createUiTestHarness", () => {
       }),
     ).rejects.toThrow("one of the supplied actions");
 
-    const invalidText = createUiTestHarness([{ kind: "promptText", value: undefined }]);
+    const invalidText = createUiTestHarness([unsafeStep({ kind: "promptText", value: undefined })]);
     await expect(invalidText.ui.promptText({ title: "Name" })).rejects.toThrow("string or null");
 
-    const invalidMessage = createUiTestHarness([{ kind: "showMessage", value: "acknowledged" }]);
+    const invalidMessage = createUiTestHarness([
+      unsafeStep({ kind: "showMessage", value: "acknowledged" }),
+    ]);
     await expect(
       invalidMessage.ui.showMessage({ title: "Done", message: "Finished" }),
     ).rejects.toThrow("no response value");

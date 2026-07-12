@@ -92,10 +92,29 @@ interface UiInteractionBase {
 
 /** Read-only description of one requested interaction. */
 export type UiInteractionRequest =
-  | (UiInteractionBase & { kind: "promptText" | "promptPassword"; options: Readonly<PromptTextOptions> })
+  | (UiInteractionBase & { kind: "promptText"; options: Readonly<PromptTextOptions> })
+  | (UiInteractionBase & { kind: "promptPassword"; options: Readonly<PromptTextOptions> })
   | (UiInteractionBase & { kind: "pickOne"; options: Readonly<PickOneOptions<unknown>> })
   | (UiInteractionBase & { kind: "confirmAction"; options: Readonly<ConfirmActionOptions<string>> })
   | (UiInteractionBase & { kind: "showMessage"; options: Readonly<ShowMessageOptions> });
+
+/** Request variant for one interaction kind. */
+export type UiInteractionRequestOf<K extends UiInteractionKind> = Extract<
+  UiInteractionRequest,
+  { kind: K }
+>;
+
+/** Automated result accepted for one interaction kind. */
+export type UiInteractionResultOf<K extends UiInteractionKind> = K extends
+  "promptText" | "promptPassword"
+  ? string | null
+  : K extends "pickOne"
+    ? unknown | null
+    : K extends "confirmAction"
+      ? string | null
+      : K extends "showMessage"
+        ? undefined
+        : never;
 
 /** Tells the interaction dispatcher to invoke its platform fallback. */
 export interface UiInteractionPassthrough {

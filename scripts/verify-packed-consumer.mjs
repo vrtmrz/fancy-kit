@@ -229,6 +229,10 @@ async function main() {
       join(repositoryRoot, "test", "packed-consumer", "obsidian-plugin-kit-usage.ts"),
       join(temporaryRoot, "obsidian-plugin-kit-usage.ts"),
     );
+    await copyFile(
+      join(repositoryRoot, "test", "packed-consumer", "scripted-step-types.ts"),
+      join(temporaryRoot, "scripted-step-types.ts"),
+    );
     await writeFile(
       join(temporaryRoot, "tsconfig.json"),
       `${JSON.stringify(
@@ -243,7 +247,11 @@ async function main() {
             target: "ES2022",
             types: ["node"],
           },
-          files: ["public-exports.ts", "obsidian-plugin-kit-usage.ts"],
+          files: [
+            "public-exports.ts",
+            "obsidian-plugin-kit-usage.ts",
+            "scripted-step-types.ts",
+          ],
         },
         null,
         2,
@@ -321,7 +329,7 @@ export const createVaultAccess = createObsidianVaultTextAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit usage fixture, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit usage and scripted-step type fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

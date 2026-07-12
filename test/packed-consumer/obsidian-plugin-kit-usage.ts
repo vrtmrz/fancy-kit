@@ -24,7 +24,6 @@ import {
 } from "@vrtmrz/obsidian-plugin-kit/testing";
 import {
   createObsidianUi,
-  type UiInteractionRequest,
   type UiInteractions,
 } from "@vrtmrz/obsidian-plugin-kit/ui";
 import {
@@ -32,8 +31,10 @@ import {
   type VaultTextAccess,
 } from "@vrtmrz/obsidian-plugin-kit/vault";
 
+type TemplateUi = Pick<UiInteractions, "promptText" | "showMessage">;
+
 interface WorkflowServices {
-  ui: UiInteractions;
+  ui: TemplateUi;
   vault: VaultTextAccess;
 }
 
@@ -101,7 +102,9 @@ export async function useDirectDialogs(app: App, files: readonly TFile[]): Promi
   });
 }
 
-export async function confirmRestore(ui: UiInteractions): Promise<boolean> {
+type RestoreConfirmationUi = Pick<UiInteractions, "confirmAction">;
+
+export async function confirmRestore(ui: RestoreConfirmationUi): Promise<boolean> {
   const action = await ui.confirmAction(
     {
       title: "Restore confirmation",
@@ -133,8 +136,7 @@ export async function exerciseAppFreeUi(): Promise<void> {
   const observed = createUiTestHarness([
     {
       kind: "promptText",
-      value: (request: UiInteractionRequest) => {
-        if (request.kind !== "promptText") throw new Error("Unexpected interaction");
+      value: (request) => {
         if (request.options.title !== "Device name") throw new Error("Unexpected title");
         return "observed-device";
       },
