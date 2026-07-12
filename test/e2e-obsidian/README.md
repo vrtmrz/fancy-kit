@@ -6,7 +6,7 @@ The shared `@vrtmrz/obsidian-test-session` package installs the showcase into a 
 
 This suite is local-only. It is intentionally not part of the default CI gate.
 
-The suite has currently been exercised only on Linux. The shared runner contains macOS and Windows executable discovery paths, but this showcase does not yet claim tested support for either platform.
+The suite has been exercised on Linux and macOS. The shared runner contains Windows executable discovery paths, but this showcase does not yet claim tested Windows support.
 
 ## Commands
 

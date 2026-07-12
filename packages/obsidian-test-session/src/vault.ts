@@ -141,8 +141,12 @@ async function writeObsidianVaultRegistry(
     null,
     4,
   );
-  for (const configRoot of [join(homePath, ".config"), xdgConfigPath]) {
-    const obsidianConfigDir = join(configRoot, "obsidian");
+  const obsidianConfigDirs = [
+    join(homePath, ".config", "obsidian"),
+    join(xdgConfigPath, "obsidian"),
+    join(homePath, "Library", "Application Support", "obsidian"),
+  ];
+  for (const obsidianConfigDir of obsidianConfigDirs) {
     await mkdir(obsidianConfigDir, { recursive: true });
     await writeFile(join(obsidianConfigDir, "obsidian.json"), registryText);
   }

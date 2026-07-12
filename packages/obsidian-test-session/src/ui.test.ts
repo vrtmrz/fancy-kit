@@ -2,6 +2,7 @@ import type { Page } from "playwright";
 import { describe, expect, it, vi } from "vitest";
 import {
   obsidianRemoteDebuggingPort,
+  waitForObsidianPageVault,
   waitForObsidianPageUiIdle,
 } from "./ui.js";
 
@@ -54,5 +55,18 @@ describe("waitForObsidianPageUiIdle", () => {
 
     expect(page.locator).toHaveBeenCalledWith(".progress-bar-container");
     expect(remove).toHaveBeenCalledOnce();
+  });
+});
+
+describe("waitForObsidianPageVault", () => {
+  it("requires the renderer vault path to match the isolated vault exactly", async () => {
+    const waitForFunction = vi.fn().mockResolvedValue(undefined);
+    const page = { waitForFunction } as unknown as Page;
+
+    await waitForObsidianPageVault(page, "/tmp/isolated-vault", 250);
+
+    expect(waitForFunction).toHaveBeenCalledOnce();
+    expect(waitForFunction.mock.calls[0]?.[1]).toBe("/tmp/isolated-vault");
+    expect(waitForFunction.mock.calls[0]?.[2]).toEqual({ timeout: 250 });
   });
 });

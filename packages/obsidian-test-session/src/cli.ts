@@ -1,4 +1,8 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { platform } from "node:process";
 
 /** The captured result of one `obsidian-cli` process. */
 export interface ObsidianCliResult {
@@ -18,6 +22,29 @@ function parseEvalJson(stdout: string): unknown {
   const text =
     markerIndex >= 0 ? stdout.slice(markerIndex + marker.length) : stdout;
   return JSON.parse(text.trim());
+}
+
+async function waitForObsidianCliSocket(
+  env: NodeJS.ProcessEnv,
+  timeoutMs = Number(
+    env.E2E_OBSIDIAN_CLI_READY_TIMEOUT_MS ??
+      process.env.E2E_OBSIDIAN_CLI_READY_TIMEOUT_MS ??
+      30_000,
+  ),
+): Promise<void> {
+  if (platform === "win32") return;
+  const homePath = env.HOME?.trim() || homedir();
+  const socketRoot =
+    platform !== "darwin" && env.XDG_RUNTIME_DIR?.trim()
+      ? env.XDG_RUNTIME_DIR
+      : homePath;
+  const socketPath = join(socketRoot, ".obsidian-cli.sock");
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (existsSync(socketPath)) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Timed out waiting for Obsidian CLI socket: ${socketPath}`);
 }
 
 /**
@@ -78,6 +105,7 @@ export async function openVaultWithObsidianCli(
   vaultPath: string,
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
+  await waitForObsidianCliSocket(env);
   const result = await runObsidianCli(
     cliBinary,
     [`obsidian://open?path=${encodeURIComponent(vaultPath)}`],

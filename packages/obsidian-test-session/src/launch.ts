@@ -84,12 +84,9 @@ function shouldUseXvfb(env: NodeJS.ProcessEnv): boolean {
 
 async function listChildPids(pid: number): Promise<number[]> {
   if (platform === "win32") return [];
-  const { stdout } = await execFileAsync("ps", [
-    "-o",
-    "pid=",
-    "--ppid",
-    String(pid),
-  ]).catch(() => ({ stdout: "" }));
+  const { stdout } = await execFileAsync("pgrep", ["-P", String(pid)]).catch(
+    () => ({ stdout: "" }),
+  );
   const directChildren = stdout
     .split("\n")
     .map((line) => Number(line.trim()))

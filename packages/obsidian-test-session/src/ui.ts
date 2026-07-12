@@ -96,6 +96,85 @@ export async function preseedTrustedVaultState(
 }
 
 /**
+ * Waits until one renderer has opened the expected filesystem vault.
+ *
+ * @param page - Active Obsidian renderer page.
+ * @param vaultPath - Exact filesystem path of the isolated vault.
+ * @param timeoutMs - Vault-open timeout in milliseconds.
+ */
+export async function waitForObsidianPageVault(
+  page: Page,
+  vaultPath: string,
+  timeoutMs = Number(process.env.E2E_OBSIDIAN_VAULT_TIMEOUT_MS ?? 30_000),
+): Promise<void> {
+  const readActivePath = () => {
+    return page.evaluate(() => {
+      const app = (
+        globalThis as typeof globalThis & {
+          app?: {
+            vault?: {
+              adapter?: {
+                basePath?: string;
+                getBasePath?: () => string;
+              };
+            };
+          };
+        }
+      ).app;
+      const adapter = app?.vault?.adapter;
+      return adapter?.getBasePath?.() ?? adapter?.basePath ?? null;
+    });
+  };
+  try {
+    await page.waitForFunction(
+      (expectedPath) => {
+        const app = (
+          globalThis as typeof globalThis & {
+            app?: {
+              vault?: {
+                adapter?: {
+                  basePath?: string;
+                  getBasePath?: () => string;
+                };
+              };
+            };
+          }
+        ).app;
+        const adapter = app?.vault?.adapter;
+        const activePath = adapter?.getBasePath?.() ?? adapter?.basePath;
+        return activePath === expectedPath;
+      },
+      vaultPath,
+      { timeout: timeoutMs },
+    );
+  } catch (error) {
+    const activePath = await readActivePath().catch(() => null);
+    throw new Error(
+      `Timed out waiting for isolated Obsidian vault. expected=${vaultPath}, active=${activePath ?? "(none)"}`,
+      { cause: error },
+    );
+  }
+}
+
+/**
+ * Waits until the active renderer has opened the expected filesystem vault.
+ *
+ * @param port - Electron remote-debugging port.
+ * @param vaultPath - Exact filesystem path of the isolated vault.
+ * @param timeoutMs - Vault-open timeout in milliseconds.
+ */
+export async function waitForObsidianVault(
+  port: number,
+  vaultPath: string,
+  timeoutMs?: number,
+): Promise<void> {
+  await withObsidianPage(
+    port,
+    async (page) => await waitForObsidianPageVault(page, vaultPath, timeoutMs),
+  );
+}
+
+/**
  * Accepts Obsidian's trust prompts until the workspace becomes visible.
  *
  * @param port - Electron remote-debugging port.
