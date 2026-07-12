@@ -3,6 +3,7 @@ import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { build } from "esbuild";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packageNames = [
@@ -68,6 +69,73 @@ function publicSpecifier(packageName, exportName) {
     throw new Error(`Unsupported export key ${exportName} in ${packageName}`);
   }
   return `${packageName}/${exportName.slice(2)}`;
+}
+
+function normaliseModulePath(path) {
+  return path.replaceAll("\\", "/");
+}
+
+function hasModule(contributors, moduleSuffix) {
+  const normalisedSuffix = normaliseModulePath(moduleSuffix);
+  return contributors.some((path) => path.endsWith(normalisedSuffix));
+}
+
+async function verifyTreeShakenBundle({
+  temporaryRoot,
+  entryName,
+  source,
+  requiredModules,
+  excludedModules,
+  externalImports,
+}) {
+  const entryPath = join(temporaryRoot, entryName);
+  await writeFile(entryPath, source);
+
+  const result = await build({
+    absWorkingDir: temporaryRoot,
+    entryPoints: [entryPath],
+    bundle: true,
+    external: ["obsidian"],
+    format: "esm",
+    logLevel: "silent",
+    metafile: true,
+    minify: true,
+    platform: "browser",
+    target: "es2022",
+    treeShaking: true,
+    write: false,
+  });
+  const outputs = Object.values(result.metafile.outputs);
+  if (outputs.length !== 1 || outputs[0] === undefined) {
+    throw new Error(`${entryName} produced ${outputs.length} bundle outputs; expected one`);
+  }
+
+  const output = outputs[0];
+  const contributors = Object.entries(output.inputs)
+    .filter(([, contribution]) => contribution.bytesInOutput > 0)
+    .map(([path]) => normaliseModulePath(path));
+
+  for (const moduleSuffix of requiredModules) {
+    if (!hasModule(contributors, moduleSuffix)) {
+      throw new Error(`${entryName} did not retain required module ${moduleSuffix}`);
+    }
+  }
+  for (const moduleSuffix of excludedModules) {
+    if (hasModule(contributors, moduleSuffix)) {
+      throw new Error(`${entryName} retained excluded module ${moduleSuffix}`);
+    }
+  }
+
+  const actualExternalImports = output.imports
+    .filter((item) => item.external)
+    .map((item) => item.path)
+    .sort();
+  const expectedExternalImports = [...externalImports].sort();
+  if (JSON.stringify(actualExternalImports) !== JSON.stringify(expectedExternalImports)) {
+    throw new Error(
+      `${entryName} external imports were ${JSON.stringify(actualExternalImports)}; expected ${JSON.stringify(expectedExternalImports)}`,
+    );
+  }
 }
 
 async function main() {
@@ -195,8 +263,65 @@ async function main() {
     );
     run(process.execPath, ["runtime-imports.mjs"], { cwd: temporaryRoot });
 
+    const obsidianFeatureModules = [
+      "node_modules/@vrtmrz/obsidian-plugin-kit/dist/dialog.js",
+      "node_modules/@vrtmrz/obsidian-plugin-kit/dist/notice.js",
+      "node_modules/@vrtmrz/obsidian-plugin-kit/dist/progress.js",
+      "node_modules/@vrtmrz/obsidian-plugin-kit/dist/ui-context.js",
+      "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault.js",
+    ];
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "app-free-testing.ts",
+      source: `import {
+  createUiTestHarness,
+  createVaultTextTestHarness,
+} from "@vrtmrz/obsidian-plugin-kit/testing";
+
+const ui = createUiTestHarness([
+  { kind: "promptText", value: "device" },
+]);
+await ui.ui.promptText({ title: "Device" });
+ui.assertDone();
+
+const vault = createVaultTextTestHarness();
+await vault.vault.createText("note.md", "text");
+console.log(vault.getFile("note.md"));
+`,
+      requiredModules: [
+        "node_modules/@vrtmrz/ui-interactions/dist/testing.js",
+        "node_modules/@vrtmrz/ui-interactions/dist/driven-ui.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault-testing.js",
+      ],
+      excludedModules: obsidianFeatureModules,
+      externalImports: [],
+    });
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "root-vault-import.ts",
+      source: `import { createObsidianVaultTextAccess } from "@vrtmrz/obsidian-plugin-kit";
+
+export const createVaultAccess = createObsidianVaultTextAccess;
+`,
+      requiredModules: [
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault-contracts.js",
+      ],
+      excludedModules: [
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/dialog.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/notice.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/progress.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/ui-context.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/testing.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault-testing.js",
+        "node_modules/@vrtmrz/ui-interactions/dist/contracts.js",
+      ],
+      externalImports: ["obsidian"],
+    });
+
     console.log(
-      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit usage fixture, and ${runtimeSafeEntries.length} runtime-safe imports.`,
+      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit usage fixture, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });
