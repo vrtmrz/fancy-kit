@@ -12,3 +12,4 @@
 - [inbox](inbox/README.md)
 - [pacemaker](pacemaker/README.md)
 - [slipboard](slipboard/README.md)
+- [streamInbox](streamInbox/README.md)
