@@ -27,6 +27,10 @@ npm run verify:workspace
 
 The gate checks and tests all four packages, builds all publishable artefacts and the showcase, and performs a dry-run pack of every workspace package. Changes confined to one package may use its workspace scripts during iteration, but the final validation should remain proportional to any affected dependants.
 
+Neutral packages own compile-time public API fixtures, reusable contract cases, App-free harnesses, operation-count assertions, and packed-consumer checks for the contracts they publish. Platform adapters and consumers own real filesystem, browser, Obsidian, permission, symbolic-link, and workflow integration coverage.
+
+Treat operation counts as ordinary unit or contract assertions when a spy can detect unnecessary scans, reads, writes, or platform calls deterministically. Add a benchmark only when a change can plausibly affect algorithmic cost, a hot path, allocation or copying, I/O amplification, concurrency, start-up, or behaviour at realistic data volumes. Keep benchmarks separate from functional gates, use fixed unit-sized data sets and warm-up where practical, and prefer comparison with a recorded baseline over brittle absolute wall-clock limits.
+
 The workspace root pins `@emnapi/core` and `@emnapi/runtime` because npm can otherwise resolve the optional `@napi-rs/wasm-runtime` peers differently when creating and consuming the lockfile. Validate dependency changes with a clean `npm ci` before removing those pins.
 
 When a local Obsidian executable and CLI are available, also run:
