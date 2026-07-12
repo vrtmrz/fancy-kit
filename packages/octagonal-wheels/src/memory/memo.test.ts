@@ -40,6 +40,18 @@ describe("memoWithMap", () => {
         expect(fn).toHaveBeenCalledTimes(4);
     });
 
+    it("Evicts an empty string when it is the least recently used key", async () => {
+        const fn = vi.fn(async (value: string) => value);
+        const memoed = memoWithMap(2, fn);
+
+        await memoed("");
+        await memoed("second");
+        await memoed("third");
+        await memoed("");
+
+        expect(fn).toHaveBeenCalledTimes(4);
+    });
+
     it("Removes the entry from the cache if the Promise is rejected", async () => {
         let count = 0;
         const fn = vi.fn(async (x: number) => {
