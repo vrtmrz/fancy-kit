@@ -5,10 +5,10 @@ Framework-neutral contracts for prompts, typed selection, Markdown actions, and 
 The package has no Obsidian or browser dependency. A platform adapter supplies real UI; tests can instead use the App-free harness.
 
 > [!IMPORTANT]
-> This package is in initial `0.x` development. Install the `next` release and pin its exact version while evaluating it.
+> This package is in initial `0.x` development. Pin an exact version when controlled upgrades are important.
 
 ```bash
-npm install @vrtmrz/ui-interactions@next
+npm install --save-exact @vrtmrz/ui-interactions
 ```
 
 ## Public entry points

@@ -91,16 +91,16 @@ After publication, install the exact released version in one consumer, run its b
 
 `octagonal-wheels` is maintained in this monorepo while retaining its independent package version and release cadence. Its former standalone repository is a read-only signpost to Fancy Kit. Keep the package `repository.directory`, homepage, issue tracker, npm Trusted Publisher, and release workflow pointed at `packages/octagonal-wheels` here.
 
-The npm registry already contains `0.1.47`; the path and byte-view additions therefore use the `0.1.48` release line. The package already exists on npm, so it does not need the interactive bootstrap used for new scoped packages. Stage it through `publish-npm.yml`, review it on npm, and approve it with 2FA like subsequent scoped-package releases.
+The package already exists on npm, so it does not need the interactive bootstrap used for a new package. Stage releases through `publish-npm.yml`, review them on npm, and approve them with 2FA like subsequent scoped-package releases.
 
-## Consumption before publication
+## Testing unpublished package changes
 
 An npm Git dependency targets this monorepo's private root package, not a selected workspace package. It also lacks the ignored scoped-package build output, so do not use the repository URL directly as an `npm install` specification.
 
-During migration, use one of these temporary flows:
+For consumer testing before a changed package version is published, use one of these temporary flows:
 
 1. build this repository and install the required `packages/<name>` directories through local `file:` dependencies;
 2. in CI, check out an explicit commit SHA, build it, and install package directories from that checkout;
 3. run `npm pack --workspace <package-name>` and install the generated tarball locally or from a controlled build artefact location.
 
-Install `@vrtmrz/ui-interactions` alongside `@vrtmrz/obsidian-plugin-kit` until both have published versions. Treat `@vrtmrz/obsidian-test-session` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.
+When an unpublished plug-in-kit change depends on an unpublished UI interactions change, install both package directories or tarballs from the same Fancy Kit commit. Treat `@vrtmrz/obsidian-test-session` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.
