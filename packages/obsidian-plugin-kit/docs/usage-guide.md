@@ -21,6 +21,8 @@ npm install --save-exact @vrtmrz/obsidian-plugin-kit
 | Observe selected interactions while allowing others to open real UI | Pass an instance-scoped driver to `createObsidianUi` |
 | Read and write text through a focused, injectable Vault boundary | Accept `VaultTextAccess` and create it with `createObsidianVaultTextAccess` |
 | Test a Vault text workflow without Obsidian | Use `createVaultTextTestHarness` |
+| Mutate an existing Markdown file's frontmatter without passing `TFile` | Accept `VaultFrontmatterAccess` and create it with `createObsidianVaultFrontmatterAccess` |
+| Test frontmatter policy without parsing or serialising YAML | Use `createVaultFrontmatterTestHarness` |
 | Update one persistent Notice by an application-defined key | Use `KeyedNoticeManager` |
 | Display determinate or indeterminate progress | Use `ProgressFragment` or `showProgressNotice` |
 
@@ -287,6 +289,60 @@ Use `onOperation` to inject a read or write failure. Missing reads, modifies, an
 
 This contract does not cover deletion, rename, binary files, folders, MetadataCache, events, or `TFile` lifecycle. Keep those behaviours in the consumer and test them in real Obsidian until a focused shared contract has proven consumers.
 
+## Vault frontmatter workflows
+
+`VaultFrontmatterAccess` updates an existing Markdown file through a synchronous in-place callback while keeping `TFile` and `FileManager` at the Obsidian composition boundary:
+
+```ts
+import {
+  createObsidianVaultFrontmatterAccess,
+  type VaultFrontmatterAccess,
+} from "@vrtmrz/obsidian-plugin-kit/vault";
+
+async function addTags(
+  vault: VaultFrontmatterAccess,
+  path: string,
+  tags: readonly string[],
+): Promise<void> {
+  await vault.updateFrontmatter(path, (frontmatter) => {
+    const existing = Array.isArray(frontmatter.tags)
+      ? frontmatter.tags.filter((value): value is string => typeof value === "string")
+      : [];
+    frontmatter.tags = [...new Set([...tags, ...existing])];
+  });
+}
+
+const frontmatter = createObsidianVaultFrontmatterAccess(this.app);
+await addTags(frontmatter, "Notes/example.md", ["project/client"]);
+```
+
+The updater must be synchronous. Returning a promise rejects with `VaultFrontmatterAsyncUpdaterError`. Missing or non-file paths reject with `VaultFrontmatterFileNotFoundError`, existing non-Markdown files reject with `VaultFrontmatterUnsupportedFileError`, and callback failures propagate unchanged.
+
+Use the transactional App-free harness to test mutation policy and failure handling:
+
+```ts
+import { createVaultFrontmatterTestHarness } from "@vrtmrz/obsidian-plugin-kit/testing";
+
+const harness = createVaultFrontmatterTestHarness({
+  files: { "Notes/example.md": { tags: ["existing"] } },
+});
+
+await addTags(harness.vault, "Notes/example.md", ["new"]);
+
+expect(harness.transcript).toEqual([
+  {
+    kind: "updateFrontmatter",
+    path: "Notes/example.md",
+    before: { tags: ["existing"] },
+    after: { tags: ["new", "existing"] },
+  },
+]);
+```
+
+The harness applies the updater to a private clone and commits only after successful synchronous completion. Its snapshots are isolated and deeply frozen; a failed or injected operation records `after: null` and leaves state unchanged.
+
+This capability delegates YAML parsing and serialisation to Obsidian. The harness treats path keys literally and does not emulate Obsidian path normalisation, YAML text, formatting, comments, anchors, aliases, MetadataCache timing, or Vault events. Cover those behaviours with focused real-Obsidian tests when they matter to the consumer.
+
 ## Keyed Notices
 
 `KeyedNoticeManager` owns at most one visible Notice per key. Reusing the key updates the existing Notice and restarts its expiry:
@@ -342,8 +398,14 @@ import { promptText } from "@vrtmrz/obsidian-plugin-kit/dialog";
 import { KeyedNoticeManager } from "@vrtmrz/obsidian-plugin-kit/notice";
 import { showProgressNotice } from "@vrtmrz/obsidian-plugin-kit/progress";
 import { createObsidianUi } from "@vrtmrz/obsidian-plugin-kit/ui";
-import { createObsidianVaultTextAccess } from "@vrtmrz/obsidian-plugin-kit/vault";
-import { createUiTestHarness } from "@vrtmrz/obsidian-plugin-kit/testing";
+import {
+  createObsidianVaultFrontmatterAccess,
+  createObsidianVaultTextAccess,
+} from "@vrtmrz/obsidian-plugin-kit/vault";
+import {
+  createUiTestHarness,
+  createVaultFrontmatterTestHarness,
+} from "@vrtmrz/obsidian-plugin-kit/testing";
 ```
 
 The root export exists for convenience, but focused imports make feature ownership and runtime dependencies clearer. Import only documented public entry points; do not import package `src` or `dist` internals.

@@ -17,8 +17,8 @@ Start with the [usage guide](docs/usage-guide.md) for integration choices, compl
 - `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
 - `@vrtmrz/obsidian-plugin-kit/ui`: an Obsidian adapter for the neutral `UiInteractions` contract.
-- `@vrtmrz/obsidian-plugin-kit/vault`: a path-based text Vault capability and Obsidian adapter.
-- `@vrtmrz/obsidian-plugin-kit/testing`: framework-neutral scripted UI drivers plus App-free UI and Vault harnesses.
+- `@vrtmrz/obsidian-plugin-kit/vault`: path-based text and frontmatter Vault capabilities with Obsidian adapters.
+- `@vrtmrz/obsidian-plugin-kit/testing`: framework-neutral scripted UI drivers plus App-free UI, Vault text, and frontmatter harnesses.
 
 ## Dialogs
 
@@ -152,6 +152,19 @@ expect(harness.transcript).toEqual([
 ```
 
 The capability deliberately excludes deletion, rename, binary files, MetadataCache, and `TFile` lifecycle. Keep those operations consumer-owned until another focused contract has real consumers. Use real-Obsidian E2E for event timing, metadata propagation, and platform behaviour.
+
+Frontmatter workflows can accept `VaultFrontmatterAccess` and remain independent of `TFile` identity:
+
+```ts
+import { createObsidianVaultFrontmatterAccess } from "@vrtmrz/obsidian-plugin-kit/vault";
+
+const frontmatter = createObsidianVaultFrontmatterAccess(this.app);
+await frontmatter.updateFrontmatter("Notes/example.md", (value) => {
+  value.reviewed = true;
+});
+```
+
+`createVaultFrontmatterTestHarness` provides transactional in-memory updates, before/after transcripts, stable missing and unsupported-file errors, failure injection, and rollback. It tests mutation policy rather than YAML serialisation; use real Obsidian when formatting, MetadataCache timing, or Vault events matter.
 
 ## Development
 

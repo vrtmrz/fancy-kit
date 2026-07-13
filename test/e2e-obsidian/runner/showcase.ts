@@ -16,6 +16,7 @@ export interface ShowcaseState {
   lastResult: unknown;
   progressState: string | null;
   progressValue: number;
+  frontmatterState: "updated" | "failed" | null;
 }
 
 export interface ShowcaseTestSession {

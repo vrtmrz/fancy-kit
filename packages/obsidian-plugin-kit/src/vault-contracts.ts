@@ -57,3 +57,79 @@ export class VaultTextFileExistsError extends Error {
     this.path = path;
   }
 }
+
+/** Mutable YAML frontmatter object supplied to a synchronous updater. */
+export type VaultFrontmatter = Record<string, unknown>;
+
+/** Synchronous in-place frontmatter mutation. */
+export type VaultFrontmatterUpdater = (frontmatter: VaultFrontmatter) => void;
+
+/** Path-based capability for updating an existing Markdown file's frontmatter. */
+export interface VaultFrontmatterAccess {
+  /**
+   * Updates frontmatter through one synchronous mutation callback.
+   * @param path - Vault-relative path of an existing Markdown file.
+   * @param updater - Synchronous callback that mutates the supplied object in place.
+   */
+  updateFrontmatter(path: string, updater: VaultFrontmatterUpdater): Promise<void>;
+}
+
+/** Error raised when a frontmatter update path does not resolve to a file. */
+export class VaultFrontmatterFileNotFoundError extends Error {
+  /** Normalised vault-relative path that did not resolve to a file. */
+  readonly path: string;
+
+  /** Creates a missing-frontmatter-file error. */
+  constructor(path: string) {
+    super(`Vault frontmatter file was not found: ${path}`);
+    this.name = "VaultFrontmatterFileNotFoundError";
+    this.path = path;
+  }
+}
+
+/** Error raised when frontmatter is requested for a non-Markdown file. */
+export class VaultFrontmatterUnsupportedFileError extends Error {
+  /** Normalised vault-relative path of the unsupported file. */
+  readonly path: string;
+
+  /** Creates an unsupported-frontmatter-file error. */
+  constructor(path: string) {
+    super(`Vault frontmatter requires a Markdown file: ${path}`);
+    this.name = "VaultFrontmatterUnsupportedFileError";
+    this.path = path;
+  }
+}
+
+/** Error raised when an updater returns a promise or another thenable. */
+export class VaultFrontmatterAsyncUpdaterError extends Error {
+  /** Vault-relative path whose updater was asynchronous. */
+  readonly path: string;
+
+  /** Creates an asynchronous-updater error. */
+  constructor(path: string) {
+    super(`Vault frontmatter updater must be synchronous: ${path}`);
+    this.name = "VaultFrontmatterAsyncUpdaterError";
+    this.path = path;
+  }
+}
+
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    (typeof value === "object" && value !== null) || typeof value === "function"
+  ) && "then" in value && typeof value.then === "function";
+}
+
+/** @internal Invokes an updater and rejects accidentally asynchronous callbacks. */
+export function invokeVaultFrontmatterUpdater(
+  path: string,
+  updater: VaultFrontmatterUpdater,
+  frontmatter: VaultFrontmatter,
+): void {
+  const result = updater(frontmatter);
+  if (!isThenable(result)) return;
+
+  // Observe a later rejection so reporting the contract error does not also
+  // create an unhandled rejection. Obsidian must not serialise this update.
+  void Promise.resolve(result).catch(() => undefined);
+  throw new VaultFrontmatterAsyncUpdaterError(path);
+}

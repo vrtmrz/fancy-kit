@@ -283,6 +283,7 @@ async function main() {
       entryName: "app-free-testing.ts",
       source: `import {
   createUiTestHarness,
+  createVaultFrontmatterTestHarness,
   createVaultTextTestHarness,
 } from "@vrtmrz/obsidian-plugin-kit/testing";
 
@@ -295,6 +296,14 @@ ui.assertDone();
 const vault = createVaultTextTestHarness();
 await vault.vault.createText("note.md", "text");
 console.log(vault.getFile("note.md"));
+
+const frontmatter = createVaultFrontmatterTestHarness({
+  files: { "note.md": { value: "before" } },
+});
+await frontmatter.vault.updateFrontmatter("note.md", (value) => {
+  value.value = "after";
+});
+console.log(frontmatter.getFrontmatter("note.md"));
 `,
       requiredModules: [
         "node_modules/@vrtmrz/ui-interactions/dist/testing.js",
@@ -308,9 +317,13 @@ console.log(vault.getFile("note.md"));
     await verifyTreeShakenBundle({
       temporaryRoot,
       entryName: "root-vault-import.ts",
-      source: `import { createObsidianVaultTextAccess } from "@vrtmrz/obsidian-plugin-kit";
+      source: `import {
+  createObsidianVaultFrontmatterAccess,
+  createObsidianVaultTextAccess,
+} from "@vrtmrz/obsidian-plugin-kit";
 
 export const createVaultAccess = createObsidianVaultTextAccess;
+export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
 `,
       requiredModules: [
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault.js",

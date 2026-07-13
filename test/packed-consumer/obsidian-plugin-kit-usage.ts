@@ -20,6 +20,7 @@ import {
 import {
   createScriptedUiDriver,
   createUiTestHarness,
+  createVaultFrontmatterTestHarness,
   createVaultTextTestHarness,
 } from "@vrtmrz/obsidian-plugin-kit/testing";
 import {
@@ -27,7 +28,9 @@ import {
   type UiInteractions,
 } from "@vrtmrz/obsidian-plugin-kit/ui";
 import {
+  createObsidianVaultFrontmatterAccess,
   createObsidianVaultTextAccess,
+  type VaultFrontmatterAccess,
   type VaultTextAccess,
 } from "@vrtmrz/obsidian-plugin-kit/vault";
 
@@ -36,12 +39,14 @@ type TemplateUi = Pick<UiInteractions, "promptText" | "showMessage">;
 interface WorkflowServices {
   ui: TemplateUi;
   vault: VaultTextAccess;
+  frontmatter: VaultFrontmatterAccess;
 }
 
 export function createServices(app: App): WorkflowServices {
   return {
     ui: createObsidianUi(app),
     vault: createObsidianVaultTextAccess(app.vault),
+    frontmatter: createObsidianVaultFrontmatterAccess(app),
   };
 }
 
@@ -163,6 +168,17 @@ export async function exerciseVaultHarness(): Promise<void> {
   const template = await harness.vault.readText("Templates/note.md");
   await harness.vault.createText("Notes/new.md", template.replace("{{title}}", "New"));
   if (harness.getFile("Notes/new.md") !== "# New") throw new Error("Unexpected content");
+
+  const frontmatter = createVaultFrontmatterTestHarness({
+    files: { "Notes/new.md": { tags: ["existing"] } },
+  });
+  await frontmatter.vault.updateFrontmatter("Notes/new.md", (value) => {
+    const tags = Array.isArray(value.tags) ? value.tags : [];
+    value.tags = ["new", ...tags];
+  });
+  if (frontmatter.transcript[0]?.after === null) {
+    throw new Error("Frontmatter update did not commit");
+  }
 }
 
 export function exerciseNoticesAndProgress(document: Document): void {

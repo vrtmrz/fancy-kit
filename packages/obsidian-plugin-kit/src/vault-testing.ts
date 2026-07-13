@@ -1,12 +1,23 @@
 import {
+  invokeVaultFrontmatterUpdater,
+  VaultFrontmatterFileNotFoundError,
+  VaultFrontmatterUnsupportedFileError,
   VaultTextFileExistsError,
   VaultTextFileNotFoundError,
+  type VaultFrontmatter,
+  type VaultFrontmatterAccess,
   type VaultTextAccess,
 } from "./vault-contracts.js";
 
 export {
+  VaultFrontmatterAsyncUpdaterError,
+  VaultFrontmatterFileNotFoundError,
+  VaultFrontmatterUnsupportedFileError,
   VaultTextFileExistsError,
   VaultTextFileNotFoundError,
+  type VaultFrontmatter,
+  type VaultFrontmatterAccess,
+  type VaultFrontmatterUpdater,
   type VaultTextAccess,
 } from "./vault-contracts.js";
 
@@ -133,5 +144,119 @@ export function createVaultTextTestHarness(
     transcript,
     getFile: (path) => files.get(path),
     snapshot: () => new Map(files),
+  };
+}
+
+/** One attempted frontmatter update recorded by the App-free harness. */
+export interface VaultFrontmatterUpdateOperation {
+  /** Operation discriminator. */
+  readonly kind: "updateFrontmatter";
+  /** Requested vault-relative path. */
+  readonly path: string;
+  /** Isolated frontmatter snapshot before the attempt, or `null` when missing. */
+  readonly before: Readonly<VaultFrontmatter> | null;
+  /** Isolated committed snapshot, or `null` when the attempt did not commit. */
+  readonly after: Readonly<VaultFrontmatter> | null;
+}
+
+interface MutableVaultFrontmatterUpdateOperation extends VaultFrontmatterUpdateOperation {
+  after: Readonly<VaultFrontmatter> | null;
+}
+
+/** Options for an instance-scoped Vault frontmatter test harness. */
+export interface VaultFrontmatterTestHarnessOptions {
+  /** Initial frontmatter objects keyed by vault-relative path. */
+  readonly files?:
+    | Readonly<Record<string, VaultFrontmatter>>
+    | ReadonlyMap<string, VaultFrontmatter>;
+  /** Optional hook invoked after recording and before applying an update. */
+  readonly onOperation?: (
+    operation: VaultFrontmatterUpdateOperation,
+  ) => void | Promise<void>;
+}
+
+/** App-free frontmatter capability, transcript, and observable in-memory state. */
+export interface VaultFrontmatterTestHarness {
+  /** Capability supplied to the application workflow under test. */
+  readonly vault: VaultFrontmatterAccess;
+  /** Attempted updates in call order. */
+  readonly transcript: readonly VaultFrontmatterUpdateOperation[];
+  /** Returns an isolated frontmatter snapshot, or `undefined` when missing. */
+  getFrontmatter(path: string): Readonly<VaultFrontmatter> | undefined;
+  /** Returns isolated snapshots of all current frontmatter objects. */
+  snapshot(): ReadonlyMap<string, Readonly<VaultFrontmatter>>;
+}
+
+function cloneFrontmatter(frontmatter: VaultFrontmatter): VaultFrontmatter {
+  return structuredClone(frontmatter);
+}
+
+function freezeValue(value: unknown): void {
+  if (typeof value !== "object" || value === null || Object.isFrozen(value)) return;
+  for (const child of Object.values(value)) freezeValue(child);
+  Object.freeze(value);
+}
+
+function frontmatterSnapshot(frontmatter: VaultFrontmatter): Readonly<VaultFrontmatter> {
+  const snapshot = cloneFrontmatter(frontmatter);
+  freezeValue(snapshot);
+  return snapshot;
+}
+
+function frontmatterEntries(
+  files: VaultFrontmatterTestHarnessOptions["files"],
+): readonly (readonly [string, VaultFrontmatter])[] {
+  if (files === undefined) return [];
+  return files instanceof Map ? [...files.entries()] : Object.entries(files);
+}
+
+/** Creates a transactional App-free frontmatter capability and spy transcript. */
+export function createVaultFrontmatterTestHarness(
+  options: VaultFrontmatterTestHarnessOptions = {},
+): VaultFrontmatterTestHarness {
+  const files = new Map(
+    frontmatterEntries(options.files).map(([path, frontmatter]) => [
+      path,
+      cloneFrontmatter(frontmatter),
+    ]),
+  );
+  const transcript: MutableVaultFrontmatterUpdateOperation[] = [];
+
+  const vault: VaultFrontmatterAccess = {
+    async updateFrontmatter(path, updater) {
+      const current = files.get(path);
+      const operation: MutableVaultFrontmatterUpdateOperation = {
+        kind: "updateFrontmatter",
+        path,
+        before: current === undefined ? null : frontmatterSnapshot(current),
+        after: null,
+      };
+      transcript.push(operation);
+      await options.onOperation?.(operation);
+
+      if (current === undefined) throw new VaultFrontmatterFileNotFoundError(path);
+      if (!path.toLowerCase().endsWith(".md")) {
+        throw new VaultFrontmatterUnsupportedFileError(path);
+      }
+
+      const updated = cloneFrontmatter(current);
+      invokeVaultFrontmatterUpdater(path, updater, updated);
+      files.set(path, updated);
+      operation.after = frontmatterSnapshot(updated);
+    },
+  };
+
+  return {
+    vault,
+    transcript,
+    getFrontmatter(path) {
+      const frontmatter = files.get(path);
+      return frontmatter === undefined ? undefined : frontmatterSnapshot(frontmatter);
+    },
+    snapshot() {
+      return new Map(
+        [...files].map(([path, frontmatter]) => [path, frontmatterSnapshot(frontmatter)]),
+      );
+    },
   };
 }
