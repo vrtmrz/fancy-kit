@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-const steps = ["smoke.ts", "dialogs.ts", "progress.ts", "notices.ts", "mobile.ts"];
+const steps = ["smoke.ts", "dialogs.ts", "progress.ts", "notices.ts", "frontmatter.ts", "mobile.ts"];
 
 function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {

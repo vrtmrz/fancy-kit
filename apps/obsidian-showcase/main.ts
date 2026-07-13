@@ -1,6 +1,8 @@
 import { ItemView, Plugin, Setting, type WorkspaceLeaf } from "obsidian";
 import {
   KeyedNoticeManager,
+  VaultFrontmatterAsyncUpdaterError,
+  createObsidianVaultFrontmatterAccess,
   confirmAction,
   pickOne,
   promptPassword,
@@ -8,6 +10,8 @@ import {
   showMessage,
   showProgressNotice,
   type ProgressNotice,
+  type VaultFrontmatter,
+  type VaultFrontmatterUpdater,
 } from "@vrtmrz/obsidian-plugin-kit";
 
 const VIEW_TYPE = "vpk-showcase-view";
@@ -82,11 +86,13 @@ export default class ShowcasePlugin extends Plugin {
     lastResult: ShowcaseResult;
     progressState: string | null;
     progressValue: number;
+    frontmatterState: "updated" | "failed" | null;
   } = {
     lastStory: null,
     lastResult: null,
     progressState: null,
     progressValue: 0,
+    frontmatterState: null,
   };
 
   private activeProgress: ProgressNotice | undefined;
@@ -96,6 +102,11 @@ export default class ShowcasePlugin extends Plugin {
     this.registerView(VIEW_TYPE, (leaf) => new ShowcaseView(leaf, this));
     this.addRibbonIcon("test-tube", "Open Plugin Kit Showcase", () => void this.openShowcase());
     this.addCommand({ id: "open", name: "Open showcase", callback: () => void this.openShowcase() });
+    this.addCommand({
+      id: "e2e-update-frontmatter",
+      name: "E2E: update frontmatter fixture",
+      callback: () => void this.updateFrontmatterFixture(),
+    });
 
     for (const story of [
       "prompt-text",
@@ -225,6 +236,46 @@ export default class ShowcasePlugin extends Plugin {
         break;
       default:
         throw new Error(`Unknown showcase story: ${story}`);
+    }
+  }
+
+  private async updateFrontmatterFixture(): Promise<void> {
+    this.e2e.frontmatterState = null;
+    try {
+      const frontmatter = createObsidianVaultFrontmatterAccess(this.app);
+      await frontmatter.updateFrontmatter("Frontmatter fixture.md", (value) => {
+        const tags = Array.isArray(value.tags)
+          ? value.tags.filter((tag): tag is string => typeof tag === "string")
+          : [];
+        value.tags = [...new Set(["new", ...tags])];
+        value.reviewed = true;
+      });
+
+      const callbackFailure = new Error("Expected frontmatter callback failure");
+      try {
+        await frontmatter.updateFrontmatter("Frontmatter fixture.md", (value) => {
+          value.failedCallbackWasWritten = true;
+          throw callbackFailure;
+        });
+        throw new Error("A failed frontmatter callback unexpectedly completed");
+      } catch (error) {
+        if (error !== callbackFailure) throw error;
+      }
+
+      const asyncUpdater = (async (value: VaultFrontmatter) => {
+        value.asyncCallbackWasWritten = true;
+      }) as unknown as VaultFrontmatterUpdater;
+      try {
+        await frontmatter.updateFrontmatter("Frontmatter fixture.md", asyncUpdater);
+        throw new Error("An asynchronous frontmatter callback unexpectedly completed");
+      } catch (error) {
+        if (!(error instanceof VaultFrontmatterAsyncUpdaterError)) throw error;
+      }
+
+      this.e2e.frontmatterState = "updated";
+    } catch (error) {
+      this.e2e.frontmatterState = "failed";
+      console.error(error);
     }
   }
 

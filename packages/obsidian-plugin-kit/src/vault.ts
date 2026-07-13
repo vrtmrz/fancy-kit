@@ -1,13 +1,24 @@
-import { normalizePath, TFile, type TAbstractFile, type Vault } from "obsidian";
+import { normalizePath, TFile, type App, type TAbstractFile, type Vault } from "obsidian";
 import {
+  invokeVaultFrontmatterUpdater,
+  VaultFrontmatterFileNotFoundError,
+  VaultFrontmatterUnsupportedFileError,
   VaultTextFileExistsError,
   VaultTextFileNotFoundError,
+  type VaultFrontmatterAccess,
+  type VaultFrontmatterUpdater,
   type VaultTextAccess,
 } from "./vault-contracts.js";
 
 export {
+  VaultFrontmatterAsyncUpdaterError,
+  VaultFrontmatterFileNotFoundError,
+  VaultFrontmatterUnsupportedFileError,
   VaultTextFileExistsError,
   VaultTextFileNotFoundError,
+  type VaultFrontmatter,
+  type VaultFrontmatterAccess,
+  type VaultFrontmatterUpdater,
   type VaultTextAccess,
 } from "./vault-contracts.js";
 
@@ -52,4 +63,43 @@ export class ObsidianVaultTextAccess implements VaultTextAccess {
 /** Creates an Obsidian adapter for path-based text Vault operations. */
 export function createObsidianVaultTextAccess(vault: Vault): VaultTextAccess {
   return new ObsidianVaultTextAccess(vault);
+}
+
+/** Obsidian services required by the frontmatter adapter factory. */
+export type ObsidianVaultFrontmatterHost = Pick<App, "vault" | "fileManager">;
+
+/** Obsidian-backed implementation of the path-based frontmatter capability. */
+export class ObsidianVaultFrontmatterAccess implements VaultFrontmatterAccess {
+  readonly #host: ObsidianVaultFrontmatterHost;
+
+  /** Creates an adapter owned by the supplied Vault and FileManager services. */
+  constructor(host: ObsidianVaultFrontmatterHost) {
+    this.#host = host;
+  }
+
+  async updateFrontmatter(path: string, updater: VaultFrontmatterUpdater): Promise<void> {
+    const normalisedPath = normalizePath(path);
+    const file = this.#host.vault.getAbstractFileByPath(normalisedPath);
+    if (!(file instanceof TFile)) {
+      throw new VaultFrontmatterFileNotFoundError(normalisedPath);
+    }
+    if (file.extension.toLowerCase() !== "md") {
+      throw new VaultFrontmatterUnsupportedFileError(normalisedPath);
+    }
+
+    await this.#host.fileManager.processFrontMatter(file, (frontmatter: unknown) => {
+      invokeVaultFrontmatterUpdater(
+        normalisedPath,
+        updater,
+        frontmatter as Record<string, unknown>,
+      );
+    });
+  }
+}
+
+/** Creates an Obsidian adapter for path-based frontmatter updates. */
+export function createObsidianVaultFrontmatterAccess(
+  host: ObsidianVaultFrontmatterHost,
+): VaultFrontmatterAccess {
+  return new ObsidianVaultFrontmatterAccess(host);
 }
