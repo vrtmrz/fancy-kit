@@ -206,7 +206,7 @@ const QUANTUM = 32768;
  */
 
 const te = new TextEncoder();
-const td = new TextDecoder();
+const td = new TextDecoder("utf-8", { ignoreBOM: true });
 
 export function writeString(string: string): Uint8Array<ArrayBuffer> {
     if (string.length > 128) {
@@ -253,6 +253,7 @@ export function writeString(string: string): Uint8Array<ArrayBuffer> {
  *
  * @param buffer - The Uint8Array buffer to convert.
  * @returns The converted string.
+ * @remarks Preserves a leading UTF-8 BOM as U+FEFF so that valid UTF-8 round-trips without dropping its first code point. Callers that treat a BOM as a document signature should remove it explicitly after decoding.
  */
 export function readString(buffer: Uint8Array): string {
     const length = buffer.length;

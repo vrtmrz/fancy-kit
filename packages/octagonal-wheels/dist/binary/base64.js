@@ -189,7 +189,7 @@ const QUANTUM = 32768;
  * todo: When Capacitor or Electron is upgraded, check and reappraise this.
  */
 const te = new TextEncoder();
-const td = new TextDecoder();
+const td = new TextDecoder("utf-8", { ignoreBOM: true });
 function writeString(string) {
     if (string.length > 128) {
         const buf = te.encode(string);
@@ -237,6 +237,7 @@ function writeString(string) {
  *
  * @param buffer - The Uint8Array buffer to convert.
  * @returns The converted string.
+ * @remarks Preserves a leading UTF-8 BOM as U+FEFF so that valid UTF-8 round-trips without dropping its first code point. Callers that treat a BOM as a document signature should remove it explicitly after decoding.
  */
 function readString(buffer) {
     const length = buffer.length;
