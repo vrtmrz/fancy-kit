@@ -200,6 +200,18 @@ describe("Base64", () => {
                     const result = readString(buffer);
                     expect(result).to.equal("あいう");
                 });
+
+                it("should preserve a leading BOM in large strings", () => {
+                    const input = "\uFEFF" + "A".repeat(129);
+                    const result = readString(writeString(input));
+                    expect(result).to.equal(input);
+                });
+
+                it("should preserve a BOM within large strings", () => {
+                    const input = "A".repeat(65) + "\uFEFF" + "B".repeat(65);
+                    const result = readString(writeString(input));
+                    expect(result).to.equal(input);
+                });
             });
             describe("base64ToString", () => {
                 it("should return the correct string when given a valid base64 string", () => {

@@ -71,6 +71,7 @@ export declare function writeString(string: string): Uint8Array<ArrayBuffer>;
  *
  * @param buffer - The Uint8Array buffer to convert.
  * @returns The converted string.
+ * @remarks Preserves a leading UTF-8 BOM as U+FEFF so that valid UTF-8 round-trips without dropping its first code point. Callers that treat a BOM as a document signature should remove it explicitly after decoding.
  */
 export declare function readString(buffer: Uint8Array): string;
 /**
