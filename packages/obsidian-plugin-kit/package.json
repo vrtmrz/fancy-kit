@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/obsidian-plugin-kit",
-  "version": "0.1.1-rc.0",
+  "version": "0.1.1",
   "description": "Reusable, testable primitives for Obsidian plugins",
   "type": "module",
   "license": "MIT",
