@@ -22,8 +22,7 @@ export async function prepareHarnessRelease({
   outputDirectory = resolve(repositoryRoot, "dist/fancy-kit-harness"),
   sourceCommit = gitText(repositoryRoot, ["rev-parse", "HEAD"]),
   sourceDirty =
-    gitText(repositoryRoot, ["status", "--porcelain", "--untracked-files=no"])
-      .length > 0,
+    gitText(repositoryRoot, ["status", "--porcelain"]).length > 0,
 } = {}) {
   const appDirectory = resolve(repositoryRoot, "apps/obsidian-harness");
   const manifest = await readJson(resolve(appDirectory, "manifest.json"));
