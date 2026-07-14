@@ -45,6 +45,8 @@ export interface StartObsidianPluginSessionOptions {
   pluginId: string;
   /** Directory containing built plug-in artefacts. */
   artifactRoot: string;
+  /** Optional plug-in data written before the plug-in is loaded. */
+  pluginData?: unknown;
   /** Optional process environment overrides. */
   env?: NodeJS.ProcessEnv;
   /** Time that Obsidian must remain alive before launch succeeds. */
@@ -65,6 +67,7 @@ export async function startObsidianPluginSession(
   const install = await installBuiltPlugin(options.vault.path, {
     pluginId: options.pluginId,
     artifactRoot: options.artifactRoot,
+    pluginData: options.pluginData,
   });
   const baseEnv = { ...process.env, ...options.env };
   const remoteDebuggingPort = obsidianRemoteDebuggingPort(baseEnv);

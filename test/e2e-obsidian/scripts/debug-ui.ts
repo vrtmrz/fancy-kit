@@ -1,13 +1,13 @@
 import { withObsidianPage } from "@vrtmrz/obsidian-test-session";
 import {
-  executeShowcaseCommand,
-  startShowcaseTestSession,
-  stopShowcaseTestSession,
-  type ShowcaseTestSession,
-} from "../runner/showcase.ts";
+  executeHarnessCommand,
+  startHarnessTestSession,
+  stopHarnessTestSession,
+  type HarnessTestSession,
+} from "../runner/harness.ts";
 
 async function waitUntilClosed(
-  testSession: ShowcaseTestSession,
+  testSession: HarnessTestSession,
 ): Promise<void> {
   await new Promise<void>((resolve) => {
     const done = () => resolve();
@@ -18,25 +18,25 @@ async function waitUntilClosed(
 }
 
 async function main(): Promise<void> {
-  let testSession: ShowcaseTestSession | undefined;
+  let testSession: HarnessTestSession | undefined;
   try {
-    testSession = await startShowcaseTestSession();
-    await executeShowcaseCommand(testSession.session, "open");
+    testSession = await startHarnessTestSession();
+    await executeHarnessCommand(testSession.session, "open");
     await withObsidianPage(
       testSession.session.remoteDebuggingPort,
       async (page) => {
         await page
-          .getByRole("heading", { name: "Obsidian Plugin Kit" })
+          .getByRole("heading", { name: "Fancy Kit Harness" })
           .waitFor({ timeout: 10_000 });
       },
     );
     console.log(
-      `Showcase opened in temporary vault: ${testSession.vault.path}`,
+      `Harness opened in temporary vault: ${testSession.vault.path}`,
     );
     console.log("Close Obsidian or press Ctrl+C to stop.");
     await waitUntilClosed(testSession);
   } finally {
-    if (testSession !== undefined) await stopShowcaseTestSession(testSession);
+    if (testSession !== undefined) await stopHarnessTestSession(testSession);
   }
 }
 

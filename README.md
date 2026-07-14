@@ -2,7 +2,7 @@
 
 This npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
-The packages use independent `0.x` versions. Stable releases are available from npm through the default `latest` dist-tag. The workspace root and showcase application are always private.
+The packages use independent `0.x` versions. Stable releases are available from npm through the default `latest` dist-tag. The workspace root and harness application are never published to npm.
 
 ## Packages
 
@@ -11,19 +11,19 @@ The packages use independent `0.x` versions. Stable releases are available from 
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
 - [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history.
 
-## Workspace applications
+## Workspace application
 
-- [`obsidian-showcase`](apps/obsidian-showcase): a private interactive catalogue and real Obsidian E2E fixture.
+- [`Fancy Kit Harness`](apps/obsidian-harness): a public interactive catalogue, guided real-device contract runner, and real Obsidian E2E fixture. BRAT releases are distributed separately from [`vrtmrz/fancy-kit-harness`](https://github.com/vrtmrz/fancy-kit-harness).
 
 ## Development
 
-For a quick feedback loop while changing the scoped packages or showcase, run:
+For a quick feedback loop while changing the scoped packages or harness, run:
 
 ```bash
 npm run check:all
 npm run test
 npm run build
-npm run build:showcase
+npm run build:harness
 ```
 
 Before handing off a repository-wide change, validate every package, including octagonal-wheels, and inspect every package tarball with:
@@ -38,7 +38,7 @@ The octagonal-wheels suite uses headless Chromium. Install its local Playwright 
 npm exec --workspace octagonal-wheels -- playwright install chromium
 ```
 
-The equivalent individual whole-workspace commands are `check:workspace`, `test:workspace`, `build:workspace`, `build:showcase`, and `pack:workspace`.
+The equivalent individual whole-workspace commands are `check:workspace`, `test:workspace`, `build:workspace`, `build:harness`, and `pack:workspace`.
 
 Real Obsidian E2E remains a local-only suite and is not a default CI gate:
 

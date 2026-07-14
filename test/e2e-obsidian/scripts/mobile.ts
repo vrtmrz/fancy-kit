@@ -4,24 +4,24 @@ import {
   withObsidianPage,
 } from "@vrtmrz/obsidian-test-session";
 import {
-  startShowcaseTestSession,
-  stopShowcaseTestSession,
-  type ShowcaseState,
-  type ShowcaseTestSession,
-} from "../runner/showcase.ts";
+  startHarnessTestSession,
+  stopHarnessTestSession,
+  type HarnessState,
+  type HarnessTestSession,
+} from "../runner/harness.ts";
 
 const MOBILE_VIEWPORT = { width: 375, height: 667 } as const;
-const SHOWCASE_PLUGIN_ID = "vpk-showcase";
+const HARNESS_PLUGIN_ID = "fancy-kit-harness";
 
 interface ObsidianTestApp {
   emulateMobile(enabled: boolean): void;
-  plugins?: { plugins: Record<string, ShowcaseTestPlugin | undefined> };
+  plugins?: { plugins: Record<string, HarnessTestPlugin | undefined> };
 }
 
 type ObsidianTestWindow = Window & typeof globalThis & { app: ObsidianTestApp };
 
-interface ShowcaseTestPlugin {
-  e2e: ShowcaseState;
+interface HarnessTestPlugin {
+  e2e: HarnessState;
   runStory(story: string): Promise<void>;
 }
 
@@ -35,20 +35,20 @@ async function setMobileEmulation(page: Page, enabled: boolean): Promise<void> {
   }, enabled);
 }
 
-async function getShowcasePlugin(
+async function getHarnessPlugin(
   page: Page,
-): Promise<JSHandle<ShowcaseTestPlugin>> {
+): Promise<JSHandle<HarnessTestPlugin>> {
   return await page.evaluateHandle((pluginId) => {
     const plugin = (window as unknown as ObsidianTestWindow).app.plugins
       ?.plugins[pluginId];
     if (plugin === undefined)
-      throw new Error(`Showcase plugin is not loaded: ${pluginId}`);
+      throw new Error(`Harness plug-in is not loaded: ${pluginId}`);
     return plugin;
-  }, SHOWCASE_PLUGIN_ID);
+  }, HARNESS_PLUGIN_ID);
 }
 
-async function executeShowcaseStory(
-  plugin: JSHandle<ShowcaseTestPlugin>,
+async function executeHarnessStory(
+  plugin: JSHandle<HarnessTestPlugin>,
   story: string,
 ): Promise<void> {
   await plugin.evaluate((instance, storyId) => {
@@ -56,22 +56,22 @@ async function executeShowcaseStory(
   }, story);
 }
 
-async function readShowcaseState(
-  plugin: JSHandle<ShowcaseTestPlugin>,
-): Promise<ShowcaseState> {
+async function readHarnessState(
+  plugin: JSHandle<HarnessTestPlugin>,
+): Promise<HarnessState> {
   return await plugin.evaluate((instance) => instance.e2e);
 }
 
-async function waitForShowcaseState(
-  plugin: JSHandle<ShowcaseTestPlugin>,
-  predicate: (state: ShowcaseState) => boolean,
+async function waitForHarnessState(
+  plugin: JSHandle<HarnessTestPlugin>,
+  predicate: (state: HarnessState) => boolean,
   description: string,
   timeoutMs = Number(process.env.E2E_OBSIDIAN_STORY_TIMEOUT_MS ?? 10_000),
-): Promise<ShowcaseState> {
+): Promise<HarnessState> {
   const deadline = Date.now() + timeoutMs;
-  let state: ShowcaseState | undefined;
+  let state: HarnessState | undefined;
   while (Date.now() < deadline) {
-    state = await readShowcaseState(plugin);
+    state = await readHarnessState(plugin);
     if (predicate(state)) return state;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
@@ -138,9 +138,9 @@ async function assertFitsViewport(
 }
 
 async function main(): Promise<void> {
-  let testSession: ShowcaseTestSession | undefined;
+  let testSession: HarnessTestSession | undefined;
   try {
-    testSession = await startShowcaseTestSession();
+    testSession = await startHarnessTestSession();
     const port = testSession.session.remoteDebuggingPort;
 
     await withObsidianPage(port, async (page) => {
@@ -149,38 +149,38 @@ async function main(): Promise<void> {
       try {
         await page.waitForFunction((pluginId) => {
           const obsidianApp = (window as unknown as ObsidianTestWindow).app;
-          const showcaseLoaded =
+          const harnessLoaded =
             obsidianApp?.plugins?.plugins[pluginId] !== undefined;
           return (
-            document.body.classList.contains("is-mobile") && showcaseLoaded
+            document.body.classList.contains("is-mobile") && harnessLoaded
           );
-        }, SHOWCASE_PLUGIN_ID);
+        }, HARNESS_PLUGIN_ID);
         await waitForObsidianPageUiIdle(page);
-        const showcasePlugin = await getShowcasePlugin(page);
+        const harnessPlugin = await getHarnessPlugin(page);
         try {
-          await executeShowcaseStory(showcasePlugin, "prompt-text");
+          await executeHarnessStory(harnessPlugin, "prompt-text");
           const textModal = await activeModal(page, "Device name");
           await assertFitsViewport(page, textModal, "text prompt");
           const textInput = textModal.locator('input[type="text"]');
           await textInput.fill("mobile-device");
           await textInput.press("Enter");
-          await waitForShowcaseState(
-            showcasePlugin,
+          await waitForHarnessState(
+            harnessPlugin,
             (state) => state.lastResult === "mobile-device",
             "mobile text prompt result",
           );
 
-          await executeShowcaseStory(showcasePlugin, "prompt-text");
+          await executeHarnessStory(harnessPlugin, "prompt-text");
           await activeModal(page, "Device name");
           await page.keyboard.press("Escape");
-          await waitForShowcaseState(
-            showcasePlugin,
+          await waitForHarnessState(
+            harnessPlugin,
             (state) =>
               state.lastStory === "prompt-text" && state.lastResult === null,
             "mobile prompt cancellation",
           );
 
-          await executeShowcaseStory(showcasePlugin, "pick-one");
+          await executeHarnessStory(harnessPlugin, "pick-one");
           const prompt = page.locator(".prompt").last();
           await prompt.waitFor({ state: "visible", timeout: 10_000 });
           await assertFitsViewport(page, prompt, "typed selector");
@@ -192,26 +192,26 @@ async function main(): Promise<void> {
             .filter({ hasText: "Targets/beta.md" })
             .waitFor();
           await promptInput.press("Enter");
-          await waitForShowcaseState(
-            showcasePlugin,
+          await waitForHarnessState(
+            harnessPlugin,
             (state) =>
               (state.lastResult as { id?: string } | null)?.id === "beta",
             "mobile keyboard selection result",
           );
 
-          await executeShowcaseStory(showcasePlugin, "confirm-action");
+          await executeHarnessStory(harnessPlugin, "confirm-action");
           const confirmation = await activeModal(page, "Restore confirmation");
           await assertFitsViewport(page, confirmation, "confirmation dialog");
           await confirmation
             .getByRole("button", { name: "Restore", exact: true })
             .click();
-          await waitForShowcaseState(
-            showcasePlugin,
+          await waitForHarnessState(
+            harnessPlugin,
             (state) => state.lastResult === "restore",
             "mobile confirmation result",
           );
 
-          await executeShowcaseStory(showcasePlugin, "progress-start");
+          await executeHarnessStory(harnessPlugin, "progress-start");
           const progressNotice = page
             .locator(".notice:has(.vpk-progress-notice)")
             .last();
@@ -219,7 +219,7 @@ async function main(): Promise<void> {
           await assertFitsViewport(page, progressNotice, "progress Notice");
           await progressNotice.getByText("0 / 3", { exact: true }).waitFor();
 
-          await executeShowcaseStory(showcasePlugin, "progress-step");
+          await executeHarnessStory(harnessPlugin, "progress-step");
           await progressNotice.getByText("1 / 3", { exact: true }).waitFor();
           await assertFitsViewport(
             page,
@@ -227,15 +227,15 @@ async function main(): Promise<void> {
             "updated progress Notice",
           );
 
-          await executeShowcaseStory(showcasePlugin, "progress-cancel");
-          await waitForShowcaseState(
-            showcasePlugin,
+          await executeHarnessStory(harnessPlugin, "progress-cancel");
+          await waitForHarnessState(
+            harnessPlugin,
             (state) => state.progressState === "cancelled",
             "mobile cancelled progress state",
           );
           await progressNotice.waitFor({ state: "hidden", timeout: 5_000 });
         } finally {
-          await showcasePlugin.dispose();
+          await harnessPlugin.dispose();
         }
       } finally {
         await setMobileEmulation(page, false);
@@ -244,7 +244,7 @@ async function main(): Promise<void> {
 
     console.log("Real Obsidian mobile-emulation stories passed.");
   } finally {
-    if (testSession !== undefined) await stopShowcaseTestSession(testSession);
+    if (testSession !== undefined) await stopHarnessTestSession(testSession);
   }
 }
 

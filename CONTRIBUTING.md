@@ -14,7 +14,7 @@ Add focused unit tests for every functional change.
 
 For visible Obsidian UI behaviour:
 
-1. add or update a showcase story;
+1. add or update a harness showcase story;
 2. add a real Obsidian E2E scenario when keyboard, focus, rendered DOM, theme, Modal, SuggestModal, or Notice behaviour matters;
 3. keep scripted-driver tests separate from real UI coverage.
 
@@ -25,7 +25,7 @@ npm exec --workspace octagonal-wheels -- playwright install chromium
 npm run verify:workspace
 ```
 
-The gate checks and tests all four packages, builds all publishable artefacts and the showcase, and performs a dry-run pack of every workspace package. Changes confined to one package may use its workspace scripts during iteration, but the final validation should remain proportional to any affected dependants.
+The gate checks and tests all four packages, builds all publishable artefacts and the harness, and performs a dry-run pack of every workspace package. Changes confined to one package may use its workspace scripts during iteration, but the final validation should remain proportional to any affected dependants.
 
 Neutral packages own compile-time public API fixtures, reusable contract cases, App-free harnesses, operation-count assertions, and packed-consumer checks for the contracts they publish. Platform adapters and consumers own real filesystem, browser, Obsidian, permission, symbolic-link, and workflow integration coverage.
 

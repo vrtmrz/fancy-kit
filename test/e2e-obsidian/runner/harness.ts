@@ -9,22 +9,43 @@ import {
   type TemporaryVault,
 } from "@vrtmrz/obsidian-test-session";
 
-export const SHOWCASE_PLUGIN_ID = "vpk-showcase";
+export const HARNESS_PLUGIN_ID = "fancy-kit-harness";
 
-export interface ShowcaseState {
+export interface HarnessState {
+  mode: "review" | "showcase" | "automation" | null;
+  pendingRun: {
+    requestId: string;
+    scenarios: readonly string[];
+  } | null;
+  pendingRunError: string | null;
+  activeRequestId: string | null;
+  completedRequestId: string | null;
   lastStory: string | null;
+  lastAction: string | null;
   lastResult: unknown;
   progressState: string | null;
   progressValue: number;
-  frontmatterState: "updated" | "failed" | null;
+  remainingSeconds: number | null;
+  transcript: readonly { event: string }[];
+  guidedReview: {
+    step: string;
+    timed: { outcome: string; displayStayedAwake: string | null };
+  };
+  suite: {
+    running: boolean;
+    current: string | null;
+    results: Record<string, { status: string; detail: string | null }>;
+  };
 }
 
-export interface ShowcaseTestSession {
+export interface HarnessTestSession {
   session: ObsidianPluginSession;
   vault: TemporaryVault;
 }
 
-export async function startShowcaseTestSession(): Promise<ShowcaseTestSession> {
+export async function startHarnessTestSession(
+  pluginData: unknown = { schemaVersion: 1, mode: "automation" },
+): Promise<HarnessTestSession> {
   const binary = requireObsidianBinary();
   const cli = discoverObsidianCli();
   if (!cli.binary)
@@ -32,17 +53,18 @@ export async function startShowcaseTestSession(): Promise<ShowcaseTestSession> {
       `Could not find obsidian-cli. Checked: ${cli.checked.join(", ")}`,
     );
   const vault = await createTemporaryVault({
-    prefix: "obsidian-plugin-kit-e2e-",
-    pluginIds: [SHOWCASE_PLUGIN_ID],
-    idPrefix: "plugin-kit-e2e",
+    prefix: "fancy-kit-harness-e2e-",
+    pluginIds: [HARNESS_PLUGIN_ID],
+    idPrefix: "fancy-kit-harness-e2e",
   });
   try {
     const session = await startObsidianPluginSession({
       binary,
       cliBinary: cli.binary,
       vault,
-      pluginId: SHOWCASE_PLUGIN_ID,
-      artifactRoot: resolve("apps/obsidian-showcase"),
+      pluginId: HARNESS_PLUGIN_ID,
+      artifactRoot: resolve("apps/obsidian-harness"),
+      pluginData,
       startupGraceMs: Number(
         process.env.E2E_OBSIDIAN_STARTUP_GRACE_MS ?? 1_000,
       ),
@@ -54,18 +76,18 @@ export async function startShowcaseTestSession(): Promise<ShowcaseTestSession> {
   }
 }
 
-export async function stopShowcaseTestSession(
-  testSession: ShowcaseTestSession,
+export async function stopHarnessTestSession(
+  testSession: HarnessTestSession,
 ): Promise<void> {
   await testSession.session.app.stop();
   await testSession.vault.dispose();
 }
 
-export async function executeShowcaseStory(
+export async function executeHarnessStory(
   session: ObsidianPluginSession,
   story: string,
 ): Promise<void> {
-  const commandId = `${SHOWCASE_PLUGIN_ID}:story-${story}`;
+  const commandId = `${HARNESS_PLUGIN_ID}:story-${story}`;
   const executed = await withObsidianPage(
     session.remoteDebuggingPort,
     async (page) =>
@@ -81,14 +103,14 @@ export async function executeShowcaseStory(
       }, commandId),
   );
   if (!executed)
-    throw new Error(`Showcase command was not executed: ${commandId}`);
+    throw new Error(`Harness command was not executed: ${commandId}`);
 }
 
-export async function executeShowcaseCommand(
+export async function executeHarnessCommand(
   session: ObsidianPluginSession,
   command: string,
 ): Promise<void> {
-  const commandId = `${SHOWCASE_PLUGIN_ID}:${command}`;
+  const commandId = `${HARNESS_PLUGIN_ID}:${command}`;
   const executed = await withObsidianPage(
     session.remoteDebuggingPort,
     async (page) =>
@@ -104,12 +126,12 @@ export async function executeShowcaseCommand(
       }, commandId),
   );
   if (!executed)
-    throw new Error(`Showcase command was not executed: ${commandId}`);
+    throw new Error(`Harness command was not executed: ${commandId}`);
 }
 
-export async function readShowcaseState(
+export async function readHarnessState(
   session: ObsidianPluginSession,
-): Promise<ShowcaseState> {
+): Promise<HarnessState> {
   return await withObsidianPage(
     session.remoteDebuggingPort,
     async (page) =>
@@ -117,28 +139,28 @@ export async function readShowcaseState(
         const obsidianApp = (
           globalThis as typeof globalThis & {
             app?: {
-              plugins?: { plugins?: Record<string, { e2e: ShowcaseState }> };
+              plugins?: { plugins?: Record<string, { e2e: HarnessState }> };
             };
           }
         ).app;
         const state = obsidianApp?.plugins?.plugins?.[pluginId]?.e2e;
         if (state === undefined)
-          throw new Error(`Showcase plug-in is not loaded: ${pluginId}`);
+          throw new Error(`Harness plug-in is not loaded: ${pluginId}`);
         return state;
-      }, SHOWCASE_PLUGIN_ID),
+      }, HARNESS_PLUGIN_ID),
   );
 }
 
-export async function waitForShowcaseState(
+export async function waitForHarnessState(
   session: ObsidianPluginSession,
-  predicate: (state: ShowcaseState) => boolean,
+  predicate: (state: HarnessState) => boolean,
   description: string,
   timeoutMs = Number(process.env.E2E_OBSIDIAN_STORY_TIMEOUT_MS ?? 10_000),
-): Promise<ShowcaseState> {
+): Promise<HarnessState> {
   const deadline = Date.now() + timeoutMs;
-  let state: ShowcaseState | undefined;
+  let state: HarnessState | undefined;
   while (Date.now() < deadline) {
-    state = await readShowcaseState(session);
+    state = await readHarnessState(session);
     if (predicate(state)) return state;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }

@@ -37,8 +37,8 @@ jobs:
       - name: Build workspace packages
         run: npm run build:workspace
 
-      - name: Build showcase
-        run: npm run build:showcase
+      - name: Build harness
+        run: npm run build:harness
 
       - name: Verify package contents
         run: npm run pack:workspace

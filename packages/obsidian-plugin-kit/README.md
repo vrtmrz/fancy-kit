@@ -174,7 +174,7 @@ From the workspace root:
 npm run check:all
 npm run test
 npm run build
-npm run build:showcase
+npm run build:harness
 ```
 
 Run `npm run verify:workspace` before handing off repository-wide changes.

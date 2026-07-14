@@ -1,6 +1,15 @@
 import { spawn } from "node:child_process";
 
-const steps = ["smoke.ts", "dialogs.ts", "progress.ts", "notices.ts", "frontmatter.ts", "mobile.ts"];
+const steps = [
+  "smoke.ts",
+  "modes.ts",
+  "dialogs.ts",
+  "progress.ts",
+  "notices.ts",
+  "frontmatter.ts",
+  "contracts.ts",
+  "mobile.ts",
+];
 
 function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -16,7 +25,7 @@ function run(command: string, args: string[]): Promise<void> {
 async function main(): Promise<void> {
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
   const npx = process.platform === "win32" ? "npx.cmd" : "npx";
-  await run(npm, ["run", "build:showcase"]);
+  await run(npm, ["run", "build:harness"]);
   for (const step of steps) {
     console.log(`\n# ${step}`);
     await run(npx, ["tsx", `test/e2e-obsidian/scripts/${step}`]);

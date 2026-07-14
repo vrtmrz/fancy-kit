@@ -1,20 +1,20 @@
 import { withObsidianPage } from "@vrtmrz/obsidian-test-session";
 import {
-  executeShowcaseStory,
-  startShowcaseTestSession,
-  stopShowcaseTestSession,
-  waitForShowcaseState,
-  type ShowcaseTestSession,
-} from "../runner/showcase.ts";
+  executeHarnessStory,
+  startHarnessTestSession,
+  stopHarnessTestSession,
+  waitForHarnessState,
+  type HarnessTestSession,
+} from "../runner/harness.ts";
 
 async function main(): Promise<void> {
-  let testSession: ShowcaseTestSession | undefined;
+  let testSession: HarnessTestSession | undefined;
   try {
-    testSession = await startShowcaseTestSession();
+    testSession = await startHarnessTestSession();
     const { session } = testSession;
     const port = session.remoteDebuggingPort;
 
-    await executeShowcaseStory(session, "progress-start");
+    await executeHarnessStory(session, "progress-start");
     await withObsidianPage(port, async (page) => {
       const notice = page.locator(".vpk-progress-notice").last();
       await notice.waitFor({ state: "visible", timeout: 10_000 });
@@ -22,16 +22,16 @@ async function main(): Promise<void> {
       await notice.getByText("0 / 3", { exact: true }).waitFor();
     });
 
-    await executeShowcaseStory(session, "progress-step");
+    await executeHarnessStory(session, "progress-step");
     await withObsidianPage(port, async (page) => {
       const notice = page.locator(".vpk-progress-notice").last();
       await notice.getByText("1 / 3", { exact: true }).waitFor();
       await notice.getByText("Step 1", { exact: true }).waitFor();
     });
 
-    await executeShowcaseStory(session, "progress-step");
-    await executeShowcaseStory(session, "progress-step");
-    await waitForShowcaseState(
+    await executeHarnessStory(session, "progress-step");
+    await executeHarnessStory(session, "progress-step");
+    await waitForHarnessState(
       session,
       (state) =>
         state.progressState === "completed" && state.progressValue === 3,
@@ -44,9 +44,9 @@ async function main(): Promise<void> {
         .waitFor({ state: "hidden", timeout: 5_000 });
     });
 
-    await executeShowcaseStory(session, "progress-start");
-    await executeShowcaseStory(session, "progress-cancel");
-    await waitForShowcaseState(
+    await executeHarnessStory(session, "progress-start");
+    await executeHarnessStory(session, "progress-cancel");
+    await waitForHarnessState(
       session,
       (state) => state.progressState === "cancelled",
       "cancelled progress state",
@@ -60,7 +60,7 @@ async function main(): Promise<void> {
 
     console.log("Real Obsidian progress stories passed.");
   } finally {
-    if (testSession !== undefined) await stopShowcaseTestSession(testSession);
+    if (testSession !== undefined) await stopHarnessTestSession(testSession);
   }
 }
 

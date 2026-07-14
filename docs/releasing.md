@@ -2,7 +2,7 @@
 
 This is the developer and maintainer runbook for validating and publishing workspace packages. Repository-specific agent authority and stopping rules belong in `AGENTS.md`.
 
-The workspace root and showcase are private. Publish only an explicitly selected package under `packages/`, and keep package versions independent.
+The workspace root and harness application are not published to npm. Publish to npm only an explicitly selected package under `packages/`, and keep package versions independent. Fancy Kit Harness has a separate BRAT distribution flow described below.
 
 ## Release gate
 
@@ -17,7 +17,7 @@ Real Obsidian E2E is deliberately local-only. Run `npm run test:e2e:obsidian:loc
 
 Current real-Obsidian validation covers Linux and macOS. Do not describe Windows as supported until the same smoke and lifecycle checks have been run successfully there.
 
-Inspect the selected package's entry in the `pack:workspace` output. A scoped package tarball should contain its licence, README, compiled `dist` files and emitted maps, and package metadata only. The showcase, tests, private notes, and files outside the package manifest must not leak into it.
+Inspect the selected package's entry in the `pack:workspace` output. A scoped package tarball should contain its licence, README, compiled `dist` files and emitted maps, and package metadata only. The harness, tests, private notes, and files outside the package manifest must not leak into it.
 
 ## Version and dependency order
 
@@ -102,6 +102,24 @@ npm pack --workspace octagonal-wheels --pack-destination "$preview_dir"
 ```
 
 Inspect the tarball contents and package metadata, generate checksums, then create a GitHub prerelease whose tag points at the exact commit used to build them. Keep consumers on the previous preview unless they need the new contract; packages in one consumer should use one preview tag when practical.
+
+## Fancy Kit Harness releases
+
+Fancy Kit Harness is not an npm package. Its source and manifest live under `apps/obsidian-harness`, while `vrtmrz/fancy-kit-harness` provides the repository-root metadata and GitHub Release assets required by BRAT. Keep the harness manifest version independent from all workspace package versions.
+
+Update `apps/obsidian-harness/manifest.json` and `apps/obsidian-harness/versions.json` together. Run the relevant unit and local real-Obsidian scenarios while developing. Neither the complete local suite nor a full physical mobile review is a strict release gate; run the checks relevant to the change and record the available evidence.
+
+After the reviewed source change is committed, rebuild the release projection from that clean commit:
+
+```bash
+npm run verify:workspace
+npm run test:e2e:obsidian:local-suite
+npm run release:prepare:harness
+```
+
+Inspect `dist/fancy-kit-harness/SOURCE.json` and require `includesUncommittedChanges` to be `false` for a public release. Verify `SHA256SUMS`, copy `manifest.json` and `versions.json` to the distribution repository root, and keep that repository's user README pointed at the exact Fancy Kit source commit. Attach `main.js`, `manifest.json`, and `styles.css` to the GitHub release. Attach `SOURCE.json` and `SHA256SUMS` as provenance and inspection aids.
+
+The distribution tag and release version must match the harness manifest version. Do not publish the harness to npm, do not treat a package release as an implied harness release, and do not build release assets from the distribution repository. The Fancy Kit source commit is authoritative; the separate repository is a BRAT-compatible release projection only.
 
 ## Initial npm bootstrap
 
