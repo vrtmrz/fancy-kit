@@ -544,7 +544,7 @@ class WakeLockHarnessView extends ItemView {
       });
     }
 
-    new Setting(section)
+    const scenarioActions = new Setting(section)
       .setName("Run tests")
       .setDesc(
         suite.running
@@ -575,6 +575,9 @@ class WakeLockHarnessView extends ItemView {
           .onClick(() => void this.plugin.runScenarios(ALL_SCENARIO_IDS));
         button.buttonEl.dataset.testid = "scenario-run-full";
       });
+    scenarioActions.settingEl.addClass(
+      "fancy-kit-harness__scenario-actions",
+    );
   }
 
   private renderGuidedReview(container: HTMLElement): void {

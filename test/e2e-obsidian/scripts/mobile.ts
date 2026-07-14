@@ -22,6 +22,7 @@ type ObsidianTestWindow = Window & typeof globalThis & { app: ObsidianTestApp };
 
 interface HarnessTestPlugin {
   e2e: HarnessState;
+  openHarness(): Promise<void>;
   runStory(story: string): Promise<void>;
 }
 
@@ -158,6 +159,23 @@ async function main(): Promise<void> {
         await waitForObsidianPageUiIdle(page);
         const harnessPlugin = await getHarnessPlugin(page);
         try {
+          await harnessPlugin.evaluate(async (instance) => {
+            await instance.openHarness();
+          });
+          const scenarioRunner = page.locator(
+            '[data-testid="scenario-runner"]',
+          );
+          await scenarioRunner.waitFor({ state: "visible", timeout: 10_000 });
+          const scenarioActions = scenarioRunner.locator(".setting-item", {
+            has: page.locator('[data-testid="scenario-run-selected"]'),
+          });
+          await scenarioActions.scrollIntoViewIfNeeded();
+          await assertFitsViewport(
+            page,
+            scenarioActions,
+            "scenario runner actions",
+          );
+
           await executeHarnessStory(harnessPlugin, "prompt-text");
           const textModal = await activeModal(page, "Device name");
           await assertFitsViewport(page, textModal, "text prompt");
