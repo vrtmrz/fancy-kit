@@ -71,6 +71,8 @@ The package provides focused Playwright inspection helpers for real-renderer lay
 
 ```ts
 import {
+  assertLocatorHasMinimumTouchTarget,
+  assertLocatorWithinSafeArea,
   assertLocatorWithinViewport,
   assertNoHorizontalOverflow,
   inspectLocatorLayout,
@@ -88,12 +90,71 @@ await withObsidianPage(session.remoteDebuggingPort, async (page) => {
     label: "backup actions",
   });
 
+  const closeButton = page.locator(
+    ".modal-container .modal:last-child .modal-close-button",
+  );
+  await assertLocatorWithinSafeArea(page, closeButton, {
+    label: "backup dialogue close button",
+  });
+  await assertLocatorHasMinimumTouchTarget(page, closeButton, {
+    label: "backup dialogue close button",
+  });
+
   const measurements = await inspectLocatorLayout(page, actions);
-  console.log(measurements.contentOverflow);
+  console.log({
+    contentOverflow: measurements.contentOverflow,
+    safeAreaInsets: measurements.safeAreaInsets,
+    safeAreaOverflow: measurements.safeAreaOverflow,
+  });
 });
 ```
 
-`assertNoHorizontalOverflow` checks both the locator's horizontal viewport bounds and whether its content requires horizontal scrolling. It deliberately permits vertical viewport and content overflow. `assertLocatorWithinViewport` checks the selected axes but does not inspect internal scrollable content. Both assertions retry transient layouts and return the final structured measurements; configure `timeoutMs`, `pollIntervalMs`, and `tolerancePx` when the defaults do not suit the rendered component.
+The public assertions have separate, composable responsibilities:
+
+| Assertion                            | Contract                                                                                                                                       |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `assertLocatorWithinViewport`        | The visible bounding box remains within the selected viewport axes.                                                                            |
+| `assertNoHorizontalOverflow`         | The locator remains within the horizontal viewport and its content does not require horizontal scrolling. Vertical scrolling remains valid.    |
+| `assertLocatorWithinSafeArea`        | The visible bounding box remains outside status-bar, notch, rounded-corner, home-indicator, and equivalent unsafe insets on the selected axes. |
+| `assertLocatorHasMinimumTouchTarget` | The visible bounding box meets the configured minimum width and height. Both default to 44 CSS pixels for a practical mobile review target.    |
+
+Every assertion retries transient layouts and returns the final `LocatorLayoutInspection`. Configure `timeoutMs`, `pollIntervalMs`, and `tolerancePx` when the defaults do not suit the rendered component. `assertLocatorWithinViewport` and `assertLocatorWithinSafeArea` also accept `axes: "horizontal"`, `"vertical"`, or `"both"`.
+
+### Safe-area checks
+
+`inspectLocatorLayout` measures Obsidian's inherited `--safe-area-inset-*` values when present, then falls back to the browser CSS `env(safe-area-inset-*)` values. The result includes the effective `safeAreaInsets` and the distance by which each locator edge enters the unsafe area. A locator can therefore pass viewport containment but fail safe-area containment, as when a mobile dialogue Close control is visible underneath the iPhone status area.
+
+Desktop mobile emulation often reports zero hardware insets. Supply the target device's logical CSS-pixel insets to make that test deterministic:
+
+```ts
+await page.setViewportSize({ width: 390, height: 844 });
+
+await assertLocatorWithinSafeArea(page, closeButton, {
+  label: "note lookup close button",
+  safeAreaInsets: {
+    top: 47,
+    right: 0,
+    bottom: 34,
+    left: 0,
+  },
+});
+```
+
+An override replaces only the supplied edges; other edges retain their measured values. Insets and locator dimensions are CSS pixels, not physical screenshot pixels. Use the target viewport's logical dimensions and insets together.
+
+### Touch-target checks
+
+The 44 by 44 CSS-pixel default is an intentionally practical mobile review policy, not a claim that every platform or accessibility standard requires the same threshold. Consumers can select their own policy:
+
+```ts
+await assertLocatorHasMinimumTouchTarget(page, closeButton, {
+  label: "dialogue close button",
+  minimumWidthPx: 24,
+  minimumHeightPx: 24,
+});
+```
+
+The assertion measures the locator's visible bounding box. It does not infer a larger hit area created by pseudo-elements, prove that the element receives pointer events, detect a native operating-system overlay, or click the control. Combine the dimension and safe-area assertions for mobile controls, and retain consumer-owned interaction checks for focus, activation, dismissal, and occlusion.
 
 The helpers do not scroll, resize, take screenshots, or scan descendants. Call `scrollIntoViewIfNeeded()` explicitly when the selected element may be outside a legitimate scroll container. A fixed Playwright viewport is used when available; otherwise, a connected Electron renderer uses its inner window dimensions.
 

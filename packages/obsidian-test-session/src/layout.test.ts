@@ -1,6 +1,8 @@
 import type { Locator, Page } from "playwright";
 import { describe, expect, it, vi } from "vitest";
 import {
+  assertLocatorHasMinimumTouchTarget,
+  assertLocatorWithinSafeArea,
   assertLocatorWithinViewport,
   assertNoHorizontalOverflow,
   inspectLocatorLayout,
@@ -24,6 +26,7 @@ function layoutFixture({
     scrollWidth: 343,
     scrollHeight: 100,
   },
+  safeAreaInsets = { top: 0, right: 0, bottom: 0, left: 0 },
 }: {
   viewport?: { width: number; height: number } | null;
   box?: { x: number; y: number; width: number; height: number } | null;
@@ -33,12 +36,19 @@ function layoutFixture({
     scrollWidth: number;
     scrollHeight: number;
   };
+  safeAreaInsets?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
 } = {}): LayoutFixture {
   const boundingBox = vi.fn().mockResolvedValue(box);
   const evaluate = vi.fn().mockResolvedValue(scroll);
-  const pageEvaluate = vi
-    .fn()
-    .mockResolvedValue({ width: 1_024, height: 768 });
+  const pageEvaluate = vi.fn().mockResolvedValue({
+    viewport: { width: 1_024, height: 768 },
+    safeAreaInsets,
+  });
   const waitForTimeout = vi.fn().mockResolvedValue(undefined);
   return {
     page: {
@@ -78,6 +88,8 @@ describe("inspectLocatorLayout", () => {
         scrollHeight: 720,
       },
       viewportOverflow: { left: 2, right: 3, top: 0, bottom: 53 },
+      safeAreaInsets: { top: 0, right: 0, bottom: 0, left: 0 },
+      safeAreaOverflow: { left: 2, right: 3, top: 0, bottom: 53 },
       contentOverflow: { horizontal: 132, vertical: 20 },
     });
   });
@@ -92,6 +104,41 @@ describe("inspectLocatorLayout", () => {
 
     expect(inspection.viewport).toEqual({ width: 1_024, height: 768 });
     expect(fixture.pageEvaluate).toHaveBeenCalledOnce();
+  });
+
+  it("reports overflow into measured device safe-area insets", async () => {
+    const fixture = layoutFixture({
+      viewport: { width: 390, height: 844 },
+      box: { x: 346, y: 20, width: 44, height: 44 },
+      safeAreaInsets: { top: 47, right: 0, bottom: 34, left: 0 },
+    });
+
+    await expect(
+      inspectLocatorLayout(fixture.page, fixture.locator),
+    ).resolves.toMatchObject({
+      viewportOverflow: { left: 0, right: 0, top: 0, bottom: 0 },
+      safeAreaInsets: { top: 47, right: 0, bottom: 34, left: 0 },
+      safeAreaOverflow: { left: 0, right: 0, top: 27, bottom: 0 },
+    });
+  });
+
+  it("applies explicit safe-area edges over measured values", async () => {
+    const fixture = layoutFixture({
+      safeAreaInsets: { top: 12, right: 8, bottom: 10, left: 6 },
+    });
+
+    const inspection = await inspectLocatorLayout(
+      fixture.page,
+      fixture.locator,
+      { safeAreaInsets: { top: 47, bottom: 34 } },
+    );
+
+    expect(inspection.safeAreaInsets).toEqual({
+      top: 47,
+      right: 8,
+      bottom: 34,
+      left: 6,
+    });
   });
 });
 
@@ -204,9 +251,7 @@ describe("assertLocatorWithinViewport", () => {
         label: "dialogue",
         timeoutMs: 0,
       }),
-    ).rejects.toThrowError(
-      /dialogue extends past the viewport.*"bottom":53/u,
-    );
+    ).rejects.toThrowError(/dialogue extends past the viewport.*"bottom":53/u);
   });
 
   it("reports a missing visible bounding box", async () => {
@@ -239,6 +284,121 @@ describe("assertLocatorWithinViewport", () => {
         axes: "diagonal" as "both",
       }),
     ).rejects.toThrowError(/Unknown viewport axes: diagonal/u);
+    expect(fixture.boundingBox).not.toHaveBeenCalled();
+  });
+});
+
+describe("assertLocatorWithinSafeArea", () => {
+  it("reports a locator inside the viewport but above the safe area", async () => {
+    const fixture = layoutFixture({
+      viewport: { width: 390, height: 844 },
+      box: { x: 326, y: 20, width: 44, height: 44 },
+    });
+
+    await expect(
+      assertLocatorWithinSafeArea(fixture.page, fixture.locator, {
+        label: "note lookup close button",
+        safeAreaInsets: { top: 47, right: 0, bottom: 34, left: 0 },
+        timeoutMs: 0,
+      }),
+    ).rejects.toThrowError(
+      /note lookup close button extends into the device safe area.*"top":27/u,
+    );
+  });
+
+  it("accepts a locator below an iPhone-style top inset", async () => {
+    const fixture = layoutFixture({
+      viewport: { width: 390, height: 844 },
+      box: { x: 326, y: 64, width: 44, height: 44 },
+    });
+
+    await expect(
+      assertLocatorWithinSafeArea(fixture.page, fixture.locator, {
+        safeAreaInsets: { top: 47, right: 0, bottom: 34, left: 0 },
+        timeoutMs: 0,
+      }),
+    ).resolves.toMatchObject({
+      safeAreaOverflow: { left: 0, right: 0, top: 0, bottom: 0 },
+    });
+  });
+
+  it("can inspect only the requested safe-area axis", async () => {
+    const fixture = layoutFixture({
+      viewport: { width: 390, height: 844 },
+      box: { x: 0, y: 64, width: 44, height: 44 },
+    });
+
+    await expect(
+      assertLocatorWithinSafeArea(fixture.page, fixture.locator, {
+        axes: "vertical",
+        safeAreaInsets: { left: 20 },
+        timeoutMs: 0,
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it("rejects invalid safe-area overrides", async () => {
+    const fixture = layoutFixture();
+
+    await expect(
+      assertLocatorWithinSafeArea(fixture.page, fixture.locator, {
+        safeAreaInsets: { top: -1 },
+        timeoutMs: 0,
+      }),
+    ).rejects.toThrowError(/safeAreaInsets\.top/u);
+  });
+});
+
+describe("assertLocatorHasMinimumTouchTarget", () => {
+  it("accepts the default 44 by 44 CSS-pixel target", async () => {
+    const fixture = layoutFixture({
+      box: { x: 16, y: 64, width: 44, height: 44 },
+    });
+
+    await expect(
+      assertLocatorHasMinimumTouchTarget(fixture.page, fixture.locator, {
+        timeoutMs: 0,
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it("reports an undersized target with measured and required dimensions", async () => {
+    const fixture = layoutFixture({
+      box: { x: 16, y: 64, width: 32, height: 40 },
+    });
+
+    await expect(
+      assertLocatorHasMinimumTouchTarget(fixture.page, fixture.locator, {
+        label: "dialogue close button",
+        timeoutMs: 0,
+      }),
+    ).rejects.toThrowError(
+      /dialogue close button is smaller than the minimum touch target \(32×40 CSS px; requires 44×44 CSS px\)/u,
+    );
+  });
+
+  it("supports a consumer-selected target policy", async () => {
+    const fixture = layoutFixture({
+      box: { x: 16, y: 64, width: 28, height: 30 },
+    });
+
+    await expect(
+      assertLocatorHasMinimumTouchTarget(fixture.page, fixture.locator, {
+        minimumWidthPx: 24,
+        minimumHeightPx: 24,
+        timeoutMs: 0,
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it("rejects non-positive minimum dimensions before measuring", async () => {
+    const fixture = layoutFixture();
+
+    await expect(
+      assertLocatorHasMinimumTouchTarget(fixture.page, fixture.locator, {
+        minimumWidthPx: 0,
+      }),
+    ).rejects.toThrowError(/minimumWidthPx/u);
     expect(fixture.boundingBox).not.toHaveBeenCalled();
   });
 });
