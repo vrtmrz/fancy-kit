@@ -121,6 +121,7 @@ async function main(): Promise<void> {
       "### Environment",
       "User agent",
       "Post-release display",
+      "Optional post-release visibility evidence",
       "wake-lock-guided",
     ]) {
       if (!markdownReport.includes(expected)) {

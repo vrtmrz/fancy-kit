@@ -25,7 +25,7 @@ Vault scenarios create a unique owned fixture folder and remove it whether the s
 
 ## Mobile wake-lock review
 
-Set the device auto-lock timeout to a short known value, then choose a test duration longer than that timeout. Follow the displayed action and expected result without touching the screen during the countdown. The Harness first asks whether the wake lock kept the physical display awake. It then verifies that no Harness wake-lock lease remains and asks you to leave the device untouched until its normal policy switches the display off. Finally, it records the background and return lifecycle.
+Set the device auto-lock timeout to a short known value, then choose a test duration longer than that timeout. Follow the displayed action and expected result without touching the screen during the countdown. The Harness first asks whether the wake lock kept the physical display awake. It then verifies that no Harness wake-lock lease remains and asks you to leave the device untouched until its normal policy switches the display off. Your answer records the physical result. Page-visibility events during this step are optional supporting evidence because embedded WebViews might not report screen power changes. Finally, the Harness separately records the background and return lifecycle.
 
 A display that does not switch off is recorded as a failed post-release check, but is not by itself proof of a leaked wake lock. Device power policy, charging state, system accessibility settings, and other applications can affect auto-lock behaviour.
 

@@ -1,5 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { formatHarnessMarkdownReport } from "./report.js";
+import {
+  describeOptionalVisibilityEvidence,
+  formatHarnessMarkdownReport,
+} from "./report.js";
+
+describe("describeOptionalVisibilityEvidence", () => {
+  it.each([
+    [false, false, "Not observed (informational)"],
+    [true, false, "Hidden observed; return not observed"],
+    [true, true, "Hidden and return observed"],
+    [false, true, "Return observed without hidden event"],
+  ])(
+    "describes hidden=%s and returned=%s without treating absence as failure",
+    (hiddenObserved, returnedObserved, expected) => {
+      expect(
+        describeOptionalVisibilityEvidence(hiddenObserved, returnedObserved),
+      ).toBe(expected);
+    },
+  );
+});
 
 describe("formatHarnessMarkdownReport", () => {
   it("formats device information and scenario outcomes for a pull request", () => {
