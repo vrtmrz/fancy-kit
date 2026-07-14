@@ -9,9 +9,10 @@
 - Preserve documented behavioural contracts when changing an existing API.
 - Keep scripted UI responses instance-scoped through an explicit `UiInteractions` capability and driver; never store them in static members or module globals.
 - Follow `test/e2e-obsidian/README.md` when changing visible Obsidian UI behaviour.
-- Treat `apps/obsidian-harness` as public BRAT-facing code. Keep Vault scenarios inside unique owned fixture roots, clean them in `finally`, and keep Automation mode as a convenience rather than a relaxed safety boundary.
+- Treat `apps/obsidian-harness` and `site/harness` as public review-distribution code. Keep Vault scenarios inside unique owned fixture roots, clean them in `finally`, and keep Automation mode as a convenience rather than a relaxed safety boundary.
 - A `pendingRun` from plug-in data is one-shot: validate it, save its removal before execution, and never accept arbitrary commands, paths, credentials, or code through it.
-- Keep Fancy Kit as the authoritative harness source. The separate `fancy-kit-harness` repository is a generated BRAT release projection, not a second source tree.
+- Keep Fancy Kit as the authoritative Harness source. A generated Screwdriver document may restore only `main.js`, `manifest.json`, and `styles.css` below `.obsidian/plugins/fancy-kit-harness`; never include `data.json`, `community-plugins.json`, or an arbitrary path.
+- The Harness installer may derive only versioned Fancy Kit release paths, must verify the document SHA-256 from the release link, and must keep the selected Vault name in browser-local storage. Do not create a second Harness source tree or distribution mirror unless the distribution decision changes explicitly.
 
 ## Release work and user gates
 

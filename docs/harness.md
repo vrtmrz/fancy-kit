@@ -6,7 +6,7 @@ The application has one plug-in ID, `fancy-kit-harness`, and three start-up mode
 
 | Mode | Purpose | Behaviour |
 | --- | --- | --- |
-| `review` | Manual BRAT and real-device review | Emphasises selectable contract scenarios and guided instructions. |
+| `review` | Manual release-bundle and real-device review | Emphasises selectable contract scenarios and guided instructions. |
 | `showcase` | Component exploration | Emphasises individual UI stories while retaining review controls. |
 | `automation` | Isolated E2E sessions | Suppresses first-run selection and enables deterministic automation commands. It does not run tests merely by being selected. |
 
@@ -55,11 +55,16 @@ The component showcase and review runner share the same runtime APIs and binary.
 
 ## Distribution boundary
 
-The Fancy Kit repository cannot itself be a conventional BRAT plug-in repository because its root represents an npm monorepo. `npm run release:prepare:harness` builds the application and creates a distribution directory containing:
+The Fancy Kit repository root represents an npm monorepo rather than a conventional Obsidian plug-in repository. `npm run release:prepare:harness` builds the application and creates `dist/fancy-kit-harness` containing:
 
-- `main.js`, `manifest.json`, and `styles.css` for the GitHub release;
-- `versions.json` for the BRAT-compatible mirror root;
-- `SOURCE.json` with the exact Fancy Kit commit and dirty-worktree flag; and
+- `main.js`, `manifest.json`, and `styles.css` as inspectable plug-in artefacts;
+- `versions.json` and `SOURCE.json` as version and source provenance;
+- a versioned `fancy-kit-harness-<version>-screwdriver.md` document;
+- `INSTALLER.md`, whose HTTPS link includes the document SHA-256; and
 - `SHA256SUMS` for all generated metadata and assets.
 
-Only release assets rebuilt from the reviewed clean source commit are suitable for the public mirror. The mirror owns BRAT tags and release metadata; Fancy Kit remains the only source location.
+The Screwdriver document embeds only the three plug-in runtime files. It never contains `data.json`, `community-plugins.json`, or a caller-provided path. Publish it as an asset of the matching `harness-<version>` Fancy Kit release.
+
+The Pages deployment copies all published Harness documents from their versioned release assets into a same-origin path. The installer accepts only a semantic Harness version and SHA-256, downloads that path, verifies the digest and restore-path allowlist, and then waits for explicit user confirmation. On installation it stores the selected Vault name or ID in browser-local storage, copies the document to the Clipboard, and opens a versioned note with `obsidian://new`. The default Vault value is `fancy-kit-harness`.
+
+Fancy Kit remains the sole source tree. The Pages copy is a transport cache rebuilt from published release assets, not a source mirror or a release authority. A BRAT projection can be added later if external automatic updates justify its additional repository and release lifecycle.

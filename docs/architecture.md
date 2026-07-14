@@ -43,7 +43,7 @@ LiveSync replication, database, storage composition, and domain-specific service
 
 ## Workspace application
 
-`apps/obsidian-harness` is a component catalogue, guided contract runner, and real-Obsidian fixture. `test/e2e-obsidian` owns its external stories and assertions while consuming the shared test session package. The application is not an npm package; BRAT-compatible releases are projected into a separate distribution repository. See [the harness architecture](harness.md) for its modes, one-shot automation request, safety boundary, and release projection.
+`apps/obsidian-harness` is a component catalogue, guided contract runner, and real-Obsidian fixture. `test/e2e-obsidian` owns its external stories and assertions while consuming the shared test session package. The application is not an npm package. Versioned Screwdriver documents are attached to Fancy Kit releases, reflected into the same-origin Pages site, verified in the browser, and passed to Obsidian through the Clipboard form of Obsidian URI. See [the harness architecture](harness.md) for its modes, one-shot automation request, safety boundary, and distribution path.
 
 ## UI composition roles
 

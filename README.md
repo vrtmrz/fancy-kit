@@ -13,7 +13,7 @@ The packages use independent `0.x` versions. Stable releases are available from 
 
 ## Workspace application
 
-- [`Fancy Kit Harness`](apps/obsidian-harness): a public interactive catalogue, guided real-device contract runner, and real Obsidian E2E fixture. BRAT releases are distributed separately from [`vrtmrz/fancy-kit-harness`](https://github.com/vrtmrz/fancy-kit-harness).
+- [`Fancy Kit Harness`](apps/obsidian-harness): a public interactive catalogue, guided real-device contract runner, and real Obsidian E2E fixture. Reviewed Harness releases provide a verified web installer that creates a Screwdriver document in a dedicated test Vault; follow the link in the selected [GitHub release](https://github.com/vrtmrz/fancy-kit/releases).
 
 ## Development
 
