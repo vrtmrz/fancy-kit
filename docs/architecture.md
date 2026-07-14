@@ -22,11 +22,11 @@ consumer E2E suites and the public harness
 
 `octagonal-wheels` owns reusable utilities and structural algorithms that do not express Obsidian UI or LiveSync domain policy. It retains its existing package name, history, version, browser-compatible modules, and independent release lifecycle.
 
-`@vrtmrz/obsidian-test-session` is Node-only development infrastructure. It owns local Obsidian binary discovery and preparation, isolated vault and profile state, process lifecycle, CLI bootstrap, and Playwright/CDP readiness. It does not belong in a plug-in runtime bundle.
+`@vrtmrz/obsidian-test-session` is Node-only development infrastructure. It owns local Obsidian binary discovery and preparation, isolated vault and profile state, process lifecycle, CLI bootstrap, Playwright/CDP readiness, and generic layout measurements and assertions for consumer-selected locators. It does not belong in a plug-in runtime bundle.
 
 ## Consumer ownership
 
-Consumers own their settings, fixtures, databases, synchronisation workflows, showcase stories, and assertions. The test session package returns `cliEnv` and `remoteDebuggingPort` so a consumer can perform domain-specific CLI or renderer operations without adding those operations to the shared package.
+Consumers own their settings, fixtures, databases, synchronisation workflows, showcase stories, selectors, and domain-specific assertions. The test session package returns `cliEnv` and `remoteDebuggingPort` so a consumer can perform domain-specific CLI or renderer operations without adding those operations to the shared package. Generic inspection helpers may measure a locator supplied by the consumer, but must not select plug-in UI, scan the complete document, or encode a consumer's expected workflow.
 
 LiveSync replication, database, storage composition, and domain-specific service contracts remain in `livesync-commonlib`. Only reusable Obsidian adapters belong in the plug-in kit.
 

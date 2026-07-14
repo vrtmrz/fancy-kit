@@ -1,5 +1,7 @@
 import type { JSHandle, Locator, Page } from "playwright";
 import {
+  assertLocatorWithinViewport,
+  assertNoHorizontalOverflow,
   waitForObsidianPageUiIdle,
   withObsidianPage,
 } from "@vrtmrz/obsidian-test-session";
@@ -95,47 +97,8 @@ async function assertFitsViewport(
   element: Locator,
   description: string,
 ): Promise<void> {
-  const viewport = page.viewportSize();
-  if (viewport === null)
-    throw new Error("Mobile viewport emulation is not active");
-
-  const tolerance = 1;
-  const deadline = Date.now() + 3_000;
-  let box = await element.boundingBox();
-  while (
-    box !== null &&
-    (box.x < -tolerance ||
-      box.y < -tolerance ||
-      box.x + box.width > viewport.width + tolerance ||
-      box.y + box.height > viewport.height + tolerance) &&
-    Date.now() < deadline
-  ) {
-    await page.waitForTimeout(50);
-    box = await element.boundingBox();
-  }
-
-  if (box === null)
-    throw new Error(`${description} has no visible bounding box`);
-  if (
-    box.x < -tolerance ||
-    box.y < -tolerance ||
-    box.x + box.width > viewport.width + tolerance ||
-    box.y + box.height > viewport.height + tolerance
-  ) {
-    throw new Error(
-      `${description} exceeds ${viewport.width}x${viewport.height}: ${JSON.stringify(box)}`,
-    );
-  }
-
-  const widths = await element.evaluate((node) => ({
-    clientWidth: node.clientWidth,
-    scrollWidth: node.scrollWidth,
-  }));
-  if (widths.scrollWidth > widths.clientWidth + tolerance) {
-    throw new Error(
-      `${description} overflows horizontally: ${JSON.stringify(widths)}`,
-    );
-  }
+  await assertLocatorWithinViewport(page, element, { label: description });
+  await assertNoHorizontalOverflow(page, element, { label: description });
 }
 
 async function main(): Promise<void> {

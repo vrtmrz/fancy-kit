@@ -233,6 +233,10 @@ async function main() {
       join(repositoryRoot, "test", "packed-consumer", "scripted-step-types.ts"),
       join(temporaryRoot, "scripted-step-types.ts"),
     );
+    await copyFile(
+      join(repositoryRoot, "test", "packed-consumer", "test-session-usage.ts"),
+      join(temporaryRoot, "test-session-usage.ts"),
+    );
     await writeFile(
       join(temporaryRoot, "tsconfig.json"),
       `${JSON.stringify(
@@ -251,6 +255,7 @@ async function main() {
             "public-exports.ts",
             "obsidian-plugin-kit-usage.ts",
             "scripted-step-types.ts",
+            "test-session-usage.ts",
           ],
         },
         null,
@@ -342,7 +347,7 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit usage and scripted-step type fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

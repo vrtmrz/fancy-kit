@@ -24,6 +24,7 @@
   "files": [
     "dist",
     "README.md",
+    "updates.md",
     "LICENSE"
   ],
   "exports": {
