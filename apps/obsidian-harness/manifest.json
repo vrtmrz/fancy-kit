@@ -1,7 +1,7 @@
 {
   "id": "fancy-kit-harness",
   "name": "Fancy Kit Harness",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.8.7",
   "description": "Interactive Fancy Kit catalogue and guided contract runner for a dedicated test Vault.",
   "author": "vorotamoroz",
