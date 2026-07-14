@@ -26,6 +26,21 @@ export interface HarnessMarkdownReportInput {
   readonly transcript: readonly HarnessReportTranscriptEntry[];
 }
 
+/**
+ * Describes optional page-visibility evidence collected during a physical
+ * screen-off check. Embedded WebViews do not necessarily expose screen power
+ * changes as document visibility transitions, so absence is informational.
+ */
+export function describeOptionalVisibilityEvidence(
+  hiddenObserved: boolean,
+  returnedObserved: boolean,
+): string {
+  if (hiddenObserved && returnedObserved) return "Hidden and return observed";
+  if (hiddenObserved) return "Hidden observed; return not observed";
+  if (returnedObserved) return "Return observed without hidden event";
+  return "Not observed (informational)";
+}
+
 function tableCell(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll(/\r?\n/gu, "<br>");
 }

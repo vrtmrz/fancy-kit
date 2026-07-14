@@ -41,7 +41,10 @@ import {
   type HarnessSettings,
   type ScenarioId,
 } from "./settings.js";
-import { formatHarnessMarkdownReport } from "./report.js";
+import {
+  describeOptionalVisibilityEvidence,
+  formatHarnessMarkdownReport,
+} from "./report.js";
 
 const VIEW_TYPE = "fancy-kit-harness-wake-lock";
 const MAX_TRANSCRIPT_ENTRIES = 200;
@@ -783,7 +786,7 @@ class WakeLockHarnessView extends ItemView {
         describeStep(
           "Step 3 of 4: leave the device untouched",
           "Wait without touching the device. After the display switches off, unlock it, return to Obsidian, and record the result. If it remains on beyond the configured auto-lock timeout, choose No.",
-          "The display switches off according to the device policy. This physical check is separate from the browser visibility evidence.",
+          "The display switches off according to the device policy. Your answer is the result; page-visibility events are optional supporting evidence because an embedded WebView might not report screen power changes.",
         );
         new Setting(section)
           .setName("Did the display switch off after release?")
@@ -877,8 +880,13 @@ class WakeLockHarnessView extends ItemView {
         "Post-release result",
         review.release.displaySwitchedOff ?? "Not recorded",
       ],
-      ["Post-release hidden observed", String(review.release.hiddenObserved)],
-      ["Post-release return observed", String(review.release.returnedObserved)],
+      [
+        "Optional post-release visibility evidence",
+        describeOptionalVisibilityEvidence(
+          review.release.hiddenObserved,
+          review.release.returnedObserved,
+        ),
+      ],
       [
         "Timed run elapsed",
         review.timed.elapsedMilliseconds === null
@@ -2160,8 +2168,11 @@ export default class FancyKitHarnessPlugin extends Plugin {
             snapshot.guidedReview.release.displaySwitchedOff ?? "Not recorded",
         },
         {
-          label: "Post-release visibility",
-          value: `hidden=${String(snapshot.guidedReview.release.hiddenObserved)}, returned=${String(snapshot.guidedReview.release.returnedObserved)}`,
+          label: "Optional post-release visibility evidence",
+          value: describeOptionalVisibilityEvidence(
+            snapshot.guidedReview.release.hiddenObserved,
+            snapshot.guidedReview.release.returnedObserved,
+          ),
         },
         {
           label: "Visibility lifecycle",
