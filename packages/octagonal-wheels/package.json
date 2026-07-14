@@ -1,6 +1,6 @@
 {
     "name": "octagonal-wheels",
-    "version": "0.1.50",
+    "version": "0.1.51-preview.0",
     "description": "This module is a compilation of wheels that have been reinvented for a specific purpose",
     "type": "module",
     "types": "./dist/index.d.ts",
@@ -970,6 +970,7 @@
     "files": [
         "dist/**",
         "readme.md",
+        "updates.md",
         "LICENSE",
         "package.json"
     ],
