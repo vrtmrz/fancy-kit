@@ -1,6 +1,10 @@
 # Fancy Kit Harness
 
-Fancy Kit Harness is an interactive catalogue and guided contract runner for Fancy Kit. Install a reviewed release through BRAT into a dedicated test Vault. It is not intended for an everyday Vault or for the Obsidian Community Plugins catalogue.
+Fancy Kit Harness is an interactive catalogue and guided contract runner for Fancy Kit. Install a reviewed release into a dedicated test Vault by following its verified installer link. The installer requires [Screwdriver](https://github.com/vrtmrz/obsidian-screwdriver), copies a checked document to the Clipboard, and opens it in Obsidian. The Harness is not intended for an everyday Vault or for the Obsidian Community Plugins catalogue.
+
+The installer asks for a Vault name or ID and initially suggests `fancy-kit-harness`. It remembers the selected value in that browser only. Confirm the dedicated Vault, choose **Copy and open in Obsidian**, then run `Screwdriver: Restore files from this note`. Reload Obsidian, enable **Fancy Kit Harness**, and open the Harness command.
+
+The generated document restores only `main.js`, `manifest.json`, and `styles.css` below the Harness plug-in directory. It does not enable the plug-in, alter the community plug-in list, or supply a `data.json` file.
 
 Open the `Fancy Kit Harness: Open harness` command or select its ribbon icon. On first start, choose the experience that should open by default:
 
@@ -31,4 +35,4 @@ Reports contain scenario status, capability state, timing, and lifecycle events.
 
 ## Project status
 
-The harness has its own `0.x` manifest version and BRAT release history. It is not an npm package. Its source is maintained in the Fancy Kit monorepo, while BRAT-compatible release metadata and assets are distributed through the separate `fancy-kit-harness` repository.
+The Harness has its own `0.x` manifest version and GitHub release history. It is not an npm package. Its source, release assets, and installer are maintained from the Fancy Kit repository; the web installer verifies the exact versioned document before passing it to Obsidian.

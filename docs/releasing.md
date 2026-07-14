@@ -2,7 +2,7 @@
 
 This is the developer and maintainer runbook for validating and publishing workspace packages. Repository-specific agent authority and stopping rules belong in `AGENTS.md`.
 
-The workspace root and harness application are not published to npm. Publish to npm only an explicitly selected package under `packages/`, and keep package versions independent. Fancy Kit Harness has a separate BRAT distribution flow described below.
+The workspace root and Harness application are not published to npm. Publish to npm only an explicitly selected package under `packages/`, and keep package versions independent. Fancy Kit Harness has a separate GitHub release and verified web-installer flow described below.
 
 ## Release gate
 
@@ -105,11 +105,11 @@ Inspect the tarball contents and package metadata, generate checksums, then crea
 
 ## Fancy Kit Harness releases
 
-Fancy Kit Harness is not an npm package. Its source and manifest live under `apps/obsidian-harness`, while `vrtmrz/fancy-kit-harness` provides the repository-root metadata and GitHub Release assets required by BRAT. Keep the harness manifest version independent from all workspace package versions.
+Fancy Kit Harness is not an npm package. Its source and manifest live under `apps/obsidian-harness`, and its version remains independent from all workspace package versions. A release uses the tag `harness-<version>` in this repository and attaches a versioned Screwdriver document.
 
 Update `apps/obsidian-harness/manifest.json` and `apps/obsidian-harness/versions.json` together. Run the relevant unit and local real-Obsidian scenarios while developing. Neither the complete local suite nor a full physical mobile review is a strict release gate; run the checks relevant to the change and record the available evidence.
 
-After the reviewed source change is committed, rebuild the release projection from that clean commit:
+After the reviewed source change is committed, rebuild the release assets from that clean commit:
 
 ```bash
 npm run verify:workspace
@@ -117,9 +117,15 @@ npm run test:e2e:obsidian:local-suite
 npm run release:prepare:harness
 ```
 
-Inspect `dist/fancy-kit-harness/SOURCE.json` and require `includesUncommittedChanges` to be `false` for a public release. Verify `SHA256SUMS`, copy `manifest.json` and `versions.json` to the distribution repository root, and keep that repository's user README pointed at the exact Fancy Kit source commit. Attach `main.js`, `manifest.json`, and `styles.css` to the GitHub release. Attach `SOURCE.json` and `SHA256SUMS` as provenance and inspection aids.
+Inspect `dist/fancy-kit-harness/SOURCE.json` and require `includesUncommittedChanges` to be `false`. Verify all entries in `SHA256SUMS`. The generated `INSTALLER.md` contains the exact HTTPS link for the release body; its query identifies the Harness version and Screwdriver-document SHA-256, but never a Vault name.
 
-The distribution tag and release version must match the harness manifest version. Do not publish the harness to npm, do not treat a package release as an implied harness release, and do not build release assets from the distribution repository. The Fancy Kit source commit is authoritative; the separate repository is a BRAT-compatible release projection only.
+Create the `harness-<version>` release at the exact source commit. Attach at least the versioned Screwdriver document, `SOURCE.json`, and `SHA256SUMS`; the individual plug-in files may also be attached for inspection. Include the generated installer link in the release body. Attach all assets before publishing when possible.
+
+Publishing or editing the release triggers the Pages workflow. It copies every published Harness Screwdriver asset into a versioned same-origin path and deploys the installer. Wait for the **Deploy Harness installer** workflow, then open the release link and verify the complete Clipboard, Obsidian URI, Screwdriver restore, plug-in enablement, and selected review flow on the intended device. If the release was published before its asset was attached, add the asset and rerun the Pages workflow manually.
+
+GitHub Pages must use **GitHub Actions** as its publishing source. The installer remembers the user-entered Vault name or ID in that browser under `fancy-kit-harness.vault-name`; the initial value is `fancy-kit-harness`. The Vault value does not enter release metadata or network requests.
+
+The release tag and manifest version must match. Do not publish the Harness to npm, treat a package release as an implied Harness release, or make the Pages cache authoritative. The Fancy Kit source commit and its release assets remain authoritative.
 
 ## Initial npm bootstrap
 

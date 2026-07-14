@@ -1,6 +1,6 @@
 # Real Obsidian harness and E2E
 
-The public-source harness plug-in under `apps/obsidian-harness/` is an interactive catalogue, guided contract runner, and fixture for automated UI tests. It runs inside real Obsidian, is not an npm package, and is distributed separately as a BRAT-compatible plug-in.
+The public-source harness plug-in under `apps/obsidian-harness/` is an interactive catalogue, guided contract runner, and fixture for automated UI tests. It runs inside real Obsidian, is not an npm package, and is distributed for manual review as a verified Screwdriver document from a Fancy Kit release.
 
 The shared `@vrtmrz/obsidian-test-session` package installs the harness into a temporary Vault and isolated Obsidian profile. It writes Automation-mode `pluginData` before start, uses `obsidian-cli` only to deliver the Vault-open URI, then uses Playwright over Electron's DevTools endpoint for bootstrap and UI readiness. Harness story invocation, one-shot requests, state, and assertions remain local consumer code.
 

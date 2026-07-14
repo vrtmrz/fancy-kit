@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'"
+    >
+    <meta name="color-scheme" content="light dark">
+    <title>Install Fancy Kit Harness</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="installer-card">
+      <p class="eyebrow">Fancy Kit</p>
+      <h1>Install Fancy Kit Harness</h1>
+      <p class="summary">
+        This page verifies a reviewed Harness bundle, copies it to the
+        Clipboard, and asks Obsidian to create a Screwdriver note.
+      </p>
+
+      <section class="release" aria-labelledby="release-heading">
+        <h2 id="release-heading">Reviewed release</h2>
+        <dl>
+          <div>
+            <dt>Version</dt>
+            <dd id="version">Not specified</dd>
+          </div>
+          <div>
+            <dt>Bundle</dt>
+            <dd id="bundle-status" aria-live="polite">Reading the release link…</dd>
+          </div>
+        </dl>
+        <p>
+          <a id="release-link" href="https://github.com/vrtmrz/fancy-kit/releases">
+            View the GitHub release
+          </a>
+          <span aria-hidden="true">·</span>
+          <a id="download-link" href="https://github.com/vrtmrz/fancy-kit/releases" download>
+            Download the Screwdriver document
+          </a>
+        </p>
+      </section>
+
+      <section aria-labelledby="vault-heading">
+        <h2 id="vault-heading">Dedicated test Vault</h2>
+        <label for="vault-name">Vault name or ID</label>
+        <input
+          id="vault-name"
+          name="vault-name"
+          type="text"
+          value="fancy-kit-harness"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <p class="hint">
+          The saved value remains in this browser only. It is not placed in the
+          release link or sent to Fancy Kit.
+        </p>
+        <label class="confirmation">
+          <input id="dedicated-vault" type="checkbox">
+          <span>I have opened or created this disposable, dedicated test Vault.</span>
+        </label>
+      </section>
+
+      <p id="message" class="message" aria-live="assertive"></p>
+      <div class="actions">
+        <button id="install" type="button" disabled>Copy and open in Obsidian</button>
+        <button id="retry" class="secondary" type="button" hidden>Retry bundle check</button>
+      </div>
+
+      <details>
+        <summary>What happens next?</summary>
+        <ol>
+          <li>Obsidian creates or replaces a versioned note from the Clipboard.</li>
+          <li>Run <code>Screwdriver: Restore files from this note</code>.</li>
+          <li>Reload Obsidian, then enable <strong>Fancy Kit Harness</strong>.</li>
+        </ol>
+        <p>
+          The document restores only <code>main.js</code>,
+          <code>manifest.json</code>, and <code>styles.css</code>. It does not
+          enable the plug-in or provide a <code>data.json</code> file.
+        </p>
+      </details>
+
+      <noscript>This installer requires JavaScript to verify and copy the bundle.</noscript>
+    </main>
+    <script type="module" src="./installer.mjs"></script>
+  </body>
+</html>
