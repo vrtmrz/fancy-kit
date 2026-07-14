@@ -116,6 +116,13 @@ test("rejects changed content and unexpected restore paths", async () => {
           ".obsidian/plugins/fancy-kit-harness/main.js",
           ".obsidian/community-plugins.json",
         ),
+    ),
+    /unexpected restore path/,
+  );
+  assert.throws(
+    () =>
+      assertHarnessDocument(
+        `${harnessDocument}\n\`\`\`screwdriver:.obsidian/plugins/other/main.js:base64:0\nYnlwYXNz\n\`\`\`\n`,
       ),
     /unexpected restore path/,
   );

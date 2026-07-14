@@ -9,6 +9,9 @@ const EXPECTED_PATHS = new Set(
     (file) => `${PLUGIN_ROOT}/${file}`,
   ),
 );
+const EXPECTED_DIRECTIVES = new Set(
+  [...EXPECTED_PATHS].map((path) => `${path}:plain:0`),
+);
 
 export function parseInstallerRequest(search) {
   const parameters = new URLSearchParams(search);
@@ -92,12 +95,13 @@ export function assertHarnessDocument(content) {
   if (!content.startsWith("---\n") || !content.includes("\nadjustObsidianDir: true\n")) {
     throw new Error("The downloaded file is not a Fancy Kit Harness Screwdriver document.");
   }
-  const paths = [...content.matchAll(/^```screwdriver:([^:\n]+):plain:0$/gm)].map(
+  const directives = [...content.matchAll(/^```screwdriver:([^\n]+)$/gm)].map(
     (match) => match[1],
   );
   if (
-    paths.length !== EXPECTED_PATHS.size ||
-    paths.some((path) => !EXPECTED_PATHS.has(path))
+    directives.length !== EXPECTED_DIRECTIVES.size ||
+    new Set(directives).size !== EXPECTED_DIRECTIVES.size ||
+    directives.some((directive) => !EXPECTED_DIRECTIVES.has(directive))
   ) {
     throw new Error("The Harness document contains an unexpected restore path.");
   }
