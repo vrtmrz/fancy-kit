@@ -27,6 +27,8 @@ Use a prerelease when consumer validation requires a registry version before the
 
 `@vrtmrz/obsidian-test-session` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
 
+Record pending user-visible `octagonal-wheels` changes under `Unreleased` in `packages/octagonal-wheels/updates.md`. During stable release preparation, replace that heading with the release version and add a new empty `Unreleased` section above it. Consumer previews may retain the `Unreleased` heading until the stable version is chosen.
+
 Choose the version deliberately before preparing the release:
 
 - use a patch version for compatible fixes, internal maintenance, and compatible additions;
