@@ -30,12 +30,24 @@ export interface HarnessState {
   guidedReview: {
     step: string;
     timed: { outcome: string; displayStayedAwake: string | null };
+    release: {
+      outcome: string;
+      displaySwitchedOff: string | null;
+      activeLeaseCountAtStart: number | null;
+      sentinelHeldAtStart: boolean | null;
+    };
   };
   suite: {
+    selected: readonly string[];
     running: boolean;
     current: string | null;
     results: Record<string, { status: string; detail: string | null }>;
   };
+}
+
+interface HarnessPluginAccess {
+  readonly e2e: HarnessState;
+  createMarkdownReport(): string;
 }
 
 export interface HarnessTestSession {
@@ -139,7 +151,7 @@ export async function readHarnessState(
         const obsidianApp = (
           globalThis as typeof globalThis & {
             app?: {
-              plugins?: { plugins?: Record<string, { e2e: HarnessState }> };
+              plugins?: { plugins?: Record<string, HarnessPluginAccess> };
             };
           }
         ).app;
@@ -147,6 +159,28 @@ export async function readHarnessState(
         if (state === undefined)
           throw new Error(`Harness plug-in is not loaded: ${pluginId}`);
         return state;
+      }, HARNESS_PLUGIN_ID),
+  );
+}
+
+export async function readHarnessMarkdownReport(
+  session: ObsidianPluginSession,
+): Promise<string> {
+  return await withObsidianPage(
+    session.remoteDebuggingPort,
+    async (page) =>
+      await page.evaluate((pluginId) => {
+        const obsidianApp = (
+          globalThis as typeof globalThis & {
+            app?: {
+              plugins?: { plugins?: Record<string, HarnessPluginAccess> };
+            };
+          }
+        ).app;
+        const plugin = obsidianApp?.plugins?.plugins?.[pluginId];
+        if (plugin === undefined)
+          throw new Error(`Harness plug-in is not loaded: ${pluginId}`);
+        return plugin.createMarkdownReport();
       }, HARNESS_PLUGIN_ID),
   );
 }

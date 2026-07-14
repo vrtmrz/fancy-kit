@@ -30,7 +30,7 @@ npm run test:e2e:obsidian:mobile
 npm run test:e2e:obsidian:local-suite
 ```
 
-The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, and guided wake-lock evidence. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
+The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, guided wake-lock and post-release evidence, and Markdown report generation. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
 
 ## Local prerequisites
 

@@ -7,6 +7,7 @@ import {
   Plugin,
   PluginSettingTab,
   Setting,
+  apiVersion,
   type WorkspaceLeaf,
 } from "obsidian";
 import {
@@ -40,15 +41,14 @@ import {
   type HarnessSettings,
   type ScenarioId,
 } from "./settings.js";
+import { formatHarnessMarkdownReport } from "./report.js";
 
 const VIEW_TYPE = "fancy-kit-harness-wake-lock";
 const MAX_TRANSCRIPT_ENTRIES = 200;
 const DEFAULT_DURATION_SECONDS = 120;
 
 type ShowcaseResult =
-  | string
-  | null
-  | { id: string; label: string; path: string };
+  string | null | { id: string; label: string; path: string };
 
 type ScenarioMode = "automatic" | "guided";
 type ScenarioStatus =
@@ -111,7 +111,8 @@ const SCENARIOS: readonly ScenarioDefinition[] = [
     description:
       "Checks overlapping logical leases and reference counting without requiring physical platform support.",
     action: "Acquire two logical leases and dispose of them independently.",
-    expected: "The lease count returns to its original value without a leaked lease.",
+    expected:
+      "The lease count returns to its original value without a leaked lease.",
     mode: "automatic",
   },
   {
@@ -119,7 +120,8 @@ const SCENARIOS: readonly ScenarioDefinition[] = [
     title: "Mobile wake-lock review",
     description:
       "Guides the physical display and background-return checks that the WebView cannot complete by itself.",
-    action: "Follow the displayed mobile instructions and confirm the physical result.",
+    action:
+      "Follow the displayed mobile instructions and confirm the physical result.",
     expected:
       "Automated lifecycle evidence and the separate physical-display decision are recorded in the report.",
     mode: "guided",
@@ -130,6 +132,12 @@ const AUTOMATIC_SCENARIO_IDS = SCENARIOS.filter(
   ({ mode }) => mode === "automatic",
 ).map(({ id }) => id);
 const ALL_SCENARIO_IDS = SCENARIOS.map(({ id }) => id);
+
+function defaultScenarioIds(mode: HarnessMode | null): ScenarioId[] {
+  return mode === "review"
+    ? [...ALL_SCENARIO_IDS]
+    : [...AUTOMATIC_SCENARIO_IDS];
+}
 
 function createScenarioResults(): Record<ScenarioId, ScenarioResult> {
   return Object.fromEntries(
@@ -148,6 +156,8 @@ type GuidedStep =
   | "preflight"
   | "timed-run"
   | "screen-confirmation"
+  | "release-ready"
+  | "release-waiting"
   | "visibility-ready"
   | "visibility-waiting"
   | "summary";
@@ -170,6 +180,16 @@ interface GuidedReviewState {
     elapsedMilliseconds: number | null;
     maximumTimerDriftMilliseconds: number;
     displayStayedAwake: "yes" | "no" | "unsure" | null;
+  };
+  release: {
+    outcome: GuidedOutcome;
+    displaySwitchedOff: "yes" | "no" | "unsure" | null;
+    hiddenObserved: boolean;
+    returnedObserved: boolean;
+    startedAt: string | null;
+    completedAt: string | null;
+    activeLeaseCountAtStart: number | null;
+    sentinelHeldAtStart: boolean | null;
   };
   visibility: {
     outcome: GuidedOutcome;
@@ -207,6 +227,20 @@ interface HarnessSnapshot extends HarnessState {
   activeLeaseCount: number;
 }
 
+interface UserAgentData {
+  readonly mobile?: boolean;
+  readonly platform?: string;
+  readonly brands?: readonly {
+    readonly brand: string;
+    readonly version: string;
+  }[];
+}
+
+type HarnessNavigator = Navigator & {
+  readonly wakeLock?: unknown;
+  readonly userAgentData?: UserAgentData;
+};
+
 function createGuidedReviewState(): GuidedReviewState {
   return {
     step: "idle",
@@ -218,6 +252,16 @@ function createGuidedReviewState(): GuidedReviewState {
       elapsedMilliseconds: null,
       maximumTimerDriftMilliseconds: 0,
       displayStayedAwake: null,
+    },
+    release: {
+      outcome: "pending",
+      displaySwitchedOff: null,
+      hiddenObserved: false,
+      returnedObserved: false,
+      startedAt: null,
+      completedAt: null,
+      activeLeaseCountAtStart: null,
+      sentinelHeldAtStart: null,
     },
     visibility: {
       outcome: "pending",
@@ -233,6 +277,12 @@ function describeError(error: unknown): string {
   return error instanceof Error
     ? `${error.name}: ${error.message}`
     : String(error);
+}
+
+function describeReportValue(value: unknown): string {
+  if (value === null || value === undefined) return "Not recorded";
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
 }
 
 function isAbortError(error: unknown): boolean {
@@ -342,10 +392,11 @@ class HarnessSettingTab extends PluginSettingTab {
           .addOption("showcase", MODE_LABELS.showcase)
           .addOption("automation", MODE_LABELS.automation)
           .setValue(this.plugin.mode ?? "")
-          .onChange((value) =>
-            void this.plugin.setMode(
-              value === "" ? null : (value as HarnessMode),
-            ),
+          .onChange(
+            (value) =>
+              void this.plugin.setMode(
+                value === "" ? null : (value as HarnessMode),
+              ),
           );
       });
 
@@ -400,8 +451,7 @@ class WakeLockHarnessView extends ItemView {
     });
 
     if (this.plugin.mode === "showcase") this.renderShowcase(container);
-    if (this.plugin.mode === "automation")
-      this.renderAutomation(container);
+    if (this.plugin.mode === "automation") this.renderAutomation(container);
 
     this.renderScenarioRunner(container);
 
@@ -425,7 +475,9 @@ class WakeLockHarnessView extends ItemView {
   }
 
   private renderAutomation(container: HTMLElement): void {
-    const section = container.createDiv({ cls: "fancy-kit-harness__automation" });
+    const section = container.createDiv({
+      cls: "fancy-kit-harness__automation",
+    });
     section.dataset.testid = "automation-status";
     section.createEl("h2", { text: "Automated E2E" });
     const pending = this.plugin.e2e.pendingRun;
@@ -455,21 +507,65 @@ class WakeLockHarnessView extends ItemView {
       text: "Run individual UI stories backed by the same API used by the automated real-Obsidian suite.",
     });
     this.renderShowcaseSection(section, "Dialogs", [
-      ["Text prompt", "Initial value, selection, Enter, Escape, and empty-string semantics.", "prompt-text"],
-      ["Password prompt", "Password input without retaining the value in the catalogue.", "prompt-password"],
-      ["Typed selection", "Select an object while preserving its identity.", "pick-one"],
-      ["Markdown confirmation", "Literal action types and Markdown content.", "confirm-action"],
-      ["Message", "A one-action informational Markdown dialog.", "show-message"],
+      [
+        "Text prompt",
+        "Initial value, selection, Enter, Escape, and empty-string semantics.",
+        "prompt-text",
+      ],
+      [
+        "Password prompt",
+        "Password input without retaining the value in the catalogue.",
+        "prompt-password",
+      ],
+      [
+        "Typed selection",
+        "Select an object while preserving its identity.",
+        "pick-one",
+      ],
+      [
+        "Markdown confirmation",
+        "Literal action types and Markdown content.",
+        "confirm-action",
+      ],
+      [
+        "Message",
+        "A one-action informational Markdown dialog.",
+        "show-message",
+      ],
     ]);
     this.renderShowcaseSection(section, "Progress", [
-      ["Progress Notice", "Start a deterministic three-step progress Notice.", "progress-start"],
-      ["Advance progress", "Advance the active progress story by one step.", "progress-step"],
-      ["Cancel progress", "Cancel the active progress story.", "progress-cancel"],
+      [
+        "Progress Notice",
+        "Start a deterministic three-step progress Notice.",
+        "progress-start",
+      ],
+      [
+        "Advance progress",
+        "Advance the active progress story by one step.",
+        "progress-step",
+      ],
+      [
+        "Cancel progress",
+        "Cancel the active progress story.",
+        "progress-cancel",
+      ],
     ]);
     this.renderShowcaseSection(section, "Notices", [
-      ["Show keyed Notice", "Create a persistent Notice owned by an instance-scoped manager.", "notice-show"],
-      ["Update keyed Notice", "Update the same Notice and start its expiry.", "notice-update"],
-      ["Hide keyed Notice", "Hide and forget the keyed Notice explicitly.", "notice-hide"],
+      [
+        "Show keyed Notice",
+        "Create a persistent Notice owned by an instance-scoped manager.",
+        "notice-show",
+      ],
+      [
+        "Update keyed Notice",
+        "Update the same Notice and start its expiry.",
+        "notice-update",
+      ],
+      [
+        "Hide keyed Notice",
+        "Hide and forget the keyed Notice explicitly.",
+        "notice-hide",
+      ],
     ]);
 
     const result = section.createDiv({ cls: "fancy-kit-harness__result" });
@@ -538,9 +634,10 @@ class WakeLockHarnessView extends ItemView {
       resultLine.dataset.testid = `scenario-result-${scenario.id}`;
       resultLine.createEl("strong", { text: "Result: " });
       resultLine.createSpan({
-        text: result.detail === null
-          ? result.status
-          : `${result.status} — ${result.detail}`,
+        text:
+          result.detail === null
+            ? result.status
+            : `${result.status} — ${result.detail}`,
       });
     }
 
@@ -563,9 +660,7 @@ class WakeLockHarnessView extends ItemView {
         button
           .setButtonText("Run automatic")
           .setDisabled(suite.running)
-          .onClick(() =>
-            void this.plugin.runScenarios(AUTOMATIC_SCENARIO_IDS),
-          );
+          .onClick(() => void this.plugin.runScenarios(AUTOMATIC_SCENARIO_IDS));
         button.buttonEl.dataset.testid = "scenario-run-automatic";
       })
       .addButton((button) => {
@@ -575,9 +670,7 @@ class WakeLockHarnessView extends ItemView {
           .onClick(() => void this.plugin.runScenarios(ALL_SCENARIO_IDS));
         button.buttonEl.dataset.testid = "scenario-run-full";
       });
-    scenarioActions.settingEl.addClass(
-      "fancy-kit-harness__scenario-actions",
-    );
+    scenarioActions.settingEl.addClass("fancy-kit-harness__scenario-actions");
   }
 
   private renderGuidedReview(container: HTMLElement): void {
@@ -617,7 +710,7 @@ class WakeLockHarnessView extends ItemView {
         break;
       case "preflight":
         describeStep(
-          "Step 1 of 3: prepare the device",
+          "Step 1 of 4: prepare the device",
           `Set device auto-lock to less than ${this.plugin.durationSeconds} seconds, keep Obsidian in the foreground, and do not touch the display after starting.`,
           "The countdown should complete without the display switching off or the lock screen appearing.",
         );
@@ -632,7 +725,7 @@ class WakeLockHarnessView extends ItemView {
         break;
       case "timed-run":
         describeStep(
-          "Step 1 of 3: leave the device untouched",
+          "Step 1 of 4: leave the device untouched",
           `Do not touch the device. Wait for the remaining ${this.plugin.e2e.remainingSeconds ?? 0} seconds.`,
           "The display remains awake, the countdown continues, and the runner releases its lease at the end.",
         );
@@ -645,7 +738,7 @@ class WakeLockHarnessView extends ItemView {
         break;
       case "screen-confirmation":
         describeStep(
-          "Step 2 of 3: confirm the physical result",
+          "Step 2 of 4: confirm the physical result",
           "Report what happened while the countdown was running.",
           "Choose Yes only if the display remained awake for the complete test without interaction.",
         );
@@ -669,11 +762,55 @@ class WakeLockHarnessView extends ItemView {
               .setButtonText("Unsure")
               .onClick(() => this.plugin.recordDisplayResult("unsure"));
             button.buttonEl.dataset.testid = "guided-display-unsure";
-          });
+          })
+          .settingEl.addClass("fancy-kit-harness__guided-actions");
+        break;
+      case "release-ready":
+        describeStep(
+          "Step 3 of 4: verify normal screen-off",
+          "Start the check, leave Obsidian untouched, and wait for the normal device auto-lock timeout. Unlock the device and return to this view after the screen switches off.",
+          "With no Harness wake-lock lease active, the operating system can switch the display off normally.",
+        );
+        new Setting(section).addButton((button) => {
+          button
+            .setButtonText("Start without wake lock")
+            .setCta()
+            .onClick(() => this.plugin.startReleasedDisplayTest());
+          button.buttonEl.dataset.testid = "guided-start-release";
+        });
+        break;
+      case "release-waiting":
+        describeStep(
+          "Step 3 of 4: leave the device untouched",
+          "Wait without touching the device. After the display switches off, unlock it, return to Obsidian, and record the result. If it remains on beyond the configured auto-lock timeout, choose No.",
+          "The display switches off according to the device policy. This physical check is separate from the browser visibility evidence.",
+        );
+        new Setting(section)
+          .setName("Did the display switch off after release?")
+          .addButton((button) => {
+            button
+              .setButtonText("Yes")
+              .setCta()
+              .onClick(() => this.plugin.recordReleasedDisplayResult("yes"));
+            button.buttonEl.dataset.testid = "guided-release-yes";
+          })
+          .addButton((button) => {
+            button
+              .setButtonText("No")
+              .onClick(() => this.plugin.recordReleasedDisplayResult("no"));
+            button.buttonEl.dataset.testid = "guided-release-no";
+          })
+          .addButton((button) => {
+            button
+              .setButtonText("Unsure")
+              .onClick(() => this.plugin.recordReleasedDisplayResult("unsure"));
+            button.buttonEl.dataset.testid = "guided-release-unsure";
+          })
+          .settingEl.addClass("fancy-kit-harness__guided-actions");
         break;
       case "visibility-ready":
         describeStep(
-          "Step 3 of 3: background and return",
+          "Step 4 of 4: background and return",
           "Tap Start, send Obsidian to the background for at least five seconds, then return to this view.",
           "The runner observes hidden and visible states, releases while hidden, and reacquires after returning when the platform supports it.",
         );
@@ -687,7 +824,7 @@ class WakeLockHarnessView extends ItemView {
         break;
       case "visibility-waiting":
         describeStep(
-          "Step 3 of 3: perform the app switch",
+          "Step 4 of 4: perform the app switch",
           review.visibility.hiddenObserved
             ? "Return to Obsidian and wait while the runner collects the reacquisition result."
             : "Send Obsidian to the background now, wait at least five seconds, and then return.",
@@ -710,7 +847,7 @@ class WakeLockHarnessView extends ItemView {
         new Setting(section)
           .addButton((button) => {
             button
-              .setButtonText("Copy report")
+              .setButtonText("Copy Markdown report")
               .setCta()
               .onClick(() => void this.plugin.copyReport());
             button.buttonEl.dataset.testid = "guided-copy-report";
@@ -735,6 +872,13 @@ class WakeLockHarnessView extends ItemView {
     table.dataset.testid = "guided-summary";
     const rows: readonly (readonly [string, string])[] = [
       ["Physical display", review.timed.outcome],
+      ["Post-release display", review.release.outcome],
+      [
+        "Post-release result",
+        review.release.displaySwitchedOff ?? "Not recorded",
+      ],
+      ["Post-release hidden observed", String(review.release.hiddenObserved)],
+      ["Post-release return observed", String(review.release.returnedObserved)],
       [
         "Timed run elapsed",
         review.timed.elapsedMilliseconds === null
@@ -881,10 +1025,12 @@ class WakeLockHarnessView extends ItemView {
       });
     new Setting(container)
       .setName("Diagnostic report")
-      .setDesc("Copies capability state and the transcript for review.")
+      .setDesc(
+        "Copies a Markdown report with device information, capability state, scenario results, and the transcript for review.",
+      )
       .addButton((button) => {
         button
-          .setButtonText("Copy report")
+          .setButtonText("Copy Markdown report")
           .onClick(() => void this.plugin.copyReport());
         button.buttonEl.dataset.testid = "wake-lock-copy-report";
       })
@@ -946,9 +1092,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
   private explicitController: AbortController | undefined;
   private explicitLease: ScreenWakeLockLease | undefined;
   private visibilityFinishTimeout: number | undefined;
-  private guidedScenarioResolve:
-    | ((result: ScenarioResult) => void)
-    | undefined;
+  private guidedScenarioResolve: ((result: ScenarioResult) => void) | undefined;
 
   get mode(): HarnessMode | null {
     return this.harnessSettings.mode;
@@ -967,6 +1111,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
     this.harnessSettings = parsed.settings;
     this.invalidPendingRun = parsed.invalidPendingRun;
     this.e2e.mode = this.harnessSettings.mode;
+    this.e2e.suite.selected = defaultScenarioIds(this.harnessSettings.mode);
     this.e2e.pendingRun = this.harnessSettings.pendingRun ?? null;
     this.e2e.pendingRunError = parsed.pendingRunError ?? null;
     this.wakeLock = createScreenWakeLockManager({
@@ -1034,6 +1179,16 @@ export default class FancyKitHarnessPlugin extends Plugin {
       "e2e-confirm-display-yes",
       "E2E: confirm the guided display result",
       () => this.recordDisplayResult("yes"),
+    );
+    this.addAutomationCommand(
+      "e2e-start-released-display-check",
+      "E2E: start the post-release display check",
+      () => this.startReleasedDisplayTest(),
+    );
+    this.addAutomationCommand(
+      "e2e-confirm-released-display-yes",
+      "E2E: confirm the post-release display result",
+      () => this.recordReleasedDisplayResult("yes"),
     );
     this.addAutomationCommand(
       "e2e-run-automatic-suite",
@@ -1115,6 +1270,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
     );
     this.harnessSettings = settings;
     this.e2e.mode = mode;
+    this.e2e.suite.selected = defaultScenarioIds(mode);
     this.refreshViews();
   }
 
@@ -1228,10 +1384,8 @@ export default class FancyKitHarnessPlugin extends Plugin {
           total: 3,
           hideOnCompleteMs: 750,
           hideOnCancelMs: 750,
-          onComplete: ({ state, value }) =>
-            this.setProgressState(state, value),
-          onCancel: ({ state, value }) =>
-            this.setProgressState(state, value),
+          onComplete: ({ state, value }) => this.setProgressState(state, value),
+          onCancel: ({ state, value }) => this.setProgressState(state, value),
         });
         this.setProgressState("running", 0);
         this.setResult("started");
@@ -1294,9 +1448,9 @@ export default class FancyKitHarnessPlugin extends Plugin {
     const current = new Set(this.e2e.suite.selected);
     if (selected) current.add(id);
     else current.delete(id);
-    this.e2e.suite.selected = SCENARIOS.map(({ id: candidate }) => candidate).filter(
-      (candidate) => current.has(candidate),
-    );
+    this.e2e.suite.selected = SCENARIOS.map(
+      ({ id: candidate }) => candidate,
+    ).filter((candidate) => current.has(candidate));
     this.refreshViews();
   }
 
@@ -1402,7 +1556,9 @@ export default class FancyKitHarnessPlugin extends Plugin {
       await operation();
     } catch (error) {
       if (predicate(error)) return;
-      throw new Error(`${label} returned an unexpected error: ${describeError(error)}`);
+      throw new Error(
+        `${label} returned an unexpected error: ${describeError(error)}`,
+      );
     }
     throw new Error(`${label} did not reject`);
   }
@@ -1448,7 +1604,8 @@ export default class FancyKitHarnessPlugin extends Plugin {
       );
       return {
         status: "passed",
-        detail: "Four operations and four typed error paths matched the contract.",
+        detail:
+          "Four operations and four typed error paths matched the contract.",
       };
     } finally {
       await this.removeFixtureRoot(root);
@@ -1530,25 +1687,30 @@ export default class FancyKitHarnessPlugin extends Plugin {
     const review = this.e2e.guidedReview;
     if (
       review.timed.outcome === "failed" ||
+      review.release.outcome === "failed" ||
       review.visibility.outcome === "failed"
     ) {
       return {
         status: "failed",
-        detail: "The physical display or visibility lifecycle check failed.",
+        detail:
+          "The wake-lock display, post-release display, or visibility lifecycle check failed.",
       };
     }
     if (
       review.timed.outcome === "passed" &&
+      review.release.outcome === "passed" &&
       review.visibility.outcome === "passed"
     ) {
       return {
         status: "passed",
-        detail: "The physical display and visibility lifecycle checks passed.",
+        detail:
+          "The wake-lock display, post-release display, and visibility lifecycle checks passed.",
       };
     }
     return {
       status: "inconclusive",
-      detail: "The collected platform evidence did not support a complete pass or failure.",
+      detail:
+        "The collected platform evidence did not support a complete pass or failure.",
     };
   }
 
@@ -1590,7 +1752,11 @@ export default class FancyKitHarnessPlugin extends Plugin {
 
   cancelGuidedReview(): void {
     const review = this.e2e.guidedReview;
-    review.timed.outcome = "cancelled";
+    if (review.timed.outcome === "pending") review.timed.outcome = "cancelled";
+    if (review.release.outcome === "pending")
+      review.release.outcome = "cancelled";
+    if (review.visibility.outcome === "pending")
+      review.visibility.outcome = "cancelled";
     review.step = "summary";
     review.completedAt = new Date().toISOString();
     this.timedController?.abort();
@@ -1609,10 +1775,63 @@ export default class FancyKitHarnessPlugin extends Plugin {
     review.timed.displayStayedAwake = result;
     review.timed.outcome =
       result === "yes" ? "passed" : result === "no" ? "failed" : "inconclusive";
-    review.step = "visibility-ready";
+    review.step = "release-ready";
     this.e2e.lastAction = "physical-display-confirmation";
     this.e2e.lastResult = `display-stayed-awake-${result}`;
     this.record("physical-display-confirmed", { result });
+    this.refreshViews();
+  }
+
+  startReleasedDisplayTest(): void {
+    const review = this.e2e.guidedReview;
+    if (review.step !== "release-ready") return;
+    const wakeLock = this.requireWakeLock();
+    review.release = {
+      outcome: "pending",
+      displaySwitchedOff: null,
+      hiddenObserved: false,
+      returnedObserved: false,
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+      activeLeaseCountAtStart: wakeLock.activeLeaseCount,
+      sentinelHeldAtStart: wakeLock.held,
+    };
+    review.step = "release-waiting";
+    this.e2e.lastAction = "post-release-display-started";
+    this.e2e.lastResult = "waiting-for-screen-off";
+    this.record("post-release-check-started", {
+      activeLeaseCount: wakeLock.activeLeaseCount,
+      sentinelHeld: wakeLock.held,
+    });
+    this.refreshViews();
+  }
+
+  recordReleasedDisplayResult(result: "yes" | "no" | "unsure"): void {
+    const review = this.e2e.guidedReview;
+    if (review.step !== "release-waiting") return;
+    const leakedAtStart =
+      (review.release.activeLeaseCountAtStart ?? 0) > 0 ||
+      review.release.sentinelHeldAtStart === true;
+    review.release.displaySwitchedOff = result;
+    review.release.completedAt = new Date().toISOString();
+    review.release.outcome = leakedAtStart
+      ? "failed"
+      : result === "yes"
+        ? "passed"
+        : result === "no"
+          ? "failed"
+          : "inconclusive";
+    review.step = "visibility-ready";
+    this.e2e.lastAction = "post-release-display-confirmation";
+    this.e2e.lastResult = `display-switched-off-${result}`;
+    this.record("post-release-display-confirmed", {
+      result,
+      outcome: review.release.outcome,
+      activeLeaseCountAtStart: review.release.activeLeaseCountAtStart,
+      sentinelHeldAtStart: review.release.sentinelHeldAtStart,
+      hiddenObserved: review.release.hiddenObserved,
+      returnedObserved: review.release.returnedObserved,
+    });
     this.refreshViews();
   }
 
@@ -1662,6 +1881,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
     this.e2e.lastResult = `guided-review-${review.visibility.outcome}`;
     this.record("guided-review-completed", {
       timedOutcome: review.timed.outcome,
+      releaseOutcome: review.release.outcome,
       visibilityOutcome: review.visibility.outcome,
     });
     this.refreshViews();
@@ -1843,32 +2063,125 @@ export default class FancyKitHarnessPlugin extends Plugin {
   }
 
   async copyReport(): Promise<void> {
-    const snapshot = this.snapshot();
-    const report = JSON.stringify(
-      {
-        ...snapshot,
-        lastResult:
-          snapshot.lastAction === "showcase-story"
-            ? "Showcase result omitted from report."
-            : snapshot.lastResult,
-      },
-      null,
-      2,
-    );
+    const report = this.createMarkdownReport();
     try {
       await navigator.clipboard.writeText(report);
       this.e2e.lastAction = "copy-report";
       this.e2e.lastResult = "report-copied";
       this.record("report-copied");
-      new Notice("Harness report copied.");
+      new Notice("Markdown Harness report copied.");
     } catch (error) {
       this.e2e.lastResult = `report-copy-failed: ${describeError(error)}`;
       this.record("report-copy-failed", { error: describeError(error) });
       new Notice(
-        "Could not copy the wake lock report. The transcript remains visible.",
+        "Could not copy the Harness report. The transcript remains visible.",
       );
     }
     this.refreshViews();
+  }
+
+  createMarkdownReport(): string {
+    const snapshot = this.snapshot();
+    const browserNavigator = navigator as HarnessNavigator;
+    const userAgentData = browserNavigator.userAgentData;
+    const brands = userAgentData?.brands
+      ?.map(({ brand, version }) => `${brand} ${version}`)
+      .join(", ");
+    const lastResult =
+      snapshot.lastAction === "showcase-story"
+        ? "Showcase result omitted from report."
+        : describeReportValue(snapshot.lastResult);
+    return formatHarnessMarkdownReport({
+      generatedAt: new Date().toISOString(),
+      environment: [
+        { label: "Harness version", value: this.manifest.version },
+        { label: "Obsidian API version", value: apiVersion },
+        { label: "Platform", value: snapshot.platform },
+        { label: "User agent", value: browserNavigator.userAgent },
+        {
+          label: "Navigator platform",
+          value: browserNavigator.platform || "Not exposed",
+        },
+        {
+          label: "User-agent client hints",
+          value:
+            userAgentData === undefined
+              ? "Not exposed"
+              : [
+                  userAgentData.platform ?? "unknown platform",
+                  `mobile=${String(userAgentData.mobile ?? false)}`,
+                  brands || "brands not exposed",
+                ].join("; "),
+        },
+        {
+          label: "Viewport",
+          value: `${window.innerWidth} × ${window.innerHeight} CSS px`,
+        },
+        {
+          label: "Screen",
+          value: `${screen.width} × ${screen.height} CSS px`,
+        },
+        {
+          label: "Device pixel ratio",
+          value: String(window.devicePixelRatio),
+        },
+        {
+          label: "Maximum touch points",
+          value: String(browserNavigator.maxTouchPoints),
+        },
+        { label: "Secure context", value: String(snapshot.secureContext) },
+        { label: "Wake Lock API", value: String(snapshot.apiAvailable) },
+      ],
+      scenarios: SCENARIOS.map(({ id, title, mode }) => ({
+        id,
+        title,
+        mode,
+        status: snapshot.suite.results[id].status,
+        detail: snapshot.suite.results[id].detail,
+      })),
+      guidedReview: [
+        { label: "Current step", value: snapshot.guidedReview.step },
+        {
+          label: "Wake-lock display",
+          value: snapshot.guidedReview.timed.outcome,
+        },
+        {
+          label: "Display stayed awake",
+          value:
+            snapshot.guidedReview.timed.displayStayedAwake ?? "Not recorded",
+        },
+        {
+          label: "Post-release display",
+          value: snapshot.guidedReview.release.outcome,
+        },
+        {
+          label: "Display switched off",
+          value:
+            snapshot.guidedReview.release.displaySwitchedOff ?? "Not recorded",
+        },
+        {
+          label: "Post-release visibility",
+          value: `hidden=${String(snapshot.guidedReview.release.hiddenObserved)}, returned=${String(snapshot.guidedReview.release.returnedObserved)}`,
+        },
+        {
+          label: "Visibility lifecycle",
+          value: snapshot.guidedReview.visibility.outcome,
+        },
+      ],
+      currentState: [
+        { label: "Mode", value: snapshot.mode ?? "Not selected" },
+        { label: "Document visibility", value: snapshot.visibility },
+        { label: "Manager supported", value: String(snapshot.supported) },
+        { label: "Platform sentinel held", value: String(snapshot.held) },
+        {
+          label: "Logical leases",
+          value: String(snapshot.activeLeaseCount),
+        },
+        { label: "Last action", value: snapshot.lastAction ?? "None" },
+        { label: "Last result", value: lastResult },
+      ],
+      transcript: snapshot.transcript,
+    });
   }
 
   clearTranscript(): void {
@@ -1880,7 +2193,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
 
   snapshot(): HarnessSnapshot {
     const wakeLock = this.wakeLock;
-    const browserNavigator = navigator as Navigator & { wakeLock?: unknown };
+    const browserNavigator = navigator as HarnessNavigator;
     return {
       mode: this.e2e.mode,
       pendingRun:
@@ -1920,6 +2233,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
       guidedReview: {
         ...this.e2e.guidedReview,
         timed: { ...this.e2e.guidedReview.timed },
+        release: { ...this.e2e.guidedReview.release },
         visibility: { ...this.e2e.guidedReview.visibility },
       },
     };
@@ -1958,7 +2272,16 @@ export default class FancyKitHarnessPlugin extends Plugin {
     const visibilityState = document.visibilityState;
     this.record("visibility-change", { visibilityState });
     const review = this.e2e.guidedReview;
-    if (review.step === "visibility-waiting") {
+    if (review.step === "release-waiting") {
+      if (visibilityState === "hidden") {
+        review.release.hiddenObserved = true;
+      } else if (
+        visibilityState === "visible" &&
+        review.release.hiddenObserved
+      ) {
+        review.release.returnedObserved = true;
+      }
+    } else if (review.step === "visibility-waiting") {
       if (visibilityState === "hidden") {
         review.visibility.hiddenObserved = true;
       } else if (

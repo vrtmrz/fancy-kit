@@ -26,6 +26,11 @@ interface HarnessTestPlugin {
   e2e: HarnessState;
   openHarness(): Promise<void>;
   runStory(story: string): Promise<void>;
+  beginGuidedReview(): void;
+  setDurationSeconds(value: string): void;
+  startGuidedTimedTest(): Promise<void>;
+  recordDisplayResult(result: "yes" | "no" | "unsure"): void;
+  startReleasedDisplayTest(): void;
 }
 
 async function setMobileEmulation(page: Page, enabled: boolean): Promise<void> {
@@ -115,9 +120,7 @@ async function main(): Promise<void> {
           const obsidianApp = (window as unknown as ObsidianTestWindow).app;
           const harnessLoaded =
             obsidianApp?.plugins?.plugins[pluginId] !== undefined;
-          return (
-            document.body.classList.contains("is-mobile") && harnessLoaded
-          );
+          return document.body.classList.contains("is-mobile") && harnessLoaded;
         }, HARNESS_PLUGIN_ID);
         await waitForObsidianPageUiIdle(page);
         const harnessPlugin = await getHarnessPlugin(page);
@@ -137,6 +140,23 @@ async function main(): Promise<void> {
             page,
             scenarioActions,
             "scenario runner actions",
+          );
+
+          await harnessPlugin.evaluate(async (instance) => {
+            instance.beginGuidedReview();
+            instance.setDurationSeconds("1");
+            await instance.startGuidedTimedTest();
+            instance.recordDisplayResult("yes");
+            instance.startReleasedDisplayTest();
+          });
+          const releasedDisplayActions = page
+            .locator('[data-testid="guided-review"]')
+            .locator(".fancy-kit-harness__guided-actions");
+          await releasedDisplayActions.scrollIntoViewIfNeeded();
+          await assertFitsViewport(
+            page,
+            releasedDisplayActions,
+            "post-release result actions",
           );
 
           await executeHarnessStory(harnessPlugin, "prompt-text");

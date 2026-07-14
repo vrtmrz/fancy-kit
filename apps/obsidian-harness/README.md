@@ -8,7 +8,7 @@ The generated document restores only `main.js`, `manifest.json`, and `styles.css
 
 Open the `Fancy Kit Harness: Open harness` command or select its ribbon icon. On first start, choose the experience that should open by default:
 
-- **Guided review** runs selected, automatic, or full contract reviews and displays the action, expected result, and collected evidence for each scenario.
+- **Guided review** runs selected, automatic, or full contract reviews and displays the action, expected result, and collected evidence for each scenario. It selects the guided mobile scenario by default so a real-device review includes it unless you switch it off.
 - **Component showcase** exercises dialogs, typed selection, notices, progress, and other visual components individually.
 - **Automated E2E** prepares the plug-in for an isolated test runner. It does not start a test merely because the mode is selected.
 
@@ -25,13 +25,17 @@ Vault scenarios create a unique owned fixture folder and remove it whether the s
 
 ## Mobile wake-lock review
 
-Set the device auto-lock timeout to a short known value, then choose a test duration longer than that timeout. Follow the displayed action and expected result without touching the screen during the countdown. The harness records browser-visible lifecycle evidence and asks separately whether the physical display remained awake.
+Set the device auto-lock timeout to a short known value, then choose a test duration longer than that timeout. Follow the displayed action and expected result without touching the screen during the countdown. The Harness first asks whether the wake lock kept the physical display awake. It then verifies that no Harness wake-lock lease remains and asks you to leave the device untouched until its normal policy switches the display off. Finally, it records the background and return lifecycle.
+
+A display that does not switch off is recorded as a failed post-release check, but is not by itself proof of a leaked wake lock. Device power policy, charging state, system accessibility settings, and other applications can affect auto-lock behaviour.
 
 A screen wake lock is best effort. It does not guarantee background execution, prevent the operating system from suspending Obsidian, or override device power policy.
 
 ## Reports and privacy
 
-Reports contain scenario status, capability state, timing, and lifecycle events. They do not intentionally include the Vault name, Vault path, existing file names, existing file contents, or password values. Reports are not transmitted automatically; use **Copy report** when you want to attach one to a review.
+The **Copy Markdown report** action produces GitHub-flavoured Markdown containing scenario status, capability state, timing, lifecycle events, Obsidian and Harness versions, the user agent, and screen dimensions. This makes the result suitable for pasting into a pull request or release review.
+
+Reports do not intentionally include the Vault name, Vault path, existing file names, existing file contents, or password values. They are not transmitted automatically. Review the environment table before posting because the user agent and screen dimensions can identify a device or operating system.
 
 ## Project status
 
