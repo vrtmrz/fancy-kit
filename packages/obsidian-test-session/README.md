@@ -65,6 +65,38 @@ try {
 
 `pluginData` is optional. When supplied, the session writes it as the plug-in's `data.json` before Obsidian starts. This supports deterministic modes and one-shot test requests. When omitted, an existing `data.json` is preserved.
 
+## Layout inspection
+
+The package provides focused Playwright inspection helpers for real-renderer layout checks. Consumers choose the locator and remain responsible for plug-in-specific selectors and workflow assertions.
+
+```ts
+import {
+  assertLocatorWithinViewport,
+  assertNoHorizontalOverflow,
+  inspectLocatorLayout,
+  withObsidianPage,
+} from "@vrtmrz/obsidian-test-session";
+
+await withObsidianPage(session.remoteDebuggingPort, async (page) => {
+  const actions = page.locator('[data-testid="backup-actions"]');
+  await actions.scrollIntoViewIfNeeded();
+
+  await assertLocatorWithinViewport(page, actions, {
+    label: "backup actions",
+  });
+  await assertNoHorizontalOverflow(page, actions, {
+    label: "backup actions",
+  });
+
+  const measurements = await inspectLocatorLayout(page, actions);
+  console.log(measurements.contentOverflow);
+});
+```
+
+`assertNoHorizontalOverflow` checks both the locator's horizontal viewport bounds and whether its content requires horizontal scrolling. It deliberately permits vertical viewport and content overflow. `assertLocatorWithinViewport` checks the selected axes but does not inspect internal scrollable content. Both assertions retry transient layouts and return the final structured measurements; configure `timeoutMs`, `pollIntervalMs`, and `tolerancePx` when the defaults do not suit the rendered component.
+
+The helpers do not scroll, resize, take screenshots, or scan descendants. Call `scrollIntoViewIfNeeded()` explicitly when the selected element may be outside a legitimate scroll container. A fixed Playwright viewport is used when available; otherwise, a connected Electron renderer uses its inner window dimensions.
+
 ## Session boundary
 
 The high-level session installs built plug-in artefacts, launches an isolated Obsidian process, pre-seeds vault trust, and asks the CLI to open the vault. When a platform CLI cannot connect to the isolated process, the session continues only after CDP confirms that the renderer opened the exact isolated vault path. It then enables and reloads the plug-in through CDP and waits for readiness. It returns:

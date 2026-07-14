@@ -2,6 +2,7 @@ export * from "./appimage.js";
 export * from "./cli.js";
 export * from "./environment.js";
 export * from "./launch.js";
+export * from "./layout.js";
 export * from "./plugin-installer.js";
 export * from "./session.js";
 export * from "./ui.js";
