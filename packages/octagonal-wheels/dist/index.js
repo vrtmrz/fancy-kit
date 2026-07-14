@@ -46,6 +46,8 @@ import * as channel_index from './channel/index.js';
 export { channel_index as channel };
 import * as BackedQueue_index from './BackedQueue/index.js';
 export { BackedQueue_index as BackedQueue };
+import * as browser_index from './browser/index.js';
+export { browser_index as browser };
 
 /**
  * Returns the version of the library.

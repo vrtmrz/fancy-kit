@@ -13,6 +13,7 @@
         "doc": "npx typedoc  --plugin typedoc-plugin-markdown  --out ./docs ./src",
         "dev": "rollup -c -w",
         "test": "vitest run",
+        "test:node": "tsx --test test-node/*.test.ts",
         "bench": "vitest bench",
         "coverage": "vitest run --coverage",
         "postcoverage": "npm run updateReadme",
@@ -160,6 +161,26 @@
         "./binary/index.js": {
             "import": "./dist/binary/index.js",
             "types": "./dist/binary/index.d.ts"
+        },
+        "./browser": {
+            "import": "./dist/browser/index.js",
+            "types": "./dist/browser/index.d.ts"
+        },
+        "./browser.js": {
+            "import": "./dist/browser/index.js",
+            "types": "./dist/browser/index.d.ts"
+        },
+        "./browser/index.js": {
+            "import": "./dist/browser/index.js",
+            "types": "./dist/browser/index.d.ts"
+        },
+        "./browser/wakeLock": {
+            "import": "./dist/browser/wakeLock.js",
+            "types": "./dist/browser/wakeLock.d.ts"
+        },
+        "./browser/wakeLock.js": {
+            "import": "./dist/browser/wakeLock.js",
+            "types": "./dist/browser/wakeLock.d.ts"
         },
         "./bureau": {
             "import": "./dist/bureau/index.js",
