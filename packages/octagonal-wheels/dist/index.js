@@ -56,7 +56,7 @@ export { browser_index as browser };
  * @returns The version of the library.
  */
 function libVersion() {
-    return "octagonal-wheels-0.1.51-preview.0";
+    return "octagonal-wheels-0.1.51";
 }
 
 export { libVersion };
