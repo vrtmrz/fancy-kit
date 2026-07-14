@@ -51,6 +51,7 @@ try {
     vault,
     pluginId: "example-plugin",
     artifactRoot: "dist/example-plugin",
+    pluginData: { mode: "automation" },
   });
 
   // Run consumer-owned assertions through session.remoteDebuggingPort.
@@ -61,6 +62,8 @@ try {
 ```
 
 `startObsidianPluginSession` stops a process whose bootstrap fails. After a successful start, the caller owns both `session.app.stop()` and `vault.dispose()` as shown above.
+
+`pluginData` is optional. When supplied, the session writes it as the plug-in's `data.json` before Obsidian starts. This supports deterministic modes and one-shot test requests. When omitted, an existing `data.json` is preserved.
 
 ## Session boundary
 

@@ -3,11 +3,17 @@ import { resolve } from "node:path";
 
 const production = process.argv[2] === "production";
 const context = await esbuild.context({
-  entryPoints: ["apps/obsidian-showcase/main.ts"],
-  outfile: "apps/obsidian-showcase/main.js",
+  entryPoints: ["apps/obsidian-harness/main.ts"],
+  outfile: "apps/obsidian-harness/main.js",
   alias: {
+    "@vrtmrz/obsidian-plugin-kit/vault": resolve(
+      "packages/obsidian-plugin-kit/src/vault.ts",
+    ),
     "@vrtmrz/obsidian-plugin-kit": resolve("packages/obsidian-plugin-kit/src/index.ts"),
     "@vrtmrz/ui-interactions": resolve("packages/ui-interactions/src/index.ts"),
+    "octagonal-wheels/browser/wakeLock": resolve(
+      "packages/octagonal-wheels/src/browser/wakeLock.ts",
+    ),
   },
   bundle: true,
   external: ["obsidian"],

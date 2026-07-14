@@ -1,100 +1,63 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { withObsidianPage } from "@vrtmrz/obsidian-test-session";
 import {
-  executeShowcaseCommand,
-  startShowcaseTestSession,
-  stopShowcaseTestSession,
-  waitForShowcaseState,
-  type ShowcaseTestSession,
-} from "../runner/showcase.ts";
-
-const FIXTURE_PATH = "Frontmatter fixture.md";
+  executeHarnessCommand,
+  startHarnessTestSession,
+  stopHarnessTestSession,
+  waitForHarnessState,
+  type HarnessTestSession,
+} from "../runner/harness.ts";
 
 async function main(): Promise<void> {
-  let testSession: ShowcaseTestSession | undefined;
+  let testSession: HarnessTestSession | undefined;
   try {
-    testSession = await startShowcaseTestSession();
+    testSession = await startHarnessTestSession({
+      schemaVersion: 1,
+      mode: "automation",
+      pendingRun: {
+        requestId: "frontmatter-contract",
+        scenarios: ["vault-frontmatter"],
+      },
+    });
     const { session } = testSession;
-    await withObsidianPage(session.remoteDebuggingPort, async (page) => {
-      await page.evaluate(async ({ path, content }) => {
-        const obsidianApp = (
-          globalThis as typeof globalThis & {
-            app?: {
-              vault?: { create(path: string, content: string): Promise<unknown> };
-            };
-          }
-        ).app;
-        if (!obsidianApp?.vault) throw new Error("Obsidian Vault API is unavailable");
-        await obsidianApp.vault.create(path, content);
-      }, {
-        path: FIXTURE_PATH,
-        content: "---\ntags:\n  - existing\n---\nFixture\n",
-      });
-    });
-
-    await executeShowcaseCommand(session, "e2e-update-frontmatter");
-    const state = await waitForShowcaseState(
+    await executeHarnessCommand(session, "e2e-start-pending-run");
+    const state = await waitForHarnessState(
       session,
-      (candidate) => candidate.frontmatterState !== null,
-      "frontmatter fixture update",
+      (candidate) =>
+        candidate.completedRequestId === "frontmatter-contract" &&
+        !candidate.suite.running,
+      "frontmatter contract completion",
     );
-    if (state.frontmatterState !== "updated") {
-      throw new Error(`Frontmatter fixture update failed: ${JSON.stringify(state)}`);
+    const result = state.suite.results["vault-frontmatter"];
+    if (result?.status !== "passed") {
+      throw new Error(
+        `Frontmatter contract failed: ${JSON.stringify(result)}`,
+      );
     }
-
-    const cached = await withObsidianPage(session.remoteDebuggingPort, async (page) => {
-      const handle = await page.waitForFunction((path) => {
-        const obsidianApp = (
-          globalThis as typeof globalThis & {
-            app?: {
-              vault?: { getAbstractFileByPath(path: string): unknown };
-              metadataCache?: {
-                getFileCache(file: unknown): { frontmatter?: Record<string, unknown> } | null;
-              };
-            };
-          }
-        ).app;
-        const file = obsidianApp?.vault?.getAbstractFileByPath(path);
-        if (!file) return null;
-        const frontmatter = obsidianApp?.metadataCache?.getFileCache(file)?.frontmatter;
-        if (frontmatter?.reviewed !== true) return null;
-        return {
-          reviewed: frontmatter.reviewed,
-          tags: frontmatter.tags,
-          failedCallbackWasWritten: frontmatter.failedCallbackWasWritten,
-          asyncCallbackWasWritten: frontmatter.asyncCallbackWasWritten,
-        };
-      }, FIXTURE_PATH, { timeout: 10_000 });
-      return await handle.jsonValue() as {
-        reviewed: boolean;
-        tags: unknown;
-        failedCallbackWasWritten?: unknown;
-        asyncCallbackWasWritten?: unknown;
-      };
-    });
-    if (
-      cached.reviewed !== true ||
-      JSON.stringify(cached.tags) !== JSON.stringify(["new", "existing"]) ||
-      cached.failedCallbackWasWritten !== undefined ||
-      cached.asyncCallbackWasWritten !== undefined
-    ) {
-      throw new Error(`Unexpected cached frontmatter: ${JSON.stringify(cached)}`);
+    if (state.pendingRun !== null || state.activeRequestId !== null) {
+      throw new Error(
+        `The one-shot request was not consumed: ${JSON.stringify(state)}`,
+      );
     }
-
-    const source = await readFile(join(testSession.vault.path, FIXTURE_PATH), "utf8");
-    if (
-      !source.includes("reviewed: true") ||
-      source.includes("failedCallbackWasWritten") ||
-      source.includes("asyncCallbackWasWritten")
-    ) {
-      throw new Error(`Updated frontmatter was not serialised: ${JSON.stringify(source)}`);
+    const saved = JSON.parse(
+      await readFile(
+        join(
+          testSession.vault.path,
+          ".obsidian/plugins/fancy-kit-harness/data.json",
+        ),
+        "utf8",
+      ),
+    ) as Record<string, unknown>;
+    if ("pendingRun" in saved || saved.mode !== "automation") {
+      throw new Error(
+        `The saved one-shot request was not consumed safely: ${JSON.stringify(saved)}`,
+      );
     }
     console.log(
-      "Real Obsidian frontmatter update, rollback, and MetadataCache reflection passed.",
+      "Real Obsidian frontmatter persistence, typed errors, and fixture cleanup passed.",
     );
   } finally {
-    if (testSession !== undefined) await stopShowcaseTestSession(testSession);
+    if (testSession !== undefined) await stopHarnessTestSession(testSession);
   }
 }
 

@@ -59,4 +59,64 @@ describe("installBuiltPlugin", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it("writes explicitly supplied plug-in data without treating it as an artefact", async () => {
+    const root = await mkdtemp(join(tmpdir(), "obsidian-runner-install-"));
+    const vaultPath = join(root, "vault");
+    const artifactRoot = join(root, "artefacts");
+    await mkdir(join(vaultPath, ".obsidian"), { recursive: true });
+    await mkdir(artifactRoot, { recursive: true });
+    await Promise.all([
+      writeFile(join(artifactRoot, "main.js"), "export {};"),
+      writeFile(join(artifactRoot, "manifest.json"), '{"id":"example-plugin"}'),
+    ]);
+
+    try {
+      const result = await installBuiltPlugin(vaultPath, {
+        pluginId: "example-plugin",
+        artifactRoot,
+        pluginData: {
+          schemaVersion: 1,
+          mode: "automation",
+          pendingRun: { requestId: "test-1", scenarios: ["smoke"] },
+        },
+      });
+      expect(result.copied).toEqual(["main.js", "manifest.json"]);
+      expect(
+        JSON.parse(await readFile(join(result.pluginDir, "data.json"), "utf8")),
+      ).toEqual({
+        schemaVersion: 1,
+        mode: "automation",
+        pendingRun: { requestId: "test-1", scenarios: ["smoke"] },
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves existing plug-in data when none is supplied", async () => {
+    const root = await mkdtemp(join(tmpdir(), "obsidian-runner-install-"));
+    const vaultPath = join(root, "vault");
+    const artifactRoot = join(root, "artefacts");
+    const pluginDir = join(vaultPath, ".obsidian", "plugins", "example-plugin");
+    await mkdir(pluginDir, { recursive: true });
+    await mkdir(artifactRoot, { recursive: true });
+    await Promise.all([
+      writeFile(join(artifactRoot, "main.js"), "export {};"),
+      writeFile(join(artifactRoot, "manifest.json"), '{"id":"example-plugin"}'),
+      writeFile(join(pluginDir, "data.json"), '{"mode":"review"}\n'),
+    ]);
+
+    try {
+      await installBuiltPlugin(vaultPath, {
+        pluginId: "example-plugin",
+        artifactRoot,
+      });
+      expect(await readFile(join(pluginDir, "data.json"), "utf8")).toBe(
+        '{"mode":"review"}\n',
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });

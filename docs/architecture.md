@@ -1,6 +1,6 @@
 # Package architecture
 
-This repository contains four independently versioned packages and one private Obsidian showcase. Sharing a workspace does not make their APIs or release lifecycles inseparable.
+This repository contains four independently versioned packages and one public-source Obsidian harness application. Sharing a workspace does not make their APIs or release lifecycles inseparable.
 
 ## Dependency direction
 
@@ -13,7 +13,7 @@ octagonal-wheels             (independent shared utilities)
 
 @vrtmrz/obsidian-test-session  ──peer──> playwright
           ↑ dev-time
-consumer E2E suites and the private showcase
+consumer E2E suites and the public harness
 ```
 
 `@vrtmrz/ui-interactions` owns framework-neutral interaction contracts, dispatch, scripted drivers, transcripts, and the App-free harness. It must not import Obsidian or browser APIs.
@@ -41,9 +41,9 @@ LiveSync replication, database, storage composition, and domain-specific service
 - Keep scripted steps discriminated by interaction kind so callbacks receive the matching request type and automated results are checked before runtime validation.
 - Keep the complete `UiInteractions` adapter at the consumer composition root. Workflows that use a subset should define a local, application-named `Pick<UiInteractions, ...>` capability rather than adding consumer policy groupings to this package.
 
-## Private workspace applications
+## Workspace application
 
-`apps/obsidian-showcase` is a visual catalogue and a real-Obsidian fixture. `test/e2e-obsidian` owns its stories and assertions while consuming the shared test session package. Neither directory is published.
+`apps/obsidian-harness` is a component catalogue, guided contract runner, and real-Obsidian fixture. `test/e2e-obsidian` owns its external stories and assertions while consuming the shared test session package. The application is not an npm package; BRAT-compatible releases are projected into a separate distribution repository. See [the harness architecture](harness.md) for its modes, one-shot automation request, safety boundary, and release projection.
 
 ## UI composition roles
 

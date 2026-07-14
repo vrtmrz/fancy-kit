@@ -8,6 +8,8 @@ export interface PluginInstallOptions {
   pluginId: string;
   /** Directory containing `main.js`, `manifest.json`, and optional `styles.css`. */
   artifactRoot: string;
+  /** Optional plug-in data written to `data.json` before Obsidian starts. */
+  pluginData?: unknown;
 }
 
 /** Result of installing built plug-in artefacts into a vault. */
@@ -45,6 +47,13 @@ export async function installBuiltPlugin(
   if (existsSync(styles)) {
     await copyFile(styles, join(pluginDir, "styles.css"));
     copied.push("styles.css");
+  }
+
+  if (options.pluginData !== undefined) {
+    const serialised = JSON.stringify(options.pluginData, null, 2);
+    if (serialised === undefined)
+      throw new Error("Plug-in data must be JSON-serialisable");
+    await writeFile(join(pluginDir, "data.json"), `${serialised}\n`);
   }
 
   await writeFile(

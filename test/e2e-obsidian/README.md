@@ -1,34 +1,36 @@
-# Real Obsidian showcase and E2E
+# Real Obsidian harness and E2E
 
-The private showcase plug-in under `apps/obsidian-showcase/` is an interactive catalogue and a fixture for automated UI tests. It runs inside real Obsidian and is not included in a published package.
+The public-source harness plug-in under `apps/obsidian-harness/` is an interactive catalogue, guided contract runner, and fixture for automated UI tests. It runs inside real Obsidian, is not an npm package, and is distributed separately as a BRAT-compatible plug-in.
 
-The shared `@vrtmrz/obsidian-test-session` package installs the showcase into a temporary vault and isolated Obsidian profile. It uses `obsidian-cli` only to deliver the vault-open URI, then uses Playwright over Electron's DevTools endpoint for bootstrap and UI readiness. Showcase story invocation, state, and assertions remain local consumer code.
+The shared `@vrtmrz/obsidian-test-session` package installs the harness into a temporary Vault and isolated Obsidian profile. It writes Automation-mode `pluginData` before start, uses `obsidian-cli` only to deliver the Vault-open URI, then uses Playwright over Electron's DevTools endpoint for bootstrap and UI readiness. Harness story invocation, one-shot requests, state, and assertions remain local consumer code.
 
 This suite is local-only. It is intentionally not part of the default CI gate.
 
-The suite has been exercised on Linux and macOS. The shared runner contains Windows executable discovery paths, but this showcase does not yet claim tested Windows support.
+The suite has been exercised on Linux and macOS. The shared runner contains Windows executable discovery paths, but this harness does not yet claim tested Windows support.
 
 ## Commands
 
-Open the showcase for manual visual and interaction checks:
+Open the harness for manual visual and interaction checks:
 
 ```bash
-npm run showcase:open
+npm run harness:open
 ```
 
 Run the automated scenarios:
 
 ```bash
 npm run test:e2e:obsidian:smoke
+npm run test:e2e:obsidian:modes
 npm run test:e2e:obsidian:dialogs
 npm run test:e2e:obsidian:progress
 npm run test:e2e:obsidian:notices
 npm run test:e2e:obsidian:frontmatter
+npm run test:e2e:obsidian:contracts
 npm run test:e2e:obsidian:mobile
 npm run test:e2e:obsidian:local-suite
 ```
 
-The catalogue currently covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. A non-visual showcase fixture verifies frontmatter serialisation, failed-callback rollback, asynchronous-callback rejection, and MetadataCache reflection through a real Obsidian `FileManager`. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and showcase plugin to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
+The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, and guided wake-lock evidence. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, and horizontal overflow.
 
 ## Local prerequisites
 
@@ -52,25 +54,25 @@ Headless Linux automatically uses `xvfb-run` when available. Set `E2E_OBSIDIAN_K
 For each session, the runner:
 
 1. creates an isolated vault, HOME, XDG, and Electron user-data directory;
-2. installs the built showcase plugin;
+2. installs the built harness plug-in and its Automation-mode `data.json`;
 3. launches Obsidian on a session-specific DevTools port;
-4. enables the showcase and invokes story commands through the active renderer;
+4. enables the harness and invokes Automation-only story commands through the active renderer;
 5. operates the real Modal, SuggestModal, and Notice DOM through Playwright;
-6. reads the story result from the showcase fixture;
+6. reads story and contract results from the harness state;
 7. terminates Obsidian and removes temporary state unless preservation is enabled.
 
 Scripted `UiInteractions` responses are not configured in this workflow.
 
-Mobile emulation reloads the renderer. The mobile scenario therefore waits for the replacement renderer, normalises its startup overlay, reacquires the showcase plug-in, and continues through Playwright.
+Mobile emulation reloads the renderer. The mobile scenario therefore waits for the replacement renderer, normalises its start-up overlay, reacquires the harness plug-in, and continues through Playwright.
 
 ## Adding a story
 
 For each visible UI feature:
 
 1. add focused unit tests for its state and contract;
-2. add a deterministic showcase command and catalogue card;
+2. add a deterministic harness story and catalogue card;
 3. add stable class names or `data-testid` markers where semantic locators are insufficient;
 4. operate the story through Playwright rather than a scripted driver;
 5. assert both visible DOM state and the resulting application value.
 
-Keep story state private to the showcase plugin. Production consumers must not expose an E2E bridge.
+Keep Automation-only commands unavailable in Review and Showcase modes. A pending run must be validated, removed from `data.json`, and saved before execution so an Obsidian reload cannot repeat it. All Vault scenarios must use a unique owned fixture root and clean it in `finally`.

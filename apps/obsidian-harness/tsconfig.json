@@ -6,8 +6,10 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "baseUrl": "../..",
     "paths": {
+      "@vrtmrz/obsidian-plugin-kit/vault": ["packages/obsidian-plugin-kit/src/vault.ts"],
       "@vrtmrz/obsidian-plugin-kit": ["packages/obsidian-plugin-kit/src/index.ts"],
-      "@vrtmrz/ui-interactions": ["packages/ui-interactions/src/index.ts"]
+      "@vrtmrz/ui-interactions": ["packages/ui-interactions/src/index.ts"],
+      "octagonal-wheels/browser/wakeLock": ["packages/octagonal-wheels/src/browser/wakeLock.ts"]
     },
     "strict": true,
     "isolatedModules": true,
@@ -15,12 +17,14 @@
     "noEmit": true
   },
   "include": [
-    "main.ts",
+    "*.ts",
     "../../packages/obsidian-plugin-kit/src/**/*.ts",
-    "../../packages/ui-interactions/src/**/*.ts"
+    "../../packages/ui-interactions/src/**/*.ts",
+    "../../packages/octagonal-wheels/src/browser/wakeLock.ts"
   ],
   "exclude": [
     "../../packages/obsidian-plugin-kit/src/**/*.test.ts",
-    "../../packages/ui-interactions/src/**/*.test.ts"
+    "../../packages/ui-interactions/src/**/*.test.ts",
+    "../../packages/octagonal-wheels/src/**/*.test.ts"
   ]
 }

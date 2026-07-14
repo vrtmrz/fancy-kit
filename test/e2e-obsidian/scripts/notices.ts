@@ -1,42 +1,42 @@
 import { withObsidianPage } from "@vrtmrz/obsidian-test-session";
 import {
-  executeShowcaseStory,
-  startShowcaseTestSession,
-  stopShowcaseTestSession,
-  type ShowcaseTestSession,
-} from "../runner/showcase.ts";
+  executeHarnessStory,
+  startHarnessTestSession,
+  stopHarnessTestSession,
+  type HarnessTestSession,
+} from "../runner/harness.ts";
 
 async function main(): Promise<void> {
-  let testSession: ShowcaseTestSession | undefined;
+  let testSession: HarnessTestSession | undefined;
   try {
-    testSession = await startShowcaseTestSession();
+    testSession = await startHarnessTestSession();
     const { session } = testSession;
     const port = session.remoteDebuggingPort;
 
-    await executeShowcaseStory(session, "notice-show");
+    await executeHarnessStory(session, "notice-show");
     await withObsidianPage(port, async (page) => {
       const notice = page.locator(".vpk-keyed-notice");
       await notice.waitFor({ state: "visible", timeout: 10_000 });
-      await notice.getByText("Scanning vault: 1", { exact: true }).waitFor();
+      await notice.getByText("Scanning Vault: 1", { exact: true }).waitFor();
       await notice.evaluate((element) => {
         element.setAttribute("data-vpk-e2e-instance", "original");
       });
     });
 
-    await executeShowcaseStory(session, "notice-update");
+    await executeHarnessStory(session, "notice-update");
     await withObsidianPage(port, async (page) => {
       const notice = page.locator(".vpk-keyed-notice");
       if ((await notice.count()) !== 1)
         throw new Error("Expected one keyed Notice after update");
-      await notice.getByText("Scanning vault: 2", { exact: true }).waitFor();
+      await notice.getByText("Scanning Vault: 2", { exact: true }).waitFor();
       const marker = await notice.getAttribute("data-vpk-e2e-instance");
       if (marker !== "original")
         throw new Error("Keyed Notice update replaced the visible DOM element");
       await notice.waitFor({ state: "hidden", timeout: 5_000 });
     });
 
-    await executeShowcaseStory(session, "notice-show");
-    await executeShowcaseStory(session, "notice-hide");
+    await executeHarnessStory(session, "notice-show");
+    await executeHarnessStory(session, "notice-hide");
     await withObsidianPage(port, async (page) => {
       await page
         .locator(".vpk-keyed-notice")
@@ -46,7 +46,7 @@ async function main(): Promise<void> {
 
     console.log("Real Obsidian keyed Notice stories passed.");
   } finally {
-    if (testSession !== undefined) await stopShowcaseTestSession(testSession);
+    if (testSession !== undefined) await stopHarnessTestSession(testSession);
   }
 }
 

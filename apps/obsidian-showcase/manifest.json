@@ -1,9 +1,0 @@
-{
-  "id": "vpk-showcase",
-  "name": "VPK Showcase",
-  "version": "0.0.0",
-  "minAppVersion": "1.8.7",
-  "description": "Private interactive catalogue and real Obsidian test fixture for @vrtmrz/obsidian-plugin-kit.",
-  "author": "vorotamoroz",
-  "isDesktopOnly": false
-}
