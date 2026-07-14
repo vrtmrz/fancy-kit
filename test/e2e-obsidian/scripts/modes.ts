@@ -29,11 +29,16 @@ async function main(): Promise<void> {
       await review.getByRole("button", { name: "Select" }).click();
       await modal.waitFor({ state: "hidden" });
     });
-    await waitForHarnessState(
+    const reviewState = await waitForHarnessState(
       session,
       (state) => state.mode === "review",
       "saved guided-review mode",
     );
+    if (!reviewState.suite.selected.includes("wake-lock-guided")) {
+      throw new Error(
+        `Guided review did not select the mobile scenario by default: ${JSON.stringify(reviewState.suite.selected)}`,
+      );
+    }
     const data = JSON.parse(
       await readFile(
         join(
@@ -48,9 +53,7 @@ async function main(): Promise<void> {
     }
     await executeHarnessCommand(session, "open");
     await withObsidianPage(session.remoteDebuggingPort, async (page) => {
-      await page
-        .getByRole("heading", { name: "Fancy Kit Harness" })
-        .waitFor();
+      await page.getByRole("heading", { name: "Fancy Kit Harness" }).waitFor();
     });
     console.log("First-run mode selection and persistence passed.");
   } finally {

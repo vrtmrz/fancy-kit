@@ -1,6 +1,7 @@
 import { withObsidianPage } from "@vrtmrz/obsidian-test-session";
 import {
   executeHarnessCommand,
+  readHarnessMarkdownReport,
   startHarnessTestSession,
   stopHarnessTestSession,
   waitForHarnessState,
@@ -15,11 +16,7 @@ async function main(): Promise<void> {
       mode: "automation",
       pendingRun: {
         requestId: "automatic-contracts",
-        scenarios: [
-          "vault-text",
-          "vault-frontmatter",
-          "wake-lock-nested",
-        ],
+        scenarios: ["vault-text", "vault-frontmatter", "wake-lock-nested"],
       },
     });
     const { session } = testSession;
@@ -35,6 +32,17 @@ async function main(): Promise<void> {
       }
     });
 
+    const automationDefaults = await waitForHarnessState(
+      session,
+      (state) => state.mode === "automation",
+      "Automation-mode scenario defaults",
+    );
+    if (automationDefaults.suite.selected.includes("wake-lock-guided")) {
+      throw new Error(
+        `Automation mode selected a guided scenario by default: ${JSON.stringify(automationDefaults.suite.selected)}`,
+      );
+    }
+
     await executeHarnessCommand(session, "e2e-start-pending-run");
     const automatic = await waitForHarnessState(
       session,
@@ -43,11 +51,7 @@ async function main(): Promise<void> {
         !state.suite.running,
       "automatic contract completion",
     );
-    for (const id of [
-      "vault-text",
-      "vault-frontmatter",
-      "wake-lock-nested",
-    ]) {
+    for (const id of ["vault-text", "vault-frontmatter", "wake-lock-nested"]) {
       if (automatic.suite.results[id]?.status !== "passed") {
         throw new Error(
           `Automatic contract did not pass: ${id}: ${JSON.stringify(automatic.suite.results[id])}`,
@@ -69,7 +73,7 @@ async function main(): Promise<void> {
     await executeHarnessCommand(session, "e2e-confirm-display-yes");
     const confirmed = await waitForHarnessState(
       session,
-      (state) => state.guidedReview.step === "visibility-ready",
+      (state) => state.guidedReview.step === "release-ready",
       "guided physical-display confirmation",
     );
     if (confirmed.guidedReview.timed.displayStayedAwake !== "yes") {
@@ -77,6 +81,51 @@ async function main(): Promise<void> {
     }
     if (!confirmed.transcript.some(({ event }) => event === "lease-released")) {
       throw new Error("The wake-lock transcript did not record lease release");
+    }
+    await executeHarnessCommand(session, "e2e-start-released-display-check");
+    const releaseWaiting = await waitForHarnessState(
+      session,
+      (state) => state.guidedReview.step === "release-waiting",
+      "post-release display check",
+    );
+    if (
+      releaseWaiting.guidedReview.release.activeLeaseCountAtStart !== 0 ||
+      releaseWaiting.guidedReview.release.sentinelHeldAtStart !== false
+    ) {
+      throw new Error(
+        `The post-release check started with an active wake lock: ${JSON.stringify(releaseWaiting.guidedReview.release)}`,
+      );
+    }
+    await executeHarnessCommand(session, "e2e-confirm-released-display-yes");
+    const released = await waitForHarnessState(
+      session,
+      (state) => state.guidedReview.step === "visibility-ready",
+      "post-release physical-display confirmation",
+    );
+    if (
+      released.guidedReview.release.displaySwitchedOff !== "yes" ||
+      released.guidedReview.release.outcome !== "passed"
+    ) {
+      throw new Error("The post-release display result was not recorded");
+    }
+    if (
+      !released.transcript.some(
+        ({ event }) => event === "post-release-display-confirmed",
+      )
+    ) {
+      throw new Error("The transcript omitted the post-release display result");
+    }
+    const markdownReport = await readHarnessMarkdownReport(session);
+    for (const expected of [
+      "## Fancy Kit Harness report",
+      "### Environment",
+      "User agent",
+      "Post-release display",
+      "wake-lock-guided",
+    ]) {
+      if (!markdownReport.includes(expected)) {
+        throw new Error(`Markdown report omitted ${expected}`);
+      }
     }
     console.log(
       "Real Obsidian Vault, wake-lock, one-shot automation, and guided instruction contracts passed.",

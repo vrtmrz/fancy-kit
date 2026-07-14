@@ -54,7 +54,8 @@
   padding-block: 0.5rem;
 }
 
-.fancy-kit-harness__scenario-actions .setting-item-control {
+.fancy-kit-harness__scenario-actions .setting-item-control,
+.fancy-kit-harness__guided-actions .setting-item-control {
   flex-wrap: wrap;
   max-width: 100%;
 }

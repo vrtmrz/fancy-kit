@@ -6,9 +6,9 @@ The application has one plug-in ID, `fancy-kit-harness`, and three start-up mode
 
 | Mode | Purpose | Behaviour |
 | --- | --- | --- |
-| `review` | Manual release-bundle and real-device review | Emphasises selectable contract scenarios and guided instructions. |
+| `review` | Manual release-bundle and real-device review | Emphasises selectable contract scenarios and guided instructions. All current scenarios, including the mobile guided review, are selected initially. |
 | `showcase` | Component exploration | Emphasises individual UI stories while retaining review controls. |
-| `automation` | Isolated E2E sessions | Suppresses first-run selection and enables deterministic automation commands. It does not run tests merely by being selected. |
+| `automation` | Isolated E2E sessions | Suppresses first-run selection, selects only automatic scenarios initially, and enables deterministic automation commands. It does not run tests merely by being selected. |
 
 When no mode is stored, the plug-in asks after the Obsidian layout is ready. The selected value is saved through the normal Obsidian plug-in `data.json`. The settings tab can return the plug-in to the unselected state.
 
@@ -49,7 +49,10 @@ Treat this data as a narrow declarative request, not a command channel. Do not a
 - A mode or pending request never starts work before an explicit UI or driver action.
 - Password story results are reduced to a non-secret completion marker.
 - Copied reports omit Vault identity, existing content, and user-entered secrets.
+- Copied reports use GitHub-flavoured Markdown and include low-entropy device evidence such as the user agent, viewport, screen dimensions, and touch capability. The Harness does not request high-entropy user-agent hints or transmit the report.
 - Internal E2E commands are available only while Automation mode is active.
+
+The guided wake-lock review separates three kinds of evidence: whether the wake lock kept the physical display awake, whether normal device auto-lock resumed after the Harness released every lease, and whether the platform wake lock reacquired after a background and return cycle. A failed post-release screen-off result is useful evidence, but is not conclusive proof of a leak because operating-system policy can also keep a display awake.
 
 The component showcase and review runner share the same runtime APIs and binary. Keep visual stories safe enough for the public harness. Put deliberately malformed platform hosts, injected failures, and App-free edge cases in unit or contract tests instead.
 
