@@ -49,13 +49,13 @@ npm run test:e2e:obsidian:local-suite
 
 ## Installation
 
-Install only the packages that a project needs. Exact versions are recommended while the public APIs remain in initial `0.x` development:
+Install only the packages that a project needs. The commands below use npm's normal compatible version ranges. For the current `0.x` versions, those ranges accept patch releases but not the next minor release. Commit the lockfile for repeatable installations; add `--save-exact` when every dependency upgrade must be reviewed explicitly, including release qualification:
 
 ```bash
-npm install --save-exact @vrtmrz/ui-interactions
-npm install --save-exact @vrtmrz/obsidian-plugin-kit
-npm install --save-exact octagonal-wheels
-npm install -D --save-exact @vrtmrz/obsidian-test-session
+npm install @vrtmrz/ui-interactions
+npm install @vrtmrz/obsidian-plugin-kit
+npm install octagonal-wheels
+npm install -D @vrtmrz/obsidian-test-session
 npm install -D playwright @types/node
 ```
 
