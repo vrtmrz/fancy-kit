@@ -17,5 +17,7 @@
 ## Release work and user gates
 
 - Treat `docs/releasing.md` as the developer and maintainer runbook. Keep agent-specific coordination, authority, and stopping rules here instead of adding them to that document.
+- Before requiring consumer BRAT or real-device validation, assess whether mocks and injected tests cover the changed consumer behaviour and failure paths, whether unchanged Fancy Kit behaviour is already guaranteed by this repository's contracts and E2E suite, and what device-specific behaviour remains unverified. Do not ask consumers to repeat Kit-owned validation without a remaining consumer-owned risk.
+- Design public contracts and tests with explicit injectable boundaries so consumers can test their own composition and persistence logic while relying on Kit-owned guarantees without duplicating this repository's E2E suite.
 - Obtain explicit user permission for each push and merge. Also obtain explicit permission before publishing, staging, approving, or promoting an npm release; permission for one operation does not imply permission for the next.
 - When waiting for user review, state what needs review, where to review it, what response will allow work to continue, and which operations remain paused.
