@@ -3,10 +3,10 @@
 Reusable, testable primitives for Obsidian plugins.
 
 > [!IMPORTANT]
-> This package is in initial `0.x` development. Pin an exact version when controlled upgrades are important.
+> This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
 ```bash
-npm install --save-exact @vrtmrz/obsidian-plugin-kit
+npm install @vrtmrz/obsidian-plugin-kit
 ```
 
 Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, and the boundary between direct Obsidian helpers and injected capabilities.

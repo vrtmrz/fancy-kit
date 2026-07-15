@@ -7,10 +7,10 @@ It creates isolated vault and application state, installs built plug-in artefact
 The package owns only generic test infrastructure. Consumer workflows, fixtures, assertions, settings, databases, and synchronisation remain consumer-owned.
 
 > [!IMPORTANT]
-> This package is in initial `0.x` development. Pin an exact version when controlled upgrades are important. It is development tooling and must not be bundled into an Obsidian plug-in.
+> This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly. It is development tooling and must not be bundled into an Obsidian plug-in.
 
 ```bash
-npm install -D --save-exact @vrtmrz/obsidian-test-session
+npm install -D @vrtmrz/obsidian-test-session
 npm install -D playwright @types/node
 ```
 

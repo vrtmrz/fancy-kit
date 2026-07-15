@@ -17,10 +17,10 @@ Please keep in mind that all things do not have a generic purpose.
 
 ## Installation
 
-The package remains in `0.x` development. Pin an exact version when controlled upgrades are important:
+The package remains in `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly:
 
 ```bash
-npm install --save-exact octagonal-wheels
+npm install octagonal-wheels
 ```
 
 ## Documentation
