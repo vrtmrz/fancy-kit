@@ -10,6 +10,8 @@ npm install @vrtmrz/obsidian-plugin-kit
 
 `obsidian` is a peer dependency. A normal Obsidian plug-in project should already provide it as a development dependency.
 
+The published package is ESM and declares `obsidian >=1.8.7`. Direct dialogs, Notices, progress UI, the Obsidian UI adapter, and Vault adapters use Obsidian or browser APIs and are not generic Node.js utilities. The `testing` entry point contains App-free interaction and in-memory Vault harnesses; those harnesses deliberately do not emulate Obsidian rendering, filesystem events, MetadataCache timing, or YAML text serialisation.
+
 ## Choose an integration style
 
 | Need | Recommended API |
@@ -343,7 +345,7 @@ The harness applies the updater to a private clone and commits only after succes
 
 This capability delegates YAML parsing and serialisation to Obsidian. The harness treats path keys literally and does not emulate Obsidian path normalisation, YAML text, formatting, comments, anchors, aliases, MetadataCache timing, or Vault events. Cover those behaviours with focused real-Obsidian tests when they matter to the consumer.
 
-## Keyed Notices
+## Keyed notices
 
 `KeyedNoticeManager` owns at most one visible Notice per key. Reusing the key updates the existing Notice and restarts its expiry:
 
@@ -419,3 +421,21 @@ The root export exists for convenience, but focused imports make feature ownersh
 3. Use real-Obsidian E2E for rendering, keyboard and focus behaviour, themes, Modal and SuggestModal behaviour, Notice lifecycle, Vault events, MetadataCache propagation, and platform integration.
 
 The repository's local real-application infrastructure is described in the [Obsidian test session guide](../../obsidian-test-session/README.md) and the [showcase E2E guide](../../../test/e2e-obsidian/README.md). It is not a substitute for consumer-specific assertions.
+
+## Contract evidence and maintained examples
+
+The package uses focused tests for neutral or adapter-owned contracts and a real-Obsidian showcase for platform behaviour:
+
+| Public area | Focused evidence | Consumer or real-application example |
+| --- | --- | --- |
+| Text and password prompts, typed selection, Markdown actions, and dismissal | [`src/dialog.test.ts`](../src/dialog.test.ts) | Dialogue stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/dialogs.ts`](../../../test/e2e-obsidian/scripts/dialogs.ts) |
+| Injected `UiInteractions`, scripted responses, pass-through, and transcripts | [`src/ui-context.test.ts`](../src/ui-context.test.ts) and [`../ui-interactions/src/testing.test.ts`](../../ui-interactions/src/testing.test.ts) | The App-free and mixed examples in [UI automation and scripted responses](ui-automation.md) |
+| Keyed Notice reuse, expiry, and disposal | [`src/notice.test.ts`](../src/notice.test.ts) | Notice stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/notices.ts`](../../../test/e2e-obsidian/scripts/notices.ts) |
+| Progress rendering, terminal states, callbacks, and Notice expiry | [`src/progress.test.ts`](../src/progress.test.ts) | [`test/e2e-obsidian/scripts/progress.ts`](../../../test/e2e-obsidian/scripts/progress.ts) and mobile layout checks |
+| Obsidian text Vault delegation and stable contract errors | [`src/vault.test.ts`](../src/vault.test.ts) | Vault contract story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/contracts.ts`](../../../test/e2e-obsidian/scripts/contracts.ts) |
+| In-memory text operations, transcripts, and failure injection | [`src/vault-testing.test.ts`](../src/vault-testing.test.ts) | Public packed-consumer fixture in [`test/packed-consumer/obsidian-plugin-kit-usage.ts`](../../../test/packed-consumer/obsidian-plugin-kit-usage.ts) |
+| Frontmatter adapter, synchronous updater enforcement, rollback, and isolated snapshots | [`src/vault-frontmatter.test.ts`](../src/vault-frontmatter.test.ts) and [`src/vault-frontmatter-testing.test.ts`](../src/vault-frontmatter-testing.test.ts) | Frontmatter story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/frontmatter.ts`](../../../test/e2e-obsidian/scripts/frontmatter.ts) |
+
+The compile-only packed-consumer fixture exercises every documented public subpath. Real-Obsidian scenarios cover the Modal, SuggestModal, Notice, DOM, and Vault integration that App-free tests intentionally leave to the platform boundary.
+
+For complete maintained plug-in examples, see [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md). TagFolder combines the UI, text, frontmatter, and testing boundaries in a new-note workflow; DiffZip injects restore confirmation and composes a wake lock around long-running work; and Screwdriver combines injected UI policy with safe restore-path handling. Their consumer-owned tests show where the package contracts end and application policy begins.

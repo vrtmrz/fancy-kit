@@ -1,141 +1,98 @@
-## Octagonal Wheels
+# Octagonal Wheels
 
-Quod opus sit...
+`octagonal-wheels` is an ESM collection of specialised utilities used in browser, Electron, and extension applications. It includes binary conversion, concurrency, data structures, persistence, cryptography, events, iterables, caching, and browser lifecycle helpers.
 
-This module is a compilation of wheels that have been reinvented for a __specific purpose__.
+The library is exercised in maintained Self-hosted LiveSync, DiffZip, and Screwdriver workflows. See [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md) for the selected entry points and the tests which surround each application boundary.
 
-Specific purposes are, for example
-- In certain environments...
-  - to specialise in speed
-  - to specialise in memory usage
-- To reduce dependencies
-- To assist in achieving the above objectives efficiently.
+The APIs are designed for specific trade-offs rather than as universal replacements for platform or standard-library features. Select the smallest public entry point whose contract fits the application.
 
-Mainly targeted to browsers, Electron Apps, and, Chrome Extensions.
-
-Please keep in mind that all things do not have a generic purpose.
-
-## Installation
-
-The package remains in `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly:
+> [!IMPORTANT]
+> This package remains in `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
 ```bash
 npm install octagonal-wheels
 ```
 
-## Documentation
+## Imports
 
-The source, issue tracker, and current documentation are maintained in the [Fancy Kit monorepo](https://github.com/vrtmrz/fancy-kit/tree/main/packages/octagonal-wheels).
+The package has no default export. The root entry point exposes module namespaces:
 
-See [updates.md](updates.md) for released and pending user-visible changes.
+```ts
+import { binary, promises } from "octagonal-wheels";
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/vrtmrz/fancy-kit) is also useful for exploring the repository.
-
-## Current Coverage
+const bytes = binary.hexStringToUint8Array("46616e6379204b6974");
+const text = binary.uint8ArrayToHexString(bytes);
+await promises.delay(10);
 ```
-----------------------------------|---------|----------|---------|---------|-----------------------------------------
-File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                       
-----------------------------------|---------|----------|---------|---------|-----------------------------------------
-All files                         |   81.68 |    70.84 |   81.57 |   82.45 |                                         
- src                              |   95.92 |    84.44 |   97.14 |   97.04 |                                         
-  actor.ts                        |     100 |    90.32 |     100 |     100 | 56-58,191                               
-  collection.ts                   |     100 |      100 |     100 |     100 |                                         
-  context.ts                      |     100 |      100 |     100 |     100 |                                         
-  function.ts                     |     100 |      100 |     100 |     100 |                                         
-  number.ts                       |     100 |      100 |     100 |     100 |                                         
-  object.ts                       |      95 |    80.76 |     100 |      95 | 35                                      
-  promises.ts                     |   91.35 |       80 |   93.33 |   94.28 | 52-56                                   
-  string.ts                       |   91.66 |       75 |     100 |    90.9 | 15                                      
- src/BackedQueue                  |     100 |      100 |     100 |     100 |                                         
-  BackedQueue.ts                  |     100 |      100 |     100 |     100 |                                         
-  BackedQueueTypes.ts             |     100 |      100 |     100 |     100 |                                         
-  HalfPersistentIDBBackedQueue.ts |     100 |      100 |     100 |     100 |                                         
-  MemoryBackedQueue.ts            |     100 |      100 |     100 |     100 |                                         
-  PersistentIDBBackedQueue.ts     |     100 |      100 |     100 |     100 |                                         
-  QueueBackend.ts                 |     100 |      100 |     100 |     100 |                                         
-  QueueBackendMemory.ts           |     100 |      100 |     100 |     100 |                                         
-  QueueBackendTypes.ts            |     100 |      100 |     100 |     100 |                                         
- src/binary                       |   83.73 |     71.2 |   86.66 |   84.76 |                                         
-  base64.ts                       |   95.69 |    81.39 |     100 |    96.4 | 105,281,377,386,404,408                 
-  encodedUTF16.ts                 |    40.9 |       25 |      50 |    42.1 | 23-85                                   
-  hex.ts                          |     100 |    71.42 |     100 |     100 | 28-65                                   
-  index.ts                        |     100 |      100 |     100 |     100 |                                         
- src/bureau                       |   90.73 |    77.05 |   91.34 |   90.81 |                                         
-  Clerk.ts                        |   89.44 |    69.33 |   87.75 |   89.65 | ...-133,139,232,271,315-329,399,401,460 
-  Inbox.ts                        |   95.48 |    94.82 |     100 |   95.48 | 91-92,197,212,283,332                   
-  PaceMaker.ts                    |   81.81 |    72.72 |      75 |   80.95 | 15-17,60                                
-  SlipBoard.ts                    |    87.5 |    61.53 |   94.11 |   86.95 | 108-112,229-231                         
- src/channel                      |      98 |    93.61 |     100 |   97.96 |                                         
-  channels.ts                     |     100 |    96.61 |     100 |     100 | 325-326                                 
-  common.ts                       |     100 |      100 |     100 |     100 |                                         
-  transport.ts                    |   94.28 |    88.57 |     100 |    94.2 | 106-107,157-158                         
- src/common                       |   59.52 |    47.27 |   26.31 |   59.52 |                                         
-  const.ts                        |     100 |      100 |     100 |     100 |                                         
-  error.ts                        |   48.27 |       50 |   33.33 |   48.27 | 22-28,40-62,86-87                       
-  logger.ts                       |   68.08 |    42.85 |    37.5 |   68.08 | 52,54,56,58,64,90-128                   
-  polyfill.ts                     |   33.33 |       50 |       0 |   33.33 | 14-19,30                                
- src/concurrency                  |   52.58 |    43.01 |   54.71 |   53.49 |                                         
-  bulk.ts                         |   98.31 |       90 |     100 |   99.13 | 226                                     
-  lock_v1.ts                      |       0 |        0 |       0 |       0 | 20-178                                  
-  lock_v2.ts                      |   95.68 |    93.61 |     100 |   95.52 | 46,99-102,126,153                       
-  processor_v1.ts                 |       0 |        0 |       0 |       0 | 17-532                                  
-  processor_v2.ts                 |   65.24 |    53.29 |    67.6 |   68.11 | ...-519,545-546,570-571,581-584,594-618 
-  semaphore_v1.ts                 |       0 |        0 |       0 |       0 | 2-137                                   
-  semaphore_v2.ts                 |   91.66 |       80 |   91.66 |   90.32 | 27-29                                   
-  task.ts                         |   83.01 |    70.73 |      70 |   82.97 | 17,21,26,110,168-181,219-225            
- src/conduit                      |   98.97 |    96.52 |     100 |   98.95 |                                         
-  NamedInstance.ts                |     100 |      100 |     100 |     100 |                                         
-  connector.ts                    |     100 |      100 |     100 |     100 |                                         
-  manifold.ts                     |     100 |      100 |     100 |     100 |                                         
-  regulator.ts                    |     100 |      100 |     100 |     100 |                                         
-  transporter.ts                  |     100 |    94.28 |     100 |     100 | 133,173                                 
-  transporterAdapter.ts           |   93.84 |    91.66 |     100 |   93.75 | 79-80,168-169                           
- src/databases                    |   89.68 |     88.6 |   92.04 |   89.83 |                                         
-  KeyValueDB.ts                   |   73.07 |       50 |    90.9 |   73.07 | 63-64,72-77                             
-  SimpleStoreBase.ts              |     100 |      100 |     100 |     100 |                                         
-  SimpleStoreIDB.ts               |     100 |      100 |     100 |     100 |                                         
-  SimpleStoreIDBv1.ts             |   71.69 |    80.76 |   72.22 |   70.45 | 20,31-49                                
-  SimpleStoreIDBv2.ts             |   97.24 |    92.68 |   98.07 |   97.12 | 195-202,260                             
-  dbcommon.ts                     |     100 |      100 |     100 |     100 |                                         
- src/dataobject                   |   81.27 |    78.09 |   75.29 |   82.06 |                                         
-  Computed.ts                     |     100 |      100 |     100 |     100 |                                         
-  PersistentMap.ts                |   81.57 |    63.63 |   83.33 |   85.71 | 33-35,43-44                             
-  Refiner.ts                      |     100 |      100 |     100 |     100 |                                         
-  reactive_v1.ts                  |       0 |        0 |       0 |       0 | 36-140                                  
-  reactive_v2.ts                  |   97.59 |    79.41 |   96.29 |   97.33 | 111,160                                 
- src/encoding                     |     100 |    97.87 |     100 |     100 |                                         
-  encodeobject.ts                 |     100 |    97.87 |     100 |     100 | 132                                     
- src/encryption                   |   97.88 |    91.78 |     100 |   97.87 |                                         
-  encryption.ts                   |   96.31 |     90.9 |     100 |   96.27 | 330-331,349-350,358-359                 
-  encryptionv3.ts                 |   97.77 |    83.33 |     100 |   97.77 | 35                                      
-  hkdf.ts                         |     100 |    93.33 |     100 |     100 | 299                                     
-  obfuscatePath.ts                |     100 |      100 |     100 |     100 |                                         
-  obfuscatePathV2.ts              |     100 |      100 |     100 |     100 |                                         
- src/encryption/asymmetric        |     100 |      100 |     100 |     100 |                                         
-  asymmetric.ts                   |     100 |      100 |     100 |     100 |                                         
-  asymmetricHelper.ts             |     100 |      100 |     100 |     100 |                                         
-  common.ts                       |     100 |      100 |     100 |     100 |                                         
-  keys.ts                         |     100 |      100 |     100 |     100 |                                         
- src/encryption/openSSLCompat     |     100 |    44.44 |     100 |     100 |                                         
-  CBC.ts                          |     100 |    44.44 |     100 |     100 | 42-118                                  
- src/events                       |   86.07 |    68.51 |   84.61 |   85.13 |                                         
-  CustomEventTargets.ts           |   61.53 |    81.25 |   42.85 |   61.53 | 22,56-75                                
-  EventHub.ts                     |   98.11 |    63.15 |     100 |   97.91 | 70                                      
- src/hash                         |   53.38 |    63.63 |   57.14 |   55.04 |                                         
-  crc32.ts                        |       0 |        0 |       0 |       0 | 1-66                                    
-  purejs.ts                       |     100 |      100 |     100 |     100 |                                         
-  xxhash.ts                       |   72.22 |      100 |      50 |   81.25 | 19-21                                   
- src/iterable                     |   85.63 |    72.91 |   86.11 |   85.45 |                                         
-  chunks.ts                       |   97.36 |    93.75 |     100 |   97.14 | 79                                      
-  map.ts                          |   86.95 |       75 |   88.88 |   86.66 | 67-68,102-104,107                       
-  source.ts                       |      80 |    60.71 |      80 |      80 | ...4-57,66-70,81-89,124-125,135-138,149 
- src/memory                       |   89.91 |    75.49 |   89.47 |   90.14 |                                         
-  LRUCache.ts                     |     100 |    65.21 |     100 |     100 | 23-92,97-99                             
-  VolatileValueCache.ts           |     100 |       85 |     100 |     100 | 56,80,99                                
-  memo.ts                         |     100 |    77.77 |     100 |     100 | 18-20,47,58                             
-  memutil.ts                      |      77 |    66.66 |   79.31 |   77.89 | 13-14,65,149-184,291                    
-  weakMemo.ts                     |     100 |    92.85 |     100 |     100 | 48                                      
- src/messagepassing               |       0 |        0 |       0 |       0 |                                         
-  signal_v1.ts                    |       0 |        0 |       0 |       0 | 6-65                                    
-----------------------------------|---------|----------|---------|---------|-----------------------------------------
+
+Focused subpaths expose a module directly and are preferable when only one area is needed:
+
+```ts
+import {
+  hexStringToUint8Array,
+  uint8ArrayToHexString,
+} from "octagonal-wheels/binary";
+
+const bytes = hexStringToUint8Array("00ff10");
+console.log(uint8ArrayToHexString(bytes)); // "00ff10"
 ```
+
+Public subpaths are declared by the package export map. Extensionless imports, such as `octagonal-wheels/iterable/map`, are the recommended form; `.js` aliases exist for compatibility. Do not import package `src` or `dist` files.
+
+## Module areas
+
+| Area | Examples |
+| --- | --- |
+| Data conversion and utility functions | `binary`, `collection`, `function`, `iterable`, `number`, `object`, `path`, and `string` |
+| Scheduling and coordination | `actor`, `bureau`, `channel`, `concurrency`, `conduit`, `events`, and `promises` |
+| State and storage | `BackedQueue`, `databases`, `dataobject`, and `memory` |
+| Hashing and cryptography | `encoding`, `encryption`, and `hash` |
+| Platform integration | `browser`, including the reference-counted screen wake-lock manager |
+
+The [generated API index](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/docs/modules.md) links to per-module and per-symbol TSDoc. The [import and runtime guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/guides/imports-and-runtime.md) explains entry-point selection, platform dependencies, testing boundaries, and maintained examples.
+
+## Bounded asynchronous work
+
+`asyncMapWithConcurrency` retains input order while limiting concurrent callbacks. `withConcurrency` uses completion order instead:
+
+```ts
+import { asyncMapWithConcurrency } from "octagonal-wheels/iterable/map";
+
+const output: string[] = [];
+for await (const value of asyncMapWithConcurrency(
+  ["one", "two", "three"],
+  async (input) => input.toUpperCase(),
+  2,
+)) {
+  output.push(value);
+}
+```
+
+## Best-effort screen wake lock
+
+The browser wake-lock manager shares one platform sentinel across overlapping logical leases, responds to document visibility, and exposes injectable platform contracts for tests:
+
+```ts
+import { createScreenWakeLockManager } from "octagonal-wheels/browser/wakeLock";
+
+declare function createBackup(): Promise<void>;
+
+const wakeLock = createScreenWakeLockManager();
+try {
+  await wakeLock.run(async () => {
+    await createBackup();
+  }, { label: "backup" });
+} finally {
+  await wakeLock.dispose();
+}
+```
+
+Platform acquisition is best effort: an unavailable API or rejected request does not prevent the callback from running. A screen wake lock does not guarantee background execution or prevent operating-system suspension.
+
+## Runtime boundary
+
+The primary test runtime is Chromium. Individual entry points may require DOM scheduling APIs, IndexedDB, Web Crypto, `navigator`, or other browser facilities. Some pure utilities also work in Node.js, but the package does not make a package-wide Node.js compatibility claim. The screen wake-lock entry point is explicitly tested for safe import and best-effort use without DOM globals.
+
+Use focused imports, inspect the selected API contract, and inject a consumer-owned boundary when application policy must be tested independently of a browser or persistent store.
+
+See [updates](updates.md) for released and pending user-visible changes.

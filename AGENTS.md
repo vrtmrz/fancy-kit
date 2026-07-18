@@ -7,6 +7,7 @@
   - **Agents:** `AGENTS.md` records repository-specific working rules and constraints needed to perform changes safely.
   Do not copy incidental local diagnostics, handover state, or agent-only reasoning into user or developer documentation unless that audience gains a durable, actionable benefit from it.
 - Preserve documented behavioural contracts when changing an existing API.
+- When maintenance changes a public contract, a consumer integration, or a verification path, review the related user documentation and `docs/proven-in-use.md` from the perspective of current use. Update or remove stale examples, links, and evidence. Name only consumers which still use the documented boundary, and distinguish package-owned tests from consumer-owned and real-runtime verification.
 - Keep scripted UI responses instance-scoped through an explicit `UiInteractions` capability and driver; never store them in static members or module globals.
 - Follow `test/e2e-obsidian/README.md` when changing visible Obsidian UI behaviour.
 - Treat `apps/obsidian-harness` and `site/harness` as public review-distribution code. Keep Vault scenarios inside unique owned fixture roots, clean them in `finally`, and keep Automation mode as a convenience rather than a relaxed safety boundary.

@@ -16,6 +16,12 @@ const runtimeSafeEntries = [
   "@vrtmrz/ui-interactions",
   "@vrtmrz/ui-interactions/testing",
 ];
+const packagedDocumentation = new Map([
+  ["@vrtmrz/obsidian-test-session", ["docs/usage-guide.md"]],
+  ["@vrtmrz/ui-interactions", ["docs/usage-guide.md"]],
+  ["@vrtmrz/obsidian-plugin-kit", ["docs/usage-guide.md"]],
+  ["octagonal-wheels", ["guides/imports-and-runtime.md"]],
+]);
 
 function npmInvocation(args) {
   const npmExecutable = process.env.npm_execpath;
@@ -73,6 +79,17 @@ function publicSpecifier(packageName, exportName) {
 
 function normaliseModulePath(path) {
   return path.replaceAll("\\", "/");
+}
+
+function verifyPackedDocumentation(packageName, packed) {
+  const packedFiles = new Set(
+    (packed.files ?? []).map((file) => normaliseModulePath(file.path)),
+  );
+  for (const documentPath of packagedDocumentation.get(packageName) ?? []) {
+    if (!packedFiles.has(documentPath)) {
+      throw new Error(`${packageName} tarball omits ${documentPath}`);
+    }
+  }
 }
 
 function hasModule(contributors, moduleSuffix) {
@@ -168,8 +185,27 @@ async function main() {
       if (packed.length !== 1 || !packed[0].filename) {
         throw new Error(`npm pack returned no tarball for ${packageName}`);
       }
+      verifyPackedDocumentation(packageName, packed[0]);
       tarballs.push(resolve(temporaryRoot, packed[0].filename));
     }
+
+    const octagonalPackOutput = runNpm(
+      [
+        "pack",
+        "--workspace",
+        "octagonal-wheels",
+        "--pack-destination",
+        temporaryRoot,
+        "--ignore-scripts",
+        "--json",
+      ],
+      { capture: true },
+    );
+    const octagonalPacked = JSON.parse(octagonalPackOutput);
+    if (octagonalPacked.length !== 1 || !octagonalPacked[0].filename) {
+      throw new Error("npm pack returned no tarball for octagonal-wheels");
+    }
+    verifyPackedDocumentation("octagonal-wheels", octagonalPacked[0]);
 
     await writeFile(
       join(temporaryRoot, "package.json"),
@@ -347,7 +383,7 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length} packed packages, ${publicEntries.length} public export entries, the plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });
