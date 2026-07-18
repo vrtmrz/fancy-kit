@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Documentation
+
+- Added a comprehensive package guide covering the public API areas, session lifecycle, injected boundaries, layout assertions, platform constraints, and the tests behind those contracts. The guide is now included in the npm package.
+
 ## 0.2.0
 
 ### New features

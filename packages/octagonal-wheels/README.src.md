@@ -1,37 +1,98 @@
-## Octagonal Wheels
+# Octagonal Wheels
 
-Quod opus sit...
+`octagonal-wheels` is an ESM collection of specialised utilities used in browser, Electron, and extension applications. It includes binary conversion, concurrency, data structures, persistence, cryptography, events, iterables, caching, and browser lifecycle helpers.
 
-This module is a compilation of wheels that have been reinvented for a __specific purpose__.
+The library is exercised in maintained Self-hosted LiveSync, DiffZip, and Screwdriver workflows. See [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md) for the selected entry points and the tests which surround each application boundary.
 
-Specific purposes are, for example
-- In certain environments...
-  - to specialise in speed
-  - to specialise in memory usage
-- To reduce dependencies
-- To assist in achieving the above objectives efficiently.
+The APIs are designed for specific trade-offs rather than as universal replacements for platform or standard-library features. Select the smallest public entry point whose contract fits the application.
 
-Mainly targeted to browsers, Electron Apps, and, Chrome Extensions.
-
-Please keep in mind that all things do not have a generic purpose.
-
-## Installation
-
-The package remains in `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly:
+> [!IMPORTANT]
+> This package remains in `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
 ```bash
 npm install octagonal-wheels
 ```
 
-## Documentation
+## Imports
 
-The source, issue tracker, and current documentation are maintained in the [Fancy Kit monorepo](https://github.com/vrtmrz/fancy-kit/tree/main/packages/octagonal-wheels).
+The package has no default export. The root entry point exposes module namespaces:
 
-See [updates.md](updates.md) for released and pending user-visible changes.
+```ts
+import { binary, promises } from "octagonal-wheels";
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/vrtmrz/fancy-kit) is also useful for exploring the repository.
-
-## Current Coverage
+const bytes = binary.hexStringToUint8Array("46616e6379204b6974");
+const text = binary.uint8ArrayToHexString(bytes);
+await promises.delay(10);
 ```
-{coverage}
+
+Focused subpaths expose a module directly and are preferable when only one area is needed:
+
+```ts
+import {
+  hexStringToUint8Array,
+  uint8ArrayToHexString,
+} from "octagonal-wheels/binary";
+
+const bytes = hexStringToUint8Array("00ff10");
+console.log(uint8ArrayToHexString(bytes)); // "00ff10"
 ```
+
+Public subpaths are declared by the package export map. Extensionless imports, such as `octagonal-wheels/iterable/map`, are the recommended form; `.js` aliases exist for compatibility. Do not import package `src` or `dist` files.
+
+## Module areas
+
+| Area | Examples |
+| --- | --- |
+| Data conversion and utility functions | `binary`, `collection`, `function`, `iterable`, `number`, `object`, `path`, and `string` |
+| Scheduling and coordination | `actor`, `bureau`, `channel`, `concurrency`, `conduit`, `events`, and `promises` |
+| State and storage | `BackedQueue`, `databases`, `dataobject`, and `memory` |
+| Hashing and cryptography | `encoding`, `encryption`, and `hash` |
+| Platform integration | `browser`, including the reference-counted screen wake-lock manager |
+
+The [generated API index](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/docs/modules.md) links to per-module and per-symbol TSDoc. The [import and runtime guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/guides/imports-and-runtime.md) explains entry-point selection, platform dependencies, testing boundaries, and maintained examples.
+
+## Bounded asynchronous work
+
+`asyncMapWithConcurrency` retains input order while limiting concurrent callbacks. `withConcurrency` uses completion order instead:
+
+```ts
+import { asyncMapWithConcurrency } from "octagonal-wheels/iterable/map";
+
+const output: string[] = [];
+for await (const value of asyncMapWithConcurrency(
+  ["one", "two", "three"],
+  async (input) => input.toUpperCase(),
+  2,
+)) {
+  output.push(value);
+}
+```
+
+## Best-effort screen wake lock
+
+The browser wake-lock manager shares one platform sentinel across overlapping logical leases, responds to document visibility, and exposes injectable platform contracts for tests:
+
+```ts
+import { createScreenWakeLockManager } from "octagonal-wheels/browser/wakeLock";
+
+declare function createBackup(): Promise<void>;
+
+const wakeLock = createScreenWakeLockManager();
+try {
+  await wakeLock.run(async () => {
+    await createBackup();
+  }, { label: "backup" });
+} finally {
+  await wakeLock.dispose();
+}
+```
+
+Platform acquisition is best effort: an unavailable API or rejected request does not prevent the callback from running. A screen wake lock does not guarantee background execution or prevent operating-system suspension.
+
+## Runtime boundary
+
+The primary test runtime is Chromium. Individual entry points may require DOM scheduling APIs, IndexedDB, Web Crypto, `navigator`, or other browser facilities. Some pure utilities also work in Node.js, but the package does not make a package-wide Node.js compatibility claim. The screen wake-lock entry point is explicitly tested for safe import and best-effort use without DOM globals.
+
+Use focused imports, inspect the selected API contract, and inject a consumer-owned boundary when application policy must be tested independently of a browser or persistent store.
+
+See [updates](updates.md) for released and pending user-visible changes.

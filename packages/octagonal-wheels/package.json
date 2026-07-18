@@ -969,6 +969,7 @@
     },
     "files": [
         "dist/**",
+        "guides/**",
         "readme.md",
         "updates.md",
         "LICENSE",

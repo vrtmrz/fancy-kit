@@ -2,14 +2,16 @@
 
 This npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
+The libraries are extracted from, and continuously exercised by, maintained plug-ins and applications rather than existing only as sample abstractions. See [Proven in maintained consumers](docs/proven-in-use.md) for the concrete TagFolder, DiffZip, Screwdriver, and Self-hosted LiveSync integration and verification boundaries.
+
 The packages use independent `0.x` versions. Stable releases are available from npm through the default `latest` dist-tag. The workspace root and harness application are never published to npm.
 
 ## Packages
 
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives. See its [usage guide](packages/obsidian-plugin-kit/docs/usage-guide.md) for consumer integration.
-- [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure.
-- [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness.
-- [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history.
+- [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure. See its [usage guide](packages/obsidian-test-session/docs/usage-guide.md) for lifecycle and platform boundaries.
+- [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness. See its [usage and testing guide](packages/ui-interactions/docs/usage-guide.md) for adapter composition and scripted tests.
+- [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history. See its [import and runtime guide](packages/octagonal-wheels/guides/imports-and-runtime.md) and [generated API index](packages/octagonal-wheels/docs/modules.md).
 
 ## Workspace application
 

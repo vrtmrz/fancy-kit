@@ -1,6 +1,6 @@
 # @vrtmrz/obsidian-plugin-kit
 
-Reusable, testable primitives for Obsidian plugins.
+Reusable, testable primitives for Obsidian plug-ins.
 
 > [!IMPORTANT]
 > This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
@@ -9,10 +9,15 @@ Reusable, testable primitives for Obsidian plugins.
 npm install @vrtmrz/obsidian-plugin-kit
 ```
 
-Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, and the boundary between direct Obsidian helpers and injected capabilities.
+The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration.
+
+Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, platform boundaries, and links to the tests that establish each documented contract. See [UI automation and scripted responses](docs/ui-automation.md) for the detailed driver rules.
+
+The UI, Vault, and testing boundaries are also used in maintained plug-ins. See [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md) for TagFolder, DiffZip, and Screwdriver examples and the verification level behind each one.
 
 ## Available modules
 
+- `@vrtmrz/obsidian-plugin-kit`: convenience export of the runtime features below.
 - `@vrtmrz/obsidian-plugin-kit/dialog`: text and password prompts, typed selection, confirmation, and message dialogs.
 - `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
@@ -165,16 +170,3 @@ await frontmatter.updateFrontmatter("Notes/example.md", (value) => {
 ```
 
 `createVaultFrontmatterTestHarness` provides transactional in-memory updates, before/after transcripts, stable missing and unsupported-file errors, failure injection, and rollback. It tests mutation policy rather than YAML serialisation; use real Obsidian when formatting, MetadataCache timing, or Vault events matter.
-
-## Development
-
-From the workspace root:
-
-```bash
-npm run check:all
-npm run test
-npm run build
-npm run build:harness
-```
-
-Run `npm run verify:workspace` before handing off repository-wide changes.
