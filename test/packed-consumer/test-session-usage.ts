@@ -15,8 +15,20 @@ import {
   type LayoutInsets,
   type LocatorLayoutInspection,
   type SafeAreaAssertionOptions,
+  type StartObsidianPluginSessionOptions,
   type TouchTargetAssertionOptions,
 } from "@vrtmrz/obsidian-test-session";
+
+export function withDeviceLocalState(
+  options: StartObsidianPluginSessionOptions,
+): StartObsidianPluginSessionOptions {
+  return {
+    ...options,
+    localStorageEntries: {
+      "example-plugin-device-schema": "3",
+    },
+  };
+}
 
 export async function inspectActions(
   page: Page,
