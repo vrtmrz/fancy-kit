@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { platform } from "node:process";
 import { promisify } from "node:util";
+import { obsidianPlatformLaunchArguments } from "./platform.js";
 
 /** Captured output from an Obsidian process. */
 export interface ObsidianProcessOutput {
@@ -66,6 +67,7 @@ function launchArgs(options: LaunchObsidianOptions): string[] {
     "--no-sandbox",
     "--disable-gpu",
     "--disable-software-rasterizer",
+    ...obsidianPlatformLaunchArguments(),
     ...(useUserDataDir !== "false" && options.userDataPath
       ? [`--user-data-dir=${options.userDataPath}`]
       : []),
