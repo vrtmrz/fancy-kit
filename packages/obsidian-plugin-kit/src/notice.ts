@@ -202,9 +202,8 @@ interface NoticeGroupEntry {
 }
 
 function createGroupRoot(): HTMLDivElement {
-  const root = document.createElement("div");
-  root.classList.add("vpk-keyed-notice-group");
-  Object.assign(root.style, {
+  const root = createDiv({ cls: "vpk-keyed-notice-group" });
+  root.setCssStyles({
     display: "grid",
     gap: "0.75rem",
     maxWidth: "100%",
@@ -249,10 +248,11 @@ function renderGroup(entry: NoticeGroupEntry): void {
   entry.root.replaceChildren();
   let index = 0;
   for (const [itemKey, item] of entry.items) {
-    const itemElement = document.createElement("div");
-    itemElement.classList.add("vpk-keyed-notice-group__item");
+    const itemElement = createDiv({
+      cls: "vpk-keyed-notice-group__item",
+    });
     itemElement.dataset.itemKey = itemKey;
-    Object.assign(itemElement.style, {
+    itemElement.setCssStyles({
       display: "grid",
       gap: "0.5rem",
       minWidth: "0",
@@ -262,17 +262,19 @@ function renderGroup(entry: NoticeGroupEntry): void {
         : { borderTop: "1px solid var(--background-modifier-border)" }),
     });
 
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("vpk-keyed-notice-group__message");
-    messageElement.textContent = item.message;
+    const messageElement = createDiv({
+      cls: "vpk-keyed-notice-group__message",
+      text: item.message,
+    });
     itemElement.append(messageElement);
 
     if (item.action !== undefined) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.classList.add("vpk-keyed-notice-group__action");
-      button.textContent = item.action.label;
-      Object.assign(button.style, {
+      const button = createEl("button", {
+        attr: { type: "button" },
+        cls: "vpk-keyed-notice-group__action",
+        text: item.action.label,
+      });
+      button.setCssStyles({
         height: "auto",
         maxWidth: "100%",
         minHeight: "max(var(--input-height), 44px)",
