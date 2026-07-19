@@ -11,6 +11,7 @@ import {
   type WorkspaceLeaf,
 } from "obsidian";
 import {
+  KeyedNoticeGroupManager,
   KeyedNoticeManager,
   confirmAction,
   pickOne,
@@ -574,6 +575,21 @@ class WakeLockHarnessView extends ItemView {
         "Hide and forget the keyed Notice explicitly.",
         "notice-hide",
       ],
+      [
+        "Start grouped Notice",
+        "Create a persistent Notice with one named status row.",
+        "notice-group-start",
+      ],
+      [
+        "Add grouped result",
+        "Add a second named row and an action without creating another Notice.",
+        "notice-group-result",
+      ],
+      [
+        "Finish grouped Notice",
+        "Mark the grouped Notice complete and start its expiry.",
+        "notice-group-finish",
+      ],
     ]);
 
     const result = section.createDiv({ cls: "fancy-kit-harness__result" });
@@ -1101,6 +1117,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
   private wakeLock: ScreenWakeLockManager | undefined;
   private activeProgress: ProgressNotice | undefined;
   private readonly notices = new KeyedNoticeManager();
+  private readonly groupedNotices = new KeyedNoticeGroupManager();
   private readonly dialogueController = new AbortController();
   private timedController: AbortController | undefined;
   private explicitController: AbortController | undefined;
@@ -1171,6 +1188,9 @@ export default class FancyKitHarnessPlugin extends Plugin {
       "notice-show",
       "notice-update",
       "notice-hide",
+      "notice-group-start",
+      "notice-group-result",
+      "notice-group-finish",
     ]) {
       this.addAutomationCommand(`story-${story}`, `Story: ${story}`, () => {
         void this.runStory(story);
@@ -1246,6 +1266,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
     this.modeModal = undefined;
     this.activeProgress?.hide();
     this.notices.dispose();
+    this.groupedNotices.dispose();
     this.timedController?.abort();
     this.explicitController?.abort();
     if (this.visibilityFinishTimeout !== undefined) {
@@ -1483,6 +1504,31 @@ export default class FancyKitHarnessPlugin extends Plugin {
       case "notice-hide":
         this.notices.hide("showcase-scan");
         this.setResult("notice-hidden");
+        break;
+      case "notice-group-start":
+        this.groupedNotices.setItem("showcase-integrity", "checking", {
+          message: "Checking for incomplete documents...",
+        });
+        this.setResult("notice-group-started");
+        break;
+      case "notice-group-result":
+        this.groupedNotices.setItem("showcase-integrity", "result", {
+          message: "No size mismatches found",
+          action: {
+            label: "Dismiss this notification",
+            onSelect: () => {
+              this.groupedNotices.hide("showcase-integrity");
+              this.setResult("notice-group-dismissed");
+            },
+          },
+        });
+        this.setResult("notice-group-result-added");
+        break;
+      case "notice-group-finish":
+        this.groupedNotices.finish("showcase-integrity", {
+          durationMs: 750,
+        });
+        this.setResult("notice-group-finished");
         break;
       default:
         throw new Error(`Unknown showcase story: ${story}`);

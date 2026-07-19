@@ -44,7 +44,78 @@ async function main(): Promise<void> {
         .waitFor({ state: "hidden", timeout: 5_000 });
     });
 
-    console.log("Real Obsidian keyed Notice stories passed.");
+    await executeHarnessStory(session, "notice-group-start");
+    await withObsidianPage(port, async (page) => {
+      const notice = page.locator(".notice:has(.vpk-keyed-notice-group)");
+      await notice.waitFor({ state: "visible", timeout: 10_000 });
+      await notice
+        .getByText("Checking for incomplete documents...", { exact: true })
+        .waitFor();
+      await notice.evaluate((element) => {
+        element.setAttribute("data-vpk-e2e-instance", "group-original");
+      });
+    });
+
+    await executeHarnessStory(session, "notice-group-result");
+    await withObsidianPage(port, async (page) => {
+      const notice = page.locator(".notice:has(.vpk-keyed-notice-group)");
+      if ((await notice.count()) !== 1)
+        throw new Error("Expected one Notice for the named group");
+      const rows = notice.locator(".vpk-keyed-notice-group__item");
+      if ((await rows.count()) !== 2)
+        throw new Error("Expected two named rows in the grouped Notice");
+      await rows
+        .nth(0)
+        .getByText("Checking for incomplete documents...", { exact: true })
+        .waitFor();
+      await rows
+        .nth(1)
+        .getByText("No size mismatches found", { exact: true })
+        .waitFor();
+      if (
+        (await notice.getAttribute("data-vpk-e2e-instance")) !==
+        "group-original"
+      ) {
+        throw new Error("Grouped Notice update replaced the visible Notice");
+      }
+      await notice
+        .getByRole("button", { name: "Dismiss this notification" })
+        .waitFor();
+    });
+
+    await executeHarnessStory(session, "notice-group-finish");
+    await withObsidianPage(port, async (page) => {
+      await page
+        .locator(".notice:has(.vpk-keyed-notice-group)")
+        .waitFor({ state: "hidden", timeout: 5_000 });
+    });
+
+    await executeHarnessStory(session, "notice-group-start");
+    await withObsidianPage(port, async (page) => {
+      const notice = page.locator(".notice:has(.vpk-keyed-notice-group)");
+      await notice
+        .getByText("Checking for incomplete documents...", { exact: true })
+        .click();
+      await notice.waitFor({ state: "hidden", timeout: 5_000 });
+    });
+    await executeHarnessStory(session, "notice-group-result");
+    await withObsidianPage(port, async (page) => {
+      const notice = page.locator(".notice:has(.vpk-keyed-notice-group)");
+      const rows = notice.locator(".vpk-keyed-notice-group__item");
+      if ((await rows.count()) !== 1)
+        throw new Error(
+          "A dismissed grouped Notice repeated acknowledged rows",
+        );
+      await rows
+        .getByText("No size mismatches found", { exact: true })
+        .waitFor();
+      await notice
+        .getByRole("button", { name: "Dismiss this notification" })
+        .click();
+      await notice.waitFor({ state: "hidden", timeout: 5_000 });
+    });
+
+    console.log("Real Obsidian keyed and grouped Notice stories passed.");
   } finally {
     if (testSession !== undefined) await stopHarnessTestSession(testSession);
   }

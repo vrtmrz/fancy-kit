@@ -58,6 +58,8 @@ Dismissal resolves to `null`. An explicitly submitted empty string remains `""` 
 
 The direct dialogue helpers accept an optional `AbortSignal` lifecycle argument. Bind it to the owning plug-in when a dialogue may remain open across asynchronous work; aborting closes the dialogue and resolves it as dismissal. See the [usage guide](docs/usage-guide.md#dialogs) for an example.
 
+`confirmAction` constrains long Markdown content to the effective top and bottom safe-area insets, keeps its action area available, and lets the message scroll inside the dialogue. Use `actionLayout: "vertical"` for several long or safety-sensitive actions on narrow screens.
+
 ## Keyed notices
 
 `KeyedNoticeManager` updates one visible Notice per application-defined key and restarts its expiry on every update. Dispose the manager during plug-in unload.
@@ -68,6 +70,26 @@ import { KeyedNoticeManager } from "@vrtmrz/obsidian-plugin-kit/notice";
 const notices = new KeyedNoticeManager();
 notices.show("sync", "Synchronising...");
 notices.show("sync", "Synchronisation complete", { durationMs: 1_000 });
+
+// In the owning plug-in's onunload():
+notices.dispose();
+```
+
+`KeyedNoticeGroupManager` keeps several named rows in one Notice. Updating an item key replaces that row without changing its position; adding another key creates a separated row. Active groups remain visible until `finish()` starts their expiry.
+
+Click dismissal starts a fresh group on the next update, even while Obsidian's hide transition still has the old Notice connected. Previously acknowledged rows are not reintroduced.
+
+```ts
+import { KeyedNoticeGroupManager } from "@vrtmrz/obsidian-plugin-kit/notice";
+
+const notices = new KeyedNoticeGroupManager();
+notices.setItem("integrity", "checking", {
+  message: "Checking for incomplete documents...",
+});
+notices.setItem("integrity", "result", {
+  message: "No size mismatches found",
+});
+notices.finish("integrity");
 
 // In the owning plug-in's onunload():
 notices.dispose();

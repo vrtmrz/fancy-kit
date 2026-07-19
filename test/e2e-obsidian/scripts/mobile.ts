@@ -371,6 +371,44 @@ async function main(): Promise<void> {
             "mobile cancelled progress state",
           );
           await progressNotice.waitFor({ state: "hidden", timeout: 5_000 });
+
+          await executeHarnessStory(harnessPlugin, "notice-group-start");
+          await executeHarnessStory(harnessPlugin, "notice-group-result");
+          const groupedNotice = page
+            .locator(".notice:has(.vpk-keyed-notice-group)")
+            .last();
+          await groupedNotice.waitFor({ state: "visible", timeout: 10_000 });
+          await assertFitsViewport(page, groupedNotice, "grouped Notice");
+          await assertLocatorWithinSafeArea(page, groupedNotice, {
+            label: "grouped Notice",
+          });
+          const groupedAction = groupedNotice.getByRole("button", {
+            name: "Dismiss this notification",
+          });
+          await assertLocatorWithinSafeArea(page, groupedAction, {
+            label: "grouped Notice action",
+          });
+          await assertLocatorHasMinimumTouchTarget(page, groupedAction, {
+            label: "grouped Notice action",
+          });
+          const groupedNoticeScreenshot =
+            process.env.E2E_OBSIDIAN_GROUPED_NOTICE_SCREENSHOT;
+          if (
+            groupedNoticeScreenshot !== undefined &&
+            groupedNoticeScreenshot !== ""
+          ) {
+            await page.screenshot({
+              path: groupedNoticeScreenshot,
+              animations: "disabled",
+            });
+          }
+          await groupedAction.click();
+          await waitForHarnessState(
+            harnessPlugin,
+            (state) => state.lastResult === "notice-group-dismissed",
+            "mobile grouped Notice action",
+          );
+          await groupedNotice.waitFor({ state: "hidden", timeout: 5_000 });
         } finally {
           await harnessPlugin.dispose();
         }
