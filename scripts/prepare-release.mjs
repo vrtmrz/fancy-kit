@@ -80,6 +80,88 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
   return { packageDirectory, manifest: nextManifest, lockfile: nextLockfile };
 }
 
+const releasePreparationOrder = [
+  "@vrtmrz/ui-interactions",
+  "@vrtmrz/obsidian-plugin-kit",
+  "@vrtmrz/obsidian-test-session",
+  "octagonal-wheels",
+];
+
+export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
+  if (!Array.isArray(selections) || selections.length === 0) {
+    throw new Error("At least one package release must be selected");
+  }
+
+  const selectedVersions = new Map();
+  for (const selection of selections) {
+    const { packageName, version } = selection;
+    if (!publishablePackages[packageName]) {
+      throw new Error(`Unsupported package: ${packageName}`);
+    }
+    if (selectedVersions.has(packageName)) {
+      throw new Error(`Package selected more than once: ${packageName}`);
+    }
+    selectedVersions.set(packageName, version);
+  }
+
+  const nextManifests = cloneJson(manifests);
+  let nextLockfile = cloneJson(lockfile);
+  const uiPackageName = "@vrtmrz/ui-interactions";
+  const pluginKitPackageName = "@vrtmrz/obsidian-plugin-kit";
+  const uiVersion = selectedVersions.get(uiPackageName);
+
+  if (uiVersion && selectedVersions.has(pluginKitPackageName)) {
+    const pluginKitManifest = nextManifests[pluginKitPackageName];
+    if (!pluginKitManifest) {
+      throw new Error(`Manifest is missing for ${pluginKitPackageName}`);
+    }
+    const pluginKitDirectory = publishablePackages[pluginKitPackageName];
+    const pluginKitLockEntry = nextLockfile.packages?.[pluginKitDirectory];
+    if (!pluginKitLockEntry) {
+      throw new Error(`Lockfile entry is missing for ${pluginKitDirectory}`);
+    }
+    nextManifests[pluginKitPackageName] = {
+      ...pluginKitManifest,
+      dependencies: {
+        ...pluginKitManifest.dependencies,
+        [uiPackageName]: uiVersion,
+      },
+    };
+    nextLockfile.packages[pluginKitDirectory] = {
+      ...pluginKitLockEntry,
+      dependencies: {
+        ...pluginKitLockEntry.dependencies,
+        [uiPackageName]: uiVersion,
+      },
+    };
+  }
+
+  const orderIndex = new Map(releasePreparationOrder.map((packageName, index) => [packageName, index]));
+  const orderedSelections = [...selections].sort(
+    (left, right) => orderIndex.get(left.packageName) - orderIndex.get(right.packageName),
+  );
+  const preparations = [];
+  for (const { packageName, version } of orderedSelections) {
+    const manifest = nextManifests[packageName];
+    if (!manifest) throw new Error(`Manifest is missing for ${packageName}`);
+    const uiManifest = nextManifests[uiPackageName];
+    if (!uiManifest) throw new Error(`Manifest is missing for ${uiPackageName}`);
+
+    const preparation = planReleasePreparation({
+      packageName,
+      version,
+      manifest,
+      lockfile: nextLockfile,
+      uiManifest,
+    });
+    nextManifests[packageName] = preparation.manifest;
+    nextLockfile = preparation.lockfile;
+    preparations.push({ ...preparation, packageName, version });
+  }
+
+  return { manifests: nextManifests, lockfile: nextLockfile, preparations };
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -91,21 +173,40 @@ function writeJsonPreservingIndentation(path, value) {
 }
 
 export function prepareReleaseMetadata({ repositoryRoot = defaultRepositoryRoot, packageName, version }) {
-  const packageDirectory = publishablePackages[packageName];
-  if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
+  const result = prepareReleaseSetMetadata({
+    repositoryRoot,
+    selections: [{ packageName, version }],
+  });
+  return result.preparations[0];
+}
 
-  const manifestPath = resolve(repositoryRoot, packageDirectory, "package.json");
+export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRoot, selections }) {
+  const selectedPackageNames = new Set(["@vrtmrz/ui-interactions"]);
+  for (const { packageName } of selections) {
+    const packageDirectory = publishablePackages[packageName];
+    if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
+    selectedPackageNames.add(packageName);
+  }
+
+  const manifests = {};
+  for (const packageName of selectedPackageNames) {
+    const packageDirectory = publishablePackages[packageName];
+    manifests[packageName] = readJson(resolve(repositoryRoot, packageDirectory, "package.json"));
+  }
   const lockfilePath = resolve(repositoryRoot, "package-lock.json");
-  const uiManifestPath = resolve(repositoryRoot, "packages/ui-interactions/package.json");
-  const result = planReleasePreparation({
-    packageName,
-    version,
-    manifest: readJson(manifestPath),
+  const result = planReleaseSetPreparation({
+    selections,
+    manifests,
     lockfile: readJson(lockfilePath),
-    uiManifest: readJson(uiManifestPath),
   });
 
-  writeJsonPreservingIndentation(manifestPath, result.manifest);
+  for (const { packageName } of selections) {
+    const packageDirectory = publishablePackages[packageName];
+    writeJsonPreservingIndentation(
+      resolve(repositoryRoot, packageDirectory, "package.json"),
+      result.manifests[packageName],
+    );
+  }
   writeJsonPreservingIndentation(lockfilePath, result.lockfile);
   return result;
 }
@@ -121,14 +222,24 @@ export function buildPreparedPackage({ repositoryRoot = defaultRepositoryRoot, p
 }
 
 function main() {
-  const [packageName, version] = process.argv.slice(2);
-  if (!packageName || !version) {
-    throw new Error("Usage: npm run release:prepare -- <package-name> <version>");
+  const args = process.argv.slice(2);
+  if (args.length === 0 || args.length % 2 !== 0) {
+    throw new Error(
+      "Usage: npm run release:prepare -- <package-name> <version> [<package-name> <version> ...]",
+    );
+  }
+  const selections = [];
+  for (let index = 0; index < args.length; index += 2) {
+    selections.push({ packageName: args[index], version: args[index + 1] });
   }
 
-  const result = prepareReleaseMetadata({ packageName, version });
-  buildPreparedPackage({ packageName });
-  process.stdout.write(`Prepared ${packageName}@${version} in ${result.packageDirectory}.\n`);
+  const result = prepareReleaseSetMetadata({ selections });
+  for (const preparation of result.preparations) {
+    buildPreparedPackage({ packageName: preparation.packageName });
+    process.stdout.write(
+      `Prepared ${preparation.packageName}@${preparation.version} in ${preparation.packageDirectory}.\n`,
+    );
+  }
   process.stdout.write("Run npm run verify:workspace before committing the release preparation.\n");
 }
 
