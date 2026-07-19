@@ -26,6 +26,7 @@ The published package is ESM and declares `obsidian >=1.8.7`. Direct dialogs, No
 | Mutate an existing Markdown file's frontmatter without passing `TFile` | Accept `VaultFrontmatterAccess` and create it with `createObsidianVaultFrontmatterAccess` |
 | Test frontmatter policy without parsing or serialising YAML            | Use `createVaultFrontmatterTestHarness`                                                   |
 | Update one persistent Notice by an application-defined key             | Use `KeyedNoticeManager`                                                                  |
+| Keep several named status or action rows in one Notice                 | Use `KeyedNoticeGroupManager`                                                             |
 | Display determinate or indeterminate progress                          | Use `ProgressFragment` or `showProgressNotice`                                            |
 
 Direct dialog functions and `createObsidianUi` render the same Obsidian UI. The distinction is architectural: direct functions are convenient at an Obsidian-specific boundary, while `UiInteractions` allows a workflow to receive a neutral capability that a test can replace.
@@ -181,6 +182,8 @@ const action = await confirmAction(
 `confirmAction` and `showMessage` render their message as Markdown. Use `sourcePath` when relative Markdown links need an Obsidian source path.
 
 Set `actionLayout: "vertical"` when a dialogue presents several long or safety-sensitive actions. Every action then uses the available width, which keeps the labels readable and provides consistent touch targets on narrow screens. The default `auto` layout retains the ordinary wrapped row.
+
+`confirmAction` also limits its outer dialogue to the inherited `--safe-area-inset-top` and `--safe-area-inset-bottom` values. Long Markdown scrolls independently while the action area remains available inside that boundary, so the title, close control, and actions do not require the modal itself to cross an iPhone-style unsafe edge. A desktop emulation test must still provide representative safe-area variables; this layout contract does not claim to reproduce native keyboards or operating-system overlays.
 
 Dismissal resolves to `null` for prompts, selection, and confirmation. An explicitly submitted empty string remains `""`. `pickOne` returns the original supplied item, preserving object identity. Its secondary description is visible but is not included in fuzzy-search matching.
 
@@ -389,6 +392,35 @@ notices.dispose();
 
 Use a separate manager for each owning application scope. `hideAll()` clears visible Notices while leaving the manager reusable. `dispose()` clears them and permanently ends the manager lifecycle, so call it during plug-in unload.
 
+Use `KeyedNoticeGroupManager` when several messages or actions belong to one operation and should not stack as separate Notices. Each group key owns one Notice, and each item key owns one insertion-ordered row within it:
+
+```ts
+import { KeyedNoticeGroupManager } from "@vrtmrz/obsidian-plugin-kit/notice";
+
+const notices = new KeyedNoticeGroupManager({
+  defaultCompletedDurationMs: 5_000,
+});
+
+notices.setItem("integrity", "checking", {
+  message: "Checking for incomplete documents...",
+});
+notices.setItem("integrity", "result", {
+  message: "No size mismatches found",
+  action: {
+    label: "Review details",
+    onSelect: () => openIntegrityReport(),
+  },
+});
+notices.finish("integrity");
+
+// In the owning plug-in's onunload():
+notices.dispose();
+```
+
+`setItem()` cancels a pending completion expiry, so an operation can become active again without creating another Notice. Updating an existing item key retains its position. `removeItem()` removes one row and hides the Notice when the group becomes empty. If the user dismisses the Notice itself, the next update starts a fresh group and does not repeat the dismissed rows.
+
+Grouped messages are plain text. Actions use explicit labels and callbacks instead of exposing Obsidian's internal Notice elements. The manager keeps the DOM root it supplied to Obsidian and does not require newer `Notice.messageEl` or `Notice.containerEl` properties.
+
 ## Progress
 
 Use `showProgressNotice` for progress displayed as an Obsidian Notice:
@@ -452,15 +484,15 @@ The repository's local real-application infrastructure is described in the [Obsi
 
 The package uses focused tests for neutral or adapter-owned contracts and a real-Obsidian showcase for platform behaviour:
 
-| Public area                                                                            | Focused evidence                                                                                                                                            | Consumer or real-application example                                                                                                                                                               |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Text and password prompts, typed selection, Markdown actions, and dismissal            | [`src/dialog.test.ts`](../src/dialog.test.ts)                                                                                                               | Dialogue stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/dialogs.ts`](../../../test/e2e-obsidian/scripts/dialogs.ts)          |
-| Injected `UiInteractions`, scripted responses, pass-through, and transcripts           | [`src/ui-context.test.ts`](../src/ui-context.test.ts) and [`../ui-interactions/src/testing.test.ts`](../../ui-interactions/src/testing.test.ts)             | The App-free and mixed examples in [UI automation and scripted responses](ui-automation.md)                                                                                                        |
-| Keyed Notice reuse, expiry, and disposal                                               | [`src/notice.test.ts`](../src/notice.test.ts)                                                                                                               | Notice stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/notices.ts`](../../../test/e2e-obsidian/scripts/notices.ts)            |
-| Progress rendering, terminal states, callbacks, and Notice expiry                      | [`src/progress.test.ts`](../src/progress.test.ts)                                                                                                           | [`test/e2e-obsidian/scripts/progress.ts`](../../../test/e2e-obsidian/scripts/progress.ts) and mobile layout checks                                                                                 |
-| Obsidian text Vault delegation and stable contract errors                              | [`src/vault.test.ts`](../src/vault.test.ts)                                                                                                                 | Vault contract story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/contracts.ts`](../../../test/e2e-obsidian/scripts/contracts.ts)  |
-| In-memory text operations, transcripts, and failure injection                          | [`src/vault-testing.test.ts`](../src/vault-testing.test.ts)                                                                                                 | Public packed-consumer fixture in [`test/packed-consumer/obsidian-plugin-kit-usage.ts`](../../../test/packed-consumer/obsidian-plugin-kit-usage.ts)                                                |
-| Frontmatter adapter, synchronous updater enforcement, rollback, and isolated snapshots | [`src/vault-frontmatter.test.ts`](../src/vault-frontmatter.test.ts) and [`src/vault-frontmatter-testing.test.ts`](../src/vault-frontmatter-testing.test.ts) | Frontmatter story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/frontmatter.ts`](../../../test/e2e-obsidian/scripts/frontmatter.ts) |
+| Public area                                                                                   | Focused evidence                                                                                                                                            | Consumer or real-application example                                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text and password prompts, typed selection, Markdown actions, safe-area layout, and dismissal | [`src/dialog.test.ts`](../src/dialog.test.ts)                                                                                                               | Dialogue stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts), [`test/e2e-obsidian/scripts/dialogs.ts`](../../../test/e2e-obsidian/scripts/dialogs.ts), and the mobile layout suite |
+| Injected `UiInteractions`, scripted responses, pass-through, and transcripts                  | [`src/ui-context.test.ts`](../src/ui-context.test.ts) and [`../ui-interactions/src/testing.test.ts`](../../ui-interactions/src/testing.test.ts)             | The App-free and mixed examples in [UI automation and scripted responses](ui-automation.md)                                                                                                                         |
+| Keyed and grouped Notice reuse, dismissal, expiry, and disposal                               | [`src/notice.test.ts`](../src/notice.test.ts)                                                                                                               | Notice stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts), [`test/e2e-obsidian/scripts/notices.ts`](../../../test/e2e-obsidian/scripts/notices.ts), and the mobile layout suite   |
+| Progress rendering, terminal states, callbacks, and Notice expiry                             | [`src/progress.test.ts`](../src/progress.test.ts)                                                                                                           | [`test/e2e-obsidian/scripts/progress.ts`](../../../test/e2e-obsidian/scripts/progress.ts) and mobile layout checks                                                                                                  |
+| Obsidian text Vault delegation and stable contract errors                                     | [`src/vault.test.ts`](../src/vault.test.ts)                                                                                                                 | Vault contract story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/contracts.ts`](../../../test/e2e-obsidian/scripts/contracts.ts)                   |
+| In-memory text operations, transcripts, and failure injection                                 | [`src/vault-testing.test.ts`](../src/vault-testing.test.ts)                                                                                                 | Public packed-consumer fixture in [`test/packed-consumer/obsidian-plugin-kit-usage.ts`](../../../test/packed-consumer/obsidian-plugin-kit-usage.ts)                                                                 |
+| Frontmatter adapter, synchronous updater enforcement, rollback, and isolated snapshots        | [`src/vault-frontmatter.test.ts`](../src/vault-frontmatter.test.ts) and [`src/vault-frontmatter-testing.test.ts`](../src/vault-frontmatter-testing.test.ts) | Frontmatter story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/frontmatter.ts`](../../../test/e2e-obsidian/scripts/frontmatter.ts)                  |
 
 The compile-only packed-consumer fixture exercises every documented public subpath. Real-Obsidian scenarios cover the Modal, SuggestModal, Notice, DOM, and Vault integration that App-free tests intentionally leave to the platform boundary.
 

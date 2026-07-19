@@ -36,6 +36,7 @@ interface FakeButton {
 }
 
 interface FakeModal {
+  modalEl: FakeElement;
   contentEl: FakeElement;
   close(): void;
   getItems?(): unknown[];
@@ -98,6 +99,7 @@ vi.mock("obsidian", () => {
   class Modal {
     app: App;
     titleEl = new ElementMock();
+    modalEl = new ElementMock();
     contentEl = new ElementMock();
     private openState = false;
 
@@ -523,6 +525,39 @@ describe("confirmAction", () => {
     for (const button of mockState.buttons as FakeButton[]) {
       expect(button.buttonEl.styles.width).toBe("100%");
     }
+  });
+
+  it("constrains long action dialogues to the device safe area", () => {
+    void confirmAction(app, {
+      title: "Compatibility review",
+      message: "A long compatibility explanation.",
+      actions: ["back"] as const,
+      actionLayout: "vertical",
+    });
+
+    const modal = last<FakeModal>(mockState.modals);
+    expect(modal.modalEl.classes).toContain("vpk-action-dialog");
+    expect(modal.modalEl.styles.maxHeight).toContain("--safe-area-inset-top");
+    expect(modal.modalEl.styles.maxHeight).toContain(
+      "--safe-area-inset-bottom",
+    );
+    expect(modal.contentEl.styles).toMatchObject({
+      display: "flex",
+      flexDirection: "column",
+      minHeight: "0",
+      overflowY: "hidden",
+    });
+    const messageEl = modal.contentEl.children.find((child) =>
+      child.classes.includes("vpk-action-dialog__message"),
+    );
+    expect(messageEl?.styles).toMatchObject({
+      minHeight: "0",
+      overflowY: "auto",
+    });
+    const actionsEl = modal.contentEl.children.find((child) =>
+      child.classes.includes("vpk-action-dialog__actions-container"),
+    );
+    expect(actionsEl?.styles).toMatchObject({ flexShrink: "0" });
   });
 
   it("returns null when dismissed", async () => {

@@ -272,8 +272,27 @@ class ActionDialog<T extends string> extends Modal {
   override onOpen(): void {
     this.setTitle(this.options.title);
     this.renderer.load();
+    this.modalEl.addClass("vpk-action-dialog");
+    this.modalEl.setCssStyles({
+      maxHeight:
+        "calc(100vh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 1rem)",
+      minHeight: "0",
+    });
+    this.contentEl.setCssStyles({
+      display: "flex",
+      flexDirection: "column",
+      minHeight: "0",
+      overflowY: "hidden",
+    });
 
-    const messageEl = this.contentEl.createDiv();
+    const messageEl = this.contentEl.createDiv({
+      cls: "vpk-action-dialog__message",
+    });
+    messageEl.setCssStyles({
+      flex: "1 1 auto",
+      minHeight: "0",
+      overflowY: "auto",
+    });
     void MarkdownRenderer.render(
       this.app,
       this.options.message,
@@ -282,7 +301,11 @@ class ActionDialog<T extends string> extends Modal {
       this.renderer,
     );
 
-    const actions = new Setting(this.contentEl);
+    const actionsEl = this.contentEl.createDiv({
+      cls: "vpk-action-dialog__actions-container",
+    });
+    actionsEl.setCssStyles({ flexShrink: "0" });
+    const actions = new Setting(actionsEl);
     const verticalActions = this.options.actionLayout === "vertical";
     actions.controlEl.addClass("vpk-action-dialog__actions");
     if (verticalActions) {
