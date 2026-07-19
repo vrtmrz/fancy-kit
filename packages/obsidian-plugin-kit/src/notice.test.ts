@@ -1,6 +1,68 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+type TestElementInfo =
+  | string
+  | {
+      attr?: Record<string, string | number | boolean | null>;
+      cls?: string | string[];
+      text?: string;
+    };
+
+function configureTestElement<T extends HTMLElement>(
+  element: T,
+  info?: TestElementInfo,
+): T {
+  if (typeof info === "string") {
+    element.className = info;
+    return element;
+  }
+  if (info?.cls !== undefined) {
+    element.classList.add(
+      ...(Array.isArray(info.cls) ? info.cls : info.cls.split(" ")),
+    );
+  }
+  if (info?.text !== undefined) element.textContent = info.text;
+  for (const [name, value] of Object.entries(info?.attr ?? {})) {
+    if (value === null || value === false) continue;
+    element.setAttribute(name, value === true ? "" : String(value));
+  }
+  return element;
+}
+
+const originalCreateDiv = globalThis.createDiv;
+const originalCreateEl = globalThis.createEl;
+const originalSetCssStyles = HTMLElement.prototype.setCssStyles;
+
+beforeAll(() => {
+  globalThis.createDiv = ((
+    info?: TestElementInfo,
+    callback?: (element: HTMLDivElement) => void,
+  ) => {
+    const element = configureTestElement(document.createElement("div"), info);
+    callback?.(element);
+    return element;
+  }) as typeof createDiv;
+  globalThis.createEl = ((
+    tag: keyof HTMLElementTagNameMap,
+    info?: TestElementInfo,
+    callback?: (element: HTMLElement) => void,
+  ) => {
+    const element = configureTestElement(document.createElement(tag), info);
+    callback?.(element);
+    return element;
+  }) as typeof createEl;
+  HTMLElement.prototype.setCssStyles = function setCssStyles(styles) {
+    Object.assign(this.style, styles);
+  };
+});
+
+afterAll(() => {
+  globalThis.createDiv = originalCreateDiv;
+  globalThis.createEl = originalCreateEl;
+  HTMLElement.prototype.setCssStyles = originalSetCssStyles;
+});
 
 interface NoticeMockInstance {
   messageEl: HTMLElement;
