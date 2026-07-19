@@ -14,19 +14,19 @@ The published package is ESM and declares `obsidian >=1.8.7`. Direct dialogs, No
 
 ## Choose an integration style
 
-| Need | Recommended API |
-| --- | --- |
-| Open one dialog from Obsidian-specific leaf code | Import a function from `@vrtmrz/obsidian-plugin-kit/dialog` |
-| Keep an application workflow independent of Obsidian UI classes | Accept `UiInteractions` and create it with `createObsidianUi` |
-| Limit a workflow to the interactions it uses | Define a local `Pick<UiInteractions, ...>` capability |
-| Test that workflow without Obsidian | Use `createUiTestHarness` |
-| Observe selected interactions while allowing others to open real UI | Pass an instance-scoped driver to `createObsidianUi` |
-| Read and write text through a focused, injectable Vault boundary | Accept `VaultTextAccess` and create it with `createObsidianVaultTextAccess` |
-| Test a Vault text workflow without Obsidian | Use `createVaultTextTestHarness` |
+| Need                                                                   | Recommended API                                                                           |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Open one dialog from Obsidian-specific leaf code                       | Import a function from `@vrtmrz/obsidian-plugin-kit/dialog`                               |
+| Keep an application workflow independent of Obsidian UI classes        | Accept `UiInteractions` and create it with `createObsidianUi`                             |
+| Limit a workflow to the interactions it uses                           | Define a local `Pick<UiInteractions, ...>` capability                                     |
+| Test that workflow without Obsidian                                    | Use `createUiTestHarness`                                                                 |
+| Observe selected interactions while allowing others to open real UI    | Pass an instance-scoped driver to `createObsidianUi`                                      |
+| Read and write text through a focused, injectable Vault boundary       | Accept `VaultTextAccess` and create it with `createObsidianVaultTextAccess`               |
+| Test a Vault text workflow without Obsidian                            | Use `createVaultTextTestHarness`                                                          |
 | Mutate an existing Markdown file's frontmatter without passing `TFile` | Accept `VaultFrontmatterAccess` and create it with `createObsidianVaultFrontmatterAccess` |
-| Test frontmatter policy without parsing or serialising YAML | Use `createVaultFrontmatterTestHarness` |
-| Update one persistent Notice by an application-defined key | Use `KeyedNoticeManager` |
-| Display determinate or indeterminate progress | Use `ProgressFragment` or `showProgressNotice` |
+| Test frontmatter policy without parsing or serialising YAML            | Use `createVaultFrontmatterTestHarness`                                                   |
+| Update one persistent Notice by an application-defined key             | Use `KeyedNoticeManager`                                                                  |
+| Display determinate or indeterminate progress                          | Use `ProgressFragment` or `showProgressNotice`                                            |
 
 Direct dialog functions and `createObsidianUi` render the same Obsidian UI. The distinction is architectural: direct functions are convenient at an Obsidian-specific boundary, while `UiInteractions` allows a workflow to receive a neutral capability that a test can replace.
 
@@ -158,7 +158,29 @@ await showMessage(app, {
 });
 ```
 
+Bind a long-lived or safety-sensitive dialogue to its owning plug-in lifecycle. `promptText`, `promptPassword`, `pickOne`, `confirmAction`, and `showMessage` accept the same optional lifecycle argument. Aborting closes an open dialogue and resolves it as dismissal; a pre-aborted signal prevents it from opening:
+
+```ts
+const dialogueOwner = new AbortController();
+this.register(() => dialogueOwner.abort());
+
+const action = await confirmAction(
+  this.app,
+  {
+    title: "Compatibility review",
+    message: "Remote synchronisation is paused.",
+    actions: ["review", "keep-paused"] as const,
+    labels: { review: "Review details", "keep-paused": "Keep paused" },
+    defaultAction: "keep-paused",
+    actionLayout: "vertical",
+  },
+  { signal: dialogueOwner.signal },
+);
+```
+
 `confirmAction` and `showMessage` render their message as Markdown. Use `sourcePath` when relative Markdown links need an Obsidian source path.
+
+Set `actionLayout: "vertical"` when a dialogue presents several long or safety-sensitive actions. Every action then uses the available width, which keeps the labels readable and provides consistent touch targets on narrow screens. The default `auto` layout retains the ordinary wrapped row.
 
 Dismissal resolves to `null` for prompts, selection, and confirmation. An explicitly submitted empty string remains `""`. `pickOne` returns the original supplied item, preserving object identity. Its secondary description is visible but is not included in fuzzy-search matching.
 
@@ -171,7 +193,9 @@ import type { UiInteractions } from "@vrtmrz/obsidian-plugin-kit/ui";
 
 type RestoreConfirmationUi = Pick<UiInteractions, "confirmAction">;
 
-export async function confirmRestore(ui: RestoreConfirmationUi): Promise<boolean> {
+export async function confirmRestore(
+  ui: RestoreConfirmationUi,
+): Promise<boolean> {
   const action = await ui.confirmAction(
     {
       title: "Restore confirmation",
@@ -308,7 +332,9 @@ async function addTags(
 ): Promise<void> {
   await vault.updateFrontmatter(path, (frontmatter) => {
     const existing = Array.isArray(frontmatter.tags)
-      ? frontmatter.tags.filter((value): value is string => typeof value === "string")
+      ? frontmatter.tags.filter(
+          (value): value is string => typeof value === "string",
+        )
       : [];
     frontmatter.tags = [...new Set([...tags, ...existing])];
   });
@@ -426,14 +452,14 @@ The repository's local real-application infrastructure is described in the [Obsi
 
 The package uses focused tests for neutral or adapter-owned contracts and a real-Obsidian showcase for platform behaviour:
 
-| Public area | Focused evidence | Consumer or real-application example |
-| --- | --- | --- |
-| Text and password prompts, typed selection, Markdown actions, and dismissal | [`src/dialog.test.ts`](../src/dialog.test.ts) | Dialogue stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/dialogs.ts`](../../../test/e2e-obsidian/scripts/dialogs.ts) |
-| Injected `UiInteractions`, scripted responses, pass-through, and transcripts | [`src/ui-context.test.ts`](../src/ui-context.test.ts) and [`../ui-interactions/src/testing.test.ts`](../../ui-interactions/src/testing.test.ts) | The App-free and mixed examples in [UI automation and scripted responses](ui-automation.md) |
-| Keyed Notice reuse, expiry, and disposal | [`src/notice.test.ts`](../src/notice.test.ts) | Notice stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/notices.ts`](../../../test/e2e-obsidian/scripts/notices.ts) |
-| Progress rendering, terminal states, callbacks, and Notice expiry | [`src/progress.test.ts`](../src/progress.test.ts) | [`test/e2e-obsidian/scripts/progress.ts`](../../../test/e2e-obsidian/scripts/progress.ts) and mobile layout checks |
-| Obsidian text Vault delegation and stable contract errors | [`src/vault.test.ts`](../src/vault.test.ts) | Vault contract story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/contracts.ts`](../../../test/e2e-obsidian/scripts/contracts.ts) |
-| In-memory text operations, transcripts, and failure injection | [`src/vault-testing.test.ts`](../src/vault-testing.test.ts) | Public packed-consumer fixture in [`test/packed-consumer/obsidian-plugin-kit-usage.ts`](../../../test/packed-consumer/obsidian-plugin-kit-usage.ts) |
+| Public area                                                                            | Focused evidence                                                                                                                                            | Consumer or real-application example                                                                                                                                                               |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text and password prompts, typed selection, Markdown actions, and dismissal            | [`src/dialog.test.ts`](../src/dialog.test.ts)                                                                                                               | Dialogue stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/dialogs.ts`](../../../test/e2e-obsidian/scripts/dialogs.ts)          |
+| Injected `UiInteractions`, scripted responses, pass-through, and transcripts           | [`src/ui-context.test.ts`](../src/ui-context.test.ts) and [`../ui-interactions/src/testing.test.ts`](../../ui-interactions/src/testing.test.ts)             | The App-free and mixed examples in [UI automation and scripted responses](ui-automation.md)                                                                                                        |
+| Keyed Notice reuse, expiry, and disposal                                               | [`src/notice.test.ts`](../src/notice.test.ts)                                                                                                               | Notice stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/notices.ts`](../../../test/e2e-obsidian/scripts/notices.ts)            |
+| Progress rendering, terminal states, callbacks, and Notice expiry                      | [`src/progress.test.ts`](../src/progress.test.ts)                                                                                                           | [`test/e2e-obsidian/scripts/progress.ts`](../../../test/e2e-obsidian/scripts/progress.ts) and mobile layout checks                                                                                 |
+| Obsidian text Vault delegation and stable contract errors                              | [`src/vault.test.ts`](../src/vault.test.ts)                                                                                                                 | Vault contract story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/contracts.ts`](../../../test/e2e-obsidian/scripts/contracts.ts)  |
+| In-memory text operations, transcripts, and failure injection                          | [`src/vault-testing.test.ts`](../src/vault-testing.test.ts)                                                                                                 | Public packed-consumer fixture in [`test/packed-consumer/obsidian-plugin-kit-usage.ts`](../../../test/packed-consumer/obsidian-plugin-kit-usage.ts)                                                |
 | Frontmatter adapter, synchronous updater enforcement, rollback, and isolated snapshots | [`src/vault-frontmatter.test.ts`](../src/vault-frontmatter.test.ts) and [`src/vault-frontmatter-testing.test.ts`](../src/vault-frontmatter-testing.test.ts) | Frontmatter story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/frontmatter.ts`](../../../test/e2e-obsidian/scripts/frontmatter.ts) |
 
 The compile-only packed-consumer fixture exercises every documented public subpath. Real-Obsidian scenarios cover the Modal, SuggestModal, Notice, DOM, and Vault integration that App-free tests intentionally leave to the platform boundary.

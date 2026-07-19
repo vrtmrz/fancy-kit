@@ -22,6 +22,39 @@ export type {
   ShowMessageOptions,
 } from "@vrtmrz/ui-interactions";
 
+/** Binds a dialogue to an owning application or plug-in lifecycle. */
+export interface DialogLifecycleOptions {
+  /** Cancels the dialogue and resolves it as dismissed when aborted. */
+  signal?: AbortSignal;
+}
+
+interface OwnedDialogue {
+  open(): void;
+  close(): void;
+}
+
+function openOwnedDialogue<T>(
+  createDialogue: (resolve: (result: T | null) => void) => OwnedDialogue,
+  lifecycle: DialogLifecycleOptions,
+): Promise<T | null> {
+  let removeAbortHandler = (): void => {};
+  const result = new Promise<T | null>((resolve) => {
+    const { signal } = lifecycle;
+    if (signal?.aborted) {
+      resolve(null);
+      return;
+    }
+
+    const dialogue = createDialogue(resolve);
+    const abortDialogue = (): void => dialogue.close();
+    signal?.addEventListener("abort", abortDialogue, { once: true });
+    removeAbortHandler = () =>
+      signal?.removeEventListener("abort", abortDialogue);
+    dialogue.open();
+  });
+  return result.finally(() => removeAbortHandler());
+}
+
 interface TextPromptModalOptions extends PromptTextOptions {
   password: boolean;
 }
@@ -47,8 +80,10 @@ class TextPromptModal extends Modal {
     this.setTitle(this.options.title);
 
     const inputSetting = new Setting(this.contentEl);
-    if (this.options.label !== undefined) inputSetting.setName(this.options.label);
-    if (this.options.description !== undefined) inputSetting.setDesc(this.options.description);
+    if (this.options.label !== undefined)
+      inputSetting.setName(this.options.label);
+    if (this.options.description !== undefined)
+      inputSetting.setDesc(this.options.description);
 
     inputSetting.addText((input) => {
       this.input = input;
@@ -74,7 +109,9 @@ class TextPromptModal extends Modal {
           .onClick(() => this.submit()),
       )
       .addButton((button) =>
-        button.setButtonText(this.options.cancelLabel ?? "Cancel").onClick(() => this.close()),
+        button
+          .setButtonText(this.options.cancelLabel ?? "Cancel")
+          .onClick(() => this.close()),
       );
 
     this.input?.inputEl.focus();
@@ -111,10 +148,16 @@ class TextPromptModal extends Modal {
  * @param options - Prompt labels and initial input state.
  * @returns The submitted string, including an explicitly submitted empty string, or `null` when dismissed.
  */
-export function promptText(app: App, options: PromptTextOptions): Promise<string | null> {
-  return new Promise((resolve) => {
-    new TextPromptModal(app, { ...options, password: false }, resolve).open();
-  });
+export function promptText(
+  app: App,
+  options: PromptTextOptions,
+  lifecycle: DialogLifecycleOptions = {},
+): Promise<string | null> {
+  return openOwnedDialogue(
+    (resolve) =>
+      new TextPromptModal(app, { ...options, password: false }, resolve),
+    lifecycle,
+  );
 }
 
 /**
@@ -127,10 +170,16 @@ export function promptText(app: App, options: PromptTextOptions): Promise<string
  * @remarks
  * This controls visual masking only. It does not encrypt, persist, or otherwise protect the returned value.
  */
-export function promptPassword(app: App, options: PromptTextOptions): Promise<string | null> {
-  return new Promise((resolve) => {
-    new TextPromptModal(app, { ...options, password: true }, resolve).open();
-  });
+export function promptPassword(
+  app: App,
+  options: PromptTextOptions,
+  lifecycle: DialogLifecycleOptions = {},
+): Promise<string | null> {
+  return openOwnedDialogue(
+    (resolve) =>
+      new TextPromptModal(app, { ...options, password: true }, resolve),
+    lifecycle,
+  );
 }
 
 class PickOneModal<T> extends FuzzySuggestModal<T> {
@@ -139,7 +188,11 @@ class PickOneModal<T> extends FuzzySuggestModal<T> {
   private readonly itemDescription?: (item: T) => string | undefined;
   private resolveResult: ((result: T | null) => void) | undefined;
 
-  constructor(app: App, options: PickOneOptions<T>, resolveResult: (result: T | null) => void) {
+  constructor(
+    app: App,
+    options: PickOneOptions<T>,
+    resolveResult: (result: T | null) => void,
+  ) {
     super(app);
     this.items = options.items;
     this.itemText = options.getText;
@@ -189,10 +242,15 @@ class PickOneModal<T> extends FuzzySuggestModal<T> {
  * @param options - Candidate items and their searchable text projection.
  * @returns The original selected item instance, or `null` when dismissed.
  */
-export function pickOne<T>(app: App, options: PickOneOptions<T>): Promise<T | null> {
-  return new Promise((resolve) => {
-    new PickOneModal(app, options, resolve).open();
-  });
+export function pickOne<T>(
+  app: App,
+  options: PickOneOptions<T>,
+  lifecycle: DialogLifecycleOptions = {},
+): Promise<T | null> {
+  return openOwnedDialogue(
+    (resolve) => new PickOneModal(app, options, resolve),
+    lifecycle,
+  );
 }
 
 class ActionDialog<T extends string> extends Modal {
@@ -225,14 +283,40 @@ class ActionDialog<T extends string> extends Modal {
     );
 
     const actions = new Setting(this.contentEl);
+    const verticalActions = this.options.actionLayout === "vertical";
+    actions.controlEl.addClass("vpk-action-dialog__actions");
+    if (verticalActions) {
+      actions.controlEl.addClass("vpk-action-dialog__actions--vertical");
+    }
+    actions.controlEl.setCssStyles({
+      ...(verticalActions
+        ? { alignItems: "stretch", flexDirection: "column" }
+        : {}),
+      flexWrap: "wrap",
+      maxWidth: "100%",
+      width: "100%",
+    });
     for (const action of this.options.actions) {
       actions.addButton((button) => {
-        button.setButtonText(this.options.labels?.[action] ?? action).onClick(() => this.choose(action));
+        button.buttonEl.addClass("vpk-action-dialog__action");
+        button.buttonEl.setCssStyles({
+          height: "auto",
+          maxWidth: "100%",
+          minHeight: "var(--input-height)",
+          whiteSpace: "normal",
+          ...(verticalActions ? { width: "100%" } : {}),
+        });
+        button
+          .setButtonText(this.options.labels?.[action] ?? action)
+          .onClick(() => this.choose(action));
         if (action === this.options.defaultAction) button.setCta();
       });
     }
 
-    if (this.options.timeoutMs !== undefined && this.options.defaultAction !== undefined) {
+    if (
+      this.options.timeoutMs !== undefined &&
+      this.options.defaultAction !== undefined
+    ) {
       this.timeout = globalThis.setTimeout(
         () => this.choose(this.options.defaultAction as T),
         this.options.timeoutMs,
@@ -277,10 +361,12 @@ class ActionDialog<T extends string> extends Modal {
 export function confirmAction<const T extends string>(
   app: App,
   options: ConfirmActionOptions<T>,
+  lifecycle: DialogLifecycleOptions = {},
 ): Promise<T | null> {
-  return new Promise((resolve) => {
-    new ActionDialog(app, options, resolve).open();
-  });
+  return openOwnedDialogue(
+    (resolve) => new ActionDialog(app, options, resolve),
+    lifecycle,
+  );
 }
 
 /**
@@ -289,14 +375,22 @@ export function confirmAction<const T extends string>(
  * @param app - Obsidian application that owns the modal.
  * @param options - Message content and close-button label.
  */
-export async function showMessage(app: App, options: ShowMessageOptions): Promise<void> {
+export async function showMessage(
+  app: App,
+  options: ShowMessageOptions,
+  lifecycle: DialogLifecycleOptions = {},
+): Promise<void> {
   const close = "close" as const;
-  await confirmAction(app, {
-    title: options.title,
-    message: options.message,
-    actions: [close],
-    labels: { [close]: options.closeLabel ?? "Close" },
-    defaultAction: close,
-    sourcePath: options.sourcePath,
-  });
+  await confirmAction(
+    app,
+    {
+      title: options.title,
+      message: options.message,
+      actions: [close],
+      labels: { [close]: options.closeLabel ?? "Close" },
+      defaultAction: close,
+      sourcePath: options.sourcePath,
+    },
+    lifecycle,
+  );
 }

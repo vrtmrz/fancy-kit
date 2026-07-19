@@ -137,6 +137,25 @@ async function assertFitsMobileModal(
   await assertLocatorHasMinimumTouchTarget(page, closeButton, {
     label: `${description} close button`,
   });
+  const buttons = modal.getByRole("button");
+  const buttonCount = await buttons.count();
+  for (let index = 0; index < buttonCount; index += 1) {
+    const button = buttons.nth(index);
+    if (!(await button.isVisible())) continue;
+    const label = (await button.textContent())?.trim() || `button ${index + 1}`;
+    await assertLocatorWithinViewport(page, button, {
+      label: `${description}: ${label}`,
+    });
+    await assertLocatorWithinSafeArea(page, button, {
+      label: `${description}: ${label}`,
+    });
+    await assertNoHorizontalOverflow(page, button, {
+      label: `${description}: ${label}`,
+    });
+    await assertLocatorHasMinimumTouchTarget(page, button, {
+      label: `${description}: ${label}`,
+    });
+  }
 }
 
 async function main(): Promise<void> {
@@ -271,6 +290,50 @@ async function main(): Promise<void> {
             harnessPlugin,
             (state) => state.lastResult === "restore",
             "mobile confirmation result",
+          );
+
+          await executeHarnessStory(harnessPlugin, "confirm-action-long");
+          const longConfirmation = await activeModal(
+            page,
+            "Compatibility review",
+          );
+          await assertFitsMobileModal(
+            page,
+            longConfirmation,
+            "long confirmation dialog",
+          );
+          const longActions = longConfirmation.locator(
+            ".vpk-action-dialog__actions--vertical",
+          );
+          await longActions.waitFor({ state: "visible", timeout: 10_000 });
+          const longActionDirection = await longActions.evaluate(
+            (element) => getComputedStyle(element).flexDirection,
+          );
+          if (longActionDirection !== "column") {
+            throw new Error(
+              `Expected vertically stacked mobile actions, received ${longActionDirection}.`,
+            );
+          }
+          const longDialogScreenshot =
+            process.env.E2E_OBSIDIAN_LONG_DIALOG_SCREENSHOT;
+          if (
+            longDialogScreenshot !== undefined &&
+            longDialogScreenshot !== ""
+          ) {
+            await page.screenshot({
+              path: longDialogScreenshot,
+              animations: "disabled",
+            });
+          }
+          await longConfirmation
+            .getByRole("button", {
+              name: /Resume synchronisation$/,
+            })
+            .click();
+          await waitForHarnessState(
+            harnessPlugin,
+            (state) => state.lastResult === "resume",
+            "mobile long confirmation result",
           );
 
           await executeHarnessStory(harnessPlugin, "show-message");

@@ -56,6 +56,8 @@ const action = await confirmAction(this.app, {
 
 Dismissal resolves to `null`. An explicitly submitted empty string remains `""` and is not treated as cancellation. `pickOne` returns the selected item instance rather than a copy. Its optional secondary description is visible but does not change fuzzy-search matching.
 
+The direct dialogue helpers accept an optional `AbortSignal` lifecycle argument. Bind it to the owning plug-in when a dialogue may remain open across asynchronous work; aborting closes the dialogue and resolves it as dismissal. See the [usage guide](docs/usage-guide.md#dialogs) for an example.
+
 ## Keyed notices
 
 `KeyedNoticeManager` updates one visible Notice per application-defined key and restarts its expiry on every update. Dispose the manager during plug-in unload.

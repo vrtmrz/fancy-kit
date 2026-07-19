@@ -5,9 +5,13 @@ interface FakeElement {
   text: string;
   emptied: boolean;
   children: FakeElement[];
+  classes: string[];
+  styles: Record<string, string>;
   setText(value: string): void;
   empty(): void;
   createDiv(options?: { text?: string; cls?: string }): FakeElement;
+  addClass(value: string): void;
+  setCssStyles(styles: Record<string, string>): void;
 }
 
 interface FakeInput {
@@ -17,12 +21,17 @@ interface FakeInput {
   focused: boolean;
   selected: boolean;
   emit(value: string): void;
-  keydown(event: { key: string; isComposing: boolean; preventDefault(): void }): void;
+  keydown(event: {
+    key: string;
+    isComposing: boolean;
+    preventDefault(): void;
+  }): void;
 }
 
 interface FakeButton {
   text: string;
   cta: boolean;
+  buttonEl: FakeElement;
   click(): void;
 }
 
@@ -32,7 +41,10 @@ interface FakeModal {
   getItems?(): unknown[];
   getItemText?(item: unknown): string;
   onChooseItem?(item: unknown, event: KeyboardEvent): void;
-  renderSuggestion?(match: { item: unknown; match: unknown }, element: FakeElement): void;
+  renderSuggestion?(
+    match: { item: unknown; match: unknown },
+    element: FakeElement,
+  ): void;
 }
 
 interface FakeComponent {
@@ -44,6 +56,7 @@ const mockState = vi.hoisted(() => ({
   modals: [] as unknown[],
   inputs: [] as unknown[],
   buttons: [] as unknown[],
+  settings: [] as unknown[],
   components: [] as unknown[],
   markdownCalls: [] as Array<{ markdown: string; sourcePath: string }>,
 }));
@@ -53,6 +66,8 @@ vi.mock("obsidian", () => {
     text = "";
     emptied = false;
     children: ElementMock[] = [];
+    classes: string[] = [];
+    styles: Record<string, string> = {};
 
     setText(value: string): void {
       this.text = value;
@@ -66,8 +81,17 @@ vi.mock("obsidian", () => {
     createDiv(options?: { text?: string; cls?: string }): ElementMock {
       const child = new ElementMock();
       child.text = options?.text ?? "";
+      if (options?.cls !== undefined) child.classes.push(options.cls);
       this.children.push(child);
       return child;
+    }
+
+    addClass(value: string): void {
+      this.classes.push(value);
+    }
+
+    setCssStyles(styles: Record<string, string>): void {
+      Object.assign(this.styles, styles);
     }
   }
 
@@ -119,7 +143,11 @@ vi.mock("obsidian", () => {
   class TextComponent {
     private changeHandler: ((value: string) => void) | undefined;
     private keydownHandler:
-      | ((event: { key: string; isComposing: boolean; preventDefault(): void }) => void)
+      | ((event: {
+          key: string;
+          isComposing: boolean;
+          preventDefault(): void;
+        }) => void)
       | undefined;
 
     inputEl = {
@@ -136,7 +164,11 @@ vi.mock("obsidian", () => {
       },
       addEventListener: (
         event: string,
-        handler: (event: { key: string; isComposing: boolean; preventDefault(): void }) => void,
+        handler: (event: {
+          key: string;
+          isComposing: boolean;
+          preventDefault(): void;
+        }) => void,
       ) => {
         if (event === "keydown") this.keydownHandler = handler;
       },
@@ -166,7 +198,11 @@ vi.mock("obsidian", () => {
       this.changeHandler?.(value);
     }
 
-    keydown(event: { key: string; isComposing: boolean; preventDefault(): void }): void {
+    keydown(event: {
+      key: string;
+      isComposing: boolean;
+      preventDefault(): void;
+    }): void {
       this.keydownHandler?.(event);
     }
   }
@@ -174,6 +210,7 @@ vi.mock("obsidian", () => {
   class ButtonComponent {
     text = "";
     cta = false;
+    buttonEl = new ElementMock();
     private clickHandler: (() => void) | undefined;
 
     constructor() {
@@ -201,7 +238,11 @@ vi.mock("obsidian", () => {
   }
 
   class Setting {
-    constructor(_container: FakeElement) {}
+    controlEl = new ElementMock();
+
+    constructor(_container: FakeElement) {
+      mockState.settings.push(this);
+    }
     setName(_name: string): this {
       return this;
     }
@@ -250,7 +291,13 @@ vi.mock("obsidian", () => {
   return { Component, FuzzySuggestModal, MarkdownRenderer, Modal, Setting };
 });
 
-import { confirmAction, pickOne, promptPassword, promptText, showMessage } from "./dialog.js";
+import {
+  confirmAction,
+  pickOne,
+  promptPassword,
+  promptText,
+  showMessage,
+} from "./dialog.js";
 
 const app = {} as App;
 
@@ -265,13 +312,17 @@ afterEach(() => {
   mockState.modals.length = 0;
   mockState.inputs.length = 0;
   mockState.buttons.length = 0;
+  mockState.settings.length = 0;
   mockState.components.length = 0;
   mockState.markdownCalls.length = 0;
 });
 
 describe("promptText", () => {
   it("preserves an explicitly submitted empty string", async () => {
-    const result = promptText(app, { title: "Name", placeholder: "Device name" });
+    const result = promptText(app, {
+      title: "Name",
+      placeholder: "Device name",
+    });
     const input = last<TextComponent & FakeInput>(mockState.inputs);
     const [submit] = mockState.buttons as FakeButton[];
 
@@ -322,6 +373,15 @@ describe("promptText", () => {
     await expect(result).resolves.toBeNull();
   });
 
+  it("closes and resolves as dismissed when its owner aborts", async () => {
+    const owner = new AbortController();
+    const result = promptText(app, { title: "Name" }, { signal: owner.signal });
+
+    owner.abort();
+
+    await expect(result).resolves.toBeNull();
+  });
+
   it("uses a password input for promptPassword", async () => {
     const result = promptPassword(app, { title: "Passphrase" });
     const input = last<TextComponent & FakeInput>(mockState.inputs);
@@ -355,8 +415,24 @@ describe("pickOne", () => {
   });
 
   it("returns null when dismissed", async () => {
-    const result = pickOne(app, { items: [first], getText: (item) => item.name });
+    const result = pickOne(app, {
+      items: [first],
+      getText: (item) => item.name,
+    });
     last<FakeModal>(mockState.modals).close();
+    await expect(result).resolves.toBeNull();
+  });
+
+  it("closes and resolves as dismissed when its owner aborts", async () => {
+    const owner = new AbortController();
+    const result = pickOne(
+      app,
+      { items: [first], getText: (item) => item.name },
+      { signal: owner.signal },
+    );
+
+    owner.abort();
+
     await expect(result).resolves.toBeNull();
   });
 
@@ -392,10 +468,19 @@ describe("confirmAction", () => {
 
     const [apply, cancel] = mockState.buttons as FakeButton[];
     const component = last<FakeComponent>(mockState.components);
-    expect(mockState.markdownCalls).toEqual([{ markdown: "**Proceed?**", sourcePath: "note.md" }]);
+    expect(mockState.markdownCalls).toEqual([
+      { markdown: "**Proceed?**", sourcePath: "note.md" },
+    ]);
     expect(apply.text).toBe("Apply");
     expect(apply.cta).toBe(true);
     expect(cancel.cta).toBe(false);
+    expect(apply.buttonEl.classes).toContain("vpk-action-dialog__action");
+    expect(apply.buttonEl.styles).toMatchObject({
+      height: "auto",
+      maxWidth: "100%",
+      minHeight: "var(--input-height)",
+      whiteSpace: "normal",
+    });
     expect(component.loaded).toBe(true);
 
     cancel.click();
@@ -418,6 +503,28 @@ describe("confirmAction", () => {
     await expect(result).resolves.toBe("cancel");
   });
 
+  it("stacks long actions vertically when requested", () => {
+    void confirmAction(app, {
+      title: "Compatibility review",
+      message: "Choose the next step.",
+      actions: ["details", "resume", "keep-paused"] as const,
+      actionLayout: "vertical",
+    });
+
+    const setting = last<{ controlEl: FakeElement }>(mockState.settings);
+    expect(setting.controlEl.classes).toContain(
+      "vpk-action-dialog__actions--vertical",
+    );
+    expect(setting.controlEl.styles).toMatchObject({
+      alignItems: "stretch",
+      flexDirection: "column",
+      width: "100%",
+    });
+    for (const button of mockState.buttons as FakeButton[]) {
+      expect(button.buttonEl.styles.width).toBe("100%");
+    }
+  });
+
   it("returns null when dismissed", async () => {
     const result = confirmAction(app, {
       title: "Confirm",
@@ -428,15 +535,69 @@ describe("confirmAction", () => {
     last<FakeModal>(mockState.modals).close();
     await expect(result).resolves.toBeNull();
   });
+
+  it("closes and resolves as dismissed when its owner aborts", async () => {
+    const owner = new AbortController();
+    const result = confirmAction(
+      app,
+      {
+        title: "Confirm",
+        message: "Proceed?",
+        actions: ["yes", "no"] as const,
+      },
+      { signal: owner.signal },
+    );
+    const component = last<FakeComponent>(mockState.components);
+
+    owner.abort();
+
+    await expect(result).resolves.toBeNull();
+    expect(component.unloaded).toBe(true);
+  });
+
+  it("does not open when its owner has already aborted", async () => {
+    const owner = new AbortController();
+    owner.abort();
+
+    const result = confirmAction(
+      app,
+      {
+        title: "Confirm",
+        message: "Proceed?",
+        actions: ["yes", "no"] as const,
+      },
+      { signal: owner.signal },
+    );
+
+    await expect(result).resolves.toBeNull();
+    expect(mockState.components).toHaveLength(0);
+  });
 });
 
 describe("showMessage", () => {
   it("resolves after its close action", async () => {
-    const result = showMessage(app, { title: "Done", message: "Finished", closeLabel: "OK" });
+    const result = showMessage(app, {
+      title: "Done",
+      message: "Finished",
+      closeLabel: "OK",
+    });
     const [close] = mockState.buttons as FakeButton[];
 
     expect(close.text).toBe("OK");
     close.click();
+
+    await expect(result).resolves.toBeUndefined();
+  });
+
+  it("resolves when its owner aborts", async () => {
+    const owner = new AbortController();
+    const result = showMessage(
+      app,
+      { title: "Done", message: "Finished" },
+      { signal: owner.signal },
+    );
+
+    owner.abort();
 
     await expect(result).resolves.toBeUndefined();
   });
