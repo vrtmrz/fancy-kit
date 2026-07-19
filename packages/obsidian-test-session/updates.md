@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.2
+
 ### Fixes
 
 - Kept isolated macOS Obsidian profiles below a socket-safe temporary root and launched them with Chromium's mock keychain, preventing CLI socket truncation and blocking login-keychain dialogues.
