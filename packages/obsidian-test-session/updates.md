@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.1
+
 ### New features
 
 - Added optional, exact local-storage seeding before plug-in enablement. Consumers can now prepare isolated device-local schema or acknowledgement markers without weakening the plug-in's first-load safety checks.
