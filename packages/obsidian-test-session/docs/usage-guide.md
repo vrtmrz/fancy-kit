@@ -94,6 +94,14 @@ The result contains the process handle, remote-debugging port, isolated CLI envi
 
 The package does not decide whether a consumer flow has passed. Use `withObsidianPage`, `session.cliEnv`, or another consumer-owned integration to execute commands and assertions.
 
+## macOS process isolation
+
+`createTemporaryVault` places both the Vault and the isolated application profile below `/tmp` on macOS. The ordinary macOS temporary directory can have a long `/var/folders/...` path; nesting an isolated HOME below it can exceed the Unix-domain socket path limit used by `obsidian-cli`. Other platforms retain the operating system's normal temporary root. A consumer can supply `temporaryRoot` when it owns another short, writable location.
+
+The default `launchObsidian` arguments also include Chromium's `--use-mock-keychain` flag on macOS. This prevents the isolated HOME, which intentionally has no user login keychain, from opening a blocking system dialogue. The flag applies only to the test process and does not access or modify the user's keychain.
+
+These defaults apply to both `startObsidianPluginSession` and direct `launchObsidian` calls. Supplying `E2E_OBSIDIAN_ARGS` replaces the complete argument list, including the macOS keychain flag, user-data directory, remote-debugging port, and Vault URI. A consumer which takes that low-level ownership must restore every argument its flow requires.
+
 ## Use explicit dependencies in tests
 
 The public functions accept their important environment and runtime dependencies through arguments:
@@ -255,5 +263,7 @@ Real Obsidian execution is a local workflow and is not expected in ordinary CI.
 | Layout measurements, retry behaviour, safe areas, and touch targets                     | [`src/layout.test.ts`](../src/layout.test.ts)                                             | [`test/e2e-obsidian/scripts/mobile.ts`](../../../test/e2e-obsidian/scripts/mobile.ts) and the packed-consumer fixture [`test/packed-consumer/test-session-usage.ts`](../../../test/packed-consumer/test-session-usage.ts) |
 
 Focused tests establish package-owned logic with controlled collaborators. The repository's real-Obsidian scripts exercise the remaining Electron, Obsidian, process, and platform integration. Consumer-specific workflows still require their own assertions.
+
+The macOS temporary-root and launch-argument policies are covered by [`src/platform.test.ts`](../src/platform.test.ts), while the explicit temporary-root override is covered by [`src/vault.test.ts`](../src/vault.test.ts).
 
 Maintained TagFolder, DiffZip, Screwdriver, and Self-hosted LiveSync suites use this division in their own repositories. [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md) links their session composition and domain-specific scenarios so that a new consumer can follow an application example rather than treating the internal Harness as the only integration model.

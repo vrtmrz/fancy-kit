@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTemporaryVault } from "./vault.js";
@@ -44,5 +45,21 @@ describe("createTemporaryVault", () => {
     }
     expect(existsSync(vault.path)).toBe(false);
     expect(existsSync(vault.statePath)).toBe(false);
+  });
+
+  it("creates both isolated roots below an explicitly selected temporary root", async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), "obsidian-root-unit-"));
+    const options = {
+      prefix: "obsidian-selected-root-",
+      temporaryRoot,
+    };
+    const vault = await createTemporaryVault(options);
+    try {
+      expect(vault.path.startsWith(`${temporaryRoot}/`)).toBe(true);
+      expect(vault.statePath.startsWith(`${temporaryRoot}/`)).toBe(true);
+    } finally {
+      await vault.dispose();
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
   });
 });

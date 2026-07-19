@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Fixes
+
+- Kept isolated macOS Obsidian profiles below a socket-safe temporary root and launched them with Chromium's mock keychain, preventing CLI socket truncation and blocking login-keychain dialogues.
+
+### New features
+
+- Added an optional `temporaryRoot` to `createTemporaryVault` for consumers which own another short, writable isolation root.
+
+### Documentation
+
+- Documented the macOS process-isolation defaults and the additional responsibility accepted when `E2E_OBSIDIAN_ARGS` replaces the complete default argument list.
+
 ## 0.2.1
 
 ### New features

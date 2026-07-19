@@ -1,11 +1,13 @@
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { obsidianTemporaryRoot } from "./platform.js";
 
 /** Options for creating an isolated temporary Obsidian vault. */
 export interface CreateTemporaryVaultOptions {
   /** Temporary-directory prefix. Defaults to `obsidian-e2e-`. */
   prefix?: string;
+  /** Parent for the Vault and isolated profile. Defaults to a platform-safe temporary root. */
+  temporaryRoot?: string;
   /** Plug-in identifiers enabled in `community-plugins.json`. */
   pluginIds?: readonly string[];
   /** Vault registry identifier prefix. Defaults to the temporary-directory prefix. */
@@ -49,8 +51,10 @@ export async function createTemporaryVault(
 ): Promise<TemporaryVault> {
   const prefix = options.prefix ?? "obsidian-e2e-";
   const processMarker = `${prefix}state-`;
-  const vaultPath = await mkdtemp(join(tmpdir(), prefix));
-  const statePath = await mkdtemp(join(tmpdir(), processMarker));
+  const temporaryRoot = options.temporaryRoot ?? obsidianTemporaryRoot();
+  await mkdir(temporaryRoot, { recursive: true });
+  const vaultPath = await mkdtemp(join(temporaryRoot, prefix));
+  const statePath = await mkdtemp(join(temporaryRoot, processMarker));
   const name = vaultPath.split(/[\\/]/u).pop() ?? "obsidian-e2e";
   const safeIdPrefix = (options.idPrefix ?? prefix)
     .replace(/[^A-Za-z0-9_-]/gu, "-")

@@ -32,6 +32,8 @@ import {
 
 Executable discovery is implemented for Linux, macOS, and Windows. This project exercises complete real-Obsidian sessions on Linux and macOS; Windows discovery exists but the end-to-end workflow remains unverified. Automated AppImage download and optional `xvfb-run` wrapping are Linux-specific.
 
+On macOS, isolated sessions use a socket-safe root below `/tmp` and Chromium's test-only mock keychain so the CLI socket and system keychain dialogue do not block start-up. See the usage guide before replacing the complete default launch arguments.
+
 Set `OBSIDIAN_BINARY` and `OBSIDIAN_CLI` when the executables are outside the built-in discovery paths. Importing the package has no side effects. AppImage download, Vault creation, artefact installation, process launch, and cleanup occur only through explicit calls.
 
 ## Start an isolated plug-in session
