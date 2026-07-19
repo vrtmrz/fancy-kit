@@ -8,6 +8,7 @@ import {
   buildPreparedPackage,
   compareReleaseVersions,
   planReleasePreparation,
+  planReleaseSetPreparation,
   prepareReleaseMetadata,
 } from "./prepare-release.mjs";
 
@@ -88,6 +89,60 @@ test("requires the plug-in kit UI dependency to match the workspace and lockfile
   const lockMismatch = fixture("@vrtmrz/obsidian-plugin-kit");
   lockMismatch.lockfile.packages["packages/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"] = "0.0.9";
   assert.throws(() => planReleasePreparation(lockMismatch), /does not match the lockfile/);
+});
+
+test("prepares a coordinated UI and plug-in-kit release with one exact dependency", () => {
+  const manifests = {
+    "@vrtmrz/ui-interactions": {
+      name: "@vrtmrz/ui-interactions",
+      version: "0.1.0",
+    },
+    "@vrtmrz/obsidian-plugin-kit": {
+      name: "@vrtmrz/obsidian-plugin-kit",
+      version: "0.1.1",
+      dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
+    },
+  };
+  const lockfile = {
+    packages: {
+      "packages/ui-interactions": {
+        name: "@vrtmrz/ui-interactions",
+        version: "0.1.0",
+      },
+      "packages/obsidian-plugin-kit": {
+        name: "@vrtmrz/obsidian-plugin-kit",
+        version: "0.1.1",
+        dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
+      },
+    },
+  };
+
+  const result = planReleaseSetPreparation({
+    selections: [
+      { packageName: "@vrtmrz/ui-interactions", version: "0.1.1" },
+      { packageName: "@vrtmrz/obsidian-plugin-kit", version: "0.1.2" },
+    ],
+    manifests,
+    lockfile,
+  });
+
+  assert.equal(result.manifests["@vrtmrz/ui-interactions"].version, "0.1.1");
+  assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].version, "0.1.2");
+  assert.equal(
+    result.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"],
+    "0.1.1",
+  );
+  assert.equal(result.lockfile.packages["packages/ui-interactions"].version, "0.1.1");
+  assert.equal(result.lockfile.packages["packages/obsidian-plugin-kit"].version, "0.1.2");
+  assert.equal(
+    result.lockfile.packages["packages/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"],
+    "0.1.1",
+  );
+  assert.equal(manifests["@vrtmrz/ui-interactions"].version, "0.1.0");
+  assert.equal(
+    manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"],
+    "0.1.0",
+  );
 });
 
 test("builds only the selected workspace", () => {

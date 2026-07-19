@@ -35,7 +35,7 @@ Choose the version deliberately before preparing the release:
 - use the next minor version while the packages are in `0.x` when the public contract changes intentionally or consumers must review migration work;
 - add a prerelease suffix, such as `-rc.0`, when registry Consumer validation must precede the stable version.
 
-The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and a plug-in-kit UI dependency that does not match the workspace.
+The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and a plug-in-kit UI dependency that does not match the workspace. It accepts more than one package/version pair when a reviewed source change crosses workspace package boundaries. A coordinated UI interactions and plug-in-kit selection updates the kit's manifest and lockfile dependency to the exact selected UI version.
 
 ## Preparing a release pull request
 
@@ -49,7 +49,18 @@ npm ci
 npm run release:prepare -- <package-name> <version>
 ```
 
-`release:prepare` updates the selected package manifest and its workspace lockfile entry together, then runs that package's `build` script. It deliberately does not commit, push, stage, approve, publish, or promote anything.
+`release:prepare` updates each selected package manifest and its workspace lockfile entry together, then runs each selected package's `build` script. It deliberately does not commit, push, stage, approve, publish, or promote anything.
+
+When new plug-in-kit source requires a new UI interactions contract, prepare the two runtime packages as one metadata set:
+
+```bash
+git switch -c release-runtime-packages-<ui-version>-<kit-version>
+npm run release:prepare -- \
+  @vrtmrz/ui-interactions <ui-version> \
+  @vrtmrz/obsidian-plugin-kit <kit-version>
+```
+
+This prevents the packed consumer from resolving the kit against an older nested UI package while the consumer imports the new top-level UI package. Keep npm publication sequential even though the metadata is reviewed together: stage, publish, and validate UI interactions first, then stage and publish the plug-in kit from the same exact main commit. Each stage, approval, publication, and dist-tag promotion remains a separate operation.
 
 Review the resulting files before running the complete gate:
 
@@ -68,7 +79,7 @@ The expected release preparation differs by package:
 | `@vrtmrz/obsidian-test-session` | Independent of the runtime packages. | Manifest and root lockfile. Compiled `dist` is ignored. | Run the local Obsidian lifecycle suite on each platform whose support is claimed. |
 | `octagonal-wheels` | Retains its independent version history. Release only when its public artefacts change. | Manifest, root lockfile, and any changed tracked files under `packages/octagonal-wheels/dist`. | Install the exact tarball in a relevant web application or plug-in. Use Self-hosted LiveSync when the changed API is consumed there. |
 
-When a new UI interactions version is required by the plug-in kit, prepare and publish UI interactions first. Update the plug-in-kit dependency to that exact published version, refresh the lockfile, and only then prepare the plug-in-kit version.
+When a new UI interactions version is required by new plug-in-kit source, use the coordinated preparation command above. If the plug-in kit does not consume the changed contract, a UI-only release remains valid. In both cases, publish and validate UI interactions before publishing the plug-in kit.
 
 Stage only the reviewed release files. For `octagonal-wheels`, use `git add -u` for already tracked build output because the general `dist` ignore rule remains in place:
 
@@ -81,6 +92,8 @@ gh pr create --draft --base main --title "Prepare <package-name> <version>"
 ```
 
 Omit the `octagonal-wheels/dist` command for the scoped packages. The release pull request should state the version choice, package and consumer checks, tarball inspection, and any platform limits. Merge it before dispatching staged publishing; the workflow accepts exact commits on `main` only.
+
+For a coordinated runtime-package release, stage both manifests and the root lockfile, and name both versions in the commit and pull request. Do not dispatch a combined npm publication: the staged workflow continues to select and publish exactly one package per run.
 
 ## GitHub consumer previews
 
