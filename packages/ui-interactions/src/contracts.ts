@@ -42,6 +42,8 @@ export interface ConfirmActionOptions<T extends string> {
   labels?: Partial<Record<T, string>>;
   /** Action presented as primary and selected when {@link timeoutMs} expires. */
   defaultAction?: T;
+  /** Button layout. Use `vertical` for several long or safety-sensitive actions. Defaults to `auto`. */
+  actionLayout?: "auto" | "vertical";
   /** Delay before selecting {@link defaultAction}; ignored when no default action is supplied. */
   timeoutMs?: number;
   /** Logical source path used to resolve relative links in Markdown. Defaults to an empty string. */
@@ -63,27 +65,35 @@ export interface ShowMessageOptions {
 /** Platform-neutral capability for application-level UI interactions. */
 export interface UiInteractions {
   /** Requests a single-line string, or resolves to `null` when dismissed. */
-  promptText(options: PromptTextOptions, interactionId?: string): Promise<string | null>;
+  promptText(
+    options: PromptTextOptions,
+    interactionId?: string,
+  ): Promise<string | null>;
   /** Requests a visually masked single-line string, or resolves to `null` when dismissed. */
-  promptPassword(options: PromptTextOptions, interactionId?: string): Promise<string | null>;
+  promptPassword(
+    options: PromptTextOptions,
+    interactionId?: string,
+  ): Promise<string | null>;
   /** Requests one supplied item by identity, or resolves to `null` when dismissed. */
-  pickOne<T>(options: PickOneOptions<T>, interactionId?: string): Promise<T | null>;
+  pickOne<T>(
+    options: PickOneOptions<T>,
+    interactionId?: string,
+  ): Promise<T | null>;
   /** Requests one supplied literal action, or resolves to `null` when dismissed. */
   confirmAction<const T extends string>(
     options: ConfirmActionOptions<T>,
     interactionId?: string,
   ): Promise<T | null>;
   /** Shows an informational Markdown message and resolves after acknowledgement. */
-  showMessage(options: ShowMessageOptions, interactionId?: string): Promise<void>;
+  showMessage(
+    options: ShowMessageOptions,
+    interactionId?: string,
+  ): Promise<void>;
 }
 
 /** Names of interactions that a {@link UiInteractionDriver} can observe or handle. */
 export type UiInteractionKind =
-  | "promptText"
-  | "promptPassword"
-  | "pickOne"
-  | "confirmAction"
-  | "showMessage";
+  "promptText" | "promptPassword" | "pickOne" | "confirmAction" | "showMessage";
 
 interface UiInteractionBase {
   kind: UiInteractionKind;
@@ -92,11 +102,26 @@ interface UiInteractionBase {
 
 /** Read-only description of one requested interaction. */
 export type UiInteractionRequest =
-  | (UiInteractionBase & { kind: "promptText"; options: Readonly<PromptTextOptions> })
-  | (UiInteractionBase & { kind: "promptPassword"; options: Readonly<PromptTextOptions> })
-  | (UiInteractionBase & { kind: "pickOne"; options: Readonly<PickOneOptions<unknown>> })
-  | (UiInteractionBase & { kind: "confirmAction"; options: Readonly<ConfirmActionOptions<string>> })
-  | (UiInteractionBase & { kind: "showMessage"; options: Readonly<ShowMessageOptions> });
+  | (UiInteractionBase & {
+      kind: "promptText";
+      options: Readonly<PromptTextOptions>;
+    })
+  | (UiInteractionBase & {
+      kind: "promptPassword";
+      options: Readonly<PromptTextOptions>;
+    })
+  | (UiInteractionBase & {
+      kind: "pickOne";
+      options: Readonly<PickOneOptions<unknown>>;
+    })
+  | (UiInteractionBase & {
+      kind: "confirmAction";
+      options: Readonly<ConfirmActionOptions<string>>;
+    })
+  | (UiInteractionBase & {
+      kind: "showMessage";
+      options: Readonly<ShowMessageOptions>;
+    });
 
 /** Request variant for one interaction kind. */
 export type UiInteractionRequestOf<K extends UiInteractionKind> = Extract<
@@ -131,10 +156,13 @@ export interface HandledUiInteraction {
 }
 
 /** Result returned by a {@link UiInteractionDriver}. */
-export type UiInteractionResponse = UiInteractionPassthrough | HandledUiInteraction;
+export type UiInteractionResponse =
+  UiInteractionPassthrough | HandledUiInteraction;
 
 /** Instance-scoped driver that can observe UI requests and optionally provide responses. */
 export interface UiInteractionDriver {
   /** Handles or passes through one interaction request. */
-  handle(request: UiInteractionRequest): UiInteractionResponse | Promise<UiInteractionResponse>;
+  handle(
+    request: UiInteractionRequest,
+  ): UiInteractionResponse | Promise<UiInteractionResponse>;
 }

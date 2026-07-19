@@ -100,6 +100,32 @@ async function main(): Promise<void> {
       "message close result",
     );
 
+    await executeHarnessStory(session, "confirm-action-long");
+    await withObsidianPage(port, async (page) => {
+      const modal = await activeModal(page, "Compatibility review");
+      const actions = modal.locator(".vpk-action-dialog__actions--vertical");
+      await actions.waitFor({ state: "visible", timeout: 10_000 });
+      const flexDirection = await actions.evaluate(
+        (element) => getComputedStyle(element).flexDirection,
+      );
+      if (flexDirection !== "column") {
+        throw new Error(
+          `Expected vertically stacked compatibility actions, received ${flexDirection}.`,
+        );
+      }
+      await page.evaluate(async (pluginId) => {
+        const obsidianApp = (
+          window as unknown as {
+            app: {
+              plugins: { disablePlugin(id: string): Promise<void> };
+            };
+          }
+        ).app;
+        await obsidianApp.plugins.disablePlugin(pluginId);
+      }, "fancy-kit-harness");
+      await modal.waitFor({ state: "hidden", timeout: 10_000 });
+    });
+
     console.log("Real Obsidian dialog stories passed.");
   } finally {
     if (testSession !== undefined) await stopHarnessTestSession(testSession);

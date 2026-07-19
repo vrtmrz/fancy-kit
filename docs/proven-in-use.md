@@ -37,6 +37,8 @@ Restore paths stored in a Screwdriver document are untrusted input. [`restore-pa
 
 Self-hosted LiveSync also uses `@vrtmrz/obsidian-test-session` as the generic process and Obsidian-session layer beneath its [consumer-owned E2E suite](https://github.com/vrtmrz/obsidian-livesync/blob/main/test/e2e-obsidian/README.md). That suite adds the LiveSync-specific settings, databases, two-Vault scenarios, CLI-to-Obsidian compatibility, dialogue checks, and synchronisation assertions; those domain operations deliberately remain outside the shared package.
 
+Its compatibility-review workflow also uses the Obsidian `confirmAction` adapter with `actionLayout: "vertical"` for several long, safety-sensitive choices. Focused consumer tests check the requested host-neutral layout, while the real-Obsidian dialogue suite checks the resulting vertical controls and mobile touch targets. This separates application policy from Fancy Kit's rendering contract without duplicating the Kit-owned dialogue suite.
+
 ## Reusing the patterns
 
 The examples demonstrate a recurring composition rule:

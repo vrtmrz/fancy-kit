@@ -531,6 +531,11 @@ class WakeLockHarnessView extends ItemView {
         "confirm-action",
       ],
       [
+        "Long Markdown confirmation",
+        "Vertically stacked action labels, mobile safe areas, and owner-bound dismissal.",
+        "confirm-action-long",
+      ],
+      [
         "Message",
         "A one-action informational Markdown dialog.",
         "show-message",
@@ -1096,6 +1101,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
   private wakeLock: ScreenWakeLockManager | undefined;
   private activeProgress: ProgressNotice | undefined;
   private readonly notices = new KeyedNoticeManager();
+  private readonly dialogueController = new AbortController();
   private timedController: AbortController | undefined;
   private explicitController: AbortController | undefined;
   private explicitLease: ScreenWakeLockLease | undefined;
@@ -1157,6 +1163,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
       "prompt-password",
       "pick-one",
       "confirm-action",
+      "confirm-action-long",
       "show-message",
       "progress-start",
       "progress-step",
@@ -1234,6 +1241,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
   }
 
   override onunload(): void {
+    this.dialogueController.abort();
     this.modeModal?.close();
     this.modeModal = undefined;
     this.activeProgress?.hide();
@@ -1332,20 +1340,28 @@ export default class FancyKitHarnessPlugin extends Plugin {
     switch (story) {
       case "prompt-text":
         this.setResult(
-          await promptText(this.app, {
-            title: "Device name",
-            label: "Name",
-            placeholder: "Enter a device name",
-            initialValue: "desktop",
-            selectInitialValue: true,
-          }),
+          await promptText(
+            this.app,
+            {
+              title: "Device name",
+              label: "Name",
+              placeholder: "Enter a device name",
+              initialValue: "desktop",
+              selectInitialValue: true,
+            },
+            { signal: this.dialogueController.signal },
+          ),
         );
         break;
       case "prompt-password": {
-        const result = await promptPassword(this.app, {
-          title: "Passphrase",
-          label: "Passphrase",
-        });
+        const result = await promptPassword(
+          this.app,
+          {
+            title: "Passphrase",
+            label: "Passphrase",
+          },
+          { signal: this.dialogueController.signal },
+        );
         this.setResult(result === null ? null : "password-entered");
         break;
       }
@@ -1356,32 +1372,65 @@ export default class FancyKitHarnessPlugin extends Plugin {
           { id: "gamma", label: "Gamma", path: "Targets/gamma.md" },
         ];
         this.setResult(
-          await pickOne(this.app, {
-            items,
-            getText: (item) => item.label,
-            getDescription: (item) => item.path,
-            placeholder: "Select a target",
-          }),
+          await pickOne(
+            this.app,
+            {
+              items,
+              getText: (item) => item.label,
+              getDescription: (item) => item.path,
+              placeholder: "Select a target",
+            },
+            { signal: this.dialogueController.signal },
+          ),
         );
         break;
       }
       case "confirm-action":
         this.setResult(
-          await confirmAction(this.app, {
-            title: "Restore confirmation",
-            message: "**3 files** will be restored. Continue?",
-            actions: ["restore", "cancel"] as const,
-            labels: { restore: "Restore", cancel: "Cancel" },
-            defaultAction: "cancel",
-          }),
+          await confirmAction(
+            this.app,
+            {
+              title: "Restore confirmation",
+              message: "**3 files** will be restored. Continue?",
+              actions: ["restore", "cancel"] as const,
+              labels: { restore: "Restore", cancel: "Cancel" },
+              defaultAction: "cancel",
+            },
+            { signal: this.dialogueController.signal },
+          ),
+        );
+        break;
+      case "confirm-action-long":
+        this.setResult(
+          await confirmAction(
+            this.app,
+            {
+              title: "Compatibility review",
+              message:
+                "Review the release notes and update the other devices before resuming synchronisation.",
+              actions: ["resume", "pause"] as const,
+              labels: {
+                resume:
+                  "I have reviewed this and updated my other devices — Resume synchronisation",
+                pause: "Keep synchronisation paused",
+              },
+              actionLayout: "vertical",
+              defaultAction: "pause",
+            },
+            { signal: this.dialogueController.signal },
+          ),
         );
         break;
       case "show-message":
-        await showMessage(this.app, {
-          title: "Information",
-          message: "The showcase is **ready**.",
-          closeLabel: "OK",
-        });
+        await showMessage(
+          this.app,
+          {
+            title: "Information",
+            message: "The showcase is **ready**.",
+            closeLabel: "OK",
+          },
+          { signal: this.dialogueController.signal },
+        );
         this.setResult("closed");
         break;
       case "progress-start":
