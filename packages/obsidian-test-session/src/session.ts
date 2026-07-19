@@ -7,12 +7,14 @@ import {
 import {
   enableAndReloadPlugin,
   obsidianRemoteDebuggingPort,
+  preseedLocalStorage,
   preseedTrustedVaultState,
   trustVaultIfPrompted,
   waitForObsidianVault,
   waitForObsidianUiIdle,
   waitForPluginCatalogue,
   waitForPluginReady,
+  withObsidianPage,
   type PluginReadiness,
 } from "./ui.js";
 import type { TemporaryVault } from "./vault.js";
@@ -47,6 +49,8 @@ export interface StartObsidianPluginSessionOptions {
   artifactRoot: string;
   /** Optional plug-in data written before the plug-in is loaded. */
   pluginData?: unknown;
+  /** Exact values written to the isolated renderer local storage before the plug-in is enabled. */
+  localStorageEntries?: Readonly<Record<string, string>>;
   /** Optional process environment overrides. */
   env?: NodeJS.ProcessEnv;
   /** Time that Obsidian must remain alive before launch succeeds. */
@@ -94,6 +98,11 @@ export async function startObsidianPluginSession(
 
   try {
     await preseedTrustedVaultState(remoteDebuggingPort, options.vault.id);
+    if (options.localStorageEntries !== undefined) {
+      await withObsidianPage(remoteDebuggingPort, async (page) => {
+        await preseedLocalStorage(page, options.localStorageEntries ?? {});
+      });
+    }
     try {
       await openVaultWithObsidianCli(
         options.cliBinary,

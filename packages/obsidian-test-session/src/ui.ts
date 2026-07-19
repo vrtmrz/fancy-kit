@@ -96,6 +96,23 @@ export async function preseedTrustedVaultState(
 }
 
 /**
+ * Writes consumer-owned values to the active renderer's isolated local storage.
+ *
+ * @param page - Active Obsidian renderer page.
+ * @param entries - Exact keys and string values selected by the consumer.
+ */
+export async function preseedLocalStorage(
+  page: Page,
+  entries: Readonly<Record<string, string>>,
+): Promise<void> {
+  await page.evaluate((serialisedEntries) => {
+    for (const [key, value] of serialisedEntries) {
+      localStorage.setItem(key, value);
+    }
+  }, Object.entries(entries));
+}
+
+/**
  * Waits until one renderer has opened the expected filesystem vault.
  *
  * @param page - Active Obsidian renderer page.

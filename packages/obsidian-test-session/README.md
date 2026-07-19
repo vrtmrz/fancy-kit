@@ -60,6 +60,9 @@ try {
     pluginId: "example-plugin",
     artifactRoot: "dist/example-plugin",
     pluginData: { mode: "automation" },
+    localStorageEntries: {
+      "example-plugin-device-schema": "3",
+    },
   });
 
   await withObsidianPage(session.remoteDebuggingPort, async (page) => {
@@ -72,9 +75,11 @@ try {
 }
 ```
 
-The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, opens the exact Vault, enables and reloads the plug-in, and waits for renderer readiness. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
+The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, seeds any exact `localStorageEntries`, opens the exact Vault, enables and reloads the plug-in, and waits for renderer readiness. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
 
 `pluginData` is optional. Omitting it preserves an existing `data.json`; supplying it writes deterministic consumer-owned data before Obsidian starts.
+
+`localStorageEntries` is also optional. It writes exact string keys and values to the session's isolated renderer before the plug-in is enabled. Use it only for consumer-owned device-local state which must exist on first load, such as an acknowledged schema marker. The package does not derive keys, serialise values, or copy state from the user's real Obsidian profile.
 
 ## Inspect layout
 
@@ -100,5 +105,7 @@ await withObsidianPage(session.remoteDebuggingPort, async (page) => {
 ```
 
 The helpers measure and assert; they do not scroll, resize, click, take screenshots, or choose plug-in-specific selectors. The touch-target default is a practical 44 by 44 CSS-pixel review policy and can be overridden by the consumer. It is not a claim that every platform or standard requires that value.
+
+When a desktop test calls Obsidian's `app.emulateMobile(true)`, treat the renderer as a different platform mode rather than only a narrow viewport. Obsidian may change platform-dependent command registration, so perform later fixture setup and interaction through `withObsidianPage`; do not assume that CLI `eval` remains available. See the usage guide for the complete switch-and-wait sequence and its limits.
 
 For the full session lifecycle, lower-level APIs, safe-area measurements, environment controls, and the tests and consumers behind the documented contracts, see the [usage guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/obsidian-test-session/docs/usage-guide.md). See [updates](updates.md) for release changes.

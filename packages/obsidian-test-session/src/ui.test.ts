@@ -2,6 +2,7 @@ import type { Page } from "playwright";
 import { describe, expect, it, vi } from "vitest";
 import {
   obsidianRemoteDebuggingPort,
+  preseedLocalStorage,
   waitForObsidianPageVault,
   waitForObsidianPageUiIdle,
 } from "./ui.js";
@@ -23,6 +24,40 @@ describe("obsidianRemoteDebuggingPort", () => {
       ).toThrowError(RangeError);
     },
   );
+});
+
+describe("preseedLocalStorage", () => {
+  it("writes every consumer-owned entry through the renderer before plug-in enablement", async () => {
+    const storage = new Map<string, string>();
+    const evaluate = vi.fn(
+      async (
+        operation: (entries: readonly (readonly [string, string])[]) => void,
+        entries: readonly (readonly [string, string])[],
+      ) => {
+        vi.stubGlobal("localStorage", {
+          setItem: (key: string, value: string) => storage.set(key, value),
+        });
+        try {
+          operation(entries);
+        } finally {
+          vi.unstubAllGlobals();
+        }
+      },
+    );
+    const page = { evaluate } as unknown as Page;
+
+    await preseedLocalStorage(page, {
+      "example-state": "ready",
+      "example-version": "7",
+    });
+
+    expect(storage).toEqual(
+      new Map([
+        ["example-state", "ready"],
+        ["example-version", "7"],
+      ]),
+    );
+  });
 });
 
 describe("waitForObsidianPageUiIdle", () => {
