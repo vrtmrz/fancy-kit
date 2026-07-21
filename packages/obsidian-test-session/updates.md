@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.2.3
+
+### Fixes
+
+- Scoped stale-process clean-up to each temporary Vault's unique isolated profile, so starting a concurrent session no longer terminates an active sibling session created by the same consumer.
+
+### Documentation
+
+- Documented the distinct remote-debugging ports and process-before-profile teardown order required by concurrent multi-device workflows.
+
 ## 0.2.2
 
 ### Fixes
