@@ -79,6 +79,8 @@ try {
 
 The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, seeds any exact `localStorageEntries`, opens the exact Vault, enables and reloads the plug-in, and waits for renderer readiness. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
 
+Each temporary Vault exposes a process marker derived from its unique isolated profile path. Starting another session from the same consumer therefore removes only a stale process which belongs to that exact profile; it does not stop an active sibling session. Multi-device workflows must still track every successful session, stop all sessions before disposing any Vault or profile directory, and assign a distinct remote-debugging port to each process.
+
 `pluginData` is optional. Omitting it preserves an existing `data.json`; supplying it writes deterministic consumer-owned data before Obsidian starts.
 
 `localStorageEntries` is also optional. It writes exact string keys and values to the session's isolated renderer before the plug-in is enabled. Use it only for consumer-owned device-local state which must exist on first load, such as an acknowledged schema marker. The package does not derive keys, serialise values, or copy state from the user's real Obsidian profile.

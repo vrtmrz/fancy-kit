@@ -24,7 +24,7 @@ describe("createTemporaryVault", () => {
         ),
       ).toEqual(["example-plugin"]);
       expect(vault.id).toMatch(/^runner-unit-/u);
-      expect(vault.processMarker).toBe("obsidian-runner-unit-state-");
+      expect(vault.processMarker).toBe(vault.statePath);
       expect(existsSync(join(vault.userDataPath, "obsidian.json"))).toBe(true);
       expect(
         existsSync(

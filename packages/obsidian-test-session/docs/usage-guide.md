@@ -92,6 +92,8 @@ Use `localStorageEntries` when deterministic device-local state must exist befor
 
 The result contains the process handle, remote-debugging port, isolated CLI environment, installed artefact details, plug-in identifier, and renderer-observed readiness. If a bootstrap phase fails after launch, the function stops the process and adds captured Obsidian output to the error. The caller must dispose both process and Vault after a successful return.
 
+`TemporaryVault.processMarker` is the unique isolated profile path, rather than the shared temporary-directory prefix. Stale-process cleanup can therefore identify a previous process for that exact profile without terminating another active session created by the same consumer. For concurrent multi-device tests, assign a distinct remote-debugging port to every session, keep all returned sessions tracked, stop every process first, and only then dispose the corresponding Vaults and profiles.
+
 The package does not decide whether a consumer flow has passed. Use `withObsidianPage`, `session.cliEnv`, or another consumer-owned integration to execute commands and assertions.
 
 ## macOS process isolation

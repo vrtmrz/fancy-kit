@@ -34,7 +34,7 @@ export interface TemporaryVault {
   xdgDataPath: string;
   /** Isolated Electron user-data directory. */
   userDataPath: string;
-  /** Stable substring suitable for finding stale processes using this vault family. */
+  /** Unique substring suitable for finding stale processes using this isolated profile. */
   processMarker: string;
   /** Removes the vault and isolated application state unless preservation is enabled. */
   dispose: () => Promise<void>;
@@ -50,11 +50,11 @@ export async function createTemporaryVault(
   options: CreateTemporaryVaultOptions = {},
 ): Promise<TemporaryVault> {
   const prefix = options.prefix ?? "obsidian-e2e-";
-  const processMarker = `${prefix}state-`;
+  const statePrefix = `${prefix}state-`;
   const temporaryRoot = options.temporaryRoot ?? obsidianTemporaryRoot();
   await mkdir(temporaryRoot, { recursive: true });
   const vaultPath = await mkdtemp(join(temporaryRoot, prefix));
-  const statePath = await mkdtemp(join(temporaryRoot, processMarker));
+  const statePath = await mkdtemp(join(temporaryRoot, statePrefix));
   const name = vaultPath.split(/[\\/]/u).pop() ?? "obsidian-e2e";
   const safeIdPrefix = (options.idPrefix ?? prefix)
     .replace(/[^A-Za-z0-9_-]/gu, "-")
@@ -101,7 +101,7 @@ export async function createTemporaryVault(
     xdgCachePath,
     xdgDataPath,
     userDataPath,
-    processMarker,
+    processMarker: statePath,
     dispose: async () => {
       if (process.env.E2E_OBSIDIAN_KEEP_VAULT === "true") {
         console.log(`Keeping temporary vault: ${vaultPath}`);
