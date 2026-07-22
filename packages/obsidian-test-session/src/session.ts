@@ -17,6 +17,7 @@ import {
   withObsidianPage,
   type PluginReadiness,
 } from "./ui.js";
+import { closeObsidianRendererPages } from "./renderer-lifecycle.js";
 import type { TemporaryVault } from "./vault.js";
 
 /** A ready real-Obsidian plug-in session. */
@@ -57,6 +58,28 @@ export interface StartObsidianPluginSessionOptions {
   startupGraceMs?: number;
   /** Whether to normalise a stale start-up overlay after readiness. Defaults to `true`. */
   waitForUiIdle?: boolean;
+}
+
+function withRendererAwareStop(
+  app: ObsidianProcess,
+  remoteDebuggingPort: number,
+): ObsidianProcess {
+  let stopping: Promise<void> | undefined;
+  return {
+    process: app.process,
+    output: app.output,
+    stop: async () => {
+      stopping ??= (async () => {
+        if (app.process.exitCode === null && app.process.signalCode === null) {
+          await closeObsidianRendererPages(remoteDebuggingPort).catch(
+            () => undefined,
+          );
+        }
+        await app.stop();
+      })();
+      await stopping;
+    },
+  };
 }
 
 /**
@@ -137,7 +160,7 @@ export async function startObsidianPluginSession(
     if (options.waitForUiIdle !== false)
       await waitForObsidianUiIdle(remoteDebuggingPort);
     return {
-      app,
+      app: withRendererAwareStop(app, remoteDebuggingPort),
       cliEnv,
       install,
       readiness,

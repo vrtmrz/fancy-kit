@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixes
+
+- Closed active Obsidian renderer pages before terminating the isolated process tree, so Chromium can persist profile-backed state such as local storage for a later session using the same temporary profile.
+
 ## 0.2.3
 
 ### Fixes

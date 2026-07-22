@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   order: [] as string[],
   entries: undefined as Readonly<Record<string, string>> | undefined,
+  processStop: vi.fn(async () => undefined),
 }));
 
 vi.mock("./plugin-installer.js", () => ({
@@ -16,8 +17,9 @@ vi.mock("./launch.js", () => ({
   launchObsidian: vi.fn(async () => {
     state.order.push("launch");
     return {
+      process: { exitCode: null, signalCode: null },
       output: () => ({ stdout: "", stderr: "" }),
-      stop: vi.fn(async () => undefined),
+      stop: state.processStop,
     };
   }),
 }));
@@ -25,6 +27,12 @@ vi.mock("./launch.js", () => ({
 vi.mock("./cli.js", () => ({
   openVaultWithObsidianCli: vi.fn(async () => {
     state.order.push("open-vault");
+  }),
+}));
+
+vi.mock("./renderer-lifecycle.js", () => ({
+  closeObsidianRendererPages: vi.fn(async () => {
+    state.order.push("close-renderer");
   }),
 }));
 
@@ -102,5 +110,34 @@ describe("startObsidianPluginSession", () => {
       "ready",
       "idle",
     ]);
+  });
+
+  it("closes the renderer before terminating the process so profile state can be persisted", async () => {
+    state.order.length = 0;
+    state.processStop.mockClear();
+
+    const session = await startObsidianPluginSession({
+      binary: "/bin/obsidian",
+      cliBinary: "/bin/obsidian-cli",
+      pluginId: "example-plugin",
+      artifactRoot: "/artefacts",
+      vault: {
+        id: "vault-id",
+        path: "/vault",
+        homePath: "/profile/home",
+        xdgConfigPath: "/profile/config",
+        xdgCachePath: "/profile/cache",
+        xdgDataPath: "/profile/data",
+        userDataPath: "/profile/user-data",
+        processMarker: "example-marker",
+      } as never,
+    });
+
+    state.order.length = 0;
+    await session.app.stop();
+    await session.app.stop();
+
+    expect(state.order).toEqual(["close-renderer"]);
+    expect(state.processStop).toHaveBeenCalledOnce();
   });
 });

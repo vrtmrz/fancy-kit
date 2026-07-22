@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 
 const steps = [
   "smoke.ts",
+  "profile-restart.ts",
   "modes.ts",
   "dialogs.ts",
   "progress.ts",
@@ -13,11 +14,18 @@ const steps = [
 
 function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd: process.cwd(), env: process.env, stdio: "inherit" });
+    const child = spawn(command, args, {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: "inherit",
+    });
     child.on("error", reject);
     child.on("exit", (code, signal) => {
       if (code === 0) resolve();
-      else reject(new Error(`${command} failed with ${signal ?? `exit code ${code}`}`));
+      else
+        reject(
+          new Error(`${command} failed with ${signal ?? `exit code ${code}`}`),
+        );
     });
   });
 }
