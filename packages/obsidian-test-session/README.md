@@ -79,6 +79,8 @@ try {
 
 The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, seeds any exact `localStorageEntries`, opens the exact Vault, enables and reloads the plug-in, and waits for renderer readiness. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
 
+`session.app.stop()` first closes the active renderer pages so Chromium can persist profile-backed state, then terminates any remaining process tree. Stop the session before starting another session with the same `TemporaryVault` when the workflow must retain device-local state across an application restart. Process termination remains the fallback when the renderer is no longer reachable.
+
 Each temporary Vault exposes a process marker derived from its unique isolated profile path. Starting another session from the same consumer therefore removes only a stale process which belongs to that exact profile; it does not stop an active sibling session. Multi-device workflows must still track every successful session, stop all sessions before disposing any Vault or profile directory, and assign a distinct remote-debugging port to each process.
 
 `pluginData` is optional. Omitting it preserves an existing `data.json`; supplying it writes deterministic consumer-owned data before Obsidian starts.

@@ -20,6 +20,7 @@ Run the automated scenarios:
 
 ```bash
 npm run test:e2e:obsidian:smoke
+npm run test:e2e:obsidian:profile-restart
 npm run test:e2e:obsidian:modes
 npm run test:e2e:obsidian:dialogs
 npm run test:e2e:obsidian:progress
@@ -38,7 +39,7 @@ E2E_OBSIDIAN_MOBILE_SCREENSHOT=/tmp/fancy-kit-mobile.png npm run test:e2e:obsidi
 
 The screenshot is an optional local diagnostic and is not retained by the test suite.
 
-The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, guided wake-lock and post-release evidence, and Markdown report generation. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, horizontal overflow, Close-control touch-target size, and safe-area containment.
+The profile-restart scenario writes a sentinel to the isolated renderer's local storage, stops Obsidian through the high-level session, and starts a second session with the same `TemporaryVault`. It requires the sentinel to remain available without reseeding it. The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, guided wake-lock and post-release evidence, and Markdown report generation. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, horizontal overflow, Close-control touch-target size, and safe-area containment.
 
 ## Local prerequisites
 
