@@ -83,6 +83,10 @@ The high-level session installs `main.js`, `manifest.json`, and optional `styles
 
 Each temporary Vault exposes a process marker derived from its unique isolated profile path. Starting another session from the same consumer therefore removes only a stale process which belongs to that exact profile; it does not stop an active sibling session. Multi-device workflows must still track every successful session, stop all sessions before disposing any Vault or profile directory, and assign a distinct remote-debugging port to each process.
 
+Calls which create a temporary Vault or launch Obsidian lazily register only those package-created resources for cleanup after a process signal. If the test runner receives `SIGHUP`, `SIGINT`, or `SIGTERM`, it first stops every registered Obsidian process group. It then disposes the registered temporary Vaults and profiles, unless `E2E_OBSIDIAN_KEEP_VAULT=true` requests both for debugging. If a process cannot be confirmed as stopped, its temporary state is preserved rather than removed while it may still be in use. A profile supplied outside `createTemporaryVault` is not owned or removed by this cleanup.
+
+The signal handler retains the conventional exit status, so an interrupted test remains a failed run. It cannot handle `SIGKILL`, a host shutdown, or another signal listener which exits the process immediately. Consumers must therefore keep their ordinary `finally` cleanup; signal handling protects the termination path rather than replacing explicit ownership.
+
 `pluginData` is optional. Omitting it preserves an existing `data.json`; supplying it writes deterministic consumer-owned data before Obsidian starts.
 
 `localStorageEntries` is also optional. It writes exact string keys and values to the session's isolated renderer before the plug-in is enabled. Use it only for consumer-owned device-local state which must exist on first load, such as an acknowledged schema marker. The package does not derive keys, serialise values, or copy state from the user's real Obsidian profile.

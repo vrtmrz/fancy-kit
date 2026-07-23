@@ -5,6 +5,7 @@ import { dirname } from "node:path";
 import { platform } from "node:process";
 import { promisify } from "node:util";
 import { obsidianPlatformLaunchArguments } from "./platform.js";
+import { registerProcessCleanup } from "./process-lifecycle.js";
 
 /** Captured output from an Obsidian process. */
 export interface ObsidianProcessOutput {
@@ -205,26 +206,9 @@ export async function launchObsidian(
     code,
     signal,
   }));
-  const timer = new Promise<"timeout">((resolve) =>
-    setTimeout(() => resolve("timeout"), startupGraceMs),
-  );
-  const firstResult = await Promise.race([exitPromise, timer]);
-  if (firstResult !== "timeout") {
-    throw new Error(
-      [
-        `Obsidian exited before the start-up grace period. code=${firstResult.code}, signal=${firstResult.signal}`,
-        stdout ? `stdout:\n${stdout}` : undefined,
-        stderr ? `stderr:\n${stderr}` : undefined,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
-  }
-
-  return {
-    process: child,
-    output: () => ({ stdout, stderr }),
-    stop: async () => {
+  const stop = registerProcessCleanup(
+    `Obsidian process group ${child.pid ?? "with an unavailable PID"}`,
+    async () => {
       if (child.exitCode !== null || child.signalCode !== null) return;
       const descendantPids = child.pid ? await listChildPids(child.pid) : [];
       if (child.pid) {
@@ -252,5 +236,27 @@ export async function launchObsidian(
         await exitPromise;
       }
     },
+  );
+  const timer = new Promise<"timeout">((resolve) =>
+    setTimeout(() => resolve("timeout"), startupGraceMs),
+  );
+  const firstResult = await Promise.race([exitPromise, timer]);
+  if (firstResult !== "timeout") {
+    await stop();
+    throw new Error(
+      [
+        `Obsidian exited before the start-up grace period. code=${firstResult.code}, signal=${firstResult.signal}`,
+        stdout ? `stdout:\n${stdout}` : undefined,
+        stderr ? `stderr:\n${stderr}` : undefined,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+
+  return {
+    process: child,
+    output: () => ({ stdout, stderr }),
+    stop,
   };
 }

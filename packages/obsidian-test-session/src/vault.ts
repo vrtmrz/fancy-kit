@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { obsidianTemporaryRoot } from "./platform.js";
+import { registerTemporaryCleanup } from "./process-lifecycle.js";
 
 /** Options for creating an isolated temporary Obsidian vault. */
 export interface CreateTemporaryVaultOptions {
@@ -55,54 +56,9 @@ export async function createTemporaryVault(
   await mkdir(temporaryRoot, { recursive: true });
   const vaultPath = await mkdtemp(join(temporaryRoot, prefix));
   const statePath = await mkdtemp(join(temporaryRoot, statePrefix));
-  const name = vaultPath.split(/[\\/]/u).pop() ?? "obsidian-e2e";
-  const safeIdPrefix = (options.idPrefix ?? prefix)
-    .replace(/[^A-Za-z0-9_-]/gu, "-")
-    .replace(/-+$/u, "");
-  const id = `${safeIdPrefix || "obsidian-e2e"}-${process.pid}-${Date.now()}`;
-  await mkdir(join(vaultPath, ".obsidian"), { recursive: true });
-
-  const homePath = join(statePath, "home");
-  const xdgConfigPath = join(statePath, "xdg-config");
-  const xdgCachePath = join(statePath, "xdg-cache");
-  const xdgDataPath = join(statePath, "xdg-data");
-  const userDataPath = join(statePath, "user-data");
-  await Promise.all([
-    mkdir(homePath, { recursive: true }),
-    mkdir(xdgConfigPath, { recursive: true }),
-    mkdir(xdgCachePath, { recursive: true }),
-    mkdir(xdgDataPath, { recursive: true }),
-    mkdir(userDataPath, { recursive: true }),
-  ]);
-  await writeFile(
-    join(vaultPath, ".obsidian", "app.json"),
-    JSON.stringify({ legacyEditor: false, safeMode: false }, null, 4),
-  );
-  await writeFile(
-    join(vaultPath, ".obsidian", "community-plugins.json"),
-    JSON.stringify(options.pluginIds ?? [], null, 4),
-  );
-  await writeObsidianVaultRegistry(
-    id,
-    vaultPath,
-    name,
-    homePath,
-    xdgConfigPath,
-    userDataPath,
-  );
-
-  return {
-    path: vaultPath,
-    statePath,
-    name,
-    id,
-    homePath,
-    xdgConfigPath,
-    xdgCachePath,
-    xdgDataPath,
-    userDataPath,
-    processMarker: statePath,
-    dispose: async () => {
+  const dispose = registerTemporaryCleanup(
+    `temporary Vault ${vaultPath} and profile ${statePath}`,
+    async () => {
       if (process.env.E2E_OBSIDIAN_KEEP_VAULT === "true") {
         console.log(`Keeping temporary vault: ${vaultPath}`);
         console.log(`Keeping temporary Obsidian state: ${statePath}`);
@@ -123,7 +79,68 @@ export async function createTemporaryVault(
         }),
       ]);
     },
-  };
+  );
+  try {
+    const name = vaultPath.split(/[\\/]/u).pop() ?? "obsidian-e2e";
+    const safeIdPrefix = (options.idPrefix ?? prefix)
+      .replace(/[^A-Za-z0-9_-]/gu, "-")
+      .replace(/-+$/u, "");
+    const id = `${safeIdPrefix || "obsidian-e2e"}-${process.pid}-${Date.now()}`;
+    await mkdir(join(vaultPath, ".obsidian"), { recursive: true });
+
+    const homePath = join(statePath, "home");
+    const xdgConfigPath = join(statePath, "xdg-config");
+    const xdgCachePath = join(statePath, "xdg-cache");
+    const xdgDataPath = join(statePath, "xdg-data");
+    const userDataPath = join(statePath, "user-data");
+    await Promise.all([
+      mkdir(homePath, { recursive: true }),
+      mkdir(xdgConfigPath, { recursive: true }),
+      mkdir(xdgCachePath, { recursive: true }),
+      mkdir(xdgDataPath, { recursive: true }),
+      mkdir(userDataPath, { recursive: true }),
+    ]);
+    await writeFile(
+      join(vaultPath, ".obsidian", "app.json"),
+      JSON.stringify({ legacyEditor: false, safeMode: false }, null, 4),
+    );
+    await writeFile(
+      join(vaultPath, ".obsidian", "community-plugins.json"),
+      JSON.stringify(options.pluginIds ?? [], null, 4),
+    );
+    await writeObsidianVaultRegistry(
+      id,
+      vaultPath,
+      name,
+      homePath,
+      xdgConfigPath,
+      userDataPath,
+    );
+
+    return {
+      path: vaultPath,
+      statePath,
+      name,
+      id,
+      homePath,
+      xdgConfigPath,
+      xdgCachePath,
+      xdgDataPath,
+      userDataPath,
+      processMarker: statePath,
+      dispose,
+    };
+  } catch (error: unknown) {
+    try {
+      await dispose();
+    } catch (cleanupError: unknown) {
+      throw new AggregateError(
+        [error, cleanupError],
+        "Could not create or clean up the temporary Obsidian Vault and profile",
+      );
+    }
+    throw error;
+  }
 }
 
 async function writeObsidianVaultRegistry(
