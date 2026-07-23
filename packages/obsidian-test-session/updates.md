@@ -4,6 +4,16 @@
 
 ### Fixes
 
+- Stopped package-launched Obsidian process groups when the test runner receives `SIGHUP`, `SIGINT`, or `SIGTERM`, then removed only package-owned temporary Vaults and profiles which were safe to dispose. Explicitly preserved debugging state and state whose process could not be confirmed as stopped.
+
+### Documentation
+
+- Documented cleanup order after a process signal, profile ownership, preservation policy, conventional failure exit statuses, and the signals which cannot be handled.
+
+## 0.2.4
+
+### Fixes
+
 - Closed active Obsidian renderer pages before terminating the isolated process tree, so Chromium can persist profile-backed state such as local storage for a later session using the same temporary profile.
 
 ## 0.2.3
