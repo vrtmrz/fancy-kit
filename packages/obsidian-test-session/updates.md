@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.5
+
 ### Fixes
 
 - Stopped package-launched Obsidian process groups when the test runner receives `SIGHUP`, `SIGINT`, or `SIGTERM`, then removed only package-owned temporary Vaults and profiles which were safe to dispose. Explicitly preserved debugging state and state whose process could not be confirmed as stopped.
