@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.2.6
+
+### New features
+
+- Added instance-scoped lifecycle callbacks before and after Obsidian launch, before controlled plug-in start, after plug-in loading, and after generic readiness.
+- Added explicit natural and controlled plug-in start modes. `localStorageEntries` and `beforePluginStart` now select controlled start-up by default.
+
+### Fixes
+
+- Kept a controlled target out of Obsidian's automatic start-up list until work required before its first load had completed, then enabled it, saved its enabled state, and loaded it exactly once.
+- Preserved a naturally loaded plug-in instance during high-level session bootstrap, preventing an explicit unload and reload from interrupting asynchronous plug-in start-up.
+
+### Documentation
+
+- Documented lifecycle callback timing, start-mode selection, failure cleanup, and the distinction between controlled, natural, and explicit reload operations.
+
 ## 0.2.5
 
 ### Fixes
