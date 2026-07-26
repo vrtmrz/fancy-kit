@@ -1,0 +1,9 @@
+{
+  "id": "fancy-kit-session-lifecycle-fixture",
+  "name": "Fancy Kit session lifecycle fixture",
+  "version": "1.0.0",
+  "minAppVersion": "1.7.2",
+  "description": "Records state observed during its first load for the session lifecycle E2E.",
+  "author": "vrtmrz",
+  "isDesktopOnly": false
+}

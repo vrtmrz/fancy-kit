@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 
 const steps = [
+  "session-lifecycle.ts",
   "smoke.ts",
   "profile-restart.ts",
   "modes.ts",

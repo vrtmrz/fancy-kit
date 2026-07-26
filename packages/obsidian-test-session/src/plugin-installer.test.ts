@@ -38,6 +38,40 @@ describe("installBuiltPlugin", () => {
     }
   });
 
+  it("installs a controlled plug-in without enabling it on start-up", async () => {
+    const root = await mkdtemp(join(tmpdir(), "obsidian-runner-install-"));
+    const vaultPath = join(root, "vault");
+    const artifactRoot = join(root, "artefacts");
+    await mkdir(join(vaultPath, ".obsidian"), { recursive: true });
+    await mkdir(artifactRoot, { recursive: true });
+    await Promise.all([
+      writeFile(join(artifactRoot, "main.js"), "export {};"),
+      writeFile(
+        join(artifactRoot, "manifest.json"),
+        '{"id":"example-plugin"}',
+      ),
+    ]);
+
+    try {
+      await installBuiltPlugin(vaultPath, {
+        pluginId: "example-plugin",
+        artifactRoot,
+        enableOnStartup: false,
+      });
+
+      expect(
+        JSON.parse(
+          await readFile(
+            join(vaultPath, ".obsidian", "community-plugins.json"),
+            "utf8",
+          ),
+        ),
+      ).toEqual([]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("rejects a missing required artefact", async () => {
     const root = await mkdtemp(join(tmpdir(), "obsidian-runner-install-"));
     const vaultPath = join(root, "vault");

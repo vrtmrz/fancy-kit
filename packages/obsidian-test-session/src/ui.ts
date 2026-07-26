@@ -267,7 +267,81 @@ export async function waitForPluginCatalogue(
 }
 
 /**
- * Enables community plug-ins and reloads one installed plug-in through the active renderer.
+ * Enables community plug-ins and loads one installed plug-in when it is not already running.
+ *
+ * @param port - Electron remote-debugging port.
+ * @param pluginId - Plug-in identifier to ensure is loaded.
+ */
+export async function ensurePluginLoaded(
+  port: number,
+  pluginId: string,
+): Promise<void> {
+  await withObsidianPage(port, async (page) => {
+    await page.evaluate(async (id) => {
+      const app = (
+        globalThis as typeof globalThis & {
+          app?: {
+            plugins?: {
+              plugins: Record<string, unknown>;
+              setEnable(enabled: boolean): Promise<void>;
+              loadPlugin(pluginId: string): Promise<void>;
+            };
+          };
+        }
+      ).app;
+      const plugins = app?.plugins;
+      if (plugins === undefined)
+        throw new Error("Obsidian plug-in manager is unavailable");
+      await plugins.setEnable(true);
+      if (plugins.plugins[id] === undefined) await plugins.loadPlugin(id);
+    }, pluginId);
+  });
+}
+
+/**
+ * Enables, persists, and loads a plug-in which was deliberately excluded from
+ * Obsidian's start-up list.
+ *
+ * The operation rejects if the plug-in is already loaded because the
+ * controlled sequence requires it to remain unloaded until this call.
+ *
+ * @param port - Electron remote-debugging port.
+ * @param pluginId - Installed plug-in identifier.
+ */
+export async function enablePluginAndSave(
+  port: number,
+  pluginId: string,
+): Promise<void> {
+  await withObsidianPage(port, async (page) => {
+    await page.evaluate(async (id) => {
+      const app = (
+        globalThis as typeof globalThis & {
+          app?: {
+            plugins?: {
+              plugins: Record<string, unknown>;
+              setEnable(enabled: boolean): Promise<void>;
+              enablePluginAndSave(pluginId: string): Promise<void>;
+              saveConfig(): Promise<void>;
+            };
+          };
+        }
+      ).app;
+      const plugins = app?.plugins;
+      if (plugins === undefined)
+        throw new Error("Obsidian plug-in manager is unavailable");
+      if (plugins.plugins[id] !== undefined)
+        throw new Error(
+          `Plug-in '${id}' loaded before its controlled start phase`,
+        );
+      await plugins.setEnable(true);
+      await plugins.enablePluginAndSave(id);
+      await plugins.saveConfig();
+    }, pluginId);
+  });
+}
+
+/**
+ * Enables community plug-ins and explicitly reloads one installed plug-in through the active renderer.
  *
  * @param port - Electron remote-debugging port.
  * @param pluginId - Plug-in identifier to reload.

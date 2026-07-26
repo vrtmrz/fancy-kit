@@ -20,6 +20,7 @@ Run the automated scenarios:
 
 ```bash
 npm run test:e2e:obsidian:smoke
+npm run test:e2e:obsidian:session-lifecycle
 npm run test:e2e:obsidian:profile-restart
 npm run test:e2e:obsidian:modes
 npm run test:e2e:obsidian:dialogs
@@ -38,6 +39,8 @@ E2E_OBSIDIAN_MOBILE_SCREENSHOT=/tmp/fancy-kit-mobile.png npm run test:e2e:obsidi
 ```
 
 The screenshot is an optional local diagnostic and is not retained by the test suite.
+
+The session-lifecycle scenario uses a dedicated fixture plug-in to prove that supplied local-storage values are written and `beforePluginStart` completes before the fixture's first `onload()`, that lifecycle callbacks retain their documented order, that the plug-in loads exactly once, and that its enabled state is persisted. Set `E2E_OBSIDIAN_SESSION_LIFECYCLE_SCREENSHOT` to capture the final isolated Vault for diagnostics.
 
 The profile-restart scenario writes a sentinel to the isolated renderer's local storage, stops Obsidian through the high-level session, and starts a second session with the same `TemporaryVault`. It requires the sentinel to remain available without reseeding it. The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, guided wake-lock and post-release evidence, and Markdown report generation. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, horizontal overflow, Close-control touch-target size, and safe-area containment.
 
@@ -65,10 +68,11 @@ For each session, the runner:
 1. creates an isolated vault, HOME, XDG, and Electron user-data directory;
 2. installs the built harness plug-in and its Automation-mode `data.json`;
 3. launches Obsidian on a session-specific DevTools port;
-4. enables the harness and invokes Automation-only story commands through the active renderer;
-5. operates the real Modal, SuggestModal, and Notice DOM through Playwright;
-6. reads story and contract results from the harness state;
-7. terminates Obsidian and removes temporary state unless preservation is enabled.
+4. runs any consumer-supplied lifecycle callbacks and starts the target through its selected natural or controlled mode;
+5. enables the harness and invokes Automation-only story commands through the active renderer;
+6. operates the real Modal, SuggestModal, and Notice DOM through Playwright;
+7. reads story and contract results from the harness state;
+8. terminates Obsidian and removes temporary state unless preservation is enabled.
 
 Scripted `UiInteractions` responses are not configured in this workflow.
 

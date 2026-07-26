@@ -10,23 +10,47 @@ import {
   assertLocatorWithinSafeArea,
   assertLocatorWithinViewport,
   assertNoHorizontalOverflow,
+  enablePluginAndSave,
+  ensurePluginLoaded,
   inspectLocatorLayout,
   type LayoutAssertionOptions,
   type LayoutInsets,
   type LocatorLayoutInspection,
   type SafeAreaAssertionOptions,
+  type ObsidianPluginSessionLifecycle,
   type StartObsidianPluginSessionOptions,
   type TouchTargetAssertionOptions,
 } from "@vrtmrz/obsidian-test-session";
 
+export async function startControlledPlugin(
+  remoteDebuggingPort: number,
+  pluginId: string,
+): Promise<void> {
+  await enablePluginAndSave(remoteDebuggingPort, pluginId);
+}
+
+export async function keepLoadedPluginRunning(
+  remoteDebuggingPort: number,
+  pluginId: string,
+): Promise<void> {
+  await ensurePluginLoaded(remoteDebuggingPort, pluginId);
+}
+
 export function withDeviceLocalState(
   options: StartObsidianPluginSessionOptions,
 ): StartObsidianPluginSessionOptions {
+  const lifecycle: ObsidianPluginSessionLifecycle = {
+    beforePluginStart: async ({ pluginStartup }) => {
+      if (pluginStartup !== "controlled")
+        throw new Error("Expected controlled plug-in start-up");
+    },
+  };
   return {
     ...options,
     localStorageEntries: {
       "example-plugin-device-schema": "3",
     },
+    lifecycle,
   };
 }
 
