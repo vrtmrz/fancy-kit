@@ -10,6 +10,11 @@ export interface PluginInstallOptions {
   artifactRoot: string;
   /** Optional plug-in data written to `data.json` before Obsidian starts. */
   pluginData?: unknown;
+  /**
+   * Whether to include the plug-in in `community-plugins.json` for Obsidian's
+   * normal start-up loading. Defaults to `true`.
+   */
+  enableOnStartup?: boolean;
 }
 
 /** Result of installing built plug-in artefacts into a vault. */
@@ -58,7 +63,11 @@ export async function installBuiltPlugin(
 
   await writeFile(
     join(vaultPath, ".obsidian", "community-plugins.json"),
-    JSON.stringify([options.pluginId], null, 2),
+    JSON.stringify(
+      options.enableOnStartup === false ? [] : [options.pluginId],
+      null,
+      2,
+    ),
   );
   return { pluginDir, copied };
 }

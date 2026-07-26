@@ -5,7 +5,8 @@ import {
   type PluginInstallResult,
 } from "./plugin-installer.js";
 import {
-  enableAndReloadPlugin,
+  enablePluginAndSave,
+  ensurePluginLoaded,
   obsidianRemoteDebuggingPort,
   preseedLocalStorage,
   preseedTrustedVaultState,
@@ -19,6 +20,79 @@ import {
 } from "./ui.js";
 import { closeObsidianRendererPages } from "./renderer-lifecycle.js";
 import type { TemporaryVault } from "./vault.js";
+
+/** How the selected plug-in is started in a real-Obsidian session. */
+export type ObsidianPluginStartupMode = "natural" | "controlled";
+
+/** Context available before the Obsidian process is launched. */
+export interface ObsidianPluginSessionLifecycleContext {
+  /** Prepared isolated temporary Vault. */
+  readonly vault: TemporaryVault;
+  /** Installed plug-in identifier. */
+  readonly pluginId: string;
+  /** Installed plug-in artefact details. */
+  readonly install: PluginInstallResult;
+  /** Environment selecting the isolated profile for `obsidian-cli`. */
+  readonly cliEnv: NodeJS.ProcessEnv;
+  /** Electron remote-debugging port reserved for the session. */
+  readonly remoteDebuggingPort: number;
+  /** Selected plug-in start mode. */
+  readonly pluginStartup: ObsidianPluginStartupMode;
+}
+
+/** Context available after the Obsidian process has been launched. */
+export interface RunningObsidianPluginSessionLifecycleContext
+  extends ObsidianPluginSessionLifecycleContext {
+  /** Launched Obsidian process. Hook callbacks do not own its disposal. */
+  readonly app: ObsidianProcess;
+}
+
+/** Context available after generic plug-in readiness has completed. */
+export interface ReadyObsidianPluginSessionLifecycleContext
+  extends RunningObsidianPluginSessionLifecycleContext {
+  /** Renderer-observed plug-in readiness details. */
+  readonly readiness: PluginReadiness;
+}
+
+/** Instance-scoped callbacks around stable session bootstrap phases. */
+export interface ObsidianPluginSessionLifecycle {
+  /**
+   * Runs after artefact installation and environment preparation, immediately
+   * before Obsidian is launched.
+   */
+  beforeLaunch?: (
+    context: ObsidianPluginSessionLifecycleContext,
+  ) => void | Promise<void>;
+  /**
+   * Runs after the Obsidian process survives its start-up grace period. The
+   * renderer and Vault are not yet guaranteed to be ready.
+   */
+  afterLaunch?: (
+    context: RunningObsidianPluginSessionLifecycleContext,
+  ) => void | Promise<void>;
+  /**
+   * Runs after the exact Vault and plug-in catalogue are ready, while the
+   * target plug-in remains unloaded. Supplying this callback selects
+   * controlled start-up unless a mode is explicitly supplied.
+   */
+  beforePluginStart?: (
+    context: RunningObsidianPluginSessionLifecycleContext,
+  ) => void | Promise<void>;
+  /**
+   * Runs after the selected plug-in has been loaded, or after natural start-up
+   * has confirmed that it is already running.
+   */
+  afterPluginLoad?: (
+    context: RunningObsidianPluginSessionLifecycleContext,
+  ) => void | Promise<void>;
+  /**
+   * Runs after generic plug-in readiness and optional start-up-overlay
+   * handling have completed.
+   */
+  afterReady?: (
+    context: ReadyObsidianPluginSessionLifecycleContext,
+  ) => void | Promise<void>;
+}
 
 /** A ready real-Obsidian plug-in session. */
 export interface ObsidianPluginSession {
@@ -50,14 +124,59 @@ export interface StartObsidianPluginSessionOptions {
   artifactRoot: string;
   /** Optional plug-in data written before the plug-in is loaded. */
   pluginData?: unknown;
-  /** Exact values written to the isolated renderer local storage before the plug-in is enabled. */
+  /** Exact values written to isolated renderer local storage before the plug-in's first load. */
   localStorageEntries?: Readonly<Record<string, string>>;
+  /**
+   * How the selected plug-in starts. `natural` permits Obsidian's normal
+   * start-up loading. `controlled` keeps the plug-in unloaded until the
+   * session starts it once. By default, `localStorageEntries` or a
+   * `beforePluginStart` callback selects `controlled`; otherwise `natural` is
+   * used.
+   */
+  pluginStartup?: ObsidianPluginStartupMode;
+  /** Instance-scoped callbacks around stable session bootstrap phases. */
+  lifecycle?: ObsidianPluginSessionLifecycle;
   /** Optional process environment overrides. */
   env?: NodeJS.ProcessEnv;
   /** Time that Obsidian must remain alive before launch succeeds. */
   startupGraceMs?: number;
   /** Whether to normalise a stale start-up overlay after readiness. Defaults to `true`. */
   waitForUiIdle?: boolean;
+}
+
+function resolvePluginStartup(
+  options: StartObsidianPluginSessionOptions,
+): ObsidianPluginStartupMode {
+  const requiresControlledStart =
+    options.localStorageEntries !== undefined ||
+    options.lifecycle?.beforePluginStart !== undefined;
+  if (options.pluginStartup === "natural" && requiresControlledStart)
+    throw new Error(
+      "Natural plug-in start-up cannot guarantee localStorageEntries or beforePluginStart before the first load",
+    );
+  return (
+    options.pluginStartup ??
+    (requiresControlledStart ? "controlled" : "natural")
+  );
+}
+
+async function runLifecycleHook<Context>(
+  name: keyof ObsidianPluginSessionLifecycle,
+  hook: ((context: Context) => void | Promise<void>) | undefined,
+  context: Context,
+): Promise<void> {
+  if (hook === undefined) return;
+  try {
+    await hook(context);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Obsidian session lifecycle hook '${name}' failed: ${detail}`,
+      {
+        cause: error,
+      },
+    );
+  }
 }
 
 function withRendererAwareStop(
@@ -91,10 +210,12 @@ function withRendererAwareStop(
 export async function startObsidianPluginSession(
   options: StartObsidianPluginSessionOptions,
 ): Promise<ObsidianPluginSession> {
+  const pluginStartup = resolvePluginStartup(options);
   const install = await installBuiltPlugin(options.vault.path, {
     pluginId: options.pluginId,
     artifactRoot: options.artifactRoot,
     pluginData: options.pluginData,
+    enableOnStartup: pluginStartup === "natural",
   });
   const baseEnv = { ...process.env, ...options.env };
   const remoteDebuggingPort = obsidianRemoteDebuggingPort(baseEnv);
@@ -105,6 +226,19 @@ export async function startObsidianPluginSession(
     XDG_CACHE_HOME: options.vault.xdgCachePath,
     XDG_DATA_HOME: options.vault.xdgDataPath,
   };
+  const lifecycleContext: ObsidianPluginSessionLifecycleContext = {
+    vault: options.vault,
+    pluginId: options.pluginId,
+    install,
+    cliEnv,
+    remoteDebuggingPort,
+    pluginStartup,
+  };
+  await runLifecycleHook(
+    "beforeLaunch",
+    options.lifecycle?.beforeLaunch,
+    lifecycleContext,
+  );
   const app = await launchObsidian({
     binary: options.binary,
     vaultPath: options.vault.path,
@@ -120,6 +254,16 @@ export async function startObsidianPluginSession(
   });
 
   try {
+    const runningLifecycleContext: RunningObsidianPluginSessionLifecycleContext =
+      {
+        ...lifecycleContext,
+        app,
+      };
+    await runLifecycleHook(
+      "afterLaunch",
+      options.lifecycle?.afterLaunch,
+      runningLifecycleContext,
+    );
     await preseedTrustedVaultState(remoteDebuggingPort, options.vault.id);
     if (options.localStorageEntries !== undefined) {
       await withObsidianPage(remoteDebuggingPort, async (page) => {
@@ -152,13 +296,33 @@ export async function startObsidianPluginSession(
     }
     await trustVaultIfPrompted(remoteDebuggingPort);
     await waitForPluginCatalogue(remoteDebuggingPort, options.pluginId);
-    await enableAndReloadPlugin(remoteDebuggingPort, options.pluginId);
+    await runLifecycleHook(
+      "beforePluginStart",
+      options.lifecycle?.beforePluginStart,
+      runningLifecycleContext,
+    );
+    if (pluginStartup === "controlled")
+      await enablePluginAndSave(remoteDebuggingPort, options.pluginId);
+    else await ensurePluginLoaded(remoteDebuggingPort, options.pluginId);
+    await runLifecycleHook(
+      "afterPluginLoad",
+      options.lifecycle?.afterPluginLoad,
+      runningLifecycleContext,
+    );
     const readiness = await waitForPluginReady(
       remoteDebuggingPort,
       options.pluginId,
     );
     if (options.waitForUiIdle !== false)
       await waitForObsidianUiIdle(remoteDebuggingPort);
+    await runLifecycleHook(
+      "afterReady",
+      options.lifecycle?.afterReady,
+      {
+        ...runningLifecycleContext,
+        readiness,
+      },
+    );
     return {
       app: withRendererAwareStop(app, remoteDebuggingPort),
       cliEnv,

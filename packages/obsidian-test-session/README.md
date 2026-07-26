@@ -65,6 +65,11 @@ try {
     localStorageEntries: {
       "example-plugin-device-schema": "3",
     },
+    lifecycle: {
+      beforePluginStart: async ({ remoteDebuggingPort }) => {
+        // Prepare any other consumer-owned state through the active renderer.
+      },
+    },
   });
 
   await withObsidianPage(session.remoteDebuggingPort, async (page) => {
@@ -77,7 +82,9 @@ try {
 }
 ```
 
-The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, seeds any exact `localStorageEntries`, opens the exact Vault, enables and reloads the plug-in, and waits for renderer readiness. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
+The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, opens the exact Vault, and waits for renderer readiness. Instance-scoped lifecycle callbacks can run before and after launch, immediately before the selected plug-in starts, after it loads, and after readiness.
+
+Supplying `localStorageEntries` or `lifecycle.beforePluginStart` selects controlled start-up by default. The selected plug-in is then excluded from Obsidian's start-up list; work required before its first load completes, and the session enables it, saves its enabled state, and loads it exactly once. Sessions without work that must precede the plug-in's first load retain natural Obsidian loading by default; set `pluginStartup` explicitly when the distinction is part of the scenario. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
 
 `session.app.stop()` first closes the active renderer pages so Chromium can persist profile-backed state, then terminates any remaining process tree. Stop the session before starting another session with the same `TemporaryVault` when the workflow must retain device-local state across an application restart. Process termination remains the fallback when the renderer is no longer reachable.
 
@@ -89,7 +96,7 @@ The signal handler retains the conventional exit status, so an interrupted test 
 
 `pluginData` is optional. Omitting it preserves an existing `data.json`; supplying it writes deterministic consumer-owned data before Obsidian starts.
 
-`localStorageEntries` is also optional. It writes exact string keys and values to the session's isolated renderer before the plug-in is enabled. Use it only for consumer-owned device-local state which must exist on first load, such as an acknowledged schema marker. The package does not derive keys, serialise values, or copy state from the user's real Obsidian profile.
+`localStorageEntries` is also optional. It writes exact string keys and values to the session's isolated renderer before the plug-in's first load. Use it only for consumer-owned device-local state, such as an acknowledged schema marker. The package does not derive keys, serialise values, or copy state from the user's real Obsidian profile.
 
 ## Inspect layout
 

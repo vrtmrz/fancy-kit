@@ -3,12 +3,27 @@ import { describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   order: [] as string[],
   entries: undefined as Readonly<Record<string, string>> | undefined,
+  installOptions: undefined as
+    | {
+        enableOnStartup?: boolean;
+      }
+    | undefined,
   processStop: vi.fn(async () => undefined),
+  reloadPlugin: vi.fn(async () => {
+    state.order.push("enable");
+  }),
+  ensurePluginLoaded: vi.fn(async () => {
+    state.order.push("ensure-loaded");
+  }),
+  enablePluginAndSave: vi.fn(async () => {
+    state.order.push("enable-and-save");
+  }),
 }));
 
 vi.mock("./plugin-installer.js", () => ({
-  installBuiltPlugin: vi.fn(async () => {
+  installBuiltPlugin: vi.fn(async (_vaultPath, options) => {
     state.order.push("install");
+    state.installOptions = options;
     return { pluginDirectory: "/vault/.obsidian/plugins/example-plugin" };
   }),
 }));
@@ -55,9 +70,9 @@ vi.mock("./ui.js", () => ({
   waitForPluginCatalogue: vi.fn(async () => {
     state.order.push("catalogue");
   }),
-  enableAndReloadPlugin: vi.fn(async () => {
-    state.order.push("enable");
-  }),
+  enableAndReloadPlugin: state.reloadPlugin,
+  enablePluginAndSave: state.enablePluginAndSave,
+  ensurePluginLoaded: state.ensurePluginLoaded,
   waitForPluginReady: vi.fn(async () => {
     state.order.push("ready");
     return { pluginId: "example-plugin", enabled: true };
@@ -71,9 +86,133 @@ vi.mock("./ui.js", () => ({
 import { startObsidianPluginSession } from "./session.js";
 
 describe("startObsidianPluginSession", () => {
+  it("runs controlled lifecycle hooks around the plug-in's first load", async () => {
+    state.order.length = 0;
+    state.installOptions = undefined;
+
+    await startObsidianPluginSession({
+      binary: "/bin/obsidian",
+      cliBinary: "/bin/obsidian-cli",
+      pluginId: "example-plugin",
+      artifactRoot: "/artefacts",
+      pluginStartup: "controlled",
+      lifecycle: {
+        beforeLaunch: async () => {
+          state.order.push("before-launch");
+        },
+        afterLaunch: async () => {
+          state.order.push("after-launch");
+        },
+        beforePluginStart: async () => {
+          state.order.push("before-plugin-start");
+        },
+        afterPluginLoad: async () => {
+          state.order.push("after-plugin-load");
+        },
+        afterReady: async () => {
+          state.order.push("after-ready");
+        },
+      },
+      vault: {
+        id: "vault-id",
+        path: "/vault",
+        homePath: "/profile/home",
+        xdgConfigPath: "/profile/config",
+        xdgCachePath: "/profile/cache",
+        xdgDataPath: "/profile/data",
+        userDataPath: "/profile/user-data",
+        processMarker: "example-marker",
+      } as never,
+    });
+
+    expect(state.installOptions?.enableOnStartup).toBe(false);
+    expect(state.order).toEqual([
+      "install",
+      "before-launch",
+      "launch",
+      "after-launch",
+      "trust-state",
+      "open-vault",
+      "trust-prompt",
+      "catalogue",
+      "before-plugin-start",
+      "enable-and-save",
+      "after-plugin-load",
+      "ready",
+      "idle",
+      "after-ready",
+    ]);
+  });
+
+  it(
+    "rejects natural start-up when local storage must be written before the first load",
+    async () => {
+      state.order.length = 0;
+
+      await expect(
+        startObsidianPluginSession({
+          binary: "/bin/obsidian",
+          cliBinary: "/bin/obsidian-cli",
+          pluginId: "example-plugin",
+          artifactRoot: "/artefacts",
+          pluginStartup: "natural",
+          localStorageEntries: {
+            "example-plugin-device-schema": "3",
+          },
+          vault: {
+            id: "vault-id",
+            path: "/vault",
+            homePath: "/profile/home",
+            xdgConfigPath: "/profile/config",
+            xdgCachePath: "/profile/cache",
+            xdgDataPath: "/profile/data",
+            userDataPath: "/profile/user-data",
+            processMarker: "example-marker",
+          } as never,
+        }),
+      ).rejects.toThrowError(
+        "Natural plug-in start-up cannot guarantee localStorageEntries",
+      );
+      expect(state.order).toEqual([]);
+    },
+  );
+
+  it("stops the launched process when a running lifecycle hook fails", async () => {
+    state.order.length = 0;
+    state.processStop.mockClear();
+
+    await expect(
+      startObsidianPluginSession({
+        binary: "/bin/obsidian",
+        cliBinary: "/bin/obsidian-cli",
+        pluginId: "example-plugin",
+        artifactRoot: "/artefacts",
+        lifecycle: {
+          afterLaunch: async () => {
+            throw new Error("fixture failed");
+          },
+        },
+        vault: {
+          id: "vault-id",
+          path: "/vault",
+          homePath: "/profile/home",
+          xdgConfigPath: "/profile/config",
+          xdgCachePath: "/profile/cache",
+          xdgDataPath: "/profile/data",
+          userDataPath: "/profile/user-data",
+          processMarker: "example-marker",
+        } as never,
+      }),
+    ).rejects.toThrowError(
+      "Obsidian session lifecycle hook 'afterLaunch' failed",
+    );
+    expect(state.processStop).toHaveBeenCalledOnce();
+  });
+
   it("seeds exact device-local state before opening the Vault or enabling the plug-in", async () => {
     state.order.length = 0;
     state.entries = undefined;
+    state.installOptions = undefined;
     const localStorageEntries = {
       "example-plugin-device-schema": "3",
     } as const;
@@ -97,6 +236,7 @@ describe("startObsidianPluginSession", () => {
     });
 
     expect(state.entries).toBe(localStorageEntries);
+    expect(state.installOptions?.enableOnStartup).toBe(false);
     expect(state.order).toEqual([
       "install",
       "launch",
@@ -106,7 +246,7 @@ describe("startObsidianPluginSession", () => {
       "open-vault",
       "trust-prompt",
       "catalogue",
-      "enable",
+      "enable-and-save",
       "ready",
       "idle",
     ]);
@@ -121,6 +261,7 @@ describe("startObsidianPluginSession", () => {
       cliBinary: "/bin/obsidian-cli",
       pluginId: "example-plugin",
       artifactRoot: "/artefacts",
+      pluginStartup: "natural",
       vault: {
         id: "vault-id",
         path: "/vault",
@@ -139,5 +280,32 @@ describe("startObsidianPluginSession", () => {
 
     expect(state.order).toEqual(["close-renderer"]);
     expect(state.processStop).toHaveBeenCalledOnce();
+  });
+
+  it("keeps an automatically loaded plug-in running during session start-up", async () => {
+    state.reloadPlugin.mockClear();
+    state.ensurePluginLoaded.mockClear();
+    state.installOptions = undefined;
+
+    await startObsidianPluginSession({
+      binary: "/bin/obsidian",
+      cliBinary: "/bin/obsidian-cli",
+      pluginId: "example-plugin",
+      artifactRoot: "/artefacts",
+      vault: {
+        id: "vault-id",
+        path: "/vault",
+        homePath: "/profile/home",
+        xdgConfigPath: "/profile/config",
+        xdgCachePath: "/profile/cache",
+        xdgDataPath: "/profile/data",
+        userDataPath: "/profile/user-data",
+        processMarker: "example-marker",
+      } as never,
+    });
+
+    expect(state.reloadPlugin).not.toHaveBeenCalled();
+    expect(state.ensurePluginLoaded).toHaveBeenCalledOnce();
+    expect(state.installOptions?.enableOnStartup).toBe(true);
   });
 });

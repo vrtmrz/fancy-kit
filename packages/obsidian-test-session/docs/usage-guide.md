@@ -14,7 +14,7 @@ All public APIs are exported from `@vrtmrz/obsidian-test-session`:
 | Artefact installation         | `installBuiltPlugin`                                                                           | Copy the required built plug-in artefacts and optional data into one Vault.                                     |
 | Process lifecycle             | `cleanupStaleObsidianE2EProcesses`, `launchObsidian`                                           | Launch and stop an isolated Obsidian process tree, with optional Linux `xvfb-run`.                              |
 | CLI operations                | `runObsidianCli`, `openVaultWithObsidianCli`, `evalObsidianJson`                               | Run the selected CLI in the isolated profile environment.                                                       |
-| High-level composition        | `startObsidianPluginSession`                                                                   | Install, launch, open, trust, enable, reload, and await one plug-in.                                            |
+| High-level composition        | `startObsidianPluginSession`                                                                   | Install, launch, run lifecycle callbacks, start one plug-in, and await it.                                      |
 | Renderer access and readiness | `withObsidianPage`, `waitForObsidianVault`, `waitForPluginReady`, and related helpers          | Connect to the active Electron renderer and coordinate generic bootstrap phases.                                |
 | Layout inspection             | `inspectLocatorLayout` and the four layout assertions                                          | Measure a consumer-selected locator against the viewport, safe area, content overflow, or minimum size.         |
 
@@ -58,6 +58,11 @@ export async function startExampleTestSession(): Promise<ExampleTestSession> {
       localStorageEntries: {
         "example-plugin-device-schema": "3",
       },
+      lifecycle: {
+        beforePluginStart: async ({ remoteDebuggingPort }) => {
+          // Prepare any remaining consumer-owned renderer state here.
+        },
+      },
     });
     return { session, vault };
   } catch (error) {
@@ -78,17 +83,32 @@ The package does not interpret `pluginData`. The consumer defines its schema, va
 
 Use `localStorageEntries` when deterministic device-local state must exist before the plug-in's first load. The keys and string values are written exactly as supplied to the isolated renderer profile. The consumer remains responsible for namespacing, serialisation, schema meaning, and avoiding credentials or state copied from a real profile.
 
+Lifecycle callbacks are instance-scoped asynchronous functions. They receive the prepared session context rather than raw command strings:
+
+- `beforeLaunch` runs after artefact installation and environment preparation;
+- `afterLaunch` runs after the process survives its start-up grace period, before renderer or Vault readiness is guaranteed;
+- `beforePluginStart` runs after the exact Vault and plug-in catalogue are ready, while the target remains unloaded;
+- `afterPluginLoad` runs after controlled loading, or after natural start-up confirms that the target is running; and
+- `afterReady` runs after generic readiness and optional start-up-overlay handling.
+
+An error from a running-process callback aborts bootstrap and stops the launched process. A callback owns only its work; it does not own process or Vault disposal.
+
+`pluginStartup: "natural"` preserves Obsidian's normal automatic loading. `pluginStartup: "controlled"` excludes the target from the start-up list, then enables, saves, and loads it once after `beforePluginStart`. When no mode is supplied, `localStorageEntries` or `beforePluginStart` selects controlled start-up; other sessions use natural start-up. An explicit natural mode is rejected when either feature is supplied because the requested work must complete before the plug-in's first load.
+
 ## High-level bootstrap contract
 
 `startObsidianPluginSession` performs these phases:
 
-1. install `main.js`, `manifest.json`, and optional `styles.css` under the selected Vault;
+1. select natural or controlled plug-in start-up, then install `main.js`, `manifest.json`, and optional `styles.css` under the selected Vault;
 2. optionally write the supplied JSON-serialisable `pluginData` to `data.json`;
-3. select a remote-debugging port and launch Obsidian with the isolated profile directories;
-4. pre-seed Vault trust state and any consumer-owned `localStorageEntries`, then ask `obsidian-cli` to open the Vault;
-5. if CLI delivery fails, continue only when CDP confirms that the active renderer opened the exact isolated Vault path;
-6. handle generic trust prompts, wait for the installed manifest, enable community plug-ins, reload the selected plug-in, and await readiness; and
-7. wait for the start-up overlay to stop blocking interaction unless `waitForUiIdle` is `false`.
+3. prepare the isolated environment and run `beforeLaunch`;
+4. launch Obsidian, then run `afterLaunch`;
+5. pre-seed Vault trust state and any consumer-owned `localStorageEntries`, then ask `obsidian-cli` to open the Vault;
+6. if CLI delivery fails, continue only when CDP confirms that the active renderer opened the exact isolated Vault path;
+7. handle generic trust prompts, wait for the installed manifest, and run `beforePluginStart`;
+8. either enable, persist, and load the controlled plug-in once, or preserve/load the natural plug-in without an explicit restart, then run `afterPluginLoad`;
+9. await generic readiness and wait for the start-up overlay to stop blocking interaction unless `waitForUiIdle` is `false`; and
+10. run `afterReady`.
 
 The result contains the process handle, remote-debugging port, isolated CLI environment, installed artefact details, plug-in identifier, and renderer-observed readiness. If a bootstrap phase fails after launch, the function stops the process and adds captured Obsidian output to the error. The caller must dispose both process and Vault after a successful return.
 
@@ -119,7 +139,7 @@ The public functions accept their important environment and runtime dependencies
 - discovery functions accept a `NodeJS.ProcessEnv`;
 - CLI functions accept the executable, arguments or code, environment, and optional timeout;
 - `launchObsidian` accepts paths, port, launch environment, and lifecycle controls;
-- `startObsidianPluginSession` accepts the prepared Vault, executables, artefact root, optional plug-in data, exact local-storage entries, and environment overrides; and
+- `startObsidianPluginSession` accepts the prepared Vault, executables, artefact root, optional plug-in data, exact local-storage entries, start mode, lifecycle callbacks, and environment overrides; and
 - layout helpers accept a Playwright `Page` and consumer-selected `Locator`.
 
 This keeps plug-in-specific fixtures and assertions outside the package and lets focused tests supply controlled paths, environments, and Playwright doubles. Process spawning and filesystem operations are real effects once their explicit functions are called; they are not in-memory test doubles.
@@ -132,7 +152,7 @@ This keeps plug-in-specific fixtures and assertions outside the package and lets
 - optional `styles.css`; and
 - generated `data.json` when `pluginData` is supplied.
 
-It then writes the selected plug-in identifier to `community-plugins.json`. Missing required artefacts reject before a session is launched. `pluginData` must be JSON-serialisable. Supplying `undefined` leaves any existing `data.json` unchanged.
+It then writes the selected plug-in identifier to `community-plugins.json`. Set `enableOnStartup` to `false` when a higher-level controlled sequence must keep the installed plug-in unloaded. Missing required artefacts reject before a session is launched. `pluginData` must be JSON-serialisable. Supplying `undefined` leaves any existing `data.json` unchanged.
 
 ## Prepare a Linux AppImage explicitly
 
@@ -163,7 +183,7 @@ await withObsidianPage(session.remoteDebuggingPort, async (page) => {
 });
 ```
 
-The lower-level readiness helpers are useful when a consumer owns a custom sequence. They expose generic operations such as exact Vault-path confirmation, trust-prompt handling, plug-in catalogue readiness, enable-and-reload, and start-up-overlay handling. They intentionally do not know consumer command identifiers, settings, or success state.
+The lower-level readiness helpers are useful when a consumer owns a custom sequence. They expose generic operations such as exact Vault-path confirmation, trust-prompt handling, plug-in catalogue readiness, controlled `enablePluginAndSave`, non-disruptive `ensurePluginLoaded`, explicit `enableAndReloadPlugin`, and start-up-overlay handling. The high-level session selects the first two loading operations according to `pluginStartup`; the explicit reload operation remains available for a consumer which deliberately needs to restart the plug-in. These helpers intentionally do not know consumer command identifiers, settings, or success state.
 
 ### Switch Obsidian into mobile mode
 
@@ -269,7 +289,8 @@ Real Obsidian execution is a local workflow and is not expected in ordinary CI.
 | Isolated Vault/profile creation and disposal                                                     | [`src/vault.test.ts`](../src/vault.test.ts)                                                                               | [`test/e2e-obsidian/runner/harness.ts`](../../../test/e2e-obsidian/runner/harness.ts)                                                                                                                                     |
 | Required and optional artefacts, plug-in data, and preservation                                  | [`src/plugin-installer.test.ts`](../src/plugin-installer.test.ts)                                                         | High-level session composition in [`src/session.ts`](../src/session.ts)                                                                                                                                                   |
 | CLI socket readiness and Vault opening                                                           | [`src/cli.test.ts`](../src/cli.test.ts)                                                                                   | High-level session bootstrap in [`src/session.ts`](../src/session.ts)                                                                                                                                                     |
-| Exact active-Vault confirmation, pre-enable local-storage seeding, and UI-idle handling          | [`src/session.test.ts`](../src/session.test.ts) and [`src/ui.test.ts`](../src/ui.test.ts)                                 | Real-Obsidian harness scripts under [`test/e2e-obsidian/scripts`](../../../test/e2e-obsidian/scripts)                                                                                                                     |
+| Exact active-Vault confirmation and UI-idle handling                                             | [`src/session.test.ts`](../src/session.test.ts) and [`src/ui.test.ts`](../src/ui.test.ts)                                 | Real-Obsidian harness scripts under [`test/e2e-obsidian/scripts`](../../../test/e2e-obsidian/scripts)                                                                                                                     |
+| State written before controlled loading, lifecycle ordering, one load, and persisted enablement  | [`src/plugin-installer.test.ts`](../src/plugin-installer.test.ts), [`src/session.test.ts`](../src/session.test.ts), and [`src/ui.test.ts`](../src/ui.test.ts) | [`test/e2e-obsidian/scripts/session-lifecycle.ts`](../../../test/e2e-obsidian/scripts/session-lifecycle.ts)                                                                                                               |
 | Renderer-first shutdown and profile-backed state across application restart                      | [`src/renderer-lifecycle.test.ts`](../src/renderer-lifecycle.test.ts) and [`src/session.test.ts`](../src/session.test.ts) | [`test/e2e-obsidian/scripts/profile-restart.ts`](../../../test/e2e-obsidian/scripts/profile-restart.ts)                                                                                                                   |
 | Cleanup after process signals, process-first ordering, and explicit temporary-state preservation | [`src/process-lifecycle.test.ts`](../src/process-lifecycle.test.ts)                                                       | Consumer workflows which launch detached real-Obsidian sessions                                                                                                                                                           |
 | Layout measurements, retry behaviour, safe areas, and touch targets                              | [`src/layout.test.ts`](../src/layout.test.ts)                                                                             | [`test/e2e-obsidian/scripts/mobile.ts`](../../../test/e2e-obsidian/scripts/mobile.ts) and the packed-consumer fixture [`test/packed-consumer/test-session-usage.ts`](../../../test/packed-consumer/test-session-usage.ts) |

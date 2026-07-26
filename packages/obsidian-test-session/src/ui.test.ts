@@ -1,11 +1,29 @@
 import type { Page } from "playwright";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const playwrightState = vi.hoisted(() => ({
+  connectOverCDP: vi.fn(),
+}));
+
+vi.mock("playwright", () => ({
+  chromium: {
+    connectOverCDP: playwrightState.connectOverCDP,
+  },
+}));
+
 import {
+  enablePluginAndSave,
+  ensurePluginLoaded,
   obsidianRemoteDebuggingPort,
   preseedLocalStorage,
   waitForObsidianPageVault,
   waitForObsidianPageUiIdle,
 } from "./ui.js";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
 
 describe("obsidianRemoteDebuggingPort", () => {
   it("records an explicit valid port in the supplied environment", () => {
@@ -57,6 +75,147 @@ describe("preseedLocalStorage", () => {
         ["example-version", "7"],
       ]),
     );
+  });
+});
+
+describe("ensurePluginLoaded", () => {
+  async function runWithPluginManager(
+    plugins: Record<string, unknown>,
+    setEnable: ReturnType<typeof vi.fn>,
+    loadPlugin: ReturnType<typeof vi.fn>,
+  ): Promise<void> {
+    const page = {
+      evaluate: vi.fn(
+        async (operation: (id: string) => Promise<void>, id: string) => {
+          const target = globalThis as typeof globalThis & {
+            app?: unknown;
+          };
+          const previousApp = target.app;
+          target.app = { plugins: { plugins, setEnable, loadPlugin } };
+          try {
+            await operation(id);
+          } finally {
+            if (previousApp === undefined) delete target.app;
+            else target.app = previousApp;
+          }
+        },
+      ),
+    } as unknown as Page;
+    const close = vi.fn(async () => undefined);
+    playwrightState.connectOverCDP.mockResolvedValue({
+      contexts: () => [{ pages: () => [page] }],
+      close,
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true })));
+
+    await ensurePluginLoaded(9222, "example-plugin");
+
+    expect(close).toHaveBeenCalledOnce();
+  }
+
+  it("keeps an already loaded plug-in running", async () => {
+    const setEnable = vi.fn(async () => undefined);
+    const loadPlugin = vi.fn(async () => undefined);
+
+    await runWithPluginManager(
+      { "example-plugin": { starting: true } },
+      setEnable,
+      loadPlugin,
+    );
+
+    expect(setEnable).toHaveBeenCalledWith(true);
+    expect(loadPlugin).not.toHaveBeenCalled();
+  });
+
+  it("loads an installed plug-in when it is not running", async () => {
+    const setEnable = vi.fn(async () => undefined);
+    const loadPlugin = vi.fn(async () => undefined);
+
+    await runWithPluginManager({}, setEnable, loadPlugin);
+
+    expect(setEnable).toHaveBeenCalledWith(true);
+    expect(loadPlugin).toHaveBeenCalledOnce();
+    expect(loadPlugin).toHaveBeenCalledWith("example-plugin");
+  });
+});
+
+describe("enablePluginAndSave", () => {
+  async function runWithPluginManager(
+    plugins: Record<string, unknown>,
+    setEnable: ReturnType<typeof vi.fn>,
+    enableAndSave: ReturnType<typeof vi.fn>,
+    saveConfig: ReturnType<typeof vi.fn>,
+  ): Promise<void> {
+    const page = {
+      evaluate: vi.fn(
+        async (operation: (id: string) => Promise<void>, id: string) => {
+          const target = globalThis as typeof globalThis & {
+            app?: unknown;
+          };
+          const previousApp = target.app;
+          target.app = {
+            plugins: {
+              plugins,
+              setEnable,
+              enablePluginAndSave: enableAndSave,
+              saveConfig,
+            },
+          };
+          try {
+            await operation(id);
+          } finally {
+            if (previousApp === undefined) delete target.app;
+            else target.app = previousApp;
+          }
+        },
+      ),
+    } as unknown as Page;
+    const close = vi.fn(async () => undefined);
+    playwrightState.connectOverCDP.mockResolvedValue({
+      contexts: () => [{ pages: () => [page] }],
+      close,
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true })));
+
+    await enablePluginAndSave(9222, "example-plugin");
+
+    expect(close).toHaveBeenCalledOnce();
+  }
+
+  it("enables community plug-ins before persistently loading the target", async () => {
+    const setEnable = vi.fn(async () => undefined);
+    const enableAndSave = vi.fn(async () => undefined);
+    const saveConfig = vi.fn(async () => undefined);
+
+    await runWithPluginManager({}, setEnable, enableAndSave, saveConfig);
+
+    expect(setEnable).toHaveBeenCalledWith(true);
+    expect(enableAndSave).toHaveBeenCalledWith("example-plugin");
+    expect(saveConfig).toHaveBeenCalledOnce();
+    expect(setEnable.mock.invocationCallOrder[0]).toBeLessThan(
+      enableAndSave.mock.invocationCallOrder[0]!,
+    );
+    expect(enableAndSave.mock.invocationCallOrder[0]).toBeLessThan(
+      saveConfig.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("rejects when the target loaded before its controlled start", async () => {
+    const setEnable = vi.fn(async () => undefined);
+    const enableAndSave = vi.fn(async () => undefined);
+    const saveConfig = vi.fn(async () => undefined);
+
+    await expect(
+      runWithPluginManager(
+        { "example-plugin": { starting: true } },
+        setEnable,
+        enableAndSave,
+        saveConfig,
+      ),
+    ).rejects.toThrowError("loaded before its controlled start phase");
+    expect(setEnable).not.toHaveBeenCalled();
+    expect(enableAndSave).not.toHaveBeenCalled();
+    expect(saveConfig).not.toHaveBeenCalled();
   });
 });
 
