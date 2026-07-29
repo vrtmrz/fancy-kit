@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/browser-ui-kit",
-  "version": "0.1.0-rc.0",
+  "version": "0.1.0",
   "description": "Framework-free browser DOM adapters for Fancy Kit UI contracts",
   "type": "module",
   "license": "MIT",
