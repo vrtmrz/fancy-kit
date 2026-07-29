@@ -19,7 +19,7 @@ The UI, Vault, and testing boundaries are also used in maintained plug-ins. See 
 
 - `@vrtmrz/obsidian-plugin-kit`: convenience export of the runtime features below.
 - `@vrtmrz/obsidian-plugin-kit/dialog`: text and password prompts, typed selection, confirmation, and message dialogs.
-- `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates and lifecycle ownership.
+- `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates, the neutral `UiNotifications` adapter, and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
 - `@vrtmrz/obsidian-plugin-kit/ui`: an Obsidian adapter for the neutral `UiInteractions` contract.
 - `@vrtmrz/obsidian-plugin-kit/vault`: path-based text and frontmatter Vault capabilities with Obsidian adapters.
@@ -61,6 +61,22 @@ The direct dialogue helpers accept an optional `AbortSignal` lifecycle argument.
 `confirmAction` constrains long Markdown content to the effective top and bottom safe-area insets, keeps its action area available, and lets the message scroll inside the dialogue. Use `actionLayout: "vertical"` for several long or safety-sensitive actions on narrow screens.
 
 ## Keyed notices
+
+Use `createObsidianUiNotifications` when a workflow accepts the neutral `UiNotifications` capability. It supports plain-text keyed messages and one optional action without exposing an Obsidian `Notice` or DOM element:
+
+```ts
+import { createObsidianUiNotifications } from "@vrtmrz/obsidian-plugin-kit/notice";
+
+const notifications = createObsidianUiNotifications();
+notifications.show("conflict", {
+  message: "A conflict needs review.",
+  action: { label: "Review", onSelect: () => void reviewConflicts() },
+  durationMs: false,
+});
+
+// In the owning plug-in's onunload():
+notifications.dispose();
+```
 
 `KeyedNoticeManager` updates one visible Notice per application-defined key and restarts its expiry on every update. Dispose the manager during plug-in unload.
 

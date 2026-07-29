@@ -25,6 +25,7 @@ The published package is ESM and declares `obsidian >=1.8.7`. Direct dialogs, No
 | Test a Vault text workflow without Obsidian                            | Use `createVaultTextTestHarness`                                                          |
 | Mutate an existing Markdown file's frontmatter without passing `TFile` | Accept `VaultFrontmatterAccess` and create it with `createObsidianVaultFrontmatterAccess` |
 | Test frontmatter policy without parsing or serialising YAML            | Use `createVaultFrontmatterTestHarness`                                                   |
+| Present neutral keyed messages and one optional action                 | Use `createObsidianUiNotifications`                                                       |
 | Update one persistent Notice by an application-defined key             | Use `KeyedNoticeManager`                                                                  |
 | Keep several named status or action rows in one Notice                 | Use `KeyedNoticeGroupManager`                                                             |
 | Display determinate or indeterminate progress                          | Use `ProgressFragment` or `showProgressNotice`                                            |
@@ -375,6 +376,34 @@ The harness applies the updater to a private clone and commits only after succes
 This capability delegates YAML parsing and serialisation to Obsidian. The harness treats path keys literally and does not emulate Obsidian path normalisation, YAML text, formatting, comments, anchors, aliases, MetadataCache timing, or Vault events. Cover those behaviours with focused real-Obsidian tests when they matter to the consumer.
 
 ## Keyed notices
+
+Create `ObsidianUiNotifications` at the composition root when application workflows accept the platform-neutral `UiNotifications` capability:
+
+```ts
+import { createObsidianUiNotifications } from "@vrtmrz/obsidian-plugin-kit/notice";
+import type { UiNotifications } from "@vrtmrz/ui-interactions";
+
+type ConflictNotifications = Pick<UiNotifications, "show">;
+
+function reportConflict(
+  notifications: ConflictNotifications,
+  review: () => void,
+): void {
+  notifications.show("conflict", {
+    message: "A conflict needs review.",
+    action: { label: "Review", onSelect: review },
+    durationMs: false,
+  });
+}
+
+const notifications = createObsidianUiNotifications();
+reportConflict(notifications, () => void reviewConflicts());
+
+// In the owning plug-in's onunload():
+notifications.dispose();
+```
+
+The adapter renders plain text and an optional full-width action. It hides the Notice before invoking the action callback, restarts expiry when a key is reused, and does not expose an Obsidian `Notice` or DOM element to the workflow.
 
 `KeyedNoticeManager` owns at most one visible Notice per key. Reusing the key updates the existing Notice and restarts its expiry:
 

@@ -58,19 +58,30 @@ test("rejects non-canonical or malformed release versions", () => {
   }
 });
 
-test("requires the plug-in kit dependency and lockfile to match UI interactions", () => {
-  const kit = {
-    ...base,
-    packageName: "@vrtmrz/obsidian-plugin-kit",
-    confirmation: `stage @vrtmrz/obsidian-plugin-kit@0.1.0-rc.0 from ${sha}`,
-    manifest: {
-      name: "@vrtmrz/obsidian-plugin-kit",
-      version: "0.1.0-rc.0",
-      dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
-    },
-    lockEntry: { version: "0.1.0-rc.0", dependencies: { "@vrtmrz/ui-interactions": "0.1.0" } },
-  };
-  assert.throws(() => validateReleaseSelection(kit), /workspace contains 0.1.0-rc.0/);
+test("requires each UI adapter dependency and lockfile to match UI interactions", () => {
+  for (const packageName of [
+    "@vrtmrz/browser-ui-kit",
+    "@vrtmrz/obsidian-plugin-kit",
+  ]) {
+    const kit = {
+      ...base,
+      packageName,
+      confirmation: `stage ${packageName}@0.1.0-rc.0 from ${sha}`,
+      manifest: {
+        name: packageName,
+        version: "0.1.0-rc.0",
+        dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
+      },
+      lockEntry: {
+        version: "0.1.0-rc.0",
+        dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
+      },
+    };
+    assert.throws(
+      () => validateReleaseSelection(kit),
+      /workspace contains 0.1.0-rc.0/,
+    );
+  }
 });
 
 test("distinguishes an unpublished registry version from registry failure", async () => {
@@ -79,8 +90,22 @@ test("distinguishes an unpublished registry version from registry failure", asyn
   await assert.rejects(assertVersionIsUnpublished("@vrtmrz/ui-interactions", "0.1.0", async () => ({ status: 200, ok: true })), /already present/);
 });
 
-test("requires the plug-in kit UI version to exist on npm", async () => {
+test("requires each UI adapter's UI version to exist on npm", async () => {
   const manifest = { dependencies: { "@vrtmrz/ui-interactions": "0.1.0" } };
-  await assert.rejects(assertKitDependencyIsPublished("@vrtmrz/obsidian-plugin-kit", manifest, async () => ({ ok: false })), /must be published/);
-  await assert.doesNotReject(assertKitDependencyIsPublished("@vrtmrz/obsidian-plugin-kit", manifest, async () => ({ ok: true })));
+  for (const packageName of [
+    "@vrtmrz/browser-ui-kit",
+    "@vrtmrz/obsidian-plugin-kit",
+  ]) {
+    await assert.rejects(
+      assertKitDependencyIsPublished(packageName, manifest, async () => ({
+        ok: false,
+      })),
+      /must be published/,
+    );
+    await assert.doesNotReject(
+      assertKitDependencyIsPublished(packageName, manifest, async () => ({
+        ok: true,
+      })),
+    );
+  }
 });

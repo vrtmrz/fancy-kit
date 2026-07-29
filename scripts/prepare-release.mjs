@@ -63,14 +63,19 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
     throw new Error(`Release version ${version} must be greater than current version ${manifest.version}`);
   }
 
-  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
+  if (
+    packageName === "@vrtmrz/browser-ui-kit" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit"
+  ) {
     const dependency = "@vrtmrz/ui-interactions";
     const uiVersion = manifest.dependencies?.[dependency];
     if (uiVersion !== uiManifest.version) {
-      throw new Error(`The plug-in kit requires ${dependency} ${uiVersion ?? "without an exact version"}, but the workspace contains ${uiManifest.version}`);
+      throw new Error(
+        `${packageName} requires ${dependency} ${uiVersion ?? "without an exact version"}, but the workspace contains ${uiManifest.version}`,
+      );
     }
     if (lockEntry.dependencies?.[dependency] !== uiVersion) {
-      throw new Error("The plug-in kit UI interactions dependency does not match the lockfile");
+      throw new Error(`${packageName} UI interactions dependency does not match the lockfile`);
     }
   }
 
@@ -82,6 +87,7 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
 
 const releasePreparationOrder = [
   "@vrtmrz/ui-interactions",
+  "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
   "@vrtmrz/obsidian-test-session",
   "octagonal-wheels",
@@ -107,33 +113,40 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
   const nextManifests = cloneJson(manifests);
   let nextLockfile = cloneJson(lockfile);
   const uiPackageName = "@vrtmrz/ui-interactions";
-  const pluginKitPackageName = "@vrtmrz/obsidian-plugin-kit";
   const uiVersion = selectedVersions.get(uiPackageName);
+  const uiAdapterPackageNames = [
+    "@vrtmrz/browser-ui-kit",
+    "@vrtmrz/obsidian-plugin-kit",
+  ];
 
-  if (uiVersion && selectedVersions.has(pluginKitPackageName)) {
-    const pluginKitManifest = nextManifests[pluginKitPackageName];
-    if (!pluginKitManifest) {
-      throw new Error(`Manifest is missing for ${pluginKitPackageName}`);
+  if (uiVersion) {
+    for (const adapterPackageName of uiAdapterPackageNames) {
+      if (!selectedVersions.has(adapterPackageName)) continue;
+
+      const adapterManifest = nextManifests[adapterPackageName];
+      if (!adapterManifest) {
+        throw new Error(`Manifest is missing for ${adapterPackageName}`);
+      }
+      const adapterDirectory = publishablePackages[adapterPackageName];
+      const adapterLockEntry = nextLockfile.packages?.[adapterDirectory];
+      if (!adapterLockEntry) {
+        throw new Error(`Lockfile entry is missing for ${adapterDirectory}`);
+      }
+      nextManifests[adapterPackageName] = {
+        ...adapterManifest,
+        dependencies: {
+          ...adapterManifest.dependencies,
+          [uiPackageName]: uiVersion,
+        },
+      };
+      nextLockfile.packages[adapterDirectory] = {
+        ...adapterLockEntry,
+        dependencies: {
+          ...adapterLockEntry.dependencies,
+          [uiPackageName]: uiVersion,
+        },
+      };
     }
-    const pluginKitDirectory = publishablePackages[pluginKitPackageName];
-    const pluginKitLockEntry = nextLockfile.packages?.[pluginKitDirectory];
-    if (!pluginKitLockEntry) {
-      throw new Error(`Lockfile entry is missing for ${pluginKitDirectory}`);
-    }
-    nextManifests[pluginKitPackageName] = {
-      ...pluginKitManifest,
-      dependencies: {
-        ...pluginKitManifest.dependencies,
-        [uiPackageName]: uiVersion,
-      },
-    };
-    nextLockfile.packages[pluginKitDirectory] = {
-      ...pluginKitLockEntry,
-      dependencies: {
-        ...pluginKitLockEntry.dependencies,
-        [uiPackageName]: uiVersion,
-      },
-    };
   }
 
   const orderIndex = new Map(releasePreparationOrder.map((packageName, index) => [packageName, index]));

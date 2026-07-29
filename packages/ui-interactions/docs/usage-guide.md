@@ -1,6 +1,6 @@
 # Usage and testing guide
 
-`@vrtmrz/ui-interactions` separates an application's request for user interaction from the platform code that renders it. This guide describes the public contract, adapter composition, and deterministic test driver.
+`@vrtmrz/ui-interactions` separates an application's request for user interaction or notification from the platform code that renders it. This guide describes the public contracts, adapter composition, and deterministic test driver.
 
 ## Choose the smallest capability
 
@@ -38,9 +38,32 @@ export async function confirmPublish(ui: PublishUi): Promise<boolean> {
 
 The literal action list makes the result `"publish" | "cancel" | null`. Keep application-specific names such as `PublishUi` in the consumer; the shared package describes interaction mechanisms rather than domain policy.
 
+Use the separate `UiNotifications` capability for non-blocking, keyed messages. Its adapter owns visible resources and expiry, so showing a notification does not return a Promise or expose a platform element:
+
+```ts
+import type { UiNotifications } from "@vrtmrz/ui-interactions";
+
+type ConflictNotifications = Pick<UiNotifications, "show" | "hide">;
+
+export function reportConflict(
+  notifications: ConflictNotifications,
+  review: () => void,
+): void {
+  notifications.show("conflict", {
+    message: "A conflict needs review.",
+    action: { label: "Review", onSelect: review },
+    durationMs: false,
+  });
+}
+```
+
+Reusing a key updates the existing notification and restarts its expiry. Selecting an action hides the notification before invoking its synchronous callback. The full adapter also supports `has`, `hideAll`, and terminal `dispose`; create and dispose it at the application composition root.
+
 ## Supply platform UI
 
 A platform adapter implements `UiInteractions`. Create it at the application composition root, where browser, desktop, terminal, or framework services are already available.
+
+A notification adapter independently implements `UiNotifications`. Keep the two capabilities separate even when one platform object creates both: interaction methods resolve one requested result, while notification methods own non-blocking keyed resources until expiry or disposal.
 
 Use the adapter directly when no driver is needed. Use `createDrivenUiInteractions` to consult an instance-scoped driver before falling back to the adapter:
 
@@ -170,6 +193,7 @@ The package documentation is backed by focused, non-platform tests and by its Ob
 | Driver-aware dispatch and validation rules | [`src/driven-ui.ts`](../src/driven-ui.ts) |
 | Complete option defaults and result types | [`src/contracts.ts`](../src/contracts.ts) |
 | Real Obsidian adapter and mixed pass-through tests | [`../../obsidian-plugin-kit/src/ui-context.test.ts`](../../obsidian-plugin-kit/src/ui-context.test.ts) |
+| Framework-free browser adapter, native DOM presentation, and keyed notifications | [`../../browser-ui-kit/src/interactions.test.ts`](../../browser-ui-kit/src/interactions.test.ts) and [`../../browser-ui-kit/src/notifications.test.ts`](../../browser-ui-kit/src/notifications.test.ts) |
 | Obsidian composition and App-free workflow examples | [`../../obsidian-plugin-kit/docs/usage-guide.md`](../../obsidian-plugin-kit/docs/usage-guide.md) |
 
 These tests cover the neutral dispatcher and scripted harness. A platform adapter remains responsible for its own rendering, focus, keyboard, accessibility, and lifecycle tests.
