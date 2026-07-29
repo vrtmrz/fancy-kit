@@ -8,6 +8,7 @@ The packages use independent `0.x` versions. Stable releases are available from 
 
 ## Packages
 
+- [`@vrtmrz/browser-ui-kit`](packages/browser-ui-kit): framework-free browser DOM adapters for the neutral interaction and notification contracts. See its [usage guide](packages/browser-ui-kit/docs/usage-guide.md) for browser composition and custom presenter boundaries.
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives. See its [usage guide](packages/obsidian-plugin-kit/docs/usage-guide.md) for consumer integration.
 - [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure. See its [usage guide](packages/obsidian-test-session/docs/usage-guide.md) for lifecycle and platform boundaries.
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness. See its [usage and testing guide](packages/ui-interactions/docs/usage-guide.md) for adapter composition and scripted tests.
@@ -55,12 +56,13 @@ Install only the packages that a project needs. The commands below use npm's nor
 
 ```bash
 npm install @vrtmrz/ui-interactions
+npm install @vrtmrz/browser-ui-kit
 npm install @vrtmrz/obsidian-plugin-kit
 npm install octagonal-wheels
 npm install -D @vrtmrz/obsidian-test-session
 npm install -D playwright @types/node
 ```
 
-The plug-in kit installs its matching UI interactions dependency automatically. The test session package is development tooling and should not be bundled into an Obsidian plug-in.
+The browser and plug-in kits install their matching UI interactions dependency automatically. The test session package is development tooling and should not be bundled into an Obsidian plug-in.
 
 See [the package architecture](docs/architecture.md), [the release process](docs/releasing.md), and [CONTRIBUTING.md](CONTRIBUTING.md) for package boundaries, publishing order, API documentation, tests, and UI automation requirements.

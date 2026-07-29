@@ -1,8 +1,8 @@
 # @vrtmrz/ui-interactions
 
-Framework-neutral contracts for application-level prompts, typed selection, Markdown actions, and messages. The package also provides instance-scoped drivers for deterministic tests.
+Framework-neutral contracts for application-level prompts, typed selection, Markdown actions, messages, and keyed notifications. The package also provides instance-scoped drivers for deterministic tests.
 
-It contains no Obsidian or DOM adapter. A consumer supplies the platform UI, while application workflows depend only on `UiInteractions` or a narrower structural type.
+It contains no Obsidian or DOM adapter. Use `@vrtmrz/browser-ui-kit` or `@vrtmrz/obsidian-plugin-kit` at the composition root, while application workflows depend only on `UiInteractions` or a narrower structural type.
 
 > [!IMPORTANT]
 > This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
@@ -19,7 +19,7 @@ The contract and testing driver are used through the Obsidian adapter in maintai
 
 | Entry point | Purpose |
 | --- | --- |
-| `@vrtmrz/ui-interactions` | `UiInteractions`, option and request types, `DrivenUiInteractions`, and `createDrivenUiInteractions` |
+| `@vrtmrz/ui-interactions` | `UiInteractions`, `UiNotifications`, option and request types, `DrivenUiInteractions`, and `createDrivenUiInteractions` |
 | `@vrtmrz/ui-interactions/testing` | `ScriptedUiDriver`, `createScriptedUiDriver`, and the App-free `createUiTestHarness` |
 
 Import only these public entry points, not package `src` or `dist` files.
@@ -76,5 +76,26 @@ The scripted driver is FIFO and strict by default. Each harness owns its queue a
 | `showMessage` | `void`, after acknowledgement | Not applicable |
 
 Automated responses are checked against these same contracts. `interactionId` is optional, but a stable identifier makes repeated interaction kinds easier to distinguish in tests and diagnostics.
+
+## Keyed notifications
+
+`UiNotifications` is separate from `UiInteractions` because a notification is non-blocking and remains owned by its adapter until expiry, explicit hiding, or disposal. Application code supplies plain text and an optional action without receiving a platform element:
+
+```ts
+import type { UiNotifications } from "@vrtmrz/ui-interactions";
+
+export function reportConflict(
+  notifications: Pick<UiNotifications, "show">,
+  review: () => void,
+): void {
+  notifications.show("conflict", {
+    message: "A conflict needs review.",
+    action: { label: "Review", onSelect: review },
+    durationMs: false,
+  });
+}
+```
+
+Reusing a key updates that notification and restarts its expiry. Create the platform adapter at the application composition root, and dispose it with the owning application lifecycle.
 
 For adapter composition, driver pass-through, callback typing, and the test evidence behind these contracts, see the [usage and testing guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/ui-interactions/docs/usage-guide.md).

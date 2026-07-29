@@ -1,13 +1,13 @@
 # Package architecture
 
-This repository contains four independently versioned packages and one public-source Obsidian harness application. Sharing a workspace does not make their APIs or release lifecycles inseparable.
+This repository contains five independently versioned packages and one public-source Obsidian harness application. Sharing a workspace does not make their APIs or release lifecycles inseparable.
 
 ## Dependency direction
 
 ```text
 @vrtmrz/ui-interactions
-          ↑
-@vrtmrz/obsidian-plugin-kit  ──peer──> obsidian
+          ↑                         ↑
+@vrtmrz/browser-ui-kit      @vrtmrz/obsidian-plugin-kit  ──peer──> obsidian
 
 octagonal-wheels             (independent shared utilities)
 
@@ -17,6 +17,8 @@ consumer E2E suites and the public harness
 ```
 
 `@vrtmrz/ui-interactions` owns framework-neutral interaction contracts, dispatch, scripted drivers, transcripts, and the App-free harness. It must not import Obsidian or browser APIs.
+
+`@vrtmrz/browser-ui-kit` owns framework-free browser DOM implementations of the neutral interaction and notification contracts. It may depend on the neutral interaction package, but it must not emulate Obsidian APIs or contain consumer-specific rendering policy.
 
 `@vrtmrz/obsidian-plugin-kit` owns Obsidian-specific Modal, SuggestModal, MarkdownRenderer, Notice, focus, lifecycle, and focused Vault adapters. It may expose narrow path-based capabilities and App-free harnesses when they make Obsidian workflows injectable without claiming to be a cross-platform filesystem. It may depend on the neutral interaction package. It must not contain LiveSync domain behaviour.
 
@@ -50,10 +52,11 @@ LiveSync replication, database, storage composition, and domain-specific service
 Keep the three UI roles distinct:
 
 - `UiInteractions` is the neutral capability accepted by an application workflow;
+- `createBrowserUi` creates the concrete browser adapter at a web application composition root;
 - `createObsidianUi` creates the concrete Obsidian adapter at the consumer composition root; and
 - `UiInteractionDriver` is an optional, instance-scoped interceptor used to observe a request, provide a scripted response, or pass the request to the adapter.
 
-The driver is not a platform abstraction and does not select a runtime platform. A future platform implementation can satisfy `UiInteractions` without changing workflow code or extending the Obsidian plug-in kit. Preserve focused direct imports for simple Obsidian UI code, keep scripted state instance-scoped, and keep cross-platform behaviour outside the plug-in kit.
+The driver is not a platform abstraction and does not select a runtime platform. Browser, Obsidian, and future platform implementations can satisfy `UiInteractions` without changing workflow code. Preserve focused direct imports for simple platform UI code, keep scripted state instance-scoped, and keep cross-platform behaviour in the neutral contract rather than either platform kit.
 
 ## Rooted storage composition
 

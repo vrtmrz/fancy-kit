@@ -1,4 +1,8 @@
 import { Notice } from "obsidian";
+import type {
+  UiNotification,
+  UiNotifications,
+} from "@vrtmrz/ui-interactions";
 
 /** Content accepted by an Obsidian Notice managed by {@link KeyedNoticeManager}. */
 export type KeyedNoticeMessage = string | DocumentFragment;
@@ -470,4 +474,96 @@ export class KeyedNoticeGroupManager {
       throw new Error("KeyedNoticeGroupManager has been disposed");
     }
   }
+}
+
+/** Configures the Obsidian implementation of {@link UiNotifications}. */
+export interface ObsidianUiNotificationsOptions {
+  /**
+   * Default visible duration in milliseconds, or `false` for no automatic hide.
+   * Defaults to `5000`.
+   */
+  defaultDurationMs?: number | false;
+}
+
+/**
+ * Presents the platform-neutral keyed notification contract through Obsidian Notices.
+ *
+ * @remarks
+ * Create one instance at the plug-in composition root and dispose it during
+ * unload. Selecting an action hides its Notice before invoking the application
+ * callback, matching the neutral lifecycle contract.
+ */
+export class ObsidianUiNotifications implements UiNotifications {
+  private readonly manager: KeyedNoticeGroupManager;
+  private readonly defaultDurationMs: number | false;
+
+  /** Creates an empty, instance-scoped Obsidian notification adapter. */
+  constructor(options: ObsidianUiNotificationsOptions = {}) {
+    this.defaultDurationMs = duration(
+      options.defaultDurationMs ?? 5_000,
+      "defaultDurationMs",
+    );
+    this.manager = new KeyedNoticeGroupManager({
+      defaultCompletedDurationMs: false,
+    });
+  }
+
+  /** Whether {@link dispose} has permanently ended this adapter's lifecycle. */
+  get isDisposed(): boolean {
+    return this.manager.isDisposed;
+  }
+
+  /** Creates or updates one Obsidian Notice without exposing its DOM to the workflow. */
+  show(key: string, notification: UiNotification): void {
+    const durationMs = duration(
+      notification.durationMs ?? this.defaultDurationMs,
+      "durationMs",
+    );
+    const action =
+      notification.action === undefined
+        ? undefined
+        : {
+            label: notification.action.label,
+            onSelect: () => {
+              this.hide(key);
+              notification.action?.onSelect();
+            },
+          };
+    this.manager.setItem(key, "notification", {
+      message: notification.message,
+      ...(action === undefined ? {} : { action }),
+    });
+    this.manager.finish(key, { durationMs });
+  }
+
+  /** Returns whether this adapter currently owns a visible Notice for a key. */
+  has(key: string): boolean {
+    return this.manager.has(key);
+  }
+
+  /** Hides and forgets one keyed Notice. */
+  hide(key: string): boolean {
+    return this.manager.hide(key);
+  }
+
+  /** Hides every owned Notice while keeping this adapter reusable. */
+  hideAll(): void {
+    this.manager.hideAll();
+  }
+
+  /** Hides every owned Notice and permanently ends this adapter's lifecycle. */
+  dispose(): void {
+    this.manager.dispose();
+  }
+}
+
+/**
+ * Creates an Obsidian adapter for platform-neutral keyed notifications.
+ *
+ * @param options - Default expiry configuration for this adapter instance.
+ */
+export function createObsidianUiNotifications(
+  options: ObsidianUiNotificationsOptions = {},
+): UiNotifications {
+  return new ObsidianUiNotifications(options);
 }

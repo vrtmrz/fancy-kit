@@ -16,11 +16,11 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @vrtmrz/obsidian-test-session && npm run build --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/obsidian-plugin-kit",
+    "build": "npm run build --workspace @vrtmrz/obsidian-test-session && npm run build --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/browser-ui-kit && npm run build --workspace @vrtmrz/obsidian-plugin-kit",
     "build:octagonal-wheels": "npm run build --workspace octagonal-wheels",
     "build:workspace": "npm run build && npm run build:octagonal-wheels",
     "build:harness": "node apps/obsidian-harness/esbuild.config.mjs production",
-    "check": "npm run check --workspace @vrtmrz/obsidian-test-session && npm run build --workspace @vrtmrz/obsidian-test-session && npm run check --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/ui-interactions && npm run check --workspace @vrtmrz/obsidian-plugin-kit",
+    "check": "npm run check --workspace @vrtmrz/obsidian-test-session && npm run build --workspace @vrtmrz/obsidian-test-session && npm run check --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/ui-interactions && npm run check --workspace @vrtmrz/browser-ui-kit && npm run check --workspace @vrtmrz/obsidian-plugin-kit",
     "check:harness": "tsc -p apps/obsidian-harness/tsconfig.json",
     "check:e2e": "tsc -p test/e2e-obsidian/tsconfig.json",
     "check:all": "npm run check && npm run check:harness && npm run check:e2e",
@@ -29,7 +29,7 @@
     "check:workspace": "npm run check:all && npm run check:octagonal-wheels && npm run check:release-tools",
     "dev:harness": "node apps/obsidian-harness/esbuild.config.mjs",
     "harness:open": "npm run build:harness && tsx test/e2e-obsidian/scripts/debug-ui.ts",
-    "test": "npm run test --workspace @vrtmrz/obsidian-test-session && npm run test --workspace @vrtmrz/obsidian-plugin-kit && npm run test --workspace @vrtmrz/ui-interactions",
+    "test": "npm run test --workspace @vrtmrz/obsidian-test-session && npm run test --workspace @vrtmrz/browser-ui-kit && npm run test --workspace @vrtmrz/obsidian-plugin-kit && npm run test --workspace @vrtmrz/ui-interactions",
     "test:test-session": "npm run test --workspace @vrtmrz/obsidian-test-session",
     "test:octagonal-wheels": "npm test --workspace octagonal-wheels -- --reporter=dot && npm run test:node --workspace octagonal-wheels",
     "test:harness": "vitest run apps/obsidian-harness",

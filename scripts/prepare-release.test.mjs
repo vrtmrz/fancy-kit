@@ -15,12 +15,17 @@ import {
 function fixture(packageName = "octagonal-wheels") {
   const directories = {
     "@vrtmrz/ui-interactions": "packages/ui-interactions",
+    "@vrtmrz/browser-ui-kit": "packages/browser-ui-kit",
     "@vrtmrz/obsidian-plugin-kit": "packages/obsidian-plugin-kit",
     "@vrtmrz/obsidian-test-session": "packages/obsidian-test-session",
     "octagonal-wheels": "packages/octagonal-wheels",
   };
   const packageDirectory = directories[packageName];
-  const dependencies = packageName === "@vrtmrz/obsidian-plugin-kit" ? { "@vrtmrz/ui-interactions": "0.1.0" } : undefined;
+  const dependencies =
+    packageName === "@vrtmrz/browser-ui-kit" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit"
+      ? { "@vrtmrz/ui-interactions": "0.1.0" }
+      : undefined;
   return {
     packageName,
     version: "0.1.49",
@@ -49,6 +54,7 @@ test("updates the selected manifest and lockfile together", () => {
 test("accepts every publishable package", () => {
   for (const packageName of [
     "@vrtmrz/ui-interactions",
+    "@vrtmrz/browser-ui-kit",
     "@vrtmrz/obsidian-plugin-kit",
     "@vrtmrz/obsidian-test-session",
     "octagonal-wheels",
@@ -81,21 +87,39 @@ test("requires the manifest and lockfile versions to agree before preparation", 
   assert.throws(() => planReleasePreparation(input), /does not match lockfile/);
 });
 
-test("requires the plug-in kit UI dependency to match the workspace and lockfile", () => {
-  const workspaceMismatch = fixture("@vrtmrz/obsidian-plugin-kit");
-  workspaceMismatch.uiManifest.version = "0.1.1";
-  assert.throws(() => planReleasePreparation(workspaceMismatch), /workspace contains 0.1.1/);
+test("requires each UI adapter dependency to match the workspace and lockfile", () => {
+  for (const packageName of [
+    "@vrtmrz/browser-ui-kit",
+    "@vrtmrz/obsidian-plugin-kit",
+  ]) {
+    const workspaceMismatch = fixture(packageName);
+    workspaceMismatch.uiManifest.version = "0.1.1";
+    assert.throws(
+      () => planReleasePreparation(workspaceMismatch),
+      /workspace contains 0.1.1/,
+    );
 
-  const lockMismatch = fixture("@vrtmrz/obsidian-plugin-kit");
-  lockMismatch.lockfile.packages["packages/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"] = "0.0.9";
-  assert.throws(() => planReleasePreparation(lockMismatch), /does not match the lockfile/);
+    const lockMismatch = fixture(packageName);
+    lockMismatch.lockfile.packages[
+      `packages/${packageName.slice("@vrtmrz/".length)}`
+    ].dependencies["@vrtmrz/ui-interactions"] = "0.0.9";
+    assert.throws(
+      () => planReleasePreparation(lockMismatch),
+      /does not match the lockfile/,
+    );
+  }
 });
 
-test("prepares a coordinated UI and plug-in-kit release with one exact dependency", () => {
+test("prepares coordinated UI and adapter releases with one exact dependency", () => {
   const manifests = {
     "@vrtmrz/ui-interactions": {
       name: "@vrtmrz/ui-interactions",
       version: "0.1.0",
+    },
+    "@vrtmrz/browser-ui-kit": {
+      name: "@vrtmrz/browser-ui-kit",
+      version: "0.1.0",
+      dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
     },
     "@vrtmrz/obsidian-plugin-kit": {
       name: "@vrtmrz/obsidian-plugin-kit",
@@ -109,6 +133,11 @@ test("prepares a coordinated UI and plug-in-kit release with one exact dependenc
         name: "@vrtmrz/ui-interactions",
         version: "0.1.0",
       },
+      "packages/browser-ui-kit": {
+        name: "@vrtmrz/browser-ui-kit",
+        version: "0.1.0",
+        dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
+      },
       "packages/obsidian-plugin-kit": {
         name: "@vrtmrz/obsidian-plugin-kit",
         version: "0.1.1",
@@ -120,6 +149,7 @@ test("prepares a coordinated UI and plug-in-kit release with one exact dependenc
   const result = planReleaseSetPreparation({
     selections: [
       { packageName: "@vrtmrz/ui-interactions", version: "0.1.1" },
+      { packageName: "@vrtmrz/browser-ui-kit", version: "0.1.1" },
       { packageName: "@vrtmrz/obsidian-plugin-kit", version: "0.1.2" },
     ],
     manifests,
@@ -127,13 +157,27 @@ test("prepares a coordinated UI and plug-in-kit release with one exact dependenc
   });
 
   assert.equal(result.manifests["@vrtmrz/ui-interactions"].version, "0.1.1");
+  assert.equal(result.manifests["@vrtmrz/browser-ui-kit"].version, "0.1.1");
   assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].version, "0.1.2");
+  assert.equal(
+    result.manifests["@vrtmrz/browser-ui-kit"].dependencies[
+      "@vrtmrz/ui-interactions"
+    ],
+    "0.1.1",
+  );
   assert.equal(
     result.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"],
     "0.1.1",
   );
   assert.equal(result.lockfile.packages["packages/ui-interactions"].version, "0.1.1");
+  assert.equal(result.lockfile.packages["packages/browser-ui-kit"].version, "0.1.1");
   assert.equal(result.lockfile.packages["packages/obsidian-plugin-kit"].version, "0.1.2");
+  assert.equal(
+    result.lockfile.packages["packages/browser-ui-kit"].dependencies[
+      "@vrtmrz/ui-interactions"
+    ],
+    "0.1.1",
+  );
   assert.equal(
     result.lockfile.packages["packages/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"],
     "0.1.1",
@@ -141,6 +185,10 @@ test("prepares a coordinated UI and plug-in-kit release with one exact dependenc
   assert.equal(manifests["@vrtmrz/ui-interactions"].version, "0.1.0");
   assert.equal(
     manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"],
+    "0.1.0",
+  );
+  assert.equal(
+    manifests["@vrtmrz/browser-ui-kit"].dependencies["@vrtmrz/ui-interactions"],
     "0.1.0",
   );
 });

@@ -10,10 +10,18 @@ export function isReleaseVersion(version) {
 
 export const publishablePackages = Object.freeze({
   "@vrtmrz/ui-interactions": "packages/ui-interactions",
+  "@vrtmrz/browser-ui-kit": "packages/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit": "packages/obsidian-plugin-kit",
   "@vrtmrz/obsidian-test-session": "packages/obsidian-test-session",
   "octagonal-wheels": "packages/octagonal-wheels",
 });
+
+function dependsOnUiInteractions(packageName) {
+  return (
+    packageName === "@vrtmrz/browser-ui-kit" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit"
+  );
+}
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(new URL(relativePath, new URL(`file://${repositoryRoot}/`)), "utf8"));
@@ -45,13 +53,15 @@ export function validateReleaseSelection({
   const requiredConfirmation = `stage ${packageName}@${expectedVersion} from ${expectedSha}`;
   if (confirmation !== requiredConfirmation) throw new Error(`Confirmation must be exactly: ${requiredConfirmation}`);
 
-  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
+  if (dependsOnUiInteractions(packageName)) {
     const uiVersion = manifest.dependencies?.["@vrtmrz/ui-interactions"];
     if (uiVersion !== uiManifest.version) {
-      throw new Error(`The plug-in kit requires UI interactions ${uiVersion ?? "without an exact version"}, but the workspace contains ${uiManifest.version}`);
+      throw new Error(
+        `${packageName} requires UI interactions ${uiVersion ?? "without an exact version"}, but the workspace contains ${uiManifest.version}`,
+      );
     }
     if (lockEntry.dependencies?.["@vrtmrz/ui-interactions"] !== uiVersion) {
-      throw new Error("The plug-in kit UI interactions dependency does not match the lockfile");
+      throw new Error(`${packageName} UI interactions dependency does not match the lockfile`);
     }
   }
 
@@ -66,11 +76,15 @@ export async function assertVersionIsUnpublished(packageName, version, fetchImpl
 }
 
 export async function assertKitDependencyIsPublished(packageName, manifest, fetchImpl = fetch) {
-  if (packageName !== "@vrtmrz/obsidian-plugin-kit") return;
+  if (!dependsOnUiInteractions(packageName)) return;
   const dependency = "@vrtmrz/ui-interactions";
   const version = manifest.dependencies?.[dependency];
   const response = await fetchImpl(`https://registry.npmjs.org/${encodeURIComponent(dependency)}/${encodeURIComponent(version)}`);
-  if (!response.ok) throw new Error(`${dependency}@${version} must be published before the plug-in kit can be staged`);
+  if (!response.ok) {
+    throw new Error(
+      `${dependency}@${version} must be published before ${packageName} can be staged`,
+    );
+  }
 }
 
 async function main() {

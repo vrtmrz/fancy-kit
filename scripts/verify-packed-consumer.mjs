@@ -9,16 +9,19 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packageNames = [
   "@vrtmrz/obsidian-test-session",
   "@vrtmrz/ui-interactions",
+  "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
 ];
 const runtimeSafeEntries = [
   "@vrtmrz/obsidian-test-session",
   "@vrtmrz/ui-interactions",
   "@vrtmrz/ui-interactions/testing",
+  "@vrtmrz/browser-ui-kit",
 ];
 const packagedDocumentation = new Map([
   ["@vrtmrz/obsidian-test-session", ["docs/usage-guide.md"]],
   ["@vrtmrz/ui-interactions", ["docs/usage-guide.md"]],
+  ["@vrtmrz/browser-ui-kit", ["docs/usage-guide.md"]],
   ["@vrtmrz/obsidian-plugin-kit", ["docs/usage-guide.md"]],
   ["octagonal-wheels", ["guides/imports-and-runtime.md"]],
 ]);
@@ -262,6 +265,10 @@ async function main() {
         .join("\n")}\n`,
     );
     await copyFile(
+      join(repositoryRoot, "test", "packed-consumer", "browser-ui-kit-usage.ts"),
+      join(temporaryRoot, "browser-ui-kit-usage.ts"),
+    );
+    await copyFile(
       join(repositoryRoot, "test", "packed-consumer", "obsidian-plugin-kit-usage.ts"),
       join(temporaryRoot, "obsidian-plugin-kit-usage.ts"),
     );
@@ -289,6 +296,7 @@ async function main() {
           },
           files: [
             "public-exports.ts",
+            "browser-ui-kit-usage.ts",
             "obsidian-plugin-kit-usage.ts",
             "scripted-step-types.ts",
             "test-session-usage.ts",
@@ -311,6 +319,27 @@ async function main() {
         .join("\n")}\n`,
     );
     run(process.execPath, ["runtime-imports.mjs"], { cwd: temporaryRoot });
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "browser-adapters.ts",
+      source: `export {
+  createBrowserUi,
+  createBrowserUiNotifications,
+} from "@vrtmrz/browser-ui-kit";
+`,
+      requiredModules: [
+        "node_modules/@vrtmrz/browser-ui-kit/dist/interactions.js",
+        "node_modules/@vrtmrz/browser-ui-kit/dist/notifications.js",
+        "node_modules/@vrtmrz/ui-interactions/dist/driven-ui.js",
+      ],
+      excludedModules: [
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/dialog.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/notice.js",
+        "node_modules/@vrtmrz/obsidian-plugin-kit/dist/ui-context.js",
+      ],
+      externalImports: [],
+    });
 
     const obsidianFeatureModules = [
       "node_modules/@vrtmrz/obsidian-plugin-kit/dist/dialog.js",
@@ -383,7 +412,7 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 2 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, and 3 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

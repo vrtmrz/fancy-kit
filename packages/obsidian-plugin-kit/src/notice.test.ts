@@ -109,7 +109,11 @@ vi.mock("obsidian", () => {
   return { Notice };
 });
 
-import { KeyedNoticeGroupManager, KeyedNoticeManager } from "./notice.js";
+import {
+  KeyedNoticeGroupManager,
+  KeyedNoticeManager,
+  ObsidianUiNotifications,
+} from "./notice.js";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -362,5 +366,70 @@ describe("KeyedNoticeGroupManager", () => {
     expect(() => manager.setItem("group", "item", { message: "B" })).toThrow(
       "disposed",
     );
+  });
+});
+
+describe("ObsidianUiNotifications", () => {
+  it("updates one neutral notification per key and restarts its expiry", async () => {
+    vi.useFakeTimers();
+    const notifications = new ObsidianUiNotifications({
+      defaultDurationMs: 500,
+    });
+
+    notifications.show("sync", { message: "One" });
+    const notice = noticeState.instances[0] as NoticeMockInstance;
+    await vi.advanceTimersByTimeAsync(400);
+    notifications.show("sync", { message: "Two" });
+
+    expect(noticeState.instances).toHaveLength(1);
+    expect(notice.messageEl.textContent).toBe("Two");
+    await vi.advanceTimersByTimeAsync(499);
+    expect(notifications.has("sync")).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(notifications.has("sync")).toBe(false);
+    expect(notice.hidden).toBe(true);
+  });
+
+  it("hides an action before invoking its callback", () => {
+    const notifications = new ObsidianUiNotifications({
+      defaultDurationMs: false,
+    });
+    const selected = vi.fn(() => {
+      expect(notifications.has("conflict")).toBe(false);
+    });
+    notifications.show("conflict", {
+      message: "Review",
+      action: { label: "Open", onSelect: selected },
+    });
+
+    document
+      .querySelector<HTMLButtonElement>(".vpk-keyed-notice-group__action")
+      ?.click();
+
+    expect(selected).toHaveBeenCalledOnce();
+    expect((noticeState.instances[0] as NoticeMockInstance).hidden).toBe(true);
+  });
+
+  it("validates neutral input and makes disposal terminal", () => {
+    const notifications = new ObsidianUiNotifications({
+      defaultDurationMs: false,
+    });
+
+    expect(() => notifications.show("", { message: "Invalid" })).toThrow(
+      TypeError,
+    );
+    expect(() =>
+      notifications.show("invalid", {
+        message: "Invalid",
+        durationMs: -1,
+      }),
+    ).toThrow(RangeError);
+
+    notifications.show("active", { message: "Active" });
+    notifications.dispose();
+    expect(notifications.isDisposed).toBe(true);
+    expect(() =>
+      notifications.show("late", { message: "Late" }),
+    ).toThrow(/disposed/);
   });
 });

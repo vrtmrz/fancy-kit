@@ -23,7 +23,7 @@ Inspect the selected package's entry in the `pack:workspace` output. A scoped pa
 
 Use a prerelease when consumer validation requires a registry version before the stable release. A compatible patch may instead be validated from an immutable local or CI-built tarball before staging the stable version under `next`. Do not publish a `0.0.0` package.
 
-`@vrtmrz/ui-interactions` must be versioned and published before a plug-in-kit release that depends on it. Update `@vrtmrz/obsidian-plugin-kit` to the exact intended published UI package version and refresh the root lockfile before packing the kit.
+`@vrtmrz/ui-interactions` must be versioned and published before a browser-kit or plug-in-kit release that depends on it. Update each selected adapter package to the exact intended published UI package version, and refresh the root lockfile before packing it.
 
 `@vrtmrz/obsidian-test-session` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
 
@@ -35,7 +35,7 @@ Choose the version deliberately before preparing the release:
 - use the next minor version while the packages are in `0.x` when the public contract changes intentionally or consumers must review migration work;
 - add a prerelease suffix, such as `-rc.0`, when registry Consumer validation must precede the stable version.
 
-The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and a plug-in-kit UI dependency that does not match the workspace. It accepts more than one package/version pair when a reviewed source change crosses workspace package boundaries. A coordinated UI interactions and plug-in-kit selection updates the kit's manifest and lockfile dependency to the exact selected UI version.
+The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and an adapter's UI dependency that does not match the workspace. It accepts more than one package/version pair when a reviewed source change crosses workspace package boundaries. A coordinated UI interactions and adapter selection updates each selected adapter's manifest and lockfile dependency to the exact selected UI version.
 
 ## Preparing a release pull request
 
@@ -51,16 +51,17 @@ npm run release:prepare -- <package-name> <version>
 
 `release:prepare` updates each selected package manifest and its workspace lockfile entry together, then runs each selected package's `build` script. It deliberately does not commit, push, stage, approve, publish, or promote anything.
 
-When new plug-in-kit source requires a new UI interactions contract, prepare the two runtime packages as one metadata set:
+When browser-kit or plug-in-kit source requires a new UI interactions contract, prepare the affected runtime packages as one metadata set:
 
 ```bash
 git switch -c release-runtime-packages-<ui-version>-<kit-version>
 npm run release:prepare -- \
   @vrtmrz/ui-interactions <ui-version> \
+  @vrtmrz/browser-ui-kit <browser-kit-version> \
   @vrtmrz/obsidian-plugin-kit <kit-version>
 ```
 
-This prevents the packed consumer from resolving the kit against an older nested UI package while the consumer imports the new top-level UI package. Keep npm publication sequential even though the metadata is reviewed together: stage, publish, and validate UI interactions first, then stage and publish the plug-in kit from the same exact main commit. Each stage, approval, publication, and dist-tag promotion remains a separate operation.
+Omit an adapter which does not consume the changed contract. This prevents a packed consumer from resolving an adapter against an older nested UI package while the consumer imports the new top-level UI package. Keep npm publication sequential even though the metadata is reviewed together: stage, publish, and validate UI interactions first, then stage and publish each selected adapter from the same exact main commit. Each stage, approval, publication, and dist-tag promotion remains a separate operation.
 
 Review the resulting files before running the complete gate:
 
@@ -74,12 +75,13 @@ The expected release preparation differs by package:
 
 | Package | Preparation and order | Tracked release output | Additional consumer validation |
 | --- | --- | --- | --- |
-| `@vrtmrz/ui-interactions` | Release before a plug-in-kit version that requires it. | Manifest and root lockfile. Compiled `dist` is ignored. | Exercise the changed contracts through a harness and at least one consuming plug-in. Run the local Obsidian suite when visible UI behaviour changes. |
+| `@vrtmrz/ui-interactions` | Release before a browser-kit or plug-in-kit version that requires it. | Manifest and root lockfile. Compiled `dist` is ignored. | Exercise the changed contracts through scripted tests and at least one maintained consumer. Run the local Obsidian suite when visible Obsidian UI behaviour changes. |
+| `@vrtmrz/browser-ui-kit` | Keep `@vrtmrz/ui-interactions` pinned to the exact intended published version. | Manifest and root lockfile. Compiled `dist` is ignored. | Build and test representative browser consumers, including native DOM interaction and notification paths. |
 | `@vrtmrz/obsidian-plugin-kit` | Keep `@vrtmrz/ui-interactions` pinned to the exact intended published version. | Manifest and root lockfile. Compiled `dist` is ignored. | Build and test representative consuming plug-ins. Run the local Obsidian suite for adapter or visible UI changes. |
 | `@vrtmrz/obsidian-test-session` | Independent of the runtime packages. | Manifest and root lockfile. Compiled `dist` is ignored. | Run the local Obsidian lifecycle suite on each platform whose support is claimed. |
 | `octagonal-wheels` | Retains its independent version history. Release only when its public artefacts change. | Manifest, root lockfile, and any changed tracked files under `packages/octagonal-wheels/dist`. | Install the exact tarball in a relevant web application or plug-in. Use Self-hosted LiveSync when the changed API is consumed there. |
 
-When a new UI interactions version is required by new plug-in-kit source, use the coordinated preparation command above. If the plug-in kit does not consume the changed contract, a UI-only release remains valid. In both cases, publish and validate UI interactions before publishing the plug-in kit.
+When a new UI interactions version is required by adapter source, use the coordinated preparation command above. If neither adapter consumes the changed contract, a UI-only release remains valid. Otherwise, publish and validate UI interactions before publishing either adapter.
 
 Stage only the reviewed release files. For `octagonal-wheels`, use `git add -u` for already tracked build output because the general `dist` ignore rule remains in place:
 
@@ -109,6 +111,7 @@ Create the selected artefacts from the workspace root after the complete release
 preview_dir=/tmp/fancy-kit-consumer-preview
 mkdir -p "$preview_dir"
 npm pack --workspace @vrtmrz/ui-interactions --pack-destination "$preview_dir"
+npm pack --workspace @vrtmrz/browser-ui-kit --pack-destination "$preview_dir"
 npm pack --workspace @vrtmrz/obsidian-plugin-kit --pack-destination "$preview_dir"
 npm pack --workspace @vrtmrz/obsidian-test-session --pack-destination "$preview_dir"
 npm pack --workspace octagonal-wheels --pack-destination "$preview_dir"
@@ -150,7 +153,7 @@ Use an `-rc.0` version and the `next` dist-tag for this one-off publication:
 FANCY_KIT_BOOTSTRAP_PUBLISH=1 npm publish --workspace <package-name> --tag next --access public
 ```
 
-Publish `@vrtmrz/ui-interactions` before `@vrtmrz/obsidian-plugin-kit`, and update the kit to depend on that exact UI release candidate. `@vrtmrz/obsidian-test-session` is independent. Confirm the authenticated npm account, `@vrtmrz` scope ownership, public-package permission, package name, packed contents, and target commit immediately before each command.
+Publish `@vrtmrz/ui-interactions` before `@vrtmrz/browser-ui-kit` or `@vrtmrz/obsidian-plugin-kit`, and update each adapter to depend on that exact UI release candidate. The two adapters can then be bootstrapped independently. `@vrtmrz/obsidian-test-session` is independent. Confirm the authenticated npm account, `@vrtmrz` scope ownership, public-package permission, package name, packed contents, and target commit immediately before each command.
 
 npm requires every package to have a `latest` dist-tag. For a package's first publication, the bootstrap release therefore receives `latest` even when `--tag next` is supplied, and npm will reject an attempt to remove that sole `latest` tag. This is expected for the initial release candidate. Leave both tags in place, and replace `latest` with the first reviewed stable release later.
 
@@ -222,4 +225,4 @@ For consumer testing before a changed package version is published, use one of t
 2. in CI, check out an explicit commit SHA, build it, and install package directories from that checkout;
 3. run `npm pack --workspace <package-name>` and install the generated tarball locally or from a controlled build artefact location.
 
-When an unpublished plug-in-kit change depends on an unpublished UI interactions change, install both package directories or tarballs from the same Fancy Kit commit. Treat `@vrtmrz/obsidian-test-session` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.
+When an unpublished browser-kit or plug-in-kit change depends on an unpublished UI interactions change, install the adapter and UI package directories or tarballs from the same Fancy Kit commit. Treat `@vrtmrz/obsidian-test-session` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.

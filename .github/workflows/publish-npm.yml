@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - "@vrtmrz/ui-interactions"
+          - "@vrtmrz/browser-ui-kit"
           - "@vrtmrz/obsidian-plugin-kit"
           - "@vrtmrz/obsidian-test-session"
           - octagonal-wheels

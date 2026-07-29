@@ -1,16 +1,16 @@
 {
-  "name": "@vrtmrz/ui-interactions",
-  "version": "0.1.2",
-  "description": "Framework-neutral UI interaction contracts and test drivers",
+  "name": "@vrtmrz/browser-ui-kit",
+  "version": "0.1.0-rc.0",
+  "description": "Framework-free browser DOM adapters for Fancy Kit UI contracts",
   "type": "module",
   "license": "MIT",
   "author": "vorotamoroz",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vrtmrz/fancy-kit.git",
-    "directory": "packages/ui-interactions"
+    "directory": "packages/browser-ui-kit"
   },
-  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/ui-interactions#readme",
+  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/browser-ui-kit#readme",
   "bugs": {
     "url": "https://github.com/vrtmrz/fancy-kit/issues"
   },
@@ -29,9 +29,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js"
+    "./interactions": {
+      "types": "./dist/interactions.d.ts",
+      "import": "./dist/interactions.js"
+    },
+    "./notifications": {
+      "types": "./dist/notifications.d.ts",
+      "import": "./dist/notifications.js"
     }
   },
   "scripts": {
@@ -39,5 +43,8 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
     "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@vrtmrz/ui-interactions": "0.1.2"
   }
 }

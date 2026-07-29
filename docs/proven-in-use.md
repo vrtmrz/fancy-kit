@@ -39,6 +39,8 @@ Self-hosted LiveSync also uses `@vrtmrz/obsidian-test-session` as the generic pr
 
 Its compatibility-review workflow also uses the Obsidian `confirmAction` adapter with `actionLayout: "vertical"` for several long, safety-sensitive choices. Focused consumer tests check the requested host-neutral layout, while the real-Obsidian dialogue suite checks the resulting vertical controls, independently scrolling Markdown, persistent action area, safe-area bounds, and mobile touch targets. Its hidden-file integrity workflow uses `KeyedNoticeGroupManager` to keep ordered status rows in one dismissible Notice. These consumers separate application policy from Fancy Kit's rendering and Notice-lifecycle contracts without duplicating the Kit-owned suites.
 
+LiveSync's WebApp and WebPeer create `@vrtmrz/browser-ui-kit` interaction and notification adapters at their browser composition roots. Consumer tests own Root selection, persistence, P2P settings, and runtime composition, while the browser kit owns typed choice mapping, native DOM lifecycle, safe plain-text defaults, and keyed notification expiry. A Compose-backed Playwright scenario then verifies the LiveSync-specific WebApp-to-WebPeer-to-CLI transfer without treating the browser adapter as a Harness or Obsidian substitute.
+
 ## Reusing the patterns
 
 The examples demonstrate a recurring composition rule:
