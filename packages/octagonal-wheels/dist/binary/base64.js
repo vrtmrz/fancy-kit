@@ -89,6 +89,13 @@ const encodeChunkSize = 3 * 50000000;
  * @returns A Promise that resolves to the base64-encoded string.
  */
 function arrayBufferToBase64internalBrowser(buffer) {
+    if (typeof FileReader === "undefined") {
+        const nodeBuffer = globalThis.Buffer;
+        if (nodeBuffer === undefined) {
+            return Promise.reject(new TypeError("Base64 encoding requires FileReader or Buffer support"));
+        }
+        return Promise.resolve(nodeBuffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength).toString("base64"));
+    }
     return new Promise((res, rej) => {
         const blob = new Blob([buffer], { type: "application/octet-binary" });
         const reader = new FileReader();
