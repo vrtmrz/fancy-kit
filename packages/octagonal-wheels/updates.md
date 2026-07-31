@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.52
+
+### Fixed
+
+- Large-buffer base64 encoding now works in Node 22 and 24 without a `FileReader` polyfill, covering both `arrayBufferToBase64` and `encodeBinary`.
+
 ### Documentation
 
 - Reworked the package overview around focused imports and runtime boundaries, and added an import and testing guide to the npm package. The full generated TSDoc reference remains available in the repository.
