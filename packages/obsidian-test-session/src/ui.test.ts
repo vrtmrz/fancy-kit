@@ -16,8 +16,10 @@ import {
   ensurePluginLoaded,
   obsidianRemoteDebuggingPort,
   preseedLocalStorage,
+  withObsidianPage,
   waitForObsidianPageVault,
   waitForObsidianPageUiIdle,
+  waitForPluginReady,
 } from "./ui.js";
 
 afterEach(() => {
@@ -42,6 +44,74 @@ describe("obsidianRemoteDebuggingPort", () => {
       ).toThrowError(RangeError);
     },
   );
+});
+
+describe("withObsidianPage", () => {
+  it("selects the Vault renderer when a Settings pop-out is first", async () => {
+    const settingsPage = {
+      evaluate: vi.fn(async () => false),
+      url: vi.fn(() => "about:blank"),
+    } as unknown as Page;
+    const vaultPage = {
+      evaluate: vi.fn(async () => true),
+      url: vi.fn(() => "app://obsidian.md/index.html"),
+    } as unknown as Page;
+    const close = vi.fn(async () => undefined);
+    playwrightState.connectOverCDP.mockResolvedValue({
+      contexts: () => [{ pages: () => [settingsPage, vaultPage] }],
+      close,
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true })));
+
+    const selected = await withObsidianPage(9222, async (page) => page);
+
+    expect(selected).toBe(vaultPage);
+    expect(close).toHaveBeenCalledOnce();
+  });
+});
+
+describe("waitForPluginReady", () => {
+  it("observes the lowercase Obsidian product token emitted by the renderer", async () => {
+    const page = {
+      url: vi.fn(() => "app://obsidian.md/index.html"),
+      waitForFunction: vi.fn(async () => undefined),
+      evaluate: vi.fn(
+        async (
+          operation: (id: string) => unknown,
+          id: string,
+        ): Promise<unknown> => {
+          vi.stubGlobal("app", {
+            plugins: {
+              plugins: { [id]: {} },
+              manifests: { [id]: { version: "0.1.0" } },
+            },
+            vault: { getName: () => "Version fixture" },
+          });
+          vi.stubGlobal("navigator", {
+            userAgent:
+              "Mozilla/5.0 obsidian/1.13.6 Chrome/150.0.0.0 Electron/43.3.0",
+          });
+          return operation(id);
+        },
+      ),
+    } as unknown as Page;
+    const close = vi.fn(async () => undefined);
+    playwrightState.connectOverCDP.mockResolvedValue({
+      contexts: () => [{ pages: () => [page] }],
+      close,
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true })));
+
+    const readiness = await waitForPluginReady(9222, "example-plugin");
+
+    expect(readiness).toMatchObject({
+      status: "ready",
+      pluginId: "example-plugin",
+      pluginVersion: "0.1.0",
+      vaultName: "Version fixture",
+      obsidianVersion: "1.13.6",
+    });
+  });
 });
 
 describe("preseedLocalStorage", () => {

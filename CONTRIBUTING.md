@@ -36,8 +36,10 @@ The workspace root pins `@emnapi/core` and `@emnapi/runtime` because npm can oth
 When a local Obsidian executable and CLI are available, also run:
 
 ```bash
-npm run test:e2e:obsidian:local-suite
+npm run test:e2e:obsidian:validated
 ```
+
+The validated suite uses the reviewed Obsidian release catalogue and rejects the unverified-version override. A passing run with `E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true` is useful for an early regression probe, but it is not release-qualification or supported-version evidence.
 
 ## UI automation
 

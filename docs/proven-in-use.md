@@ -13,6 +13,8 @@ The projects use four complementary levels of verification:
 3. Consumer tests exercise application policy through narrow injected capabilities rather than reproducing Obsidian or browser behaviour.
 4. Real-Obsidian E2E and guided device review cover the rendering, process, Electron, Vault, and mobile boundaries which mocks deliberately do not own.
 
+Repository-owned real-Obsidian runs record the API version observed from the active Vault renderer. Release-qualification runs accept only versions and AppImage digests in the reviewed catalogue. An explicitly enabled run against another exact public release remains an unverified regression probe, even when every scenario passes.
+
 ## TagFolder
 
 [TagFolder](https://github.com/vrtmrz/obsidian-tagfolder) uses the Obsidian UI and Vault adapters at its plug-in composition root. Its [new-note workflow](https://github.com/vrtmrz/obsidian-tagfolder/blob/main/new-note-workflow.ts) narrows those adapters to the selection, text, and frontmatter methods required by that operation. The corresponding [App-free tests](https://github.com/vrtmrz/obsidian-tagfolder/blob/main/tests/new-note-workflow.test.ts) script template selection, inspect Vault transcripts, inject write failures, and verify rollback without constructing an Obsidian `App`.

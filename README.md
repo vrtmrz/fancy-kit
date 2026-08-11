@@ -47,8 +47,10 @@ Real Obsidian E2E remains a local-only suite and is not a default CI gate:
 
 ```bash
 npm run test:e2e:obsidian:install-appimage
-npm run test:e2e:obsidian:local-suite
+npm run test:e2e:obsidian:validated
 ```
+
+The managed Linux workflow defaults to the reviewed Obsidian 1.13.6 assets, verifies their SHA-256 digests, and keeps each version and architecture in a separate directory. `E2E_OBSIDIAN_VERSION` selects another reviewed version. An exact version outside the reviewed catalogue requires `E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true` and is reported only as an unverified regression probe; it is deliberately rejected by `test:e2e:obsidian:validated`.
 
 ## Installation
 

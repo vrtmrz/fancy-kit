@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   order: [] as string[],
   entries: undefined as Readonly<Record<string, string>> | undefined,
+  observedObsidianVersion: "1.13.6",
   installOptions: undefined as
     | {
         enableOnStartup?: boolean;
@@ -75,7 +76,13 @@ vi.mock("./ui.js", () => ({
   ensurePluginLoaded: state.ensurePluginLoaded,
   waitForPluginReady: vi.fn(async () => {
     state.order.push("ready");
-    return { pluginId: "example-plugin", enabled: true };
+    return {
+      status: "ready",
+      pluginId: "example-plugin",
+      pluginVersion: "1.0.0",
+      vaultName: "vault",
+      obsidianVersion: state.observedObsidianVersion,
+    };
   }),
   waitForObsidianUiIdle: vi.fn(async () => {
     state.order.push("idle");
@@ -307,5 +314,66 @@ describe("startObsidianPluginSession", () => {
     expect(state.reloadPlugin).not.toHaveBeenCalled();
     expect(state.ensurePluginLoaded).toHaveBeenCalledOnce();
     expect(state.installOptions?.enableOnStartup).toBe(true);
+  });
+
+  it("rejects a renderer whose observed Obsidian version does not match the target", async () => {
+    state.observedObsidianVersion = "1.12.7";
+    state.processStop.mockClear();
+    try {
+      await expect(
+        startObsidianPluginSession({
+          binary: "/bin/obsidian",
+          cliBinary: "/bin/obsidian-cli",
+          pluginId: "example-plugin",
+          artifactRoot: "/artefacts",
+          versionPolicy: { expectedVersion: "1.13.6" },
+          vault: {
+            id: "vault-id",
+            path: "/vault",
+            homePath: "/profile/home",
+            xdgConfigPath: "/profile/config",
+            xdgCachePath: "/profile/cache",
+            xdgDataPath: "/profile/data",
+            userDataPath: "/profile/user-data",
+            processMarker: "example-marker",
+          } as never,
+        }),
+      ).rejects.toThrowError(
+        "Obsidian version mismatch. expected=1.13.6, observed=1.12.7",
+      );
+      expect(state.processStop).toHaveBeenCalledOnce();
+    } finally {
+      state.observedObsidianVersion = "1.13.6";
+    }
+  });
+
+  it("labels an explicitly allowed unverified renderer version", async () => {
+    state.observedObsidianVersion = "1.13.7";
+    try {
+      const session = await startObsidianPluginSession({
+        binary: "/bin/obsidian",
+        cliBinary: "/bin/obsidian-cli",
+        pluginId: "example-plugin",
+        artifactRoot: "/artefacts",
+        versionPolicy: {
+          expectedVersion: "1.13.7",
+          allowUnverifiedVersion: true,
+        },
+        vault: {
+          id: "vault-id",
+          path: "/vault",
+          homePath: "/profile/home",
+          xdgConfigPath: "/profile/config",
+          xdgCachePath: "/profile/cache",
+          xdgDataPath: "/profile/data",
+          userDataPath: "/profile/user-data",
+          processMarker: "example-marker",
+        } as never,
+      });
+
+      expect(session.readiness.obsidianVersionSupport).toBe("unverified");
+    } finally {
+      state.observedObsidianVersion = "1.13.6";
+    }
   });
 });

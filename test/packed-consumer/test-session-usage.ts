@@ -10,17 +10,43 @@ import {
   assertLocatorWithinSafeArea,
   assertLocatorWithinViewport,
   assertNoHorizontalOverflow,
+  DEFAULT_VALIDATED_OBSIDIAN_VERSION,
   enablePluginAndSave,
   ensurePluginLoaded,
+  installObsidianAppImage,
   inspectLocatorLayout,
+  VALIDATED_OBSIDIAN_RELEASES,
+  type InstallObsidianAppImageResult,
   type LayoutAssertionOptions,
   type LayoutInsets,
   type LocatorLayoutInspection,
   type SafeAreaAssertionOptions,
   type ObsidianPluginSessionLifecycle,
+  type PluginReadiness,
   type StartObsidianPluginSessionOptions,
   type TouchTargetAssertionOptions,
 } from "@vrtmrz/obsidian-test-session";
+
+export const defaultReviewedObsidianRelease =
+  VALIDATED_OBSIDIAN_RELEASES[DEFAULT_VALIDATED_OBSIDIAN_VERSION];
+
+export async function prepareReviewedObsidianAppImage(
+  targetDirectory: string,
+): Promise<InstallObsidianAppImageResult> {
+  return await installObsidianAppImage({
+    version: DEFAULT_VALIDATED_OBSIDIAN_VERSION,
+    targetDirectory,
+    extract: false,
+  });
+}
+
+export function requireReviewedReadiness(
+  readiness: PluginReadiness,
+): string {
+  if (readiness.obsidianVersionSupport !== "validated")
+    throw new Error("Expected reviewed Obsidian readiness");
+  return readiness.obsidianVersion;
+}
 
 export async function startControlledPlugin(
   remoteDebuggingPort: number,
@@ -47,6 +73,9 @@ export function withDeviceLocalState(
   };
   return {
     ...options,
+    versionPolicy: {
+      expectedVersion: DEFAULT_VALIDATED_OBSIDIAN_VERSION,
+    },
     localStorageEntries: {
       "example-plugin-device-schema": "3",
     },

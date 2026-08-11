@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import {
   createTemporaryVault,
   discoverObsidianCli,
+  obsidianE2EVersionPolicy,
   requireObsidianBinary,
   startObsidianPluginSession,
   withObsidianPage,
@@ -77,6 +78,7 @@ export async function startHarnessTestSession(
       pluginId: HARNESS_PLUGIN_ID,
       artifactRoot: resolve("apps/obsidian-harness"),
       pluginData,
+      versionPolicy: obsidianE2EVersionPolicy(),
       startupGraceMs: Number(
         process.env.E2E_OBSIDIAN_STARTUP_GRACE_MS ?? 1_000,
       ),

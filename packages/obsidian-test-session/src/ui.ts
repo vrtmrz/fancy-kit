@@ -1,4 +1,5 @@
-import { chromium, type Page } from "playwright";
+import { chromium, type BrowserContext, type Page } from "playwright";
+import type { ObsidianReleaseSupport } from "./appimage.js";
 
 /** Basic readiness information read from the active Obsidian renderer. */
 export interface PluginReadiness {
@@ -10,6 +11,10 @@ export interface PluginReadiness {
   pluginVersion: string;
   /** Active vault name, or `unknown` when unavailable. */
   vaultName: string;
+  /** Renderer-observed Obsidian API version, or `unknown` when unavailable. */
+  obsidianVersion: string;
+  /** Review status after an optional session version policy has been applied. */
+  obsidianVersionSupport?: ObsidianReleaseSupport;
 }
 
 /**
@@ -50,6 +55,58 @@ async function waitForCdp(port: number): Promise<void> {
   );
 }
 
+async function pageOwnsObsidianVault(page: Page): Promise<boolean> {
+  return await page
+    .evaluate(() => {
+      const app = (
+        globalThis as typeof globalThis & {
+          app?: { vault?: unknown };
+        }
+      ).app;
+      return app?.vault !== undefined;
+    })
+    .catch(() => false);
+}
+
+async function selectObsidianRendererPage(
+  context: BrowserContext,
+): Promise<Page> {
+  const timeoutMs = Number(
+    process.env.E2E_OBSIDIAN_RENDERER_TIMEOUT_MS ?? 10_000,
+  );
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const pages = context.pages();
+    const applicationPage = pages.find((candidate) => {
+      try {
+        return candidate.url().startsWith("app://obsidian.md/");
+      } catch {
+        return false;
+      }
+    });
+    if (applicationPage !== undefined) return applicationPage;
+
+    for (const candidate of pages) {
+      if (await pageOwnsObsidianVault(candidate)) return candidate;
+    }
+
+    // Focused tests and consumer doubles may expose only the Page operations
+    // under test rather than a complete Playwright URL implementation.
+    const onlyPage = pages[0] as (Page & { url?: unknown }) | undefined;
+    if (
+      pages.length === 1 &&
+      onlyPage !== undefined &&
+      typeof onlyPage.url !== "function"
+    ) {
+      return onlyPage;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(
+    `Timed out waiting for the main Obsidian Vault renderer after ${timeoutMs}ms`,
+  );
+}
+
 /**
  * Runs an operation against the active Obsidian Electron renderer.
  *
@@ -67,9 +124,7 @@ export async function withObsidianPage<T>(
     const context = browser.contexts()[0];
     if (context === undefined)
       throw new Error("Obsidian did not expose a browser context");
-    const page =
-      context.pages()[0] ??
-      (await context.waitForEvent("page", { timeout: 10_000 }));
+    const page = await selectObsidianRendererPage(context);
     return await operation(page);
   } finally {
     await browser.close();
@@ -402,6 +457,30 @@ export async function waitForPluginReady(
     );
 
     return await page.evaluate((id) => {
+      let obsidianVersion = "unknown";
+      try {
+        const requireFunction = (
+          globalThis as typeof globalThis & {
+            require?: (moduleId: string) => unknown;
+          }
+        ).require;
+        if (typeof requireFunction === "function") {
+          const obsidianModule = requireFunction("obsidian") as {
+            apiVersion?: unknown;
+          };
+          if (typeof obsidianModule.apiVersion === "string") {
+            obsidianVersion = obsidianModule.apiVersion;
+          }
+        }
+      } catch {
+        // Fall back to the renderer user agent below.
+      }
+      if (obsidianVersion === "unknown") {
+        const match = /(?:^|\s)Obsidian\/?([0-9]+\.[0-9]+\.[0-9]+)(?:\s|$)/iu.exec(
+          navigator.userAgent,
+        );
+        if (match?.[1]) obsidianVersion = match[1];
+      }
       const app = (
         globalThis as typeof globalThis & {
           app?: {
@@ -415,6 +494,7 @@ export async function waitForPluginReady(
         pluginId: id,
         pluginVersion: app?.plugins?.manifests?.[id]?.version ?? "unknown",
         vaultName: app?.vault?.getName() ?? "unknown",
+        obsidianVersion,
       };
     }, pluginId);
   });

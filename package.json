@@ -39,7 +39,7 @@
     "release:prepare:harness": "npm run check:harness && npm run build:harness && node scripts/prepare-harness-release.mjs",
     "verify:packed-consumer": "node scripts/verify-packed-consumer.mjs",
     "verify:workspace": "npm run check:workspace && npm run test:workspace && npm run build:workspace && npm run build:harness && npm run pack:workspace && npm run verify:packed-consumer",
-    "test:e2e:obsidian:install-appimage": "tsx test/e2e-obsidian/scripts/install-appimage.ts",
+    "test:e2e:obsidian:install-appimage": "npm run build --workspace @vrtmrz/obsidian-test-session && tsx test/e2e-obsidian/scripts/install-appimage.ts",
     "test:e2e:obsidian:smoke": "npm run build:harness && tsx test/e2e-obsidian/scripts/smoke.ts",
     "test:e2e:obsidian:session-lifecycle": "npm run build --workspace @vrtmrz/obsidian-test-session && tsx test/e2e-obsidian/scripts/session-lifecycle.ts",
     "test:e2e:obsidian:profile-restart": "npm run build:harness && tsx test/e2e-obsidian/scripts/profile-restart.ts",
@@ -50,7 +50,8 @@
     "test:e2e:obsidian:contracts": "npm run build:harness && tsx test/e2e-obsidian/scripts/contracts.ts",
     "test:e2e:obsidian:progress": "npm run build:harness && tsx test/e2e-obsidian/scripts/progress.ts",
     "test:e2e:obsidian:mobile": "npm run build:harness && tsx test/e2e-obsidian/scripts/mobile.ts",
-    "test:e2e:obsidian:local-suite": "tsx test/e2e-obsidian/scripts/local-suite.ts"
+    "test:e2e:obsidian:local-suite": "npm run build --workspace @vrtmrz/obsidian-test-session && tsx test/e2e-obsidian/scripts/local-suite.ts",
+    "test:e2e:obsidian:validated": "npm run build --workspace @vrtmrz/obsidian-test-session && tsx test/e2e-obsidian/scripts/local-suite.ts --validated"
   },
   "devDependencies": {
     "@emnapi/core": "1.11.2",

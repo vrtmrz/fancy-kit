@@ -32,6 +32,8 @@ import {
 
 Executable discovery is implemented for Linux, macOS, and Windows. This project exercises complete real-Obsidian sessions on Linux and macOS; Windows discovery exists but the end-to-end workflow remains unverified. Automated AppImage download and optional `xvfb-run` wrapping are Linux-specific.
 
+Managed Linux sessions default to the reviewed Obsidian 1.13.6 AppImage. The package keeps an immutable catalogue of reviewed asset names and SHA-256 digests, installs each version and architecture separately, and never downloads during executable discovery or session start-up. An exact version outside that catalogue is rejected unless the caller deliberately enables an unverified regression probe. A passing unverified probe does not establish supported-version status.
+
 On macOS, isolated sessions use a socket-safe root below `/tmp` and Chromium's test-only mock keychain so the CLI socket and system keychain dialogue do not block start-up. See the usage guide before replacing the complete default launch arguments.
 
 Set `OBSIDIAN_BINARY` and `OBSIDIAN_CLI` when the executables are outside the built-in discovery paths. Importing the package has no side effects. AppImage download, Vault creation, artefact installation, process launch, and cleanup occur only through explicit calls.
@@ -62,6 +64,7 @@ try {
     pluginId: "example-plugin",
     artifactRoot: "dist/example-plugin",
     pluginData: { mode: "automation" },
+    versionPolicy: { expectedVersion: "1.13.6" },
     localStorageEntries: {
       "example-plugin-device-schema": "3",
     },
@@ -82,7 +85,7 @@ try {
 }
 ```
 
-The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, opens the exact Vault, and waits for renderer readiness. Instance-scoped lifecycle callbacks can run before and after launch, immediately before the selected plug-in starts, after it loads, and after readiness.
+The high-level session installs `main.js`, `manifest.json`, and optional `styles.css`, writes `pluginData` as `data.json` when supplied, launches an isolated Obsidian profile, opens the exact Vault, and waits for renderer readiness. An optional `versionPolicy` compares the expected version with the active renderer and labels the observed version as validated or unverified. Instance-scoped lifecycle callbacks can run before and after launch, immediately before the selected plug-in starts, after it loads, and after readiness.
 
 Supplying `localStorageEntries` or `lifecycle.beforePluginStart` selects controlled start-up by default. The selected plug-in is then excluded from Obsidian's start-up list; work required before its first load completes, and the session enables it, saves its enabled state, and loads it exactly once. Sessions without work that must precede the plug-in's first load retain natural Obsidian loading by default; set `pluginStartup` explicitly when the distinction is part of the scenario. A failed bootstrap stops the launched process. After a successful start, the caller owns `session.app.stop()` and `vault.dispose()`.
 
