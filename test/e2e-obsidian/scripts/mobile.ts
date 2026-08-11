@@ -130,7 +130,9 @@ async function assertFitsMobileModal(
 ): Promise<void> {
   await assertFitsViewport(page, modal, description);
   await assertLocatorWithinSafeArea(page, modal, { label: description });
-  const closeButton = modal.locator(".modal-close-button");
+  const closeButton = modal.locator(
+    ".modal-close-button, .modal-header-button",
+  );
   await assertLocatorWithinSafeArea(page, closeButton, {
     label: `${description} close button`,
   });

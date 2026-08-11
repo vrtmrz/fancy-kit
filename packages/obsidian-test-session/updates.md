@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### New features
+
+- Added a reviewed Obsidian AppImage catalogue with exact architecture-specific asset names, SHA-256 verification, versioned installations, and recorded release metadata. Managed Linux sessions now default to Obsidian 1.13.6.
+- Added an explicit unverified-version option for exploratory regression runs. Session readiness now exposes the observed Obsidian API version and can enforce an expected version and reviewed-catalogue policy.
+
+### Fixes
+
+- Selected the active Vault renderer when Obsidian exposes a Settings pop-out first, and recognised the current mobile Modal header control when checking safe-area and touch-target behaviour.
+
+### Documentation
+
+- Documented validated release qualification, unverified regression probes, managed AppImage controls, and the boundary between a passing probe and supported-version evidence.
+
 ## 0.2.6
 
 ### New features

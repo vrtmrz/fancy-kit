@@ -30,7 +30,10 @@ npm run test:e2e:obsidian:frontmatter
 npm run test:e2e:obsidian:contracts
 npm run test:e2e:obsidian:mobile
 npm run test:e2e:obsidian:local-suite
+npm run test:e2e:obsidian:validated
 ```
+
+`local-suite` runs the selected target and reports its review status. `validated` runs the same scenarios but rejects the unverified-version override, making it the release-qualification command.
 
 Set `E2E_OBSIDIAN_MOBILE_SCREENSHOT` to capture the mobile scenario while its text-prompt dialogue and simulated iPhone safe-area insets are active:
 
@@ -53,11 +56,29 @@ export OBSIDIAN_BINARY=/path/to/obsidian
 export OBSIDIAN_CLI=/path/to/obsidian-cli
 ```
 
-On Linux, a reusable AppImage can be downloaded and extracted under `_testdata/obsidian` with:
+On Linux, a reusable AppImage can be downloaded and extracted with:
 
 ```bash
 npm run test:e2e:obsidian:install-appimage
 ```
+
+The managed default is Obsidian 1.13.6. The installer verifies the reviewed SHA-256 digest and writes the asset, extraction, and `release.json` below `_testdata/obsidian/1.13.6/<architecture>/`. E2E commands discover this exact target but never download it automatically.
+
+Select another reviewed target with `E2E_OBSIDIAN_VERSION`. For example:
+
+```bash
+E2E_OBSIDIAN_VERSION=1.12.7 npm run test:e2e:obsidian:install-appimage
+E2E_OBSIDIAN_VERSION=1.12.7 npm run test:e2e:obsidian:validated
+```
+
+For a quick regression probe against an exact public release which is not yet in the reviewed catalogue, both selection and execution require the explicit override:
+
+```bash
+E2E_OBSIDIAN_VERSION=1.13.4 E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true npm run test:e2e:obsidian:install-appimage
+E2E_OBSIDIAN_VERSION=1.13.4 E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true npm run test:e2e:obsidian:local-suite
+```
+
+The output labels this run `unverified`. It still checks the exact release tag and AppImage asset, observes the running Obsidian version, and runs all E2E assertions, but a pass does not establish supported-version status. `test:e2e:obsidian:validated` rejects the override.
 
 Headless Linux automatically uses `xvfb-run` when available. Set `E2E_OBSIDIAN_KEEP_VAULT=true` to preserve temporary state for inspection.
 
@@ -67,9 +88,9 @@ For each session, the runner:
 
 1. creates an isolated vault, HOME, XDG, and Electron user-data directory;
 2. installs the built harness plug-in and its Automation-mode `data.json`;
-3. launches Obsidian on a session-specific DevTools port;
+3. launches the selected exact Obsidian version on a session-specific DevTools port;
 4. runs any consumer-supplied lifecycle callbacks and starts the target through its selected natural or controlled mode;
-5. enables the harness and invokes Automation-only story commands through the active renderer;
+5. selects the active Vault renderer rather than any Settings pop-out, verifies the observed Obsidian version, enables the harness, and invokes Automation-only story commands through that renderer;
 6. operates the real Modal, SuggestModal, and Notice DOM through Playwright;
 7. reads story and contract results from the harness state;
 8. terminates Obsidian and removes temporary state unless preservation is enabled.

@@ -1,4 +1,5 @@
 import {
+  allowUnverifiedObsidianVersion,
   installObsidianAppImage,
   obsidianAppImageArchitecture,
   type ObsidianAppImageArchitecture,
@@ -18,11 +19,23 @@ async function main(): Promise<void> {
     architecture: requestedArchitecture(),
     targetDirectory: process.env.E2E_OBSIDIAN_DOWNLOAD_DIR,
     url: process.env.E2E_OBSIDIAN_APPIMAGE_URL,
+    allowUnverifiedVersion: allowUnverifiedObsidianVersion(),
     forceDownload: process.env.E2E_OBSIDIAN_FORCE_DOWNLOAD === "true",
     extract: process.env.E2E_OBSIDIAN_SKIP_EXTRACT !== "true",
   });
   console.log(
     `Set OBSIDIAN_BINARY=${result.extractedBinary} to use the extracted binary explicitly.`,
+  );
+  console.log(
+    JSON.stringify({
+      version: result.version,
+      architecture: result.architecture,
+      support: result.support,
+      assetName: result.assetName,
+      url: result.url,
+      sha256: result.sha256,
+      extractedBinary: result.extractedBinary,
+    }),
   );
 }
 

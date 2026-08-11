@@ -1,4 +1,8 @@
 import { openVaultWithObsidianCli } from "./cli.js";
+import {
+  normaliseObsidianVersion,
+  selectObsidianVersion,
+} from "./appimage.js";
 import { launchObsidian, type ObsidianProcess } from "./launch.js";
 import {
   installBuiltPlugin,
@@ -142,6 +146,16 @@ export interface StartObsidianPluginSessionOptions {
   startupGraceMs?: number;
   /** Whether to normalise a stale start-up overlay after readiness. Defaults to `true`. */
   waitForUiIdle?: boolean;
+  /** Optional expected-version and reviewed-catalogue policy for this session. */
+  versionPolicy?: ObsidianVersionPolicy;
+}
+
+/** Version checks applied after the active renderer reports its Obsidian API version. */
+export interface ObsidianVersionPolicy {
+  /** Exact version expected from the active renderer. */
+  expectedVersion?: string;
+  /** Whether a version outside the reviewed catalogue may run as a probe. */
+  allowUnverifiedVersion?: boolean;
 }
 
 function resolvePluginStartup(
@@ -158,6 +172,35 @@ function resolvePluginStartup(
     options.pluginStartup ??
     (requiresControlledStart ? "controlled" : "natural")
   );
+}
+
+function applyVersionPolicy(
+  readiness: PluginReadiness,
+  policy: ObsidianVersionPolicy | undefined,
+): PluginReadiness {
+  if (policy === undefined) return readiness;
+  if (readiness.obsidianVersion === "unknown") {
+    throw new Error("Could not observe the active Obsidian API version");
+  }
+  const expectedVersion = policy.expectedVersion
+    ? normaliseObsidianVersion(policy.expectedVersion)
+    : undefined;
+  if (
+    expectedVersion !== undefined &&
+    readiness.obsidianVersion !== expectedVersion
+  ) {
+    throw new Error(
+      `Obsidian version mismatch. expected=${expectedVersion}, observed=${readiness.obsidianVersion}`,
+    );
+  }
+  const selection = selectObsidianVersion(
+    readiness.obsidianVersion,
+    policy.allowUnverifiedVersion,
+  );
+  return {
+    ...readiness,
+    obsidianVersionSupport: selection.support,
+  };
 }
 
 async function runLifecycleHook<Context>(
@@ -309,9 +352,9 @@ export async function startObsidianPluginSession(
       options.lifecycle?.afterPluginLoad,
       runningLifecycleContext,
     );
-    const readiness = await waitForPluginReady(
-      remoteDebuggingPort,
-      options.pluginId,
+    const readiness = applyVersionPolicy(
+      await waitForPluginReady(remoteDebuggingPort, options.pluginId),
+      options.versionPolicy,
     );
     if (options.waitForUiIdle !== false)
       await waitForObsidianUiIdle(remoteDebuggingPort);
