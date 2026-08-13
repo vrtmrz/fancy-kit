@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.53
+
+### Fixed
+
+- Generated legacy TypeScript declaration mappings from the package's public export inventory, allowing every supported subpath to resolve under `Node10` module resolution without changing runtime exports.
+
 ## 0.1.52
 
 ### Fixed
