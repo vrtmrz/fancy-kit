@@ -8,6 +8,7 @@
         "clean": "rimraf dist",
         "prebuild": "npm run clean",
         "build": "rollup -c",
+        "postbuild": "npm run generateexport",
         "build:docs": "npm run build && npm run doc",
         "generateexport": "node globDist.mjs",
         "doc": "npx typedoc  --plugin typedoc-plugin-markdown  --out ./docs ./src",
@@ -1014,5 +1015,708 @@
     },
     "dependencies": {
         "idb": "^8.0.3"
+    },
+    "typesVersions": {
+        "*": {
+            "actor": [
+                "dist/actor.d.ts"
+            ],
+            "actor.js": [
+                "dist/actor.d.ts"
+            ],
+            "BackedQueue": [
+                "dist/BackedQueue/index.d.ts"
+            ],
+            "BackedQueue.js": [
+                "dist/BackedQueue/index.d.ts"
+            ],
+            "BackedQueue/BackedQueue": [
+                "dist/BackedQueue/BackedQueue.d.ts"
+            ],
+            "BackedQueue/BackedQueue.js": [
+                "dist/BackedQueue/BackedQueue.d.ts"
+            ],
+            "BackedQueue/BackedQueueTypes": [
+                "dist/BackedQueue/BackedQueueTypes.d.ts"
+            ],
+            "BackedQueue/BackedQueueTypes.js": [
+                "dist/BackedQueue/BackedQueueTypes.d.ts"
+            ],
+            "BackedQueue/HalfPersistentIDBBackedQueue": [
+                "dist/BackedQueue/HalfPersistentIDBBackedQueue.d.ts"
+            ],
+            "BackedQueue/HalfPersistentIDBBackedQueue.js": [
+                "dist/BackedQueue/HalfPersistentIDBBackedQueue.d.ts"
+            ],
+            "BackedQueue/index.js": [
+                "dist/BackedQueue/index.d.ts"
+            ],
+            "BackedQueue/MemoryBackedQueue": [
+                "dist/BackedQueue/MemoryBackedQueue.d.ts"
+            ],
+            "BackedQueue/MemoryBackedQueue.js": [
+                "dist/BackedQueue/MemoryBackedQueue.d.ts"
+            ],
+            "BackedQueue/PersistentIDBBackedQueue": [
+                "dist/BackedQueue/PersistentIDBBackedQueue.d.ts"
+            ],
+            "BackedQueue/PersistentIDBBackedQueue.js": [
+                "dist/BackedQueue/PersistentIDBBackedQueue.d.ts"
+            ],
+            "BackedQueue/QueueBackend": [
+                "dist/BackedQueue/QueueBackend.d.ts"
+            ],
+            "BackedQueue/QueueBackend.js": [
+                "dist/BackedQueue/QueueBackend.d.ts"
+            ],
+            "BackedQueue/QueueBackendMemory": [
+                "dist/BackedQueue/QueueBackendMemory.d.ts"
+            ],
+            "BackedQueue/QueueBackendMemory.js": [
+                "dist/BackedQueue/QueueBackendMemory.d.ts"
+            ],
+            "BackedQueue/QueueBackendTypes": [
+                "dist/BackedQueue/QueueBackendTypes.d.ts"
+            ],
+            "BackedQueue/QueueBackendTypes.js": [
+                "dist/BackedQueue/QueueBackendTypes.d.ts"
+            ],
+            "binary": [
+                "dist/binary/index.d.ts"
+            ],
+            "binary.js": [
+                "dist/binary/index.d.ts"
+            ],
+            "binary/arrayBuffer": [
+                "dist/binary/arrayBuffer.d.ts"
+            ],
+            "binary/arrayBuffer.js": [
+                "dist/binary/arrayBuffer.d.ts"
+            ],
+            "binary/base64": [
+                "dist/binary/base64.d.ts"
+            ],
+            "binary/base64.js": [
+                "dist/binary/base64.d.ts"
+            ],
+            "binary/encodedUTF16": [
+                "dist/binary/encodedUTF16.d.ts"
+            ],
+            "binary/encodedUTF16.js": [
+                "dist/binary/encodedUTF16.d.ts"
+            ],
+            "binary/hex": [
+                "dist/binary/hex.d.ts"
+            ],
+            "binary/hex.js": [
+                "dist/binary/hex.d.ts"
+            ],
+            "binary/index.js": [
+                "dist/binary/index.d.ts"
+            ],
+            "browser": [
+                "dist/browser/index.d.ts"
+            ],
+            "browser.js": [
+                "dist/browser/index.d.ts"
+            ],
+            "browser/index.js": [
+                "dist/browser/index.d.ts"
+            ],
+            "browser/wakeLock": [
+                "dist/browser/wakeLock.d.ts"
+            ],
+            "browser/wakeLock.js": [
+                "dist/browser/wakeLock.d.ts"
+            ],
+            "bureau": [
+                "dist/bureau/index.d.ts"
+            ],
+            "bureau.js": [
+                "dist/bureau/index.d.ts"
+            ],
+            "bureau/Clerk": [
+                "dist/bureau/Clerk.d.ts"
+            ],
+            "bureau/Clerk.js": [
+                "dist/bureau/Clerk.d.ts"
+            ],
+            "bureau/Inbox": [
+                "dist/bureau/Inbox.d.ts"
+            ],
+            "bureau/Inbox.js": [
+                "dist/bureau/Inbox.d.ts"
+            ],
+            "bureau/index.js": [
+                "dist/bureau/index.d.ts"
+            ],
+            "bureau/PaceMaker": [
+                "dist/bureau/PaceMaker.d.ts"
+            ],
+            "bureau/PaceMaker.js": [
+                "dist/bureau/PaceMaker.d.ts"
+            ],
+            "bureau/SlipBoard": [
+                "dist/bureau/SlipBoard.d.ts"
+            ],
+            "bureau/SlipBoard.js": [
+                "dist/bureau/SlipBoard.d.ts"
+            ],
+            "bureau/StreamInbox": [
+                "dist/bureau/StreamInbox.d.ts"
+            ],
+            "bureau/StreamInbox.js": [
+                "dist/bureau/StreamInbox.d.ts"
+            ],
+            "channel": [
+                "dist/channel/index.d.ts"
+            ],
+            "channel.js": [
+                "dist/channel/index.d.ts"
+            ],
+            "channel/channels": [
+                "dist/channel/channels.d.ts"
+            ],
+            "channel/channels.js": [
+                "dist/channel/channels.d.ts"
+            ],
+            "channel/common": [
+                "dist/channel/common.d.ts"
+            ],
+            "channel/common.js": [
+                "dist/channel/common.d.ts"
+            ],
+            "channel/index.js": [
+                "dist/channel/index.d.ts"
+            ],
+            "channel/transport": [
+                "dist/channel/transport.d.ts"
+            ],
+            "channel/transport.js": [
+                "dist/channel/transport.d.ts"
+            ],
+            "collection": [
+                "dist/collection.d.ts"
+            ],
+            "collection.js": [
+                "dist/collection.d.ts"
+            ],
+            "common": [
+                "dist/common/index.d.ts"
+            ],
+            "common.js": [
+                "dist/common/index.d.ts"
+            ],
+            "common/const": [
+                "dist/common/const.d.ts"
+            ],
+            "common/const.js": [
+                "dist/common/const.d.ts"
+            ],
+            "common/error": [
+                "dist/common/error.d.ts"
+            ],
+            "common/error.js": [
+                "dist/common/error.d.ts"
+            ],
+            "common/index.js": [
+                "dist/common/index.d.ts"
+            ],
+            "common/logger": [
+                "dist/common/logger.d.ts"
+            ],
+            "common/logger.js": [
+                "dist/common/logger.d.ts"
+            ],
+            "common/polyfill": [
+                "dist/common/polyfill.d.ts"
+            ],
+            "common/polyfill.js": [
+                "dist/common/polyfill.d.ts"
+            ],
+            "common/types": [
+                "dist/common/types.d.ts"
+            ],
+            "common/types.js": [
+                "dist/common/types.d.ts"
+            ],
+            "concurrency": [
+                "dist/concurrency/index.d.ts"
+            ],
+            "concurrency.js": [
+                "dist/concurrency/index.d.ts"
+            ],
+            "concurrency/bulk": [
+                "dist/concurrency/bulk.d.ts"
+            ],
+            "concurrency/bulk.js": [
+                "dist/concurrency/bulk.d.ts"
+            ],
+            "concurrency/index.js": [
+                "dist/concurrency/index.d.ts"
+            ],
+            "concurrency/lock": [
+                "dist/concurrency/lock.d.ts"
+            ],
+            "concurrency/lock_v1": [
+                "dist/concurrency/lock_v1.d.ts"
+            ],
+            "concurrency/lock_v1.js": [
+                "dist/concurrency/lock_v1.d.ts"
+            ],
+            "concurrency/lock_v2": [
+                "dist/concurrency/lock_v2.d.ts"
+            ],
+            "concurrency/lock_v2.js": [
+                "dist/concurrency/lock_v2.d.ts"
+            ],
+            "concurrency/lock.js": [
+                "dist/concurrency/lock.d.ts"
+            ],
+            "concurrency/processor": [
+                "dist/concurrency/processor.d.ts"
+            ],
+            "concurrency/processor_v1": [
+                "dist/concurrency/processor_v1.d.ts"
+            ],
+            "concurrency/processor_v1.js": [
+                "dist/concurrency/processor_v1.d.ts"
+            ],
+            "concurrency/processor_v2": [
+                "dist/concurrency/processor_v2.d.ts"
+            ],
+            "concurrency/processor_v2.js": [
+                "dist/concurrency/processor_v2.d.ts"
+            ],
+            "concurrency/processor.js": [
+                "dist/concurrency/processor.d.ts"
+            ],
+            "concurrency/semaphore": [
+                "dist/concurrency/semaphore.d.ts"
+            ],
+            "concurrency/semaphore_v1": [
+                "dist/concurrency/semaphore_v1.d.ts"
+            ],
+            "concurrency/semaphore_v1.js": [
+                "dist/concurrency/semaphore_v1.d.ts"
+            ],
+            "concurrency/semaphore_v2": [
+                "dist/concurrency/semaphore_v2.d.ts"
+            ],
+            "concurrency/semaphore_v2.js": [
+                "dist/concurrency/semaphore_v2.d.ts"
+            ],
+            "concurrency/semaphore.js": [
+                "dist/concurrency/semaphore.d.ts"
+            ],
+            "concurrency/task": [
+                "dist/concurrency/task.d.ts"
+            ],
+            "concurrency/task.js": [
+                "dist/concurrency/task.d.ts"
+            ],
+            "conduit": [
+                "dist/conduit/index.d.ts"
+            ],
+            "conduit.js": [
+                "dist/conduit/index.d.ts"
+            ],
+            "conduit/connector": [
+                "dist/conduit/connector.d.ts"
+            ],
+            "conduit/connector.js": [
+                "dist/conduit/connector.d.ts"
+            ],
+            "conduit/index.js": [
+                "dist/conduit/index.d.ts"
+            ],
+            "conduit/manifold": [
+                "dist/conduit/manifold.d.ts"
+            ],
+            "conduit/manifold.js": [
+                "dist/conduit/manifold.d.ts"
+            ],
+            "conduit/NamedInstance": [
+                "dist/conduit/NamedInstance.d.ts"
+            ],
+            "conduit/NamedInstance.js": [
+                "dist/conduit/NamedInstance.d.ts"
+            ],
+            "conduit/regulator": [
+                "dist/conduit/regulator.d.ts"
+            ],
+            "conduit/regulator.js": [
+                "dist/conduit/regulator.d.ts"
+            ],
+            "conduit/transporter": [
+                "dist/conduit/transporter.d.ts"
+            ],
+            "conduit/transporter.js": [
+                "dist/conduit/transporter.d.ts"
+            ],
+            "conduit/transporterAdapter": [
+                "dist/conduit/transporterAdapter.d.ts"
+            ],
+            "conduit/transporterAdapter.js": [
+                "dist/conduit/transporterAdapter.d.ts"
+            ],
+            "context": [
+                "dist/context.d.ts"
+            ],
+            "context.js": [
+                "dist/context.d.ts"
+            ],
+            "databases": [
+                "dist/databases/index.d.ts"
+            ],
+            "databases.js": [
+                "dist/databases/index.d.ts"
+            ],
+            "databases/dbcommon": [
+                "dist/databases/dbcommon.d.ts"
+            ],
+            "databases/dbcommon.js": [
+                "dist/databases/dbcommon.d.ts"
+            ],
+            "databases/index.js": [
+                "dist/databases/index.d.ts"
+            ],
+            "databases/KeyValueDB": [
+                "dist/databases/KeyValueDB.d.ts"
+            ],
+            "databases/KeyValueDB.js": [
+                "dist/databases/KeyValueDB.d.ts"
+            ],
+            "databases/SimpleStoreBase": [
+                "dist/databases/SimpleStoreBase.d.ts"
+            ],
+            "databases/SimpleStoreBase.js": [
+                "dist/databases/SimpleStoreBase.d.ts"
+            ],
+            "databases/SimpleStoreIDB": [
+                "dist/databases/SimpleStoreIDB.d.ts"
+            ],
+            "databases/SimpleStoreIDB.js": [
+                "dist/databases/SimpleStoreIDB.d.ts"
+            ],
+            "databases/SimpleStoreIDBv1": [
+                "dist/databases/SimpleStoreIDBv1.d.ts"
+            ],
+            "databases/SimpleStoreIDBv1.js": [
+                "dist/databases/SimpleStoreIDBv1.d.ts"
+            ],
+            "databases/SimpleStoreIDBv2": [
+                "dist/databases/SimpleStoreIDBv2.d.ts"
+            ],
+            "databases/SimpleStoreIDBv2.js": [
+                "dist/databases/SimpleStoreIDBv2.d.ts"
+            ],
+            "dataobject": [
+                "dist/dataobject/index.d.ts"
+            ],
+            "dataobject.js": [
+                "dist/dataobject/index.d.ts"
+            ],
+            "dataobject/Computed": [
+                "dist/dataobject/Computed.d.ts"
+            ],
+            "dataobject/Computed.js": [
+                "dist/dataobject/Computed.d.ts"
+            ],
+            "dataobject/index.js": [
+                "dist/dataobject/index.d.ts"
+            ],
+            "dataobject/PersistentMap": [
+                "dist/dataobject/PersistentMap.d.ts"
+            ],
+            "dataobject/PersistentMap.js": [
+                "dist/dataobject/PersistentMap.d.ts"
+            ],
+            "dataobject/reactive": [
+                "dist/dataobject/reactive.d.ts"
+            ],
+            "dataobject/reactive_v1": [
+                "dist/dataobject/reactive_v1.d.ts"
+            ],
+            "dataobject/reactive_v1.js": [
+                "dist/dataobject/reactive_v1.d.ts"
+            ],
+            "dataobject/reactive_v2": [
+                "dist/dataobject/reactive_v2.d.ts"
+            ],
+            "dataobject/reactive_v2.js": [
+                "dist/dataobject/reactive_v2.d.ts"
+            ],
+            "dataobject/reactive.js": [
+                "dist/dataobject/reactive.d.ts"
+            ],
+            "dataobject/Refiner": [
+                "dist/dataobject/Refiner.d.ts"
+            ],
+            "dataobject/Refiner.js": [
+                "dist/dataobject/Refiner.d.ts"
+            ],
+            "encoding/encodeobject": [
+                "dist/encoding/encodeobject.d.ts"
+            ],
+            "encoding/encodeobject.js": [
+                "dist/encoding/encodeobject.d.ts"
+            ],
+            "encryption": [
+                "dist/encryption/index.d.ts"
+            ],
+            "encryption.js": [
+                "dist/encryption/index.d.ts"
+            ],
+            "encryption/asymmetric": [
+                "dist/encryption/asymmetric/index.d.ts"
+            ],
+            "encryption/asymmetric.js": [
+                "dist/encryption/asymmetric/index.d.ts"
+            ],
+            "encryption/asymmetric/asymmetric": [
+                "dist/encryption/asymmetric/asymmetric.d.ts"
+            ],
+            "encryption/asymmetric/asymmetric.js": [
+                "dist/encryption/asymmetric/asymmetric.d.ts"
+            ],
+            "encryption/asymmetric/asymmetricHelper": [
+                "dist/encryption/asymmetric/asymmetricHelper.d.ts"
+            ],
+            "encryption/asymmetric/asymmetricHelper.js": [
+                "dist/encryption/asymmetric/asymmetricHelper.d.ts"
+            ],
+            "encryption/asymmetric/common": [
+                "dist/encryption/asymmetric/common.d.ts"
+            ],
+            "encryption/asymmetric/common.js": [
+                "dist/encryption/asymmetric/common.d.ts"
+            ],
+            "encryption/asymmetric/index.js": [
+                "dist/encryption/asymmetric/index.d.ts"
+            ],
+            "encryption/asymmetric/keys": [
+                "dist/encryption/asymmetric/keys.d.ts"
+            ],
+            "encryption/asymmetric/keys.js": [
+                "dist/encryption/asymmetric/keys.d.ts"
+            ],
+            "encryption/encryption": [
+                "dist/encryption/encryption.d.ts"
+            ],
+            "encryption/encryption.js": [
+                "dist/encryption/encryption.d.ts"
+            ],
+            "encryption/encryptionv3": [
+                "dist/encryption/encryptionv3.d.ts"
+            ],
+            "encryption/encryptionv3.js": [
+                "dist/encryption/encryptionv3.d.ts"
+            ],
+            "encryption/hkdf": [
+                "dist/encryption/hkdf.d.ts"
+            ],
+            "encryption/hkdf.js": [
+                "dist/encryption/hkdf.d.ts"
+            ],
+            "encryption/index.js": [
+                "dist/encryption/index.d.ts"
+            ],
+            "encryption/obfuscatePath": [
+                "dist/encryption/obfuscatePath.d.ts"
+            ],
+            "encryption/obfuscatePath.js": [
+                "dist/encryption/obfuscatePath.d.ts"
+            ],
+            "encryption/obfuscatePathV2": [
+                "dist/encryption/obfuscatePathV2.d.ts"
+            ],
+            "encryption/obfuscatePathV2.js": [
+                "dist/encryption/obfuscatePathV2.d.ts"
+            ],
+            "encryption/openSSLCompat": [
+                "dist/encryption/openSSLCompat/index.d.ts"
+            ],
+            "encryption/openSSLCompat.js": [
+                "dist/encryption/openSSLCompat/index.d.ts"
+            ],
+            "encryption/openSSLCompat/CBC": [
+                "dist/encryption/openSSLCompat/CBC.d.ts"
+            ],
+            "encryption/openSSLCompat/CBC.js": [
+                "dist/encryption/openSSLCompat/CBC.d.ts"
+            ],
+            "encryption/openSSLCompat/index.js": [
+                "dist/encryption/openSSLCompat/index.d.ts"
+            ],
+            "events": [
+                "dist/events.d.ts"
+            ],
+            "events.js": [
+                "dist/events.d.ts"
+            ],
+            "events/CustomEventTargets": [
+                "dist/events/CustomEventTargets.d.ts"
+            ],
+            "events/CustomEventTargets.js": [
+                "dist/events/CustomEventTargets.d.ts"
+            ],
+            "events/EventHub": [
+                "dist/events/EventHub.d.ts"
+            ],
+            "events/EventHub.js": [
+                "dist/events/EventHub.d.ts"
+            ],
+            "function": [
+                "dist/function.d.ts"
+            ],
+            "function.js": [
+                "dist/function.d.ts"
+            ],
+            "hash": [
+                "dist/hash/index.d.ts"
+            ],
+            "hash.js": [
+                "dist/hash/index.d.ts"
+            ],
+            "hash/crc32": [
+                "dist/hash/crc32.d.ts"
+            ],
+            "hash/crc32.js": [
+                "dist/hash/crc32.d.ts"
+            ],
+            "hash/index.js": [
+                "dist/hash/index.d.ts"
+            ],
+            "hash/purejs": [
+                "dist/hash/purejs.d.ts"
+            ],
+            "hash/purejs.js": [
+                "dist/hash/purejs.d.ts"
+            ],
+            "hash/xxhash": [
+                "dist/hash/xxhash.d.ts"
+            ],
+            "hash/xxhash.js": [
+                "dist/hash/xxhash.d.ts"
+            ],
+            "iterable": [
+                "dist/iterable/index.d.ts"
+            ],
+            "iterable.js": [
+                "dist/iterable/index.d.ts"
+            ],
+            "iterable/chunks": [
+                "dist/iterable/chunks.d.ts"
+            ],
+            "iterable/chunks.js": [
+                "dist/iterable/chunks.d.ts"
+            ],
+            "iterable/index.js": [
+                "dist/iterable/index.d.ts"
+            ],
+            "iterable/map": [
+                "dist/iterable/map.d.ts"
+            ],
+            "iterable/map.js": [
+                "dist/iterable/map.d.ts"
+            ],
+            "iterable/source": [
+                "dist/iterable/source.d.ts"
+            ],
+            "iterable/source.js": [
+                "dist/iterable/source.d.ts"
+            ],
+            "memory": [
+                "dist/memory/index.d.ts"
+            ],
+            "memory.js": [
+                "dist/memory/index.d.ts"
+            ],
+            "memory/index.js": [
+                "dist/memory/index.d.ts"
+            ],
+            "memory/LRUCache": [
+                "dist/memory/LRUCache.d.ts"
+            ],
+            "memory/LRUCache.js": [
+                "dist/memory/LRUCache.d.ts"
+            ],
+            "memory/memo": [
+                "dist/memory/memo.d.ts"
+            ],
+            "memory/memo.js": [
+                "dist/memory/memo.d.ts"
+            ],
+            "memory/memutil": [
+                "dist/memory/memutil.d.ts"
+            ],
+            "memory/memutil.js": [
+                "dist/memory/memutil.d.ts"
+            ],
+            "memory/VolatileValueCache": [
+                "dist/memory/VolatileValueCache.d.ts"
+            ],
+            "memory/VolatileValueCache.js": [
+                "dist/memory/VolatileValueCache.d.ts"
+            ],
+            "memory/weakMemo": [
+                "dist/memory/weakMemo.d.ts"
+            ],
+            "memory/weakMemo.js": [
+                "dist/memory/weakMemo.d.ts"
+            ],
+            "messagepassing": [
+                "dist/messagepassing/index.d.ts"
+            ],
+            "messagepassing.js": [
+                "dist/messagepassing/index.d.ts"
+            ],
+            "messagepassing/index.js": [
+                "dist/messagepassing/index.d.ts"
+            ],
+            "messagepassing/signal": [
+                "dist/messagepassing/signal.d.ts"
+            ],
+            "messagepassing/signal_v1": [
+                "dist/messagepassing/signal_v1.d.ts"
+            ],
+            "messagepassing/signal_v1.js": [
+                "dist/messagepassing/signal_v1.d.ts"
+            ],
+            "messagepassing/signal.js": [
+                "dist/messagepassing/signal.d.ts"
+            ],
+            "number": [
+                "dist/number.d.ts"
+            ],
+            "number.js": [
+                "dist/number.d.ts"
+            ],
+            "object": [
+                "dist/object.d.ts"
+            ],
+            "object.js": [
+                "dist/object.d.ts"
+            ],
+            "path": [
+                "dist/path.d.ts"
+            ],
+            "path.js": [
+                "dist/path.d.ts"
+            ],
+            "promises": [
+                "dist/promises.d.ts"
+            ],
+            "promises.js": [
+                "dist/promises.d.ts"
+            ],
+            "string": [
+                "dist/string.d.ts"
+            ],
+            "string.js": [
+                "dist/string.d.ts"
+            ]
+        }
     }
 }

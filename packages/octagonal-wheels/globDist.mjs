@@ -45,20 +45,24 @@ const map = files.flatMap((file) => {
         [`./${exportPath}.js`, { import: writeImportPath, types: writeTypePath }],
     ];
 });
+const sortedMap = [...map].sort((a, b) => {
+    return String(a[0]).localeCompare(String(b[0]));
+});
 const exportObject = {
     ".": {
         import: `./${distDirName}/index.js`,
         types: `./${distDirName}/index.d.ts`,
     },
     "./package.json": `./package.json`,
-    ...Object.fromEntries(
-        map.sort((a, b) => {
-            return String(a[0]).localeCompare(String(b[0]));
-        })
-    ),
+    ...Object.fromEntries(sortedMap),
 };
+const typesVersions = Object.fromEntries(
+    sortedMap.map(([exportPath, target]) => [exportPath.slice(2), [target.types.slice(2)]])
+);
 const pkg = JSON.parse(fs.readFileSync("./package.json") + "");
 pkg.exports = exportObject;
+// Keep legacy TypeScript resolution aligned with the generated public subpaths.
+pkg.typesVersions = { "*": typesVersions };
 fs.writeFileSync("./package.json", JSON.stringify(pkg, null, 4) + "\n");
-console.log("Updated package.json exports field.");
+console.log("Updated package.json exports and typesVersions fields.");
 // console.dir(exportObject);
