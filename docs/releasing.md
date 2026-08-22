@@ -97,6 +97,26 @@ Omit the `octagonal-wheels/dist` command for the scoped packages. The release pu
 
 For a coordinated runtime-package release, stage both manifests and the root lockfile, and name both versions in the commit and pull request. Do not dispatch a combined npm publication: the staged workflow continues to select and publish exactly one package per run.
 
+## Repository snapshot releases
+
+Repository snapshot releases mark reviewed, repository-wide milestones independently of every workspace package and Fancy Kit Harness version. They are normal GitHub Releases with tags in the form `fancy-kit-YYYY.MM.DD.N`, where the final positive integer distinguishes multiple snapshots on one date. They are not marked as the latest release, and they do not publish packages, build Harness assets, or imply that independently versioned components have changed.
+
+Dispatch `publish-repository-snapshot.yml` from an exact commit on `main`. The workflow validates a real calendar date, a full lowercase commit SHA, the selected Git ref, and an exact confirmation before creating the tag and release. Dispatch publishes the release immediately after verification, so treat starting the workflow as approval to publish the selected repository state and to notify any external services connected to GitHub Releases.
+
+Review the selected commit and its completed CI evidence, then dispatch the workflow with a date-based version:
+
+```bash
+sha=$(git rev-parse origin/main)
+version=YYYY.MM.DD.N
+gh workflow run publish-repository-snapshot.yml \
+  --ref main \
+  -f version="$version" \
+  -f expected_sha="$sha" \
+  -f confirmation="release fancy-kit@$version from $sha"
+```
+
+The release captures the GitHub-generated source archive for the exact tagged commit. Create a snapshot only for a meaningful repository milestone; routine merges, package-only version preparation, and CI runs do not require one.
+
 ## GitHub consumer previews
 
 Consumer previews are immutable GitHub prereleases for migration testing. They are not npm publications and must not run `npm publish`.

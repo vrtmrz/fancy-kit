@@ -1,0 +1,111 @@
+name: Publish repository snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Repository snapshot version in YYYY.MM.DD.N format
+        required: true
+        type: string
+      expected_sha:
+        description: Full 40-character commit SHA expected on main
+        required: true
+        type: string
+      confirmation:
+        description: "Type: release fancy-kit@<version> from <expected-sha>"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-snapshot-release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      tag: ${{ steps.selection.outputs.tag }}
+      version: ${{ steps.selection.outputs.version }}
+      sha: ${{ steps.selection.outputs.sha }}
+
+    steps:
+      - name: Check out the selected commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate and record the release selection
+        id: selection
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          selection_json="$(node scripts/validate-repository-release-selection.mjs \
+            "$RELEASE_VERSION" \
+            "$EXPECTED_SHA" \
+            "$GITHUB_SHA" \
+            "$GITHUB_REF" \
+            "$CONFIRMATION")"
+          tag="$(printf '%s' "$selection_json" | jq --raw-output '.tag')"
+
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            echo "::error::Tag already exists: $tag"
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha=$EXPECTED_SHA" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Prepare release notes
+        env:
+          EXPECTED_SHA: ${{ needs.verify.outputs.sha }}
+        run: |
+          {
+            printf 'This immutable release captures the Fancy Kit repository at commit [`%s`](https://github.com/%s/commit/%s).\n\n' \
+              "$EXPECTED_SHA" \
+              "$GITHUB_REPOSITORY" \
+              "$EXPECTED_SHA"
+            printf 'It represents a repository-wide milestone. The workspace packages and Fancy Kit Harness retain their independent version numbers.\n'
+          } > "$RUNNER_TEMP/release-notes.md"
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.verify.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.verify.outputs.version }}
+          EXPECTED_SHA: ${{ needs.verify.outputs.sha }}
+        run: |
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$EXPECTED_SHA" \
+            --title "Fancy Kit repository snapshot $RELEASE_VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --latest=false
+
+          release_url="$(gh release view "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json url \
+            --jq '.url')"
+
+          {
+            printf '### Repository snapshot published\n\n'
+            printf -- '- Release: [%s](%s)\n' "$TAG" "$release_url"
+            printf -- '- Commit: `%s`\n' "$EXPECTED_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
