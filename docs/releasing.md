@@ -99,7 +99,7 @@ For a coordinated runtime-package release, stage both manifests and the root loc
 
 ## Repository snapshot releases
 
-Repository snapshot releases mark reviewed, repository-wide milestones independently of every workspace package and Fancy Kit Harness version. They are normal GitHub Releases with tags in the form `fancy-kit-YYYY.MM.DD.N`, where the final positive integer distinguishes multiple snapshots on one date. They are not marked as the latest release, and they do not publish packages, build Harness assets, or imply that independently versioned components have changed.
+Repository snapshot releases mark reviewed, repository-wide milestones independently of every workspace package and Fancy Kit Harness version. They are normal GitHub Releases with tags in the form `fancy-kit-YYYY.MM.DD.N`, where the final positive integer distinguishes multiple snapshots on one date. GitHub selects the newest normal release as the repository's Latest release; this is the intended repository-wide signal. Repository snapshots do not publish packages, build Harness assets, or imply that independently versioned components have changed.
 
 Dispatch `publish-repository-snapshot.yml` from an exact commit on `main`. The workflow validates a real calendar date, a full lowercase commit SHA, the selected Git ref, and an exact confirmation before creating the tag and release. Dispatch publishes the release immediately after verification, so treat starting the workflow as approval to publish the selected repository state and to notify any external services connected to GitHub Releases.
 
@@ -155,7 +155,7 @@ npm run release:prepare:harness
 
 Inspect `dist/fancy-kit-harness/SOURCE.json` and require `includesUncommittedChanges` to be `false`. Verify all entries in `SHA256SUMS`. The generated `INSTALLER.md` contains the exact HTTPS link for the release body; its query identifies the Harness version and Screwdriver-document SHA-256, but never a Vault name.
 
-Create the `harness-<version>` release at the exact source commit. Attach at least the versioned Screwdriver document, `SOURCE.json`, and `SHA256SUMS`; the individual plug-in files may also be attached for inspection. Include the generated installer link in the release body. Attach all assets before publishing when possible.
+Create the `harness-<version>` release as a GitHub prerelease at the exact source commit. This keeps the repository snapshot as the Latest normal release. Attach at least the versioned Screwdriver document, `SOURCE.json`, and `SHA256SUMS`; the individual plug-in files may also be attached for inspection. Include the generated installer link in the release body. Attach all assets before publishing when possible.
 
 Publishing or editing the release triggers the Pages workflow. It copies every published Harness Screwdriver asset into a versioned same-origin path and deploys the installer. Wait for the **Deploy Harness installer** workflow, then open the release link and verify the complete Clipboard, Obsidian URI, Screwdriver restore, plug-in enablement, and selected review flow on the intended device. If the release was published before its asset was attached, add the asset and rerun the Pages workflow manually.
 
