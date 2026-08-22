@@ -96,8 +96,7 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$EXPECTED_SHA" \
             --title "Fancy Kit repository snapshot $RELEASE_VERSION" \
-            --notes-file "$RUNNER_TEMP/release-notes.md" \
-            --latest=false
+            --notes-file "$RUNNER_TEMP/release-notes.md"
 
           release_url="$(gh release view "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
