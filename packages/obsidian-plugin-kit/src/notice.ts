@@ -49,7 +49,9 @@ export interface FinishKeyedNoticeGroupOptions {
 
 interface NoticeEntry {
   notice: Notice;
+  root: HTMLElement;
   hideTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  dismissed: boolean;
 }
 
 function duration(value: number | false, name: string): number | false {
@@ -61,12 +63,39 @@ function duration(value: number | false, name: string): number | false {
   return value;
 }
 
-function noticeIsConnected(notice: Notice): boolean {
-  const messageEl = notice.messageEl as HTMLElement & {
-    isShown?: () => boolean;
+function createNoticeEntry(message: KeyedNoticeMessage): NoticeEntry {
+  const root = createDiv({ cls: "vpk-keyed-notice" });
+  root.replaceChildren(message);
+  const fragment = document.createDocumentFragment();
+  fragment.append(root);
+  const entry: NoticeEntry = {
+    notice: new Notice(fragment, 0),
+    root,
+    hideTimer: undefined,
+    dismissed: false,
   };
-  if (!messageEl.isConnected) return false;
-  return messageEl.isShown?.() ?? true;
+  // Obsidian can leave a dismissed Notice connected during its hide
+  // transition. Capture the click before that transition starts so an update
+  // cannot revive the acknowledged Notice.
+  root.addEventListener(
+    "click",
+    () => {
+      entry.dismissed = true;
+    },
+    { capture: true },
+  );
+  return entry;
+}
+
+function noticeEntryIsActive(entry: NoticeEntry): boolean {
+  return !entry.dismissed && entry.root.isConnected;
+}
+
+function renderNoticeMessage(
+  entry: NoticeEntry,
+  message: KeyedNoticeMessage,
+): void {
+  entry.root.replaceChildren(message);
 }
 
 /**
@@ -74,6 +103,9 @@ function noticeIsConnected(notice: Notice): boolean {
  *
  * @remarks
  * Reusing a key updates the existing visible Notice and restarts its expiry.
+ * After a Notice is dismissed, the next update creates a fresh Notice even
+ * while the host is still completing its hide transition. The manager retains
+ * the DOM root it supplies to Obsidian and does not read host Notice elements.
  * Call {@link dispose} from the owning plug-in's unload lifecycle. A disposed
  * manager cannot show more Notices.
  */
@@ -101,7 +133,7 @@ export class KeyedNoticeManager {
    * @param key - Non-empty identifier scoped to this manager instance.
    * @param message - Text or fragment passed to Obsidian's Notice API.
    * @param options - Optional expiry override for this update.
-   * @returns The active Obsidian Notice. The same instance is returned while a keyed Notice remains connected.
+   * @returns The active Obsidian Notice. The same instance is returned while a keyed Notice remains active.
    */
   show(
     key: string,
@@ -116,19 +148,18 @@ export class KeyedNoticeManager {
       "durationMs",
     );
     let entry = this.entries.get(key);
-    if (entry !== undefined && !noticeIsConnected(entry.notice)) {
+    if (entry !== undefined && !noticeEntryIsActive(entry)) {
       this.clearTimer(entry);
       this.entries.delete(key);
+      entry.notice.hide();
       entry = undefined;
     }
 
     if (entry === undefined) {
-      const notice = new Notice(message, 0);
-      notice.messageEl.classList.add("vpk-keyed-notice");
-      entry = { notice, hideTimer: undefined };
+      entry = createNoticeEntry(message);
       this.entries.set(key, entry);
     } else {
-      entry.notice.setMessage(message);
+      renderNoticeMessage(entry, message);
     }
 
     this.clearTimer(entry);
@@ -142,13 +173,14 @@ export class KeyedNoticeManager {
     return entry.notice;
   }
 
-  /** Returns whether the manager currently owns a connected Notice for a key. */
+  /** Returns whether the manager currently owns an active Notice for a key. */
   has(key: string): boolean {
     const entry = this.entries.get(key);
     if (entry === undefined) return false;
-    if (noticeIsConnected(entry.notice)) return true;
+    if (noticeEntryIsActive(entry)) return true;
     this.clearTimer(entry);
     this.entries.delete(key);
+    entry.notice.hide();
     return false;
   }
 

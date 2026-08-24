@@ -78,7 +78,7 @@ notifications.show("conflict", {
 notifications.dispose();
 ```
 
-`KeyedNoticeManager` updates one visible Notice per application-defined key and restarts its expiry on every update. Dispose the manager during plug-in unload.
+`KeyedNoticeManager` updates one visible Notice per application-defined key and restarts its expiry on every update. After click dismissal, the next update creates a fresh Notice rather than reviving the acknowledged one. The manager retains its own message root and does not read `Notice.messageEl` or deprecated `Notice.noticeEl`. Dispose the manager during plug-in unload.
 
 ```ts
 import { KeyedNoticeManager } from "@vrtmrz/obsidian-plugin-kit/notice";
