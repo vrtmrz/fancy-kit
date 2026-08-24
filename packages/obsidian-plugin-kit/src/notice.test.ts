@@ -1,6 +1,15 @@
 // @vitest-environment jsdom
 
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 type TestElementInfo =
   | string
@@ -65,44 +74,60 @@ afterAll(() => {
 });
 
 interface NoticeMockInstance {
-  messageEl: HTMLElement;
+  container: HTMLElement;
   duration: number;
   hidden: boolean;
+  setMessageCalls: number;
   hide(): void;
 }
 
-const noticeState = vi.hoisted(() => ({ instances: [] as unknown[] }));
+interface ModernNoticeMockInstance extends NoticeMockInstance {
+  messageEl: HTMLElement;
+}
+
+const noticeState = vi.hoisted(() => ({
+  instances: [] as unknown[],
+  legacy: false,
+}));
 
 vi.mock("obsidian", () => {
   class Notice {
-    messageEl = document.createElement("div");
+    readonly container = document.createElement("div");
     hidden = false;
+    setMessageCalls = 0;
 
     constructor(
       message: string | DocumentFragment,
       readonly duration = 4_000,
     ) {
+      if (!noticeState.legacy) {
+        Object.defineProperty(this, "messageEl", {
+          enumerable: true,
+          value: this.container,
+        });
+      }
       this.setMessage(message);
-      this.messageEl.addEventListener("click", () => {
+      this.container.addEventListener("click", () => {
         // Obsidian begins a hide transition immediately, while the Notice DOM
         // can remain connected until that transition completes.
         this.hidden = true;
-        this.messageEl.style.display = "none";
+        this.container.style.display = "none";
       });
-      document.body.append(this.messageEl);
+      document.body.append(this.container);
       noticeState.instances.push(this);
     }
 
     setMessage(message: string | DocumentFragment): this {
-      this.messageEl.replaceChildren();
-      if (typeof message === "string") this.messageEl.textContent = message;
-      else this.messageEl.append(message);
+      this.setMessageCalls += 1;
+      this.container.replaceChildren();
+      if (typeof message === "string") this.container.textContent = message;
+      else this.container.append(message);
       return this;
     }
 
     hide(): void {
       this.hidden = true;
-      this.messageEl.remove();
+      this.container.remove();
     }
   }
 
@@ -118,18 +143,28 @@ import {
 afterEach(() => {
   vi.useRealTimers();
   noticeState.instances.length = 0;
+  noticeState.legacy = false;
   document.body.replaceChildren();
 });
+
+function keyedNoticeRoot(notice: NoticeMockInstance): HTMLElement {
+  const root = notice.container.querySelector<HTMLElement>(
+    ".vpk-keyed-notice",
+  );
+  if (root === null) throw new Error("Keyed Notice root was not rendered");
+  return root;
+}
 
 describe("KeyedNoticeManager", () => {
   it("updates one Notice per key and restarts its expiry", async () => {
     vi.useFakeTimers();
     const manager = new KeyedNoticeManager({ defaultDurationMs: 500 });
     const first = manager.show("scan", "Scanning 1");
-    const notice = noticeState.instances[0] as NoticeMockInstance;
+    const notice = noticeState.instances[0] as ModernNoticeMockInstance;
 
     expect(notice.duration).toBe(0);
-    expect(notice.messageEl.classList.contains("vpk-keyed-notice")).toBe(true);
+    const root = keyedNoticeRoot(notice);
+    expect(root.parentElement).toBe(notice.messageEl);
     await vi.advanceTimersByTimeAsync(400);
 
     const updated = manager.show("scan", "Scanning 2");
@@ -167,7 +202,8 @@ describe("KeyedNoticeManager", () => {
     expect(second).not.toBe(first);
     expect(noticeState.instances).toHaveLength(2);
     expect(
-      (noticeState.instances[1] as NoticeMockInstance).messageEl.textContent,
+      (noticeState.instances[1] as ModernNoticeMockInstance).messageEl
+        .textContent,
     ).toBe("Second");
   });
 
@@ -198,6 +234,134 @@ describe("KeyedNoticeManager", () => {
     expect(
       () => new KeyedNoticeManager({ defaultDurationMs: Number.NaN }),
     ).toThrow(RangeError);
+  });
+});
+
+describe("KeyedNoticeManager with a legacy Notice host", () => {
+  beforeEach(() => {
+    noticeState.legacy = true;
+  });
+
+  it("shows content without host element properties", () => {
+    const manager = new KeyedNoticeManager({ defaultDurationMs: false });
+
+    const returned = manager.show("legacy", "Visible on older Obsidian");
+    const notice = noticeState.instances[0] as NoticeMockInstance;
+
+    expect(returned).toBe(notice);
+    expect("messageEl" in notice).toBe(false);
+    expect("noticeEl" in notice).toBe(false);
+    expect(keyedNoticeRoot(notice).textContent).toBe(
+      "Visible on older Obsidian",
+    );
+  });
+
+  it("updates the existing Notice without replacing its retained root", () => {
+    const manager = new KeyedNoticeManager({ defaultDurationMs: false });
+    const first = manager.show("sync", "Scanning 1");
+    const notice = noticeState.instances[0] as NoticeMockInstance;
+    const root = keyedNoticeRoot(notice);
+
+    const updated = manager.show("sync", "Scanning 2");
+
+    expect(updated).toBe(first);
+    expect(noticeState.instances).toHaveLength(1);
+    expect(keyedNoticeRoot(notice)).toBe(root);
+    expect(root.textContent).toBe("Scanning 2");
+    expect(notice.setMessageCalls).toBe(1);
+  });
+
+  it("uses the retained root lifecycle for has", () => {
+    const manager = new KeyedNoticeManager({ defaultDurationMs: false });
+    manager.show("sync", "Connected");
+    const notice = noticeState.instances[0] as NoticeMockInstance;
+    const root = keyedNoticeRoot(notice);
+
+    expect(manager.has("sync")).toBe(true);
+    notice.container.remove();
+    expect(root.isConnected).toBe(false);
+    expect(manager.has("sync")).toBe(false);
+    expect(notice.hidden).toBe(true);
+    expect(manager.hide("sync")).toBe(false);
+  });
+
+  it("restarts expiry after an update", async () => {
+    vi.useFakeTimers();
+    const manager = new KeyedNoticeManager({ defaultDurationMs: 500 });
+    const first = manager.show("sync", "Scanning 1");
+    const notice = noticeState.instances[0] as NoticeMockInstance;
+    await vi.advanceTimersByTimeAsync(400);
+
+    const updated = manager.show("sync", "Scanning 2");
+    await vi.advanceTimersByTimeAsync(499);
+
+    expect(updated).toBe(first);
+    expect(notice.hidden).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(notice.hidden).toBe(true);
+    expect(manager.has("sync")).toBe(false);
+  });
+
+  it("replaces a user-dismissed Notice on the next update", () => {
+    const manager = new KeyedNoticeManager({ defaultDurationMs: false });
+    const first = manager.show("sync", "First");
+    const firstNotice = noticeState.instances[0] as NoticeMockInstance;
+    const firstRoot = keyedNoticeRoot(firstNotice);
+
+    firstRoot.click();
+    expect(firstRoot.isConnected).toBe(true);
+
+    const second = manager.show("sync", "Second");
+    const secondNotice = noticeState.instances[1] as NoticeMockInstance;
+
+    expect(second).not.toBe(first);
+    expect(noticeState.instances).toHaveLength(2);
+    expect(firstNotice.hidden).toBe(true);
+    expect(firstRoot.isConnected).toBe(false);
+    expect(keyedNoticeRoot(secondNotice).textContent).toBe("Second");
+  });
+
+  it("removes retained entries through hide and dispose", () => {
+    const manager = new KeyedNoticeManager({ defaultDurationMs: false });
+    manager.show("first", "First");
+    const firstNotice = noticeState.instances[0] as NoticeMockInstance;
+    const firstRoot = keyedNoticeRoot(firstNotice);
+
+    expect(manager.hide("first")).toBe(true);
+    expect(firstRoot.isConnected).toBe(false);
+    expect(manager.has("first")).toBe(false);
+    expect(manager.hide("first")).toBe(false);
+
+    manager.show("second", "Second");
+    const secondNotice = noticeState.instances[1] as NoticeMockInstance;
+    const secondRoot = keyedNoticeRoot(secondNotice);
+    manager.dispose();
+
+    expect(manager.isDisposed).toBe(true);
+    expect(secondNotice.hidden).toBe(true);
+    expect(secondRoot.isConnected).toBe(false);
+    expect(manager.has("second")).toBe(false);
+  });
+
+  it("renders string and consumed DocumentFragment messages", () => {
+    const manager = new KeyedNoticeManager({ defaultDurationMs: false });
+    const first = manager.show("content", "Plain text");
+    const notice = noticeState.instances[0] as NoticeMockInstance;
+    const root = keyedNoticeRoot(notice);
+    expect(root.textContent).toBe("Plain text");
+
+    const fragment = document.createDocumentFragment();
+    const strong = document.createElement("strong");
+    strong.textContent = "Fragment content";
+    fragment.append(strong);
+
+    const updated = manager.show("content", fragment);
+
+    expect(updated).toBe(first);
+    expect(root.firstElementChild).toBe(strong);
+    expect(root.textContent).toBe("Fragment content");
+    expect(fragment.childNodes).toHaveLength(0);
+    expect(notice.setMessageCalls).toBe(1);
   });
 });
 
@@ -317,7 +481,8 @@ describe("KeyedNoticeGroupManager", () => {
       .querySelector<HTMLElement>(".vpk-keyed-notice-group__message")
       ?.click();
     expect(
-      (noticeState.instances[0] as NoticeMockInstance).messageEl.isConnected,
+      (noticeState.instances[0] as ModernNoticeMockInstance).messageEl
+        .isConnected,
     ).toBe(true);
 
     const second = manager.setItem("settings", "gamma", {
@@ -327,7 +492,8 @@ describe("KeyedNoticeGroupManager", () => {
     expect(second).not.toBe(first);
     expect(noticeState.instances).toHaveLength(2);
     expect(
-      (noticeState.instances[1] as NoticeMockInstance).messageEl.textContent,
+      (noticeState.instances[1] as ModernNoticeMockInstance).messageEl
+        .textContent,
     ).toBe("Gamma changed");
   });
 
@@ -377,7 +543,7 @@ describe("ObsidianUiNotifications", () => {
     });
 
     notifications.show("sync", { message: "One" });
-    const notice = noticeState.instances[0] as NoticeMockInstance;
+    const notice = noticeState.instances[0] as ModernNoticeMockInstance;
     await vi.advanceTimersByTimeAsync(400);
     notifications.show("sync", { message: "Two" });
 

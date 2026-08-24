@@ -44,6 +44,33 @@ async function main(): Promise<void> {
         .waitFor({ state: "hidden", timeout: 5_000 });
     });
 
+    await executeHarnessStory(session, "notice-show");
+    await withObsidianPage(port, async (page) => {
+      const notice = page
+        .locator(".vpk-keyed-notice")
+        .filter({ hasText: "Scanning Vault: 1", visible: true });
+      if ((await notice.count()) !== 1)
+        throw new Error("Expected one visible keyed Notice before dismissal");
+      await notice.evaluate((element) => {
+        element.setAttribute("data-vpk-e2e-instance", "dismissed");
+      });
+      await notice.click();
+      await notice.waitFor({ state: "hidden", timeout: 5_000 });
+    });
+
+    await executeHarnessStory(session, "notice-update");
+    await withObsidianPage(port, async (page) => {
+      const notice = page
+        .locator(".vpk-keyed-notice")
+        .filter({ hasText: "Scanning Vault: 2", visible: true });
+      if ((await notice.count()) !== 1)
+        throw new Error("Expected one fresh keyed Notice after dismissal");
+      if ((await notice.getAttribute("data-vpk-e2e-instance")) !== null) {
+        throw new Error("Keyed Notice update revived the dismissed DOM root");
+      }
+      await notice.waitFor({ state: "hidden", timeout: 5_000 });
+    });
+
     await executeHarnessStory(session, "notice-group-start");
     await withObsidianPage(port, async (page) => {
       const notice = page.locator(".notice:has(.vpk-keyed-notice-group)");

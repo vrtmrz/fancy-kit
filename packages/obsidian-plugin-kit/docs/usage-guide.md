@@ -419,7 +419,9 @@ notices.hide("sync");
 notices.dispose();
 ```
 
-Use a separate manager for each owning application scope. `hideAll()` clears visible Notices while leaving the manager reusable. `dispose()` clears them and permanently ends the manager lifecycle, so call it during plug-in unload.
+Use a separate manager for each owning application scope. `hideAll()` clears visible Notices while leaving the manager reusable. `dispose()` clears them and permanently ends the manager lifecycle, so call it during plug-in unload. After click dismissal, the next update creates a fresh Notice rather than reviving the acknowledged one, even while Obsidian is completing its hide transition.
+
+The manager retains the DOM root it supplies to Obsidian and does not read `Notice.messageEl` or deprecated `Notice.noticeEl`. This entry-point compatibility does not lower the package-wide `obsidian >=1.8.7` peer dependency; other exported entry points retain their own host requirements until they are reviewed separately.
 
 Use `KeyedNoticeGroupManager` when several messages or actions belong to one operation and should not stack as separate Notices. Each group key owns one Notice, and each item key owns one insertion-ordered row within it:
 
