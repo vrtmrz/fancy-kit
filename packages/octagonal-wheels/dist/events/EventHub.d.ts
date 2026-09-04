@@ -22,6 +22,7 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
     private _assigned;
     private _allAssigned;
     private _issueSignal;
+    private _listen;
     /**
      * Emits an event without data.
      *
@@ -46,7 +47,8 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     on<ET extends Events, K extends keyof ET>(event: EventTypeWithoutData<ET, K>, callback: (e: Event) => void | Promise<void>, options?: AddEventListenerOptions): () => void;
     /**
@@ -56,13 +58,17 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     on<ET extends Events, K extends keyof ET>(event: EventTypeWithData<ET, K>, callback: (e: Event, data: ET[K]) => void | Promise<void>, options?: AddEventListenerOptions): () => void;
     /**
-     * Removes an event listener for a specific event.
-     * @param event
-     * @param callback
+     * Removes current event registrations in bulk.
+     *
+     * Prefer the disposer returned by `on`, `onEvent`, `once`, or `onceEvent` when removing one registration.
+     *
+     * @param event - The event whose registrations should be removed.
+     * @param callback - The callback whose registrations should be removed. Omit it to remove every registration for the event.
      */
     off<ET extends Events, K extends keyof ET>(event: EventType<K>, callback?: CallableFunction): void;
     /**
@@ -76,7 +82,8 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     onEvent<ET extends Events, K extends keyof ET>(event: EventTypeWithoutData<ET, K>, callback: () => any, options?: AddEventListenerOptions): () => void;
     /**
@@ -86,7 +93,8 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     onEvent<ET extends Events, K extends keyof ET>(event: EventTypeWithData<ET, K>, callback: (data: ET[K]) => any, options?: AddEventListenerOptions): () => void;
     /**
@@ -96,8 +104,10 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
-    once<ET extends Events, K extends keyof ET>(event: EventTypeWithoutData<ET, K>, callback: (e: Event) => void): () => void;
+    once<ET extends Events, K extends keyof ET>(event: EventTypeWithoutData<ET, K>, callback: (e: Event) => void, options?: AddEventListenerOptions): () => void;
     /**
      * Registers a one-time event listener for a specific event.
      *
@@ -105,8 +115,10 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
-    once<ET extends Events, K extends keyof ET>(event: EventTypeWithData<ET, K>, callback: (e: Event, data: ET[K]) => void): () => void;
+    once<ET extends Events, K extends keyof ET>(event: EventTypeWithData<ET, K>, callback: (e: Event, data: ET[K]) => void, options?: AddEventListenerOptions): () => void;
     /**
      * Registers a one-time event listener for a specific event, with a callback that only receives the event data.
      *
@@ -114,8 +126,10 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
-    onceEvent<ET extends Events, K extends keyof ET>(event: EventTypeWithoutData<ET, K>, callback: () => void): () => void;
+    onceEvent<ET extends Events, K extends keyof ET>(event: EventTypeWithoutData<ET, K>, callback: () => void, options?: AddEventListenerOptions): () => void;
     /**
      * Registers a one-time event listener for a specific event, with a callback that only receives the event data.
      *
@@ -123,8 +137,10 @@ export declare class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
-    onceEvent<ET extends Events, K extends keyof ET>(event: EventTypeWithData<ET, K>, callback: (data: ET[K]) => void): () => void;
+    onceEvent<ET extends Events, K extends keyof ET>(event: EventTypeWithData<ET, K>, callback: (data: ET[K]) => void, options?: AddEventListenerOptions): () => void;
     /**
      * Waits for a specific event to be emitted.
      *

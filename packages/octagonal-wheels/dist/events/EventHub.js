@@ -36,27 +36,51 @@ class EventHub {
         });
         this._emitter = emitter ?? new EventTarget();
     }
-    _issueSignal(key, callback) {
-        let assigned = this._assigned.get(key);
-        if (assigned === undefined) {
-            assigned = new WeakMap();
+    _issueSignal(key, callback, sourceSignal) {
+        const controller = new AbortController();
+        const controllerRef = new FallbackWeakRef(controller);
+        const assigned = this._assigned.get(key) ?? new WeakMap();
+        const callbackControllers = assigned.get(callback) ?? new Set();
+        const allAssigned = this._allAssigned.get(key) ?? new Set();
+        const abortFromSource = () => controller.abort();
+        controller.signal.addEventListener("abort", () => {
+            sourceSignal?.removeEventListener("abort", abortFromSource);
+            callbackControllers.delete(controllerRef);
+            if (callbackControllers.size === 0) {
+                assigned.delete(callback);
+            }
+            allAssigned.delete(controllerRef);
+            if (allAssigned.size === 0) {
+                this._assigned.delete(key);
+                this._allAssigned.delete(key);
+            }
+        }, { once: true });
+        callbackControllers.add(controllerRef);
+        assigned.set(callback, callbackControllers);
+        this._assigned.set(key, assigned);
+        allAssigned.add(controllerRef);
+        this._allAssigned.set(key, allAssigned);
+        if (sourceSignal) {
+            sourceSignal.addEventListener("abort", abortFromSource, { once: true });
+            if (sourceSignal.aborted) {
+                controller.abort();
+            }
         }
-        const controllerRef = assigned.get(callback);
-        let controller = controllerRef?.deref();
-        if (!controller || controller.signal.aborted) {
-            controller = new AbortController();
-            const refController = new FallbackWeakRef(controller);
-            controller.signal.addEventListener("abort", () => {
-                this._assigned.get(key)?.delete(callback);
-                this._allAssigned.get(key)?.delete(refController);
-            }, { once: true });
-            assigned.set(callback, refController);
-            this._assigned.set(key, assigned);
-            const allAssigned = this._allAssigned.get(key) ?? new Set();
-            allAssigned.add(refController);
-            this._allAssigned.set(key, allAssigned);
-            return controller;
-        }
+        return controller;
+    }
+    _listen(key, callback, listener, options) {
+        const controller = this._issueSignal(key, callback, options?.signal);
+        const controlledListener = options?.once
+            ? (event) => {
+                try {
+                    listener(event);
+                }
+                finally {
+                    controller.abort();
+                }
+            }
+            : listener;
+        this._emitter.addEventListener(key, controlledListener, { ...options, signal: controller.signal });
         return controller;
     }
     emitEvent(event, data) {
@@ -65,25 +89,26 @@ class EventHub {
     on(event, callback, options) {
         const onEvent = (e) => void callback(e, e instanceof CustomEvent ? e?.detail : undefined);
         const key = event;
-        const controller = this._issueSignal(key, callback);
-        this._emitter.addEventListener(key, onEvent, { ...options, signal: controller.signal });
-        return () => this.off(event, callback);
+        const controller = this._listen(key, callback, onEvent, options);
+        return () => controller.abort();
     }
     /**
-     * Removes an event listener for a specific event.
-     * @param event
-     * @param callback
+     * Removes current event registrations in bulk.
+     *
+     * Prefer the disposer returned by `on`, `onEvent`, `once`, or `onceEvent` when removing one registration.
+     *
+     * @param event - The event whose registrations should be removed.
+     * @param callback - The callback whose registrations should be removed. Omit it to remove every registration for the event.
      */
     off(event, callback) {
         const key = event;
         if (callback) {
-            const w = this._assigned.get(key)?.get(callback);
-            const controller = w?.deref();
-            controller?.abort();
+            const controllers = this._assigned.get(key)?.get(callback);
+            controllers?.forEach((controllerRef) => controllerRef.deref()?.abort());
         }
         else {
-            this._allAssigned.get(key)?.forEach((w) => {
-                const controller = w.deref();
+            this._allAssigned.get(key)?.forEach((controllerRef) => {
+                const controller = controllerRef.deref();
                 controller?.abort();
             });
         }
@@ -99,15 +124,14 @@ class EventHub {
     onEvent(event, callback, options) {
         const onEvent = (e) => void callback(e instanceof CustomEvent ? e?.detail : undefined);
         const key = event;
-        const controller = this._issueSignal(key, callback);
-        this._emitter.addEventListener(key, onEvent, { ...options, signal: controller.signal });
-        return () => this.off(event, callback);
+        const controller = this._listen(key, callback, onEvent, options);
+        return () => controller.abort();
     }
-    once(event, callback) {
-        return this.on(event, callback, { once: true });
+    once(event, callback, options) {
+        return this.on(event, callback, { ...options, once: true });
     }
-    onceEvent(event, callback) {
-        return this.on(event, (_, data) => callback(data), { once: true });
+    onceEvent(event, callback, options) {
+        return this.on(event, (_, data) => callback(data), { ...options, once: true });
     }
     waitFor(event) {
         return new Promise((resolve) => {

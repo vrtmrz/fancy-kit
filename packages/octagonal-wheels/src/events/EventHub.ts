@@ -39,34 +39,67 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
         this._emitter = emitter ?? new EventTarget();
     }
 
-    private _assigned = new Map<string, WeakMap<CallableFunction, FallbackWeakRef<AbortController>>>();
+    private _assigned = new Map<string, WeakMap<CallableFunction, Set<FallbackWeakRef<AbortController>>>>();
     private _allAssigned = new Map<string, Set<FallbackWeakRef<AbortController>>>();
 
-    private _issueSignal(key: string, callback: CallableFunction) {
-        let assigned = this._assigned.get(key);
-        if (assigned === undefined) {
-            assigned = new WeakMap();
+    private _issueSignal(key: string, callback: CallableFunction, sourceSignal?: AbortSignal) {
+        const controller = new AbortController();
+        const controllerRef = new FallbackWeakRef(controller);
+        const assigned = this._assigned.get(key) ?? new WeakMap();
+        const callbackControllers = assigned.get(callback) ?? new Set();
+        const allAssigned = this._allAssigned.get(key) ?? new Set();
+        const abortFromSource = () => controller.abort();
+
+        controller.signal.addEventListener(
+            "abort",
+            () => {
+                sourceSignal?.removeEventListener("abort", abortFromSource);
+                callbackControllers.delete(controllerRef);
+                if (callbackControllers.size === 0) {
+                    assigned.delete(callback);
+                }
+                allAssigned.delete(controllerRef);
+                if (allAssigned.size === 0) {
+                    this._assigned.delete(key);
+                    this._allAssigned.delete(key);
+                }
+            },
+            { once: true }
+        );
+
+        callbackControllers.add(controllerRef);
+        assigned.set(callback, callbackControllers);
+        this._assigned.set(key, assigned);
+        allAssigned.add(controllerRef);
+        this._allAssigned.set(key, allAssigned);
+
+        if (sourceSignal) {
+            sourceSignal.addEventListener("abort", abortFromSource, { once: true });
+            if (sourceSignal.aborted) {
+                controller.abort();
+            }
         }
-        const controllerRef = assigned.get(callback);
-        let controller: AbortController | undefined = controllerRef?.deref();
-        if (!controller || controller.signal.aborted) {
-            controller = new AbortController();
-            const refController = new FallbackWeakRef(controller);
-            controller.signal.addEventListener(
-                "abort",
-                () => {
-                    this._assigned.get(key)?.delete(callback);
-                    this._allAssigned.get(key)?.delete(refController);
-                },
-                { once: true }
-            );
-            assigned.set(callback, refController);
-            this._assigned.set(key, assigned);
-            const allAssigned = this._allAssigned.get(key) ?? new Set();
-            allAssigned.add(refController);
-            this._allAssigned.set(key, allAssigned);
-            return controller;
-        }
+
+        return controller;
+    }
+
+    private _listen(
+        key: string,
+        callback: CallableFunction,
+        listener: EventListener,
+        options?: AddEventListenerOptions
+    ) {
+        const controller = this._issueSignal(key, callback, options?.signal);
+        const controlledListener: EventListener = options?.once
+            ? (event) => {
+                  try {
+                      listener(event);
+                  } finally {
+                      controller.abort();
+                  }
+              }
+            : listener;
+        this._emitter.addEventListener(key, controlledListener, { ...options, signal: controller.signal });
         return controller;
     }
 
@@ -98,7 +131,8 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     on<ET extends Events, K extends keyof ET>(
         event: EventTypeWithoutData<ET, K>,
@@ -112,7 +146,8 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     on<ET extends Events, K extends keyof ET>(
         event: EventTypeWithData<ET, K>,
@@ -126,25 +161,26 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
     ): () => void {
         const onEvent = (e: Event) => void callback(e, e instanceof CustomEvent ? (e?.detail as ET[K]) : undefined);
         const key = event;
-        const controller = this._issueSignal(key, callback);
-        this._emitter.addEventListener(key, onEvent, { ...options, signal: controller.signal });
-        return () => this.off<ET, K>(event, callback);
+        const controller = this._listen(key, callback, onEvent, options);
+        return () => controller.abort();
     }
 
     /**
-     * Removes an event listener for a specific event.
-     * @param event
-     * @param callback
+     * Removes current event registrations in bulk.
+     *
+     * Prefer the disposer returned by `on`, `onEvent`, `once`, or `onceEvent` when removing one registration.
+     *
+     * @param event - The event whose registrations should be removed.
+     * @param callback - The callback whose registrations should be removed. Omit it to remove every registration for the event.
      */
     off<ET extends Events, K extends keyof ET>(event: EventType<K>, callback?: CallableFunction): void {
         const key = event;
         if (callback) {
-            const w = this._assigned.get(key)?.get(callback);
-            const controller = w?.deref();
-            controller?.abort();
+            const controllers = this._assigned.get(key)?.get(callback);
+            controllers?.forEach((controllerRef) => controllerRef.deref()?.abort());
         } else {
-            this._allAssigned.get(key)?.forEach((w) => {
-                const controller = w.deref();
+            this._allAssigned.get(key)?.forEach((controllerRef) => {
+                const controller = controllerRef.deref();
                 controller?.abort();
             });
         }
@@ -166,7 +202,8 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     onEvent<ET extends Events, K extends keyof ET>(
         event: EventTypeWithoutData<ET, K>,
@@ -180,7 +217,8 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
-     * @returns A function to remove the event listener.
+     * @param options - Native `EventTarget` listener options. A supplied signal removes only this registration when aborted.
+     * @returns An idempotent function that removes only this registration.
      */
     onEvent<ET extends Events, K extends keyof ET>(
         event: EventTypeWithData<ET, K>,
@@ -194,9 +232,8 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
     ): () => void {
         const onEvent = (e: Event) => void callback(e instanceof CustomEvent ? (e?.detail as ET[K]) : undefined);
         const key = event;
-        const controller = this._issueSignal(key, callback);
-        this._emitter.addEventListener(key, onEvent, { ...options, signal: controller.signal });
-        return () => this.off<ET, K>(event, callback);
+        const controller = this._listen(key, callback, onEvent, options);
+        return () => controller.abort();
     }
 
     /**
@@ -206,10 +243,13 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
     once<ET extends Events, K extends keyof ET>(
         event: EventTypeWithoutData<ET, K>,
-        callback: (e: Event) => void
+        callback: (e: Event) => void,
+        options?: AddEventListenerOptions
     ): () => void;
     /**
      * Registers a one-time event listener for a specific event.
@@ -218,16 +258,20 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
     once<ET extends Events, K extends keyof ET>(
         event: EventTypeWithData<ET, K>,
-        callback: (e: Event, data: ET[K]) => void
+        callback: (e: Event, data: ET[K]) => void,
+        options?: AddEventListenerOptions
     ): () => void;
     once<ET extends Events, K extends keyof ET>(
         event: EventType<K>,
-        callback: (e: Event, data?: ET[K]) => void
+        callback: (e: Event, data?: ET[K]) => void,
+        options?: AddEventListenerOptions
     ): () => void {
-        return this.on<ET, K>(event as any, callback, { once: true });
+        return this.on<ET, K>(event as any, callback, { ...options, once: true });
     }
 
     /**
@@ -237,10 +281,13 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
     onceEvent<ET extends Events, K extends keyof ET>(
         event: EventTypeWithoutData<ET, K>,
-        callback: () => void
+        callback: () => void,
+        options?: AddEventListenerOptions
     ): () => void;
     /**
      * Registers a one-time event listener for a specific event, with a callback that only receives the event data.
@@ -249,16 +296,20 @@ export class EventHub<Events extends AnyHubEvents = LSEvents> {
      * @template K - The key of the event.
      * @param event - The event to listen for.
      * @param callback - The callback to execute when the event is triggered.
+     * @param options - Native `EventTarget` listener options. The `once` option is always treated as `true`.
+     * @returns An idempotent function that removes only this registration.
      */
     onceEvent<ET extends Events, K extends keyof ET>(
         event: EventTypeWithData<ET, K>,
-        callback: (data: ET[K]) => void
+        callback: (data: ET[K]) => void,
+        options?: AddEventListenerOptions
     ): () => void;
     onceEvent<ET extends Events, K extends keyof ET>(
         event: EventType<K>,
-        callback: (data?: ET[K]) => void
+        callback: (data?: ET[K]) => void,
+        options?: AddEventListenerOptions
     ): () => void {
-        return this.on<ET, K>(event as any, (_: any, data: any) => callback(data), { once: true });
+        return this.on<ET, K>(event as any, (_: any, data: any) => callback(data), { ...options, once: true });
     }
 
     /**
