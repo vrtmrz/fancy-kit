@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.54
+
 ### Fixed
 
 - `EventHub.on` and `EventHub.onEvent` now honour caller-supplied abort signals. Their returned disposers are registration-scoped and idempotent, so an old disposer cannot remove a later subscription.

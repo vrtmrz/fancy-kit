@@ -1,6 +1,6 @@
 {
     "name": "octagonal-wheels",
-    "version": "0.1.53",
+    "version": "0.1.54",
     "description": "This module is a compilation of wheels that have been reinvented for a specific purpose",
     "type": "module",
     "types": "./dist/index.d.ts",
