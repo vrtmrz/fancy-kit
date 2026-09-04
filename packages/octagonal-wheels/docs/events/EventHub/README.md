@@ -107,7 +107,9 @@ off<ET, K>(event: EventType<K>, callback?: CallableFunction): void;
 
 Defined in: [src/events/EventHub.ts:139](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L139)
 
-Removes an event listener for a specific event.
+Removes current event registrations in bulk.
+
+Prefer the disposer returned by `on`, `onEvent`, `once`, or `onceEvent` when removing one registration.
 
 #### Type Parameters
 
@@ -120,8 +122,8 @@ Removes an event listener for a specific event.
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `event` | [`EventType`](../EventType/README.md)\<`K`\> |  |
-| `callback?` | `CallableFunction` |  |
+| `event` | [`EventType`](../EventType/README.md)\<`K`\> | The event whose registrations should be removed. |
+| `callback?` | `CallableFunction` | The callback whose registrations should be removed. Omit it to remove every registration for the event. |
 
 #### Returns
 
@@ -173,11 +175,11 @@ Registers an event listener for a specific event.
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | (`e`: `Event`) => `void` \| `Promise`\<`void`\> | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | - |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
-A function to remove the event listener.
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -213,11 +215,11 @@ Registers an event listener for a specific event.
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | (`e`: `Event`, `data`: `ET`\[`K`\]) => `void` \| `Promise`\<`void`\> | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | - |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
-A function to remove the event listener.
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -234,7 +236,10 @@ A function to remove the event listener.
 #### Call Signature
 
 ```ts
-once<ET, K>(event: EventTypeWithoutData<ET, K>, callback: (e: Event) => void): () => void;
+once<ET, K>(
+   event: EventTypeWithoutData<ET, K>,
+   callback: (e: Event) => void,
+   options?: AddEventListenerOptions): () => void;
 ```
 
 Defined in: [src/events/EventHub.ts:210](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L210)
@@ -254,8 +259,11 @@ Registers a one-time event listener for a specific event.
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | (`e`: `Event`) => `void` | The callback to execute when the event is triggered. |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
+
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -268,7 +276,10 @@ Registers a one-time event listener for a specific event.
 #### Call Signature
 
 ```ts
-once<ET, K>(event: EventTypeWithData<ET, K>, callback: (e: Event, data: ET[K]) => void): () => void;
+once<ET, K>(
+   event: EventTypeWithData<ET, K>,
+   callback: (e: Event, data: ET[K]) => void,
+   options?: AddEventListenerOptions): () => void;
 ```
 
 Defined in: [src/events/EventHub.ts:222](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L222)
@@ -288,8 +299,11 @@ Registers a one-time event listener for a specific event.
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | (`e`: `Event`, `data`: `ET`\[`K`\]) => `void` | The callback to execute when the event is triggered. |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
+
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -306,7 +320,10 @@ Registers a one-time event listener for a specific event.
 #### Call Signature
 
 ```ts
-onceEvent<ET, K>(event: EventTypeWithoutData<ET, K>, callback: () => void): () => void;
+onceEvent<ET, K>(
+   event: EventTypeWithoutData<ET, K>,
+   callback: () => void,
+   options?: AddEventListenerOptions): () => void;
 ```
 
 Defined in: [src/events/EventHub.ts:241](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L241)
@@ -326,8 +343,11 @@ Registers a one-time event listener for a specific event, with a callback that o
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | () => `void` | The callback to execute when the event is triggered. |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
+
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -340,7 +360,10 @@ Registers a one-time event listener for a specific event, with a callback that o
 #### Call Signature
 
 ```ts
-onceEvent<ET, K>(event: EventTypeWithData<ET, K>, callback: (data: ET[K]) => void): () => void;
+onceEvent<ET, K>(
+   event: EventTypeWithData<ET, K>,
+   callback: (data: ET[K]) => void,
+   options?: AddEventListenerOptions): () => void;
 ```
 
 Defined in: [src/events/EventHub.ts:253](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L253)
@@ -360,8 +383,11 @@ Registers a one-time event listener for a specific event, with a callback that o
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | (`data`: `ET`\[`K`\]) => `void` | The callback to execute when the event is triggered. |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
+
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -401,11 +427,11 @@ Registers an event listener for a specific event, with a callback that only rece
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | () => `any` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | - |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
-A function to remove the event listener.
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;
@@ -441,11 +467,11 @@ Registers an event listener for a specific event, with a callback that only rece
 | ------ | ------ | ------ |
 | `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
 | `callback` | (`data`: `ET`\[`K`\]) => `any` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | - |
+| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
-A function to remove the event listener.
+An idempotent function that removes only this registration.
 
 ```ts
 (): void;

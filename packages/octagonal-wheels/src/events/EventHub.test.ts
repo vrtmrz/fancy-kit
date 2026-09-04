@@ -292,3 +292,153 @@ describe("multiple-hubs", () => {
         expect(callback2).toHaveBeenCalledWith("data2");
     });
 });
+
+describe("EventHub-listener-options", () => {
+    it("should remove an on listener when the supplied signal is aborted", () => {
+        const hub = createEventHub();
+        const controller = new AbortController();
+        const callback = vi.fn();
+
+        hub.on("world_test", callback, { signal: controller.signal });
+        controller.abort();
+        hub.emitEvent("world_test");
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should not register an on listener with an already-aborted signal", () => {
+        const hub = createEventHub();
+        const controller = new AbortController();
+        const callback = vi.fn();
+        controller.abort();
+
+        hub.on("world_test", callback, { signal: controller.signal });
+        hub.emitEvent("world_test");
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should remove an onEvent listener when the supplied signal is aborted", () => {
+        const hub = createEventHub();
+        const controller = new AbortController();
+        const callback = vi.fn();
+
+        hub.onEvent("world_test", callback, { signal: controller.signal });
+        controller.abort();
+        hub.emitEvent("world_test");
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should remove only the registration owned by the supplied signal", () => {
+        const hub = createEventHub();
+        const controller = new AbortController();
+        const callback = vi.fn();
+
+        hub.onEvent("world_test", callback, { signal: controller.signal });
+        hub.onEvent("world_test", callback);
+
+        controller.abort();
+        hub.emitEvent("world_test");
+
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should accept a signal for once", () => {
+        const hub = createEventHub();
+        const controller = new AbortController();
+        const callback = vi.fn();
+
+        hub.once("world_test", callback, { signal: controller.signal });
+        controller.abort();
+        hub.emitEvent("world_test");
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should accept a signal for onceEvent", () => {
+        const hub = createEventHub();
+        const controller = new AbortController();
+        const callback = vi.fn();
+
+        hub.onceEvent("world_test", callback, { signal: controller.signal });
+        controller.abort();
+        hub.emitEvent("world_test");
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("should remain a one-time listener when once is false in the supplied options", () => {
+        const hub = createEventHub();
+        const callback = vi.fn();
+
+        hub.once("world_test", callback, { once: false });
+        hub.emitEvent("world_test");
+        hub.emitEvent("world_test");
+
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("EventHub-returned-disposer", () => {
+    it("should remove only the subscription that returned it", () => {
+        const hub = createEventHub();
+        const callback = vi.fn();
+
+        const offFirst = hub.onEvent("world_test", callback);
+        const offSecond = hub.onEvent("world_test", callback);
+
+        offFirst();
+        hub.emitEvent("world_test");
+        expect(callback).toHaveBeenCalledTimes(1);
+
+        offFirst();
+        hub.emitEvent("world_test");
+        expect(callback).toHaveBeenCalledTimes(2);
+
+        offSecond();
+        hub.emitEvent("world_test");
+        expect(callback).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not remove a replacement subscription when an old disposer is called again", () => {
+        const hub = createEventHub();
+        const callback = vi.fn();
+
+        const oldOff = hub.onEvent("world_test", callback);
+        oldOff();
+        hub.onEvent("world_test", callback);
+
+        oldOff();
+        hub.emitEvent("world_test");
+
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not remove a later subscription through a disposer whose once listener has fired", () => {
+        const hub = createEventHub();
+        const callback = vi.fn();
+
+        const oldOff = hub.once("world_test", callback);
+        hub.emitEvent("world_test");
+        hub.on("world_test", callback);
+
+        oldOff();
+        hub.emitEvent("world_test");
+
+        expect(callback).toHaveBeenCalledTimes(2);
+    });
+
+    it("should remove every matching subscription through off", () => {
+        const hub = createEventHub();
+        const callback = vi.fn();
+
+        hub.onEvent("world_test", callback);
+        hub.onEvent("world_test", callback);
+
+        hub.off("world_test", callback);
+        hub.emitEvent("world_test");
+
+        expect(callback).not.toHaveBeenCalled();
+    });
+});
