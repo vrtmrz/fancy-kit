@@ -1,11 +1,20 @@
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createTemporaryVault } from "./vault.js";
 
 describe("createTemporaryVault", () => {
+  function isBelow(parentPath: string, childPath: string): boolean {
+    const pathFromParent = relative(parentPath, childPath);
+    return (
+      pathFromParent.length > 0 &&
+      pathFromParent !== ".." &&
+      !pathFromParent.startsWith(`..${sep}`)
+    );
+  }
+
   it("creates isolated profile state and removes it on disposal", async () => {
     const previousKeep = process.env.E2E_OBSIDIAN_KEEP_VAULT;
     delete process.env.E2E_OBSIDIAN_KEEP_VAULT;
@@ -55,8 +64,8 @@ describe("createTemporaryVault", () => {
     };
     const vault = await createTemporaryVault(options);
     try {
-      expect(vault.path.startsWith(`${temporaryRoot}/`)).toBe(true);
-      expect(vault.statePath.startsWith(`${temporaryRoot}/`)).toBe(true);
+      expect(isBelow(temporaryRoot, vault.path)).toBe(true);
+      expect(isBelow(temporaryRoot, vault.statePath)).toBe(true);
     } finally {
       await vault.dispose();
       await rm(temporaryRoot, { recursive: true, force: true });

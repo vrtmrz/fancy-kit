@@ -10,6 +10,7 @@
 ### Fixes
 
 - Selected the active Vault renderer when Obsidian exposes a Settings pop-out first, and recognised the current mobile Modal header control when checking safe-area and touch-target behaviour.
+- Discovered official per-user and all-user Windows installations beyond `PATH`, including the `Obsidian.com` terminal redirector.
 
 ### Documentation
 

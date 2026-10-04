@@ -1,5 +1,5 @@
 import { accessSync, constants, existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { delimiter, join, resolve } from "node:path";
 import { platform } from "node:process";
 import {
   allowUnverifiedObsidianVersion,
@@ -42,10 +42,6 @@ const defaultCandidatesByPlatform: Partial<
     "/opt/obsidian/obsidian",
     "/app/bin/obsidian",
   ],
-  win32: [
-    "C:\\Program Files\\Obsidian\\Obsidian.exe",
-    "C:\\Program Files (x86)\\Obsidian\\Obsidian.exe",
-  ],
 };
 
 const defaultCliCandidatesByPlatform: Partial<
@@ -63,11 +59,53 @@ const defaultCliCandidatesByPlatform: Partial<
     "/opt/Obsidian/obsidian-cli",
     "/opt/obsidian/obsidian-cli",
   ],
-  win32: [
-    "C:\\Program Files\\Obsidian\\obsidian-cli.exe",
-    "C:\\Program Files (x86)\\Obsidian\\obsidian-cli.exe",
-  ],
 };
+
+function windowsInstallRoots(env: NodeJS.ProcessEnv): string[] {
+  const programFiles64 = env.ProgramW6432?.trim();
+  const programFilesX86 = env["ProgramFiles(x86)"]?.trim();
+  const roots = [
+    env.LOCALAPPDATA?.trim()
+      ? join(env.LOCALAPPDATA, "Programs", "Obsidian")
+      : undefined,
+    programFiles64 ? join(programFiles64, "Obsidian") : undefined,
+    env.ProgramFiles?.trim()
+      ? join(env.ProgramFiles, "Obsidian")
+      : "C:\\Program Files\\Obsidian",
+    programFilesX86
+      ? join(programFilesX86, "Obsidian")
+      : "C:\\Program Files (x86)\\Obsidian",
+  ];
+  return [...new Set(roots.filter((root): root is string => Boolean(root)))];
+}
+
+function pathDirectories(env: NodeJS.ProcessEnv): string[] {
+  return (env.Path ?? env.PATH ?? "")
+    .split(delimiter)
+    .map((entry) => entry.trim().replace(/^"|"$/gu, ""))
+    .filter(Boolean);
+}
+
+function defaultBinaryCandidates(env: NodeJS.ProcessEnv): string[] {
+  if (platform !== "win32")
+    return [...(defaultCandidatesByPlatform[platform] ?? [])];
+  return [
+    ...windowsInstallRoots(env).map((directory) =>
+      join(directory, "Obsidian.exe"),
+    ),
+    ...pathDirectories(env).map((directory) => join(directory, "Obsidian.exe")),
+  ];
+}
+
+function defaultCliCandidates(env: NodeJS.ProcessEnv): string[] {
+  if (platform !== "win32")
+    return [...(defaultCliCandidatesByPlatform[platform] ?? [])];
+  const roots = [...windowsInstallRoots(env), ...pathDirectories(env)];
+  return roots.flatMap((directory) => [
+    join(directory, "Obsidian.com"),
+    join(directory, "obsidian-cli.exe"),
+  ]);
+}
 
 interface ManagedObsidianTarget extends ObsidianVersionSelection {
   installDirectory: string;
@@ -169,7 +207,7 @@ export function discoverObsidianBinary(
   const managedTarget = managedObsidianTarget(env);
   if (managedTarget !== undefined)
     return discover(undefined, managedBinaryCandidates(managedTarget));
-  return discover(undefined, defaultCandidatesByPlatform[platform] ?? []);
+  return discover(undefined, defaultBinaryCandidates(env));
 }
 
 /**
@@ -220,7 +258,7 @@ export function discoverObsidianCli(
   const managedTarget = managedObsidianTarget(env);
   if (managedTarget !== undefined)
     return discover(undefined, managedCliCandidates(managedTarget));
-  return discover(undefined, defaultCliCandidatesByPlatform[platform] ?? []);
+  return discover(undefined, defaultCliCandidates(env));
 }
 
 /**

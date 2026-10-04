@@ -30,7 +30,7 @@ import {
 - a local Obsidian executable and the matching `obsidian-cli`; and
 - a local test environment that can launch Electron and connect to its remote-debugging port.
 
-Executable discovery is implemented for Linux, macOS, and Windows. This project exercises complete real-Obsidian sessions on Linux and macOS; Windows discovery exists but the end-to-end workflow remains unverified. Automated AppImage download and optional `xvfb-run` wrapping are Linux-specific.
+Executable discovery is implemented for Linux, macOS, and Windows. On Windows it checks the official per-user installation below `LOCALAPPDATA`, the all-user installation directories, and then `PATH`, including the `Obsidian.com` terminal redirector. The reviewed complete real-Obsidian session matrix covers Linux and macOS. Windows executable discovery has independent Windows coverage. Automated AppImage download and optional `xvfb-run` wrapping are Linux-specific.
 
 Managed Linux sessions default to the reviewed Obsidian 1.13.6 AppImage. The package keeps an immutable catalogue of reviewed asset names and SHA-256 digests, installs each version and architecture separately, and never downloads during executable discovery or session start-up. An exact version outside that catalogue is rejected unless the caller deliberately enables an unverified regression probe. A passing unverified probe does not establish supported-version status.
 
