@@ -2,19 +2,34 @@
 
 ## Unreleased
 
+## 0.3.0
+
+2026-10-04
+
+### Migration
+
+- Linux automatic discovery now selects the reviewed Obsidian 1.13.6 AppImage in a version- and architecture-specific directory. Prepare that target with `installObsidianAppImage`, or set `OBSIDIAN_BINARY` and `OBSIDIAN_CLI` to use another existing installation. Discovery and session start-up do not download it automatically.
+- AppImage preparation accepts exact stable versions and checks the reviewed catalogue by default. Set `allowUnverifiedVersion: true` only for an explicitly labelled regression probe outside that catalogue.
+- `PluginReadiness` now requires `obsidianVersion`. Include this field in typed readiness fixtures and test doubles.
+
 ### New features
 
-- Added a reviewed Obsidian AppImage catalogue with exact architecture-specific asset names, SHA-256 verification, versioned installations, and recorded release metadata. Managed Linux sessions now default to Obsidian 1.13.6.
-- Added an explicit unverified-version option for exploratory regression runs. Session readiness now exposes the observed Obsidian API version and can enforce an expected version and reviewed-catalogue policy.
+- Run repeatable Linux sessions against reviewed Obsidian releases.
+  - The AppImage catalogue fixes architecture-specific asset names and SHA-256 digests. Installations are separated by version and architecture, and record release metadata for verified reuse.
+- Observe the running Obsidian API version and apply an optional session version policy.
+  - Session readiness reports the observed version. A supplied policy can reject an expected-version mismatch or an unreviewed version, with an explicit option for unverified regression probes.
 
 ### Fixes
 
-- Selected the active Vault renderer when Obsidian exposes a Settings pop-out first, and recognised the current mobile Modal header control when checking safe-area and touch-target behaviour.
-- Discovered official per-user and all-user Windows installations beyond `PATH`, including the `Obsidian.com` terminal redirector.
+- Discover official per-user and all-user Windows installations without requiring `PATH` registration.
+  - Discovery includes `Obsidian.com` and the legacy `obsidian-cli.exe` name, preserves explicit executable overrides, and finds native all-user installations from 32-bit Node.js on 64-bit Windows.
+- Inspect the active Vault renderer when a Settings pop-out is exposed first.
+- Recognise the current mobile Modal header when checking safe-area and touch-target behaviour.
 
 ### Documentation
 
-- Documented validated release qualification, unverified regression probes, managed AppImage controls, and the boundary between a passing probe and supported-version evidence.
+- Documented managed AppImage controls, version policies, validated release qualification, and unverified regression probes.
+- Clarified the verification boundary: the complete real-Obsidian session matrix covers Linux and macOS, while Windows executable discovery has separate coverage.
 
 ## 0.2.6
 
