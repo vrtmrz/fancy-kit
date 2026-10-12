@@ -48,9 +48,10 @@ export function validateReleaseSelection({
   if (manifest.name !== packageName) throw new Error(`Manifest name is ${manifest.name}, not ${packageName}`);
   if (manifest.version !== expectedVersion) throw new Error(`Manifest version is ${manifest.version}, not ${expectedVersion}`);
   if (lockEntry?.version !== expectedVersion) throw new Error(`Lockfile version is ${lockEntry?.version ?? "missing"}, not ${expectedVersion}`);
-  if (distTag !== "next") throw new Error("Staged releases must use the next dist-tag");
+  if (distTag !== "next" && distTag !== "latest") throw new Error("Staged release dist-tag must be next or latest");
+  if (distTag === "latest" && expectedVersion.includes("-")) throw new Error("Prereleases must use the next dist-tag");
 
-  const requiredConfirmation = `stage ${packageName}@${expectedVersion} from ${expectedSha}`;
+  const requiredConfirmation = `stage ${packageName}@${expectedVersion} to ${distTag} from ${expectedSha}`;
   if (confirmation !== requiredConfirmation) throw new Error(`Confirmation must be exactly: ${requiredConfirmation}`);
 
   if (dependsOnUiInteractions(packageName)) {
