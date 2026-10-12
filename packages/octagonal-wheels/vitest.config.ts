@@ -1,8 +1,8 @@
-/// <reference types="@vitest/browser/providers/playwright" />
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-    esbuild: {
+    oxc: {
         target: 'es2018',
     },
     test: {
@@ -22,16 +22,16 @@ export default defineConfig({
             // ignoreEmptyLines: true,
         },
         browser: {
-            provider: "playwright",
+            provider: playwright({
+                launchOptions: {
+                    args: ['--js-flags=--expose-gc'],
+                },
+            }),
             enabled: true,
             screenshotFailures: false,
             instances: [
                 {
                     browser: 'chromium',
-                    launch: {
-                        args: ['--js-flags=--expose-gc'],
-                    }
-
                     // options: {
                     //     headless: true,
                     //     slowMo: 0,
