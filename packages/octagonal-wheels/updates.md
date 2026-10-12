@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.55
+
+### Maintenance
+
+- Our browser-test toolchain now uses patched Vitest dependencies. Development metadata uses Vitest 4.1.11 and its Playwright provider, removing the vulnerable Tinypool dependency and the unused WebdriverIO dependency path.
+
 ## 0.1.54
 
 ### Fixed
