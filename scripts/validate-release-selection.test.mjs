@@ -14,7 +14,7 @@ const base = {
   distTag: "next",
   expectedSha: sha,
   actualSha: sha,
-  confirmation: `stage @vrtmrz/ui-interactions@0.1.0-rc.0 from ${sha}`,
+  confirmation: `stage @vrtmrz/ui-interactions@0.1.0-rc.0 to next from ${sha}`,
   manifest: { name: "@vrtmrz/ui-interactions", version: "0.1.0-rc.0" },
   lockEntry: { version: "0.1.0-rc.0" },
   uiManifest: { version: "0.1.0-rc.0" },
@@ -29,27 +29,63 @@ test("accepts octagonal-wheels from its monorepo package directory", () => {
     ...base,
     packageName: "octagonal-wheels",
     expectedVersion: "0.1.48-preview.0",
-    confirmation: `stage octagonal-wheels@0.1.48-preview.0 from ${sha}`,
+    confirmation: `stage octagonal-wheels@0.1.48-preview.0 to next from ${sha}`,
     manifest: { name: "octagonal-wheels", version: "0.1.48-preview.0" },
     lockEntry: { version: "0.1.48-preview.0" },
   };
   assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/octagonal-wheels");
 });
 
-test("rejects every staged release sent to latest", () => {
-  assert.throws(() => validateReleaseSelection({ ...base, distTag: "latest" }), /must use the next dist-tag/);
-  assert.throws(
-    () => validateReleaseSelection({
+for (const distTag of ["next", "latest"]) {
+  test(`accepts stable versions under ${distTag}`, () => {
+    const selection = {
       ...base,
       expectedVersion: "0.1.0",
-      distTag: "latest",
-      confirmation: `stage @vrtmrz/ui-interactions@0.1.0 from ${sha}`,
+      distTag,
+      confirmation: `stage @vrtmrz/ui-interactions@0.1.0 to ${distTag} from ${sha}`,
       manifest: { name: "@vrtmrz/ui-interactions", version: "0.1.0" },
       lockEntry: { version: "0.1.0" },
       uiManifest: { version: "0.1.0" },
+    };
+    assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/ui-interactions");
+  });
+}
+
+test("rejects prereleases under latest", () => {
+  assert.throws(
+    () => validateReleaseSelection({
+      ...base,
+      distTag: "latest",
+      confirmation: `stage @vrtmrz/ui-interactions@0.1.0-rc.0 to latest from ${sha}`,
     }),
-    /must use the next dist-tag/,
+    /Prereleases must use the next dist-tag/,
   );
+});
+
+test("rejects unsupported dist-tags", () => {
+  for (const distTag of ["", "beta", "Latest"]) {
+    assert.throws(() => validateReleaseSelection({ ...base, distTag }), /must be next or latest/);
+  }
+});
+
+test("requires confirmation of the selected dist-tag", () => {
+  const selection = {
+    ...base,
+    expectedVersion: "0.1.0",
+    manifest: { name: "@vrtmrz/ui-interactions", version: "0.1.0" },
+    lockEntry: { version: "0.1.0" },
+  };
+  for (const distTag of ["next", "latest"]) {
+    const wrongTag = distTag === "next" ? "latest" : "next";
+    assert.throws(
+      () => validateReleaseSelection({
+        ...selection,
+        distTag,
+        confirmation: `stage @vrtmrz/ui-interactions@0.1.0 to ${wrongTag} from ${sha}`,
+      }),
+      new RegExp(`Confirmation must be exactly: stage .* to ${distTag} from`),
+    );
+  }
 });
 
 test("rejects non-canonical or malformed release versions", () => {
@@ -66,7 +102,7 @@ test("requires each UI adapter dependency and lockfile to match UI interactions"
     const kit = {
       ...base,
       packageName,
-      confirmation: `stage ${packageName}@0.1.0-rc.0 from ${sha}`,
+      confirmation: `stage ${packageName}@0.1.0-rc.0 to next from ${sha}`,
       manifest: {
         name: packageName,
         version: "0.1.0-rc.0",

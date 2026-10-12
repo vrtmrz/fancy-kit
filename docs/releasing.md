@@ -21,7 +21,7 @@ Inspect the selected package's entry in the `pack:workspace` output. A scoped pa
 
 ## Version and dependency order
 
-Use a prerelease when consumer validation requires a registry version before the stable release. A compatible patch may instead be validated from an immutable local or CI-built tarball before staging the stable version under `next`. Do not publish a `0.0.0` package.
+Use a prerelease when consumer validation requires a registry version before the stable release. A compatible patch may instead be validated from an immutable local or CI-built tarball before staging the stable version under `latest`. Use `next` when registry-based consumer validation must precede promotion to `latest`. Do not publish a `0.0.0` package.
 
 `@vrtmrz/ui-interactions` must be versioned and published before a browser-kit or plug-in-kit release that depends on it. Update each selected adapter package to the exact intended published UI package version, and refresh the root lockfile before packing it.
 
@@ -194,18 +194,20 @@ Protect the GitHub `npm` environment with a required reviewer, and use a selecte
 
 After the trusted staged workflow has succeeded once, configure the npm package to require 2FA and disallow token publication. The workflow uses a GitHub-hosted runner, OIDC, and `npm stage publish`; it does not hold an npm token or publish directly.
 
-Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the full commit SHA, and the confirmation value shown by the workflow. Every staged package uses the `next` dist-tag. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
+Dispatch the workflow from an exact commit on `main`. Supply one package, its manifest version, the selected dist-tag, the full commit SHA, and the confirmation value shown by the workflow. The `dist_tag` input defaults to `next`. Choose `latest` for a stable version whose relevant consumer checks have already passed against an immutable local or CI-built tarball; prereleases must use `next`. The confirmation must name the selected tag as well as the package, version, and commit. The verification job runs the complete workspace gate, packs the selected package, records its checksum, and passes that immutable tarball to the protected staging job.
 
 The equivalent GitHub CLI dispatch is:
 
 ```bash
 sha=$(git rev-parse origin/main)
+dist_tag=latest
 gh workflow run publish-npm.yml \
   --ref main \
   -f package=<package-name> \
   -f version=<version> \
+  -f dist_tag="$dist_tag" \
   -f expected_sha="$sha" \
-  -f confirmation="stage <package-name>@<version> from $sha"
+  -f confirmation="stage <package-name>@<version> to $dist_tag from $sha"
 ```
 
 After the protected GitHub environment has approved the stage job, inspect the staged entry with npm 11.15.0 or later:
@@ -215,17 +217,17 @@ npx --yes npm@11.18.0 stage list <package-name> --json
 npx --yes npm@11.18.0 stage view <stage-id> --json
 ```
 
-Approve only the reviewed stage ID. Approval publishes the package under `next`; it does not promote `latest`:
+Before approval, inspect the stage ID, package, version, checksum, provenance, and dist-tag. A stage's tag is fixed when it is created. Approval with 2FA publishes the package under that selected tag: a `latest` stage becomes the default installed version immediately, while a `next` stage is available for registry-based consumer checks:
 
 ```bash
 npx --yes npm@11.18.0 stage approve <stage-id>
 ```
 
-Review the staged package on npm, download it when a final content comparison is useful, then approve it with 2FA. Keep both prerelease and stable versions on `next` during registry-based consumer validation. After the stable version passes that validation, promote it separately and interactively with `npm dist-tag add <package>@<version> latest`. Treat promotion as its own release operation; it is not implied by permission to stage or approve the package.
+Review the staged package on npm, download it when a final content comparison is useful, then approve it with 2FA. Keep versions on `next` when registry-based consumer validation remains outstanding. After a stable version passes that validation, promote it separately and interactively with `npm dist-tag add <package>@<version> latest`. A stable version staged under `latest` needs no separate promotion.
 
 Staged publishing requires npm 11.15.0 or later and Node.js 22.14.0 or later. Trusted publishing automatically records provenance for these public packages from this public repository. See the npm documentation for [Trusted Publishing](https://docs.npmjs.com/trusted-publishers/) and [staged publishing](https://docs.npmjs.com/staged-publishing/).
 
-After publication, install the exact released version in one consumer, run its build and focused tests, and only then migrate additional consumers or promote the stable version to `latest`.
+After publication, verify the exact registry artefact and its selected dist-tag. For a release under `next`, install the exact released version in one consumer and run its build and focused tests before migrating additional consumers or promoting a stable version to `latest`. For a release under `latest`, complete the relevant consumer checks before staging and confirm that the published artefact matches the reviewed tarball.
 
 ## octagonal-wheels releases
 
