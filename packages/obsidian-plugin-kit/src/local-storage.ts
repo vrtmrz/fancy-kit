@@ -1,10 +1,11 @@
-import { createLocalValueStore, LocalStorageError } from "@vrtmrz/local-storage";
+import { createDeletableValueStore, ValueStoreError } from "@vrtmrz/value-store";
 import type {
-  LocalValueStore,
-  LocalValueStoreOptions,
-} from "@vrtmrz/local-storage";
-import { createWebStorageLocalStore } from "@vrtmrz/local-storage/web-storage";
-import type { WebStorageAccess } from "@vrtmrz/local-storage/web-storage";
+  ValueDeleter,
+  ValueStore,
+  ValueStoreOptions,
+} from "@vrtmrz/value-store";
+import { createWebStorageValueStore } from "@vrtmrz/value-store/web-storage";
+import type { WebStorageAccess } from "@vrtmrz/value-store/web-storage";
 
 /**
  * The synchronous Obsidian App local-storage methods used by this adapter.
@@ -22,7 +23,8 @@ export interface ObsidianLocalStorage {
   loadLocalStorage(key: string): string | null;
   /**
    * Writes or deletes a raw string in the App's Vault-scoped local storage.
-   * Passing `null` deletes the key according to Obsidian's storage behaviour.
+   * Passing null deletes the key. Obsidian also treats an empty string as
+   * deletion, so this adapter rejects empty physical outputs before the host call.
    * @param key - The key after the prefix supplied in {@link ObsidianLocalStoreOptions}.
    * @param value - The raw string to store, or `null` to delete the key.
    */
@@ -30,7 +32,7 @@ export interface ObsidianLocalStorage {
 }
 
 /** Options for adapting Obsidian's host-owned local storage. */
-export interface ObsidianLocalStoreOptions extends LocalValueStoreOptions {
+export interface ObsidianLocalStoreOptions extends ValueStoreOptions {
   /**
    * The complete caller prefix within the App's Vault-scoped local storage.
    * The App owns Vault scoping; this adapter appends the caller key literally.
@@ -71,18 +73,18 @@ function readPrefix(options: ObsidianLocalStoreOptions): string {
   try {
     prefix = (options as { prefix?: unknown } | null | undefined)?.prefix;
   } catch {
-    throw new LocalStorageError("invalid-value");
+    throw new ValueStoreError("invalid-value");
   }
-  if (typeof prefix !== "string") throw new LocalStorageError("invalid-value");
+  if (typeof prefix !== "string") throw new ValueStoreError("invalid-value");
   return prefix;
 }
 
-function readValueOptions(options: LocalValueStoreOptions): LocalValueStoreOptions {
-  let serializer: LocalValueStoreOptions["serializer"];
+function readValueOptions(options: ValueStoreOptions): ValueStoreOptions {
+  let serializer: ValueStoreOptions["serializer"];
   try {
     serializer = options.serializer;
   } catch {
-    throw new LocalStorageError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
   return serializer === undefined ? {} : { serializer };
 }
@@ -99,7 +101,7 @@ function readOfficialMethods(
       saveLocalStorage: storage.saveLocalStorage,
     };
   } catch {
-    throw new LocalStorageError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
 }
 
@@ -108,13 +110,14 @@ function createOfficialStore(
   loadLocalStorage: ObsidianLocalStorage["loadLocalStorage"],
   saveLocalStorage: ObsidianLocalStorage["saveLocalStorage"],
   prefix: string,
-  options: LocalValueStoreOptions,
-): LocalValueStore {
-  return createLocalValueStore({
+  options: ValueStoreOptions,
+): ValueStore & ValueDeleter {
+  return createDeletableValueStore({
     get(key) {
       return loadLocalStorage.call(storage, prefix + key);
     },
     set(key, value) {
+      if (value === "") throw new ValueStoreError("invalid-value");
       saveLocalStorage.call(storage, prefix + key, value);
     },
     delete(key) {
@@ -130,29 +133,31 @@ function createOfficialStore(
  * The adapter appends caller keys literally and maps deletion to
  * `saveLocalStorage(key, null)`. Construction reads each host method once and
  * performs no storage operation. Calls retain the host receiver. The shared
- * local-value facade handles serialisation, validation, and asynchronous methods.
+ * value-store facade handles serialisation, validation, and asynchronous methods.
+ * Writes reject an empty physical output with `invalid-value` before calling
+ * the host, preserving any previous value.
  * Obsidian may swallow storage failures internally, so the adapter cannot report
  * errors which the host does not expose. No legacy storage is selected, and no
  * migration, enumeration, or clear operation is performed.
  *
  * @param storage - The App methods, normally from the current App instance.
  * @param options - The complete Vault-relative prefix and optional serializer.
- * @returns An asynchronous local-value reader and writer backed by Obsidian.
- * @throws {@link LocalStorageError} with `invalid-value` for an invalid prefix,
- * `unavailable` when a host method is missing, or `operation-failed` if reading
- * host method properties throws.
+ * @returns An asynchronous value store and explicit deleter backed by Obsidian.
+ * @throws {@link ValueStoreError} with `invalid-value` for an invalid prefix,
+ * `unavailable` when a host method is missing, or
+ * `operation-failed` if reading host method properties throws.
  */
 export function createObsidianLocalStore(
   storage: ObsidianLocalStorage | null | undefined,
   options: ObsidianLocalStoreOptions,
-): LocalValueStore {
+): ValueStore & ValueDeleter {
   const prefix = readPrefix(options);
   const methods = readOfficialMethods(storage);
   if (
     typeof methods.loadLocalStorage !== "function" ||
     typeof methods.saveLocalStorage !== "function"
   ) {
-    throw new LocalStorageError("unavailable");
+    throw new ValueStoreError("unavailable");
   }
   return createOfficialStore(
     storage as Partial<ObsidianLocalStorage>,
@@ -163,20 +168,20 @@ export function createObsidianLocalStore(
   );
 }
 
-function createLegacyStore(options: CompatibleObsidianLocalStoreOptions): LocalValueStore {
+function createLegacyStore(options: CompatibleObsidianLocalStoreOptions): ValueStore & ValueDeleter {
   let provider: CompatibleObsidianLocalStoreOptions["legacy"];
   try {
     provider = options.legacy;
   } catch {
-    throw new LocalStorageError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
-  if (typeof provider !== "function") throw new LocalStorageError("unavailable");
+  if (typeof provider !== "function") throw new ValueStoreError("unavailable");
 
   let source: LegacyLocalStoreSource;
   try {
     source = provider();
   } catch {
-    throw new LocalStorageError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
 
   let storage: unknown;
@@ -185,18 +190,18 @@ function createLegacyStore(options: CompatibleObsidianLocalStoreOptions): LocalV
     storage = (source as LegacyLocalStoreSource | null | undefined)?.storage;
     prefix = (source as LegacyLocalStoreSource | null | undefined)?.prefix;
   } catch {
-    throw new LocalStorageError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
-  if (typeof prefix !== "string") throw new LocalStorageError("invalid-value");
+  if (typeof prefix !== "string") throw new ValueStoreError("invalid-value");
   if (
     storage === null ||
     storage === undefined ||
     (typeof storage !== "object" && typeof storage !== "function")
   ) {
-    throw new LocalStorageError("unavailable");
+    throw new ValueStoreError("unavailable");
   }
   const valueOptions = readValueOptions(options);
-  return createWebStorageLocalStore(storage as WebStorageAccess, {
+  return createWebStorageValueStore(storage as WebStorageAccess, {
     prefix,
     ...valueOptions,
   });
@@ -205,19 +210,21 @@ function createLegacyStore(options: CompatibleObsidianLocalStoreOptions): LocalV
 /**
  * Selects official Obsidian storage or an explicitly supplied legacy Web Storage source.
  *
- * Selection happens once at construction. When both official methods exist,
- * only they are inspected and the `legacy` option is left unread. When both are
- * absent, the lazy provider is called once and its complete raw prefix is passed
- * unchanged to the Web Storage adapter. A partial or malformed official API is
- * rejected as `unavailable`; operation failures and malformed data never trigger
- * fallback. This factory performs no migration and keeps access to the legacy
- * source explicit. Use {@link createObsidianLocalStore} or
- * `createWebStorageLocalStore` directly when a single source is preferred.
+ * Selection happens once at construction. When both official methods exist, only
+ * they are inspected and the `legacy` option is left unread. When both are absent,
+ * the lazy provider is called once and its complete raw prefix is passed unchanged
+ * to the Web Storage adapter. Official storage rejects an empty physical string
+ * with `invalid-value` before the host call; legacy Web Storage can retain it.
+ * A partial or malformed official API is rejected as `unavailable`. The selected
+ * backend never changes after an operation failure. This factory performs no
+ * migration and keeps access to the legacy source explicit. Use
+ * {@link createObsidianLocalStore} or `createWebStorageValueStore` directly when a
+ * single source is preferred.
  *
  * @param storage - The optional official App methods.
  * @param options - The official prefix, optional serializer, and lazy legacy source.
- * @returns An asynchronous local-value reader and writer bound to the selected source.
- * @throws {@link LocalStorageError} with `invalid-value` for an invalid prefix,
+ * @returns An asynchronous value store and explicit deleter bound to the selected source.
+ * @throws {@link ValueStoreError} with `invalid-value` for an invalid prefix,
  * `unavailable` when neither a complete official API nor legacy source is
  * available, or `operation-failed` when reading host methods or invoking the
  * legacy provider fails.
@@ -225,7 +232,7 @@ function createLegacyStore(options: CompatibleObsidianLocalStoreOptions): LocalV
 export function createCompatibleObsidianLocalStore(
   storage: Partial<ObsidianLocalStorage> | null | undefined,
   options: CompatibleObsidianLocalStoreOptions,
-): LocalValueStore {
+): ValueStore & ValueDeleter {
   const prefix = readPrefix(options);
   const methods = readOfficialMethods(storage);
   const loadAbsent = methods.loadLocalStorage === undefined;
@@ -236,7 +243,7 @@ export function createCompatibleObsidianLocalStore(
     typeof methods.loadLocalStorage !== "function" ||
     typeof methods.saveLocalStorage !== "function"
   ) {
-    throw new LocalStorageError("unavailable");
+    throw new ValueStoreError("unavailable");
   }
 
   return createOfficialStore(

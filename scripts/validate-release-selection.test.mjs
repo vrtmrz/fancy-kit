@@ -21,18 +21,18 @@ const base = {
   uiManifest: { version: "0.1.0-rc.0" },
 };
 
-test("loads SecretStore metadata only for plugin or Node staging selection", () => {
+test("loads value-store metadata only for dependent staging selections", () => {
   const secretStorePath = "packages/secret-store/package.json";
-  const localStoragePath = "packages/local-storage/package.json";
+  const valueStorePath = "packages/value-store/package.json";
   const independentReads = [];
   const independentMetadata = readReleaseSelectionMetadata("octagonal-wheels", (path) => {
     independentReads.push(path);
     return path === "package-lock.json" ? { packages: {} } : { name: "fixture", version: "0.1.0" };
   });
   assert.equal(independentMetadata.secretStoreManifest, undefined);
-  assert.equal(independentMetadata.localStorageManifest, undefined);
+  assert.equal(independentMetadata.valueStoreManifest, undefined);
   assert.equal(independentReads.includes(secretStorePath), false);
-  assert.equal(independentReads.includes(localStoragePath), false);
+  assert.equal(independentReads.includes(valueStorePath), false);
 
   const pluginReads = [];
   const pluginMetadata = readReleaseSelectionMetadata("@vrtmrz/obsidian-plugin-kit", (path) => {
@@ -40,9 +40,9 @@ test("loads SecretStore metadata only for plugin or Node staging selection", () 
     return path === "package-lock.json" ? { packages: {} } : { name: "fixture", version: "0.1.0" };
   });
   assert.deepEqual(pluginMetadata.secretStoreManifest, { name: "fixture", version: "0.1.0" });
-  assert.deepEqual(pluginMetadata.localStorageManifest, { name: "fixture", version: "0.1.0" });
+  assert.deepEqual(pluginMetadata.valueStoreManifest, { name: "fixture", version: "0.1.0" });
   assert.equal(pluginReads.filter((path) => path === secretStorePath).length, 1);
-  assert.equal(pluginReads.filter((path) => path === localStoragePath).length, 1);
+  assert.equal(pluginReads.filter((path) => path === valueStorePath).length, 1);
 
   const nodeReads = [];
   const nodeMetadata = readReleaseSelectionMetadata("@vrtmrz/secret-store-node", (path) => {
@@ -50,9 +50,18 @@ test("loads SecretStore metadata only for plugin or Node staging selection", () 
     return path === "package-lock.json" ? { packages: {} } : { name: "fixture", version: "0.1.0" };
   });
   assert.deepEqual(nodeMetadata.secretStoreManifest, { name: "fixture", version: "0.1.0" });
-  assert.equal(nodeMetadata.localStorageManifest, undefined);
+  assert.deepEqual(nodeMetadata.valueStoreManifest, { name: "fixture", version: "0.1.0" });
   assert.equal(nodeReads.filter((path) => path === secretStorePath).length, 1);
-  assert.equal(nodeReads.includes(localStoragePath), false);
+  assert.equal(nodeReads.filter((path) => path === valueStorePath).length, 1);
+
+  const valueDependentReads = [];
+  const valueDependentMetadata = readReleaseSelectionMetadata("@vrtmrz/secret-store", (path) => {
+    valueDependentReads.push(path);
+    return path === "package-lock.json" ? { packages: {} } : { name: "fixture", version: "0.1.0" };
+  });
+  assert.equal(valueDependentReads.filter((path) => path === valueStorePath).length, 1);
+  assert.equal(valueDependentReads.filter((path) => path === secretStorePath).length, 1);
+  assert.equal(valueDependentMetadata.secretStoreManifest, undefined);
 });
 
 test("accepts an exact prerelease selection", () => {
@@ -80,19 +89,20 @@ test("accepts the Node SecretStore adapter as a scoped package", () => {
     manifest: {
       name: packageName,
       version: "0.1.0-rc.0",
-      dependencies: { "@vrtmrz/secret-store": "0.0.0", "age-encryption": "0.3.1" },
+      dependencies: { "@vrtmrz/secret-store": "0.0.0", "@vrtmrz/value-store": "0.0.0", "age-encryption": "0.3.1" },
     },
     lockEntry: {
       version: "0.1.0-rc.0",
-      dependencies: { "@vrtmrz/secret-store": "0.0.0", "age-encryption": "0.3.1" },
+      dependencies: { "@vrtmrz/secret-store": "0.0.0", "@vrtmrz/value-store": "0.0.0", "age-encryption": "0.3.1" },
     },
     secretStoreManifest: { version: "0.0.0" },
+    valueStoreManifest: { version: "0.0.0" },
   };
   assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/secret-store-node");
 });
 
-test("accepts local-storage as an independent scoped package", () => {
-  const packageName = "@vrtmrz/local-storage";
+test("accepts value-store as an independent scoped package", () => {
+  const packageName = "@vrtmrz/value-store";
   const selection = {
     ...base,
     packageName,
@@ -101,10 +111,10 @@ test("accepts local-storage as an independent scoped package", () => {
     manifest: { name: packageName, version: "0.1.0-rc.0" },
     lockEntry: { version: "0.1.0-rc.0" },
   };
-  assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/local-storage");
+  assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/value-store");
 });
 
-for (const packageName of ["@vrtmrz/local-storage", "@vrtmrz/secret-store"]) {
+for (const packageName of ["@vrtmrz/value-store", "@vrtmrz/secret-store"]) {
   for (const distTag of ["next", "latest"]) {
     test(`rejects development version 0.0.0 for ${packageName} under ${distTag}`, () => {
       const selection = {
@@ -121,14 +131,19 @@ for (const packageName of ["@vrtmrz/local-storage", "@vrtmrz/secret-store"]) {
   }
 }
 
-test("accepts SecretStore as an independent scoped package", () => {
+test("accepts SecretStore with its ValueStore dependency", () => {
   const packageName = "@vrtmrz/secret-store";
   const selection = {
     ...base,
     packageName,
     confirmation: `stage ${packageName}@0.1.0-rc.0 to next from ${sha}`,
-    manifest: { name: packageName, version: "0.1.0-rc.0" },
-    lockEntry: { version: "0.1.0-rc.0" },
+    manifest: {
+      name: packageName,
+      version: "0.1.0-rc.0",
+      dependencies: { "@vrtmrz/value-store": "0.0.0" },
+    },
+    lockEntry: { version: "0.1.0-rc.0", dependencies: { "@vrtmrz/value-store": "0.0.0" } },
+    valueStoreManifest: { version: "0.0.0" },
   };
   assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/secret-store");
 });
@@ -229,7 +244,7 @@ function pluginSelection() {
       dependencies: {
         "@vrtmrz/ui-interactions": "0.1.0-rc.0",
         "@vrtmrz/secret-store": "0.0.0",
-        "@vrtmrz/local-storage": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
       },
     },
     lockEntry: {
@@ -237,12 +252,12 @@ function pluginSelection() {
       dependencies: {
         "@vrtmrz/ui-interactions": "0.1.0-rc.0",
         "@vrtmrz/secret-store": "0.0.0",
-        "@vrtmrz/local-storage": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
       },
     },
     uiManifest: { version: "0.1.0-rc.0" },
     secretStoreManifest: { version: "0.0.0" },
-    localStorageManifest: { version: "0.0.0" },
+    valueStoreManifest: { version: "0.0.0" },
   };
 }
 
@@ -257,6 +272,7 @@ function nodeSelection() {
       version: "0.1.0-rc.0",
       dependencies: {
         "@vrtmrz/secret-store": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
         "age-encryption": "0.3.1",
       },
     },
@@ -264,12 +280,32 @@ function nodeSelection() {
       version: "0.1.0-rc.0",
       dependencies: {
         "@vrtmrz/secret-store": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
         "age-encryption": "0.3.1",
       },
     },
     secretStoreManifest: { version: "0.0.0" },
+    valueStoreManifest: { version: "0.0.0" },
   };
 }
+
+test("requires the Node adapter's ValueStore pin to match the workspace", () => {
+  const selection = nodeSelection();
+  selection.manifest.dependencies["@vrtmrz/value-store"] = "0.0.1";
+  assert.throws(
+    () => validateReleaseSelection(selection),
+    /value-store.*workspace contains 0.0.0/,
+  );
+});
+
+test("requires the Node adapter's ValueStore pin to match the lockfile", () => {
+  const selection = nodeSelection();
+  selection.lockEntry.dependencies["@vrtmrz/value-store"] = "0.0.1";
+  assert.throws(
+    () => validateReleaseSelection(selection),
+    /value-store dependency does not match the lockfile/,
+  );
+});
 
 test("requires the Node adapter's SecretStore pin to match the workspace", () => {
   const selection = nodeSelection();
@@ -311,43 +347,43 @@ test("requires the Node adapter's SecretStore pin to match the lockfile", () => 
   );
 });
 
-test("requires the selected plugin's local-storage pin to match the workspace", () => {
+test("requires the selected plugin's value-store pin to match the workspace", () => {
   const selection = pluginSelection();
-  selection.manifest.dependencies["@vrtmrz/local-storage"] = "0.0.1";
+  selection.manifest.dependencies["@vrtmrz/value-store"] = "0.0.1";
   assert.throws(
     () => validateReleaseSelection(selection),
-    /local-storage.*workspace contains 0.0.0/,
+    /value-store.*workspace contains 0.0.0/,
   );
 });
 
-test("rejects a missing plugin local-storage pin and workspace manifest", () => {
+test("rejects a missing plugin value-store pin and workspace manifest", () => {
   const selection = pluginSelection();
-  delete selection.manifest.dependencies["@vrtmrz/local-storage"];
-  delete selection.lockEntry.dependencies["@vrtmrz/local-storage"];
-  delete selection.localStorageManifest;
+  delete selection.manifest.dependencies["@vrtmrz/value-store"];
+  delete selection.lockEntry.dependencies["@vrtmrz/value-store"];
+  delete selection.valueStoreManifest;
   assert.throws(
     () => validateReleaseSelection(selection),
-    /@vrtmrz\/local-storage/,
+    /@vrtmrz\/value-store/,
   );
 });
 
-test("rejects a malformed plugin local-storage pin even when workspace and lockfile match", () => {
+test("rejects a malformed plugin value-store pin even when workspace and lockfile match", () => {
   const selection = pluginSelection();
-  selection.manifest.dependencies["@vrtmrz/local-storage"] = "latest";
-  selection.lockEntry.dependencies["@vrtmrz/local-storage"] = "latest";
-  selection.localStorageManifest.version = "latest";
+  selection.manifest.dependencies["@vrtmrz/value-store"] = "latest";
+  selection.lockEntry.dependencies["@vrtmrz/value-store"] = "latest";
+  selection.valueStoreManifest.version = "latest";
   assert.throws(
     () => validateReleaseSelection(selection),
-    /@vrtmrz\/local-storage/,
+    /@vrtmrz\/value-store/,
   );
 });
 
-test("requires the selected plugin's local-storage pin to match the lockfile", () => {
+test("requires the selected plugin's value-store pin to match the lockfile", () => {
   const selection = pluginSelection();
-  selection.lockEntry.dependencies["@vrtmrz/local-storage"] = "0.0.1";
+  selection.lockEntry.dependencies["@vrtmrz/value-store"] = "0.0.1";
   assert.throws(
     () => validateReleaseSelection(selection),
-    /local-storage dependency does not match the lockfile/,
+    /value-store dependency does not match the lockfile/,
   );
 });
 
@@ -406,7 +442,7 @@ test("requires each UI adapter's UI version to exist on npm", async () => {
       dependencies: {
         "@vrtmrz/ui-interactions": "0.1.0",
         ...(packageName === "@vrtmrz/obsidian-plugin-kit"
-          ? { "@vrtmrz/secret-store": "0.0.0", "@vrtmrz/local-storage": "0.0.0" }
+          ? { "@vrtmrz/secret-store": "0.0.0", "@vrtmrz/value-store": "0.0.0" }
           : {}),
       },
     };
@@ -424,24 +460,40 @@ test("requires each UI adapter's UI version to exist on npm", async () => {
   }
 });
 
-test("requires the plugin's SecretStore version to exist on npm alongside UI interactions", async () => {
+test("requires ValueStore to be published before staging SecretStore", async () => {
+  const packageName = "@vrtmrz/secret-store";
+  const manifest = { dependencies: { "@vrtmrz/value-store": "0.1.0" } };
+  const requests = [];
+  await assert.rejects(
+    assertKitDependencyIsPublished(packageName, manifest, async (url) => {
+      requests.push(url);
+      return { ok: false };
+    }),
+    /@vrtmrz\/value-store@0\.1\.0 must be published/,
+  );
+  assert.deepEqual(requests, ["https://registry.npmjs.org/%40vrtmrz%2Fvalue-store/0.1.0"]);
+});
+
+test("requires the plugin's ValueStore and SecretStore versions to exist on npm alongside UI interactions", async () => {
   const packageName = "@vrtmrz/obsidian-plugin-kit";
   const manifest = {
     dependencies: {
       "@vrtmrz/ui-interactions": "0.1.0",
       "@vrtmrz/secret-store": "0.0.0",
+      "@vrtmrz/value-store": "0.0.0",
     },
   };
   const requests = [];
   await assert.rejects(
     assertKitDependencyIsPublished(packageName, manifest, async (url) => {
       requests.push(url);
-      return { ok: url.includes("%40vrtmrz%2Fui-interactions") };
+      return { ok: !url.includes("%40vrtmrz%2Fsecret-store") };
     }),
     /@vrtmrz\/secret-store@0.0.0 must be published/,
   );
   assert.deepEqual(requests, [
     "https://registry.npmjs.org/%40vrtmrz%2Fui-interactions/0.1.0",
+    "https://registry.npmjs.org/%40vrtmrz%2Fvalue-store/0.0.0",
     "https://registry.npmjs.org/%40vrtmrz%2Fsecret-store/0.0.0",
   ]);
 });
@@ -450,42 +502,42 @@ test("requires the plugin's SecretStore version to exist on npm alongside UI int
 test("requires SecretStore to be published before staging the Node adapter", async () => {
   const packageName = "@vrtmrz/secret-store-node";
   const manifest = {
-    dependencies: { "@vrtmrz/secret-store": "0.0.0", "age-encryption": "0.3.1" },
+    dependencies: { "@vrtmrz/secret-store": "0.0.0", "@vrtmrz/value-store": "0.0.0", "age-encryption": "0.3.1" },
   };
   const requests = [];
   await assert.rejects(
     assertKitDependencyIsPublished(packageName, manifest, async (url) => {
       requests.push(url);
-      return { ok: false };
+      return { ok: !url.includes("%40vrtmrz%2Fsecret-store") };
     }),
     /@vrtmrz\/secret-store@0\.0\.0 must be published/,
   );
   assert.deepEqual(requests, [
+    "https://registry.npmjs.org/%40vrtmrz%2Fvalue-store/0.0.0",
     "https://registry.npmjs.org/%40vrtmrz%2Fsecret-store/0.0.0",
   ]);
 });
 
 
-test("requires local-storage to be published before staging the plugin", async () => {
+test("requires value-store to be published before staging the plugin", async () => {
   const packageName = "@vrtmrz/obsidian-plugin-kit";
   const manifest = {
     dependencies: {
       "@vrtmrz/ui-interactions": "0.1.0",
       "@vrtmrz/secret-store": "0.0.0",
-      "@vrtmrz/local-storage": "0.0.0",
+      "@vrtmrz/value-store": "0.0.0",
     },
   };
   const requests = [];
   await assert.rejects(
     assertKitDependencyIsPublished(packageName, manifest, async (url) => {
       requests.push(url);
-      return { ok: !url.includes("%40vrtmrz%2Flocal-storage") };
+      return { ok: !url.includes("%40vrtmrz%2Fvalue-store") };
     }),
-    /@vrtmrz\/local-storage@0\.0\.0 must be published/,
+    /@vrtmrz\/value-store@0\.0\.0 must be published/,
   );
   assert.deepEqual(requests, [
     "https://registry.npmjs.org/%40vrtmrz%2Fui-interactions/0.1.0",
-    "https://registry.npmjs.org/%40vrtmrz%2Fsecret-store/0.0.0",
-    "https://registry.npmjs.org/%40vrtmrz%2Flocal-storage/0.0.0",
+    "https://registry.npmjs.org/%40vrtmrz%2Fvalue-store/0.0.0",
   ]);
 });

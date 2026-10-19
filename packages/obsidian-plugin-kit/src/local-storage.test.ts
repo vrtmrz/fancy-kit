@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { LocalStorageError } from "@vrtmrz/local-storage";
-import type { LocalValueStoreOptions, ObjectValue, ValueSerializer } from "@vrtmrz/local-storage";
-import { createWebStorageLocalStore } from "@vrtmrz/local-storage/web-storage";
-import type { WebStorageAccess } from "@vrtmrz/local-storage/web-storage";
-import { runLocalValueStoreContract } from "../../local-storage/test/contract-cases.js";
+import { ValueStoreError } from "@vrtmrz/value-store";
+import type { ObjectValue, ValueSerializer, ValueStoreOptions } from "@vrtmrz/value-store";
+import { createWebStorageValueStore } from "@vrtmrz/value-store/web-storage";
+import type { WebStorageAccess } from "@vrtmrz/value-store/web-storage";
+import { runValueStoreContract } from "../../value-store/test/contract-cases.js";
 import {
   createCompatibleObsidianLocalStore,
   createObsidianLocalStore,
@@ -54,7 +54,10 @@ function serializer(prefix = "encoded:") {
   } satisfies ValueSerializer & { prefix: string };
 }
 
-runLocalValueStoreContract(() => createObsidianLocalStore(obsidianHost(), { prefix: "" }));
+runValueStoreContract(() => createObsidianLocalStore(obsidianHost(), {
+  prefix: "",
+  serializer: serializer(),
+}));
 
 describe("createObsidianLocalStore", () => {
   it("passes value strings directly to App storage with a literal prefix", async () => {
@@ -97,13 +100,13 @@ describe("createObsidianLocalStore", () => {
     await expect(store.getObject("absent")).resolves.toBeUndefined();
   });
 
-  it("deletes empty value writes before serialising and reads external empty strings", async () => {
+  it("deletes values explicitly and reads external empty strings", async () => {
     const storage = obsidianHost();
     const transform = serializer();
     const store = createObsidianLocalStore(storage, { prefix: "p/", serializer: transform });
 
     await store.setValue("empty", "present");
-    await store.setValue("empty", "");
+    await store.delete("empty");
     expect(storage.saveLocalStorage).toHaveBeenLastCalledWith("p/empty", null);
     expect(transform.serialize).toHaveBeenCalledExactlyOnceWith("empty", "present");
     expect(await store.getValue("empty")).toBeNull();
@@ -127,10 +130,64 @@ describe("createObsidianLocalStore", () => {
     );
   });
 
+  it.each([
+    {
+      key: "identity-empty",
+      value: "",
+      options: {},
+    },
+    {
+      key: "serialized-empty",
+      value: "ordinary-value",
+      options: {
+        serializer: {
+          serialize: vi.fn(async () => ""),
+          deserialize: vi.fn(async (_key: string, value: string) => value),
+        } satisfies ValueSerializer,
+      },
+    },
+  ] as const)(
+    "rejects empty physical output before official or legacy writes (case %#)",
+    async (testCase) => {
+      const storage = obsidianHost();
+      storage.values.set(`p/${testCase.key}`, "existing-value");
+      const legacy = webHost();
+      const provider = vi.fn(() => source(legacy, "legacy/"));
+      const store = createCompatibleObsidianLocalStore(storage, {
+        prefix: "p/",
+        ...testCase.options,
+        legacy: provider,
+      });
+
+      await expect(store.setValue(testCase.key, testCase.value)).rejects.toMatchObject({
+        code: "invalid-value",
+      });
+      expect(storage.saveLocalStorage).not.toHaveBeenCalled();
+      expect(storage.values.get(`p/${testCase.key}`)).toBe("existing-value");
+      expect(provider).not.toHaveBeenCalled();
+      expect(legacy.setItem).not.toHaveBeenCalled();
+    },
+  );
+
+  it("allows an empty logical value when the serializer produces non-empty output", async () => {
+    const storage = obsidianHost();
+    const transform = serializer();
+    const store = createObsidianLocalStore(storage, {
+      prefix: "p/",
+      serializer: transform,
+    });
+
+    await store.setValue("empty", "");
+
+    expect(transform.serialize).toHaveBeenCalledExactlyOnceWith("empty", "");
+    expect(storage.saveLocalStorage).toHaveBeenCalledExactlyOnceWith("p/empty", "encoded:empty:");
+    await expect(store.getValue("empty")).resolves.toBe("");
+  });
+
   it("awaits each serializer operation once with the logical key and raw string boundary", async () => {
     const storage = obsidianHost();
     const transform = serializer();
-    const options: LocalValueStoreOptions = { serializer: transform };
+    const options: ValueStoreOptions = { serializer: transform };
     const store = createObsidianLocalStore(storage, { prefix: "physical::", ...options });
 
     await store.setValue("value-key", "raw-value");
@@ -235,7 +292,7 @@ describe("createObsidianLocalStore", () => {
     const store = createObsidianLocalStore(storage, { prefix: "p/" });
 
     const readError = await store.getValue("key").catch((failure: unknown) => failure);
-    expect(readError).toBeInstanceOf(LocalStorageError);
+    expect(readError).toBeInstanceOf(ValueStoreError);
     expect(readError).toMatchObject({ code: "operation-failed" });
     expect(String(readError)).not.toContain("host-secret-sentinel");
     expect(Object.hasOwn(readError as object, "cause")).toBe(false);
@@ -283,6 +340,22 @@ describe("createCompatibleObsidianLocalStore", () => {
     expect(transform.serialize).toHaveBeenCalledExactlyOnceWith("token", "raw-value");
     expect(transform.deserialize).toHaveBeenCalledExactlyOnceWith("token", "legacy:token:raw-value");
     expect(legacy.getItem).toHaveBeenCalledExactlyOnceWith("vault::plugin::token");
+  });
+
+  it("stores and reads empty values in the explicitly selected legacy backend", async () => {
+    const legacy = webHost();
+    const provider = vi.fn(() => source(legacy, "vault::plugin::"));
+    const store = createCompatibleObsidianLocalStore(undefined, {
+      prefix: "official/",
+      legacy: provider,
+    });
+
+    await store.setValue("empty", "");
+
+    expect(provider).toHaveBeenCalledOnce();
+    expect(legacy.setItem).toHaveBeenCalledExactlyOnceWith("vault::plugin::empty", "");
+    expect(legacy.removeItem).not.toHaveBeenCalled();
+    await expect(store.getValue("empty")).resolves.toBe("");
   });
 
   it.each([undefined, null, {}])(
@@ -340,7 +413,7 @@ describe("createCompatibleObsidianLocalStore", () => {
     const legacy = webHost();
     legacy.values.set("vault::plugin::token", "legacy-value");
     const currentStore = createObsidianLocalStore(official, { prefix: "official/" });
-    const legacyStore = createWebStorageLocalStore(legacy, { prefix: "vault::plugin::" });
+    const legacyStore = createWebStorageValueStore(legacy, { prefix: "vault::plugin::" });
 
     const current = await currentStore.getValue("token");
     if (current === null) {

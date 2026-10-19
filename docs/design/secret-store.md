@@ -1,10 +1,10 @@
 # Cross-platform SecretStore design
 
-Status: Phases 1 through 3d are implemented and locally verified. Later implementation remains proposed. No consumer migration or registry release is included.
+Status: SecretStore Phases 1 through 3d are implemented and locally verified, including the shared value operations and separate package boundaries in [ADR 0003](../adr/0003-value-store-capabilities.md). No consumer migration or registry release is included.
 
 Date: 2026-10-19
 
-Decision records: [ADR 0001](../adr/0001-secret-store-boundaries.md) and [ADR 0002](../adr/0002-value-store-serialisation.md).
+Decision records: [ADR 0001](../adr/0001-secret-store-boundaries.md), [ADR 0002](../adr/0002-value-store-serialisation.md), and the superseding shared-capability decision [ADR 0003](../adr/0003-value-store-capabilities.md).
 
 ## Purpose and scope
 
@@ -20,28 +20,30 @@ Octagonal Wheels retains its existing encryption APIs, subtree history, and rele
 
 The root workspace glob discovers package directories, but the build, check, test, packed-consumer, and release machinery contains explicit package lists. Implementation therefore requires more than adding a manifest. [CONTRIBUTING.md](../../CONTRIBUTING.md), [packed-consumer verification](../../scripts/verify-packed-consumer.mjs), and [the release runbook](../releasing.md) remain authoritative for those paths.
 
-## Package and dependency proposal
+## Package and dependency layout
 
 ```text
-Application workflow -> SecretReader
-                           ^
-                  @vrtmrz/secret-store
-                    ^       ^       ^
-   obsidian-plugin-kit   secret-store-node   secret-store-keychain
-       ./secrets          ./age  ./systemd        (later)
-           |                |                     |
-     Obsidian API     age-encryption / Node   native credential API
+Application workflow
+  ├─ SecretReader / SecretStore ──> @vrtmrz/secret-store ──> @vrtmrz/value-store
+  └─ ValueReader / ValueStore ─────────────────────────────> @vrtmrz/value-store
 
-secret-store-cli -> selected Node adapter and neutral capability
+@vrtmrz/obsidian-plugin-kit/secrets ──> @vrtmrz/secret-store
+@vrtmrz/obsidian-plugin-kit/local-storage ──> @vrtmrz/value-store
+@vrtmrz/secret-store-node/age ──> @vrtmrz/secret-store, @vrtmrz/value-store (shared errors),
+                                  age-encryption, and Node filesystem APIs
+
+@vrtmrz/value-store
+  ├─ ./web-storage
+  └─ ./node-json-file (Node built-ins isolated to this entry)
 ```
 
-This diagram shows the dependency roadmap; `@vrtmrz/secret-store`, `@vrtmrz/obsidian-plugin-kit/secrets`, and `@vrtmrz/secret-store-node/age` are implemented. Arrows towards the neutral package denote dependencies. All backend construction stays at the application's composition root.
+This diagram shows the current package boundaries. `@vrtmrz/secret-store` depends on `@vrtmrz/value-store`; the Obsidian and Node adapters consume the secret profile, and the Node adapter also imports the shared error type from ValueStore. Arrows towards a package denote dependencies. All backend construction stays at the application's composition root.
 
 | Entry | Runtime and dependencies | Timing |
 | --- | --- | --- |
-| `@vrtmrz/secret-store` | Types, error class, validation, and memory storage; no runtime dependency, Node built-in, DOM, or Obsidian import. | Phase 1 implemented; unpublished. |
-| `@vrtmrz/obsidian-plugin-kit/secrets` | Neutral package and an injected structural subset of Obsidian SecretStorage; retain Obsidian as the platform peer. | Phase 2 implemented; unreleased. |
-| `@vrtmrz/secret-store-node/age` | Neutral package, `age-encryption`, and Node filesystem APIs. | Phase 3b implemented; unpublished. |
+| `@vrtmrz/secret-store` | Secret-profile contracts and memory storage; depends on `@vrtmrz/value-store` for shared operations, types, and fixed errors, with no Node built-in, DOM, or Obsidian import. | Secret profile implemented; unpublished. |
+| `@vrtmrz/obsidian-plugin-kit/secrets` | SecretStore and ValueStore, plus an injected structural subset of Obsidian SecretStorage; retain Obsidian as the platform peer. | Phase 2 implemented; unreleased. |
+| `@vrtmrz/secret-store-node/age` | SecretStore, ValueStore for shared errors, `age-encryption`, and Node filesystem APIs. | Phase 3b implemented; unpublished. |
 | `@vrtmrz/secret-store-cli` | Node age adapter initially; a separately reviewed backend selector if other management adapters are added. | Phase 4. |
 | `@vrtmrz/secret-store-node/systemd` | Neutral package and Node file reads; this entry must not evaluate the age codec. | Phase 5, when needed. |
 | `@vrtmrz/secret-store-keychain` | Neutral package and a native binding selected after platform tests. | Phase 5, when needed. |
@@ -52,7 +54,7 @@ The Node package groups file-based adapters, rather than publishing separate age
 
 ## Core public contract
 
-Phase 1 exports `SecretReader`, `SecretStore`, `SecretStoreError`, `SecretStoreErrorCode`, `validateSecretName`, and `MemorySecretStore`. Phase 3d adds `ObjectValue`, `ValueSerializer`, and `SecretStoreOptions` to the public contract. The interface signatures are defined in the [ADRs](../adr/0001-secret-store-boundaries.md#keep-the-common-contract-small) and their update [for value serialisation](../adr/0002-value-store-serialisation.md). Exported declarations and option fields require TSDoc covering these behaviours:
+The secret package exports `SecretReader`, `SecretStore`, `validateSecretName`, `MemorySecretStore`, and `SecretStoreOptions`. `ObjectValue`, `ValueSerializer`, `ValueStoreError`, and `ValueStoreErrorCode` are shared public contracts from `@vrtmrz/value-store`. The original profile boundary is defined in [ADR 0001](../adr/0001-secret-store-boundaries.md#keep-the-common-contract-small); the accepted shared-capability update is [ADR 0003](../adr/0003-value-store-capabilities.md), which supersedes the value-package split in ADR 0002. Exported declarations and option fields require TSDoc covering these behaviours:
 
 | Operation | Contract |
 | --- | --- |
@@ -65,7 +67,7 @@ Phase 1 exports `SecretReader`, `SecretStore`, `SecretStoreError`, `SecretStoreE
 
 Getter defaults are validated before I/O and are never transformed or persisted. Object defaults are detached snapshots taken before awaiting. A supplied default removes absence from the return type without asserting the shape of stored JSON; it never replaces storage, decryption, or parse failures.
 
-`ValueSerializer` is an optional instance-scoped pair of `serialize(name, value)` and `deserialize(name, value)` methods; each may return a string or a promise. It is captured with its receiver at construction, with no construction-time I/O. String operations call it once per present read or write; object operations pass JSON text through the same pair. A missing read bypasses deserialisation. Validate logical names and values before transforming them, validate serializer results before backend writes, and map failures to fixed errors without causes or fallback. Without a serializer, strings pass through unchanged. The structural type is owned by the neutral contract; no runtime dependency is added between local and secret storage.
+`ValueSerializer` is an optional instance-scoped pair of `serialize(name, value)` and `deserialize(name, value)` methods; each may return a string or a promise. It is captured with its receiver at construction, with no construction-time I/O. String operations call it once per present read or write; object operations pass JSON text through the same pair. A missing read bypasses deserialisation. Validate logical names and values before transforming them, validate serializer results before backend writes, and map failures to fixed errors without causes or fallback. Without a serializer, strings pass through unchanged. The structural type and shared value operations are owned by `@vrtmrz/value-store`; `@vrtmrz/secret-store` depends on that package without selecting a backend.
 
 Empty values, line endings, leading or trailing whitespace, NUL characters, and well-formed Unicode are data. Do not trim, normalise, interpolate, or treat a falsy string as missing. Reject unpaired UTF-16 surrogates as `invalid-value`, since portable UTF-8 storage cannot round-trip them unchanged. Do not promise a universal maximum value size: each backend documents its limit and rejects oversized values before writing. A backend which cannot preserve a supported value must explicitly reject it; compatibility tests must expose any such restriction.
 
@@ -103,7 +105,7 @@ Passing a reader type limits application coupling. Actual read-only operation re
 
 ### Failure categories and redaction
 
-`SecretStoreError` has a readonly `code` and a fixed message selected from that code. Its public constructor takes the code, not a user-supplied message or raw cause.
+`ValueStoreError` has a readonly `code` and a fixed message selected from that code. SecretStore uses this shared error class; its public constructor takes the code, not a user-supplied message or raw cause.
 
 | Code | Evidence needed |
 | --- | --- |
@@ -400,19 +402,19 @@ The core and Obsidian adapter have shared behavioural cases, compile-time fixtur
 
 | Phase | Deliverables | Completion evidence and remaining decision |
 | --- | --- | --- |
-| 1: Neutral core | Add `secret-store`, two interfaces, name/value validation, fixed-code errors, and a memory store. Add TSDoc, package README, compile-time and behavioural tests. Wire workspace and packed-consumer checks. | Accepted and implemented with the portable name profile and exact Unicode value policy. Package tests, public type fixtures, and packed-consumer checks cover the core. No runtime dependency, backend selection, URI helper, optional management capability, or platform implementation enters this phase. |
+| 1: Neutral core | Add `secret-store`, two interfaces, name/value validation, fixed-code errors, and a memory store. Add TSDoc, package README, compile-time and behavioural tests. Wire workspace and packed-consumer checks. | Accepted and implemented with the portable name profile and exact Unicode value policy. Package tests, public type fixtures, and packed-consumer checks cover the core. The initial phase had no runtime dependency; ADR 0003 later adds the shared `value-store` engine. It does not introduce backend selection, URI helpers, optional management capabilities, or platform implementations. |
 | 2: Obsidian | Add a focused adapter and export, neutral dependency, injected tests, and feature-specific compatibility documentation. | Implemented with injected host tests, packed-consumer checks, and isolated-profile value and restart verification on reviewed 1.13.6. The 1.11.4 minimum was exercised as an unverified regression probe. Common names are limited to 64 characters; existing package minimums are preserved. Mobile and other desktop platforms remain unqualified for this adapter. |
 | 3a: age feasibility | Pin and review typage and transitive requirements; keep the codec and file operations separate; prove bidirectional interoperability. | Completed initially in a private test seam, now reusing the production internal codec: exact values, error classification, size limits, per-call identities, and bidirectional age 1.3.2/rage 0.12.1 checks. The [report](secret-store-age-feasibility.md) records the runtime matrix and metadata/layout implications. Filesystem authority and persistence are covered separately by Phase 3b. |
 | 3b: age reader and writer | Implement explicit-root factories, bounded safe reads, injected identities, recipient-only writes, permissions, and atomic replacement. | Implemented with real Linux arm64 ext4 fixtures, injected failure and concurrency tests, process termination before/after rename, installed-tarball checks, and public file-store/native-tool interoperability. Windows returns unavailable; macOS, network mounts, and hardware power loss remain unqualified. No recovery journal or automatic key provisioning. |
-| 3c: Local value backends | Add instance-owned memory storage, injected Web Storage, Node JSON-file storage, direct official Obsidian storage, and explicit legacy selection. | The initial synchronous JSON-value API passed shared cases, real Chromium restart, Node 20/22/24 filesystem tests, installed-tarball checks, and reviewed Obsidian 1.13.6 E2E. Phase 3d revises its public API and stored value boundary; its verification is recorded in the next row. No consumer migration is included. |
-| 3d: Value and object API with injected serialisation | Use asynchronous `getValue`/`setValue` and `getObject`/`setObject`, raw string backends, paired serializer DI, and a tested consumer-owned OW HKDF example across memory, Web Storage, Obsidian, and Node adapters. | Accepted in [ADR 0002](../adr/0002-value-store-serialisation.md); workspace contracts, failure tests, public declarations, packed-consumer checks, browser persistence, Node 20/22/24 tests, and all twelve reviewed Obsidian 1.13.6 scenarios have passed. Memory covers application-owned temporary state; no separate session service, CLI, key provisioning, or new OS adapter is included. |
+| 3c: Local value backends | Add instance-owned memory storage, injected Web Storage, Node JSON-file storage, direct official Obsidian storage, and explicit legacy selection. | The initial synchronous JSON-value API was verified against shared cases, Chromium restart, Node filesystem tests, packed consumers, and reviewed Obsidian 1.13.6 E2E. Its package and empty-string semantics were superseded; those results do not validate ADR 0003. No consumer migration is included. |
+| 3d: Value and object API with injected serialisation | Use asynchronous `getValue`/`setValue` and `getObject`/`setObject`, raw string backends, paired serializer DI, and a tested consumer-owned OW HKDF example across memory, Web Storage, Obsidian, and Node adapters. | Implemented under [ADR 0003](../adr/0003-value-store-capabilities.md), which supersedes the package split and empty-string rule in [ADR 0002](../adr/0002-value-store-serialisation.md). Fresh workspace, packed-consumer, Chromium, Node.js 20/22/24, native age/rage, and reviewed Obsidian 1.13.6 validation passed on 2026-10-19. The isolated ValueStore tarball install added no dependencies. No consumer migration or release is included. |
 | 4a: Management and provisioning | Add the separate CLI, explicit init/input/reveal paths, optional delete/list capabilities, recipient-policy inspection, explicit identity generation, file/environment identity sources, re-encryption into a new store, and non-revealing verification. | Review the proposed operational extension before implementation. PTY, pipe, failure, permission, headless, device-migration, and service-user deployment tests must qualify completion and publication. In-place recipient mutation and automatic activation remain deferred. |
 | 4b: Encrypted provisioning packs | Add explicit selected-entry pack creation, whole-pack validation, writable-store import, and value-free verification/reporting after the basic CLI. | Review the transfer schema, finite limits, existing-entry policy, and partial-failure semantics. Initially qualify age targets; add native or Obsidian targets when their adapters are ready. No universal batch transaction or automatic rollback. |
 | 5: Additional adapters | Add systemd or native keychain only for demonstrated consumer needs; qualify each independently. | Native dependency choice, persistence, platform matrix, and error limits must be evidenced. Other secret managers remain future adapters, not speculative interfaces. |
 
-When a package is introduced, update root script ordering, lockfile, package exports, packed-consumer fixtures, the publishable-package map in `scripts/validate-release-selection.mjs`, `scripts/prepare-release.mjs` dependency handling, relevant release-tool tests, workflow choices, architecture, and release documentation. Do not treat current UI-only dependency rules as sufficient for a new shared contract. Review `scripts/assert-bootstrap-publish.mjs` and the publishing workflow for their explicit selections as well. No release version or publication is selected by this design.
+When a package is introduced, update root script ordering, lockfile, package exports, packed-consumer fixtures, the publishable-package map in `scripts/validate-release-selection.mjs`, `scripts/prepare-release.mjs` dependency handling, relevant release-tool tests, workflow choices, architecture, and release documentation. Extend the dependency checks for each new shared contract. Review `scripts/assert-bootstrap-publish.mjs` and the publishing workflow for their explicit selections as well. No release version or publication is selected by this design.
 
-Phases 1 through 3d have verified implementations. Phase 3a established codec feasibility, Phase 3b added the explicit-root age reader and writer, and Phase 3c added ordinary local-value storage. Phase 3d aligns the public value/object API and serialisation boundary across the existing backends before the CLI. Phase 4a and 4b split the original management phase into basic management/provisioning and later encrypted transfer packs. Phase 5 retains independently qualified additional backends. The later phases remain a roadmap with explicit design and evidence gates; acceptance of the common contracts does not settle every backend or management command.
+The secret profile and age adapter retain their earlier validation and persistence contracts. Phase 3a established codec feasibility, Phase 3b added the explicit-root age reader and writer, and Phase 3c added the first ordinary value-storage package. ADR 0003 consolidates shared value operations in `@vrtmrz/value-store`, changes empty-string writes to stored data, and exposes deletion as a separate capability. Its current package and runtime evidence is recorded in [Proven in use](../proven-in-use.md). Phase 4a and 4b split the original management phase into basic management/provisioning and later encrypted transfer packs. Phase 5 retains independently qualified additional backends. The later phases remain a roadmap with explicit design and evidence gates; acceptance of the common contracts does not settle every backend or management command.
 
 ## Sources
 

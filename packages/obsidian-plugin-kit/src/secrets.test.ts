@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { SecretStoreError } from "@vrtmrz/secret-store";
-import type { ObjectValue, SecretStoreOptions, ValueSerializer } from "@vrtmrz/secret-store";
+import { ValueStoreError } from "@vrtmrz/value-store";
+import type { ObjectValue, ValueSerializer } from "@vrtmrz/value-store";
+import type { SecretStoreOptions } from "@vrtmrz/secret-store";
 import { createObsidianSecretStore } from "./secrets.js";
 import type { ObsidianSecretStorage } from "./secrets.js";
 import { secretStoreContract } from "../../secret-store/test/contract-cases.js";
@@ -20,7 +21,7 @@ describe("createObsidianSecretStore", () => {
   it.each([undefined, null, {}, { getSecret() {} }, { setSecret() {} }, {
     getSecret: "not-callable", setSecret() {},
   }])("rejects missing host methods at construction (case %#)", (storage) => {
-    expect(() => createObsidianSecretStore(storage as ObsidianSecretStorage)).toThrow(SecretStoreError);
+    expect(() => createObsidianSecretStore(storage as ObsidianSecretStorage)).toThrow(ValueStoreError);
     expect(() => createObsidianSecretStore(storage as ObsidianSecretStorage)).toThrow(
       expect.objectContaining({ code: "unavailable" }),
     );
@@ -160,7 +161,7 @@ describe("createObsidianSecretStore", () => {
       : store.setValue("token", "synthetic-value");
     const error = await promise.catch((failure: unknown) => failure);
 
-    expect(error).toBeInstanceOf(SecretStoreError);
+    expect(error).toBeInstanceOf(ValueStoreError);
     expect(error).toMatchObject({ code: "operation-failed" });
     expect(String(error)).not.toContain("secret-sentinel");
     expect(JSON.stringify(error)).not.toContain("secret-sentinel");

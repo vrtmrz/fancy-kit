@@ -4,6 +4,8 @@ Status: Accepted, implemented, and locally verified.
 
 Date: 2026-10-19
 
+[ADR 0003](0003-value-store-capabilities.md) supersedes the package naming, common error ownership, and value-operation implementation described here. It also replaces ADR 0002's implicit empty-string deletion with an explicit deletion capability. This record preserves the earlier decision; authority, key acquisition, and persistence boundaries remain applicable.
+
 This decision supersedes the initial get/set naming and the synchronous JSON-value local-store contract. The packages remain unpublished development versions. No consumer migration or registry release is included.
 
 ## Decision

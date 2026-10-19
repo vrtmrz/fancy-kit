@@ -1,12 +1,8 @@
+import { ValueStoreError } from "@vrtmrz/value-store";
+import type { ValueStoreErrorCode } from "@vrtmrz/value-store";
 import { describe, expect, it, vi } from "vitest";
-import {
-  createSecretReader,
-  createSecretStore,
-  MemorySecretStore,
-  SecretStoreError,
-  validateSecretName,
-} from "../src/index.js";
-import type { ObjectValue, SecretBackend, SecretBackendReader, SecretStoreErrorCode, SecretStoreOptions, ValueSerializer } from "../src/index.js";
+import { createSecretReader, createSecretStore, MemorySecretStore, validateSecretName } from "../src/index.js";
+import type { ObjectValue, SecretBackend, SecretBackendReader, SecretStoreOptions, ValueSerializer } from "../src/index.js";
 import { secretStoreContract } from "./contract-cases.js";
 
 secretStoreContract(() => new MemorySecretStore());
@@ -34,9 +30,9 @@ function capturedError(operation: () => unknown): unknown {
   return undefined;
 }
 
-function expectFixedError(error: unknown, code: SecretStoreErrorCode, message: string): void {
-  expect(error).toBeInstanceOf(SecretStoreError);
-  expect(error).toMatchObject({ name: "SecretStoreError", code, message });
+function expectFixedError(error: unknown, code: ValueStoreErrorCode, message: string): void {
+  expect(error).toBeInstanceOf(ValueStoreError);
+  expect(error).toMatchObject({ name: "ValueStoreError", code, message });
   expect(Object.hasOwn(error as object, "cause")).toBe(false);
   expect(JSON.stringify(error)).not.toContain("private-sentinel");
   expect(String(error)).not.toContain("private-sentinel");
@@ -73,7 +69,7 @@ describe("MemorySecretStore", () => {
       () => store.setValue("api-token", "value-private-sentinel\ud800"),
     ]) {
       const error: unknown = await operation().catch((failure: unknown) => failure);
-      expect(error).toBeInstanceOf(SecretStoreError);
+      expect(error).toBeInstanceOf(ValueStoreError);
       expect(String(error)).not.toContain("private-sentinel");
       expect(JSON.stringify(error)).not.toContain("private-sentinel");
       expect((error as Error).stack).not.toContain("private-sentinel");
@@ -118,7 +114,7 @@ describe("secret facade serialization", () => {
         this.deserializations += 1;
         const prefix = `${this.prefix}${key}:`;
         if (!value.startsWith(prefix)) {
-          throw new SecretStoreError("invalid-data");
+          throw new ValueStoreError("invalid-data");
         }
         return value.slice(prefix.length);
       },
@@ -232,14 +228,14 @@ describe("secret facade serialization", () => {
     const store = createSecretStore(backend, { serializer });
 
     const writeError: unknown = await store.setValue("another-token", "value").catch((error: unknown) => error);
-    expectFixedError(writeError, "operation-failed", "The secret store operation failed.");
+    expectFixedError(writeError, "operation-failed", "The storage operation failed.");
     const readError: unknown = await store.getValue("api-token").catch((error: unknown) => error);
-    expectFixedError(readError, "operation-failed", "The secret store operation failed.");
+    expectFixedError(readError, "operation-failed", "The storage operation failed.");
   });
 
   it("preserves a known fixed callback error category without its original instance", async () => {
     const backend = createMapBackend();
-    const original = new SecretStoreError("access-denied");
+    const original = new ValueStoreError("access-denied");
     const store = createSecretStore(backend, {
       serializer: {
         serialize() { throw original; },
@@ -247,7 +243,7 @@ describe("secret facade serialization", () => {
       },
     });
     const error: unknown = await store.setValue("api-token", "value").catch((failure: unknown) => failure);
-    expectFixedError(error, "access-denied", "Access to the secret store was denied.");
+    expectFixedError(error, "access-denied", "Access to the store was denied.");
     expect(error).not.toBe(original);
   });
 
@@ -378,7 +374,7 @@ describe("secret facade serialization", () => {
       get() { throw privateError; },
     }) as SecretStoreOptions;
     const optionsError = capturedError(() => createSecretStore(backend, hostileOptions));
-    expectFixedError(optionsError, "operation-failed", "The secret store operation failed.");
+    expectFixedError(optionsError, "operation-failed", "The storage operation failed.");
 
     const partialOptions = [
       { serializer: { serialize: (_key: string, value: string) => value } },
@@ -388,20 +384,20 @@ describe("secret facade serialization", () => {
     ];
     for (const options of partialOptions) {
       const error = capturedError(() => createSecretStore(backend, options as unknown as SecretStoreOptions));
-      expect(error).toBeInstanceOf(SecretStoreError);
-      expect(error).toMatchObject({ code: "invalid-value", message: "The secret value is invalid or unsupported." });
+      expect(error).toBeInstanceOf(ValueStoreError);
+      expect(error).toMatchObject({ code: "invalid-value", message: "The value is invalid or unsupported." });
     }
   });
 
   it("does not leak hostile thrown values or invoke hostile code getters", async () => {
     const backend = createMapBackend();
-    const hostileCode = new SecretStoreError("unavailable");
+    const hostileCode = new ValueStoreError("unavailable");
     Object.defineProperty(hostileCode, "code", { get() { throw new Error("code-private-sentinel"); } });
     const store = createSecretStore(backend, {
       serializer: { serialize() { throw hostileCode; }, deserialize(_key, value) { return value; } },
     });
     const error: unknown = await store.setValue("api-token", "value").catch((failure: unknown) => failure);
-    expectFixedError(error, "operation-failed", "The secret store operation failed.");
+    expectFixedError(error, "operation-failed", "The storage operation failed.");
 
     const hostilePrototype = new Proxy({}, {
       getPrototypeOf() { throw new Error("prototype-private-sentinel"); },
@@ -414,7 +410,7 @@ describe("secret facade serialization", () => {
     });
     const proxyError: unknown = await proxyThrowingStore.setValue("api-token", "value")
       .catch((failure: unknown) => failure);
-    expectFixedError(proxyError, "operation-failed", "The secret store operation failed.");
+    expectFixedError(proxyError, "operation-failed", "The storage operation failed.");
   });
 
   it("uses identity conversion without I/O during read-only construction", async () => {
@@ -544,7 +540,7 @@ describe("object values", () => {
     backend.values.set("api-token", "{\"password\": ");
     const store = createSecretStore(backend);
     const error: unknown = await store.getObject("api-token").catch((failure: unknown) => failure);
-    expectFixedError(error, "invalid-data", "The stored secret data is invalid.");
+    expectFixedError(error, "invalid-data", "The stored data is invalid.");
   });
 });
 
@@ -560,28 +556,28 @@ describe("validateSecretName", () => {
     "a\0", "a\n", "a\r", "a\r\n", "a\u2028", "a\u2029", "日本語", "ａ", "é",
     "fancy-sec://api-token",
   ])("rejects invalid input without echoing it (case %#)", (name) => {
-    expect(() => validateSecretName(name)).toThrow(SecretStoreError);
+    expect(() => validateSecretName(name)).toThrow(ValueStoreError);
     expect(() => validateSecretName(name)).toThrow("The secret name is invalid.");
   });
 
   it("rejects non-string inputs without coercing them", () => {
     const toString = vi.fn(() => { throw new Error("private-sentinel"); });
     for (const input of [null, undefined, 1, { toString }, ["api"], new String("api")]) {
-      expect(() => validateSecretName(input as string)).toThrow(SecretStoreError);
+      expect(() => validateSecretName(input as string)).toThrow(ValueStoreError);
     }
     expect(toString).not.toHaveBeenCalled();
   });
 });
 
-describe("SecretStoreError", () => {
-  it.each<SecretStoreErrorCode>([
+describe("ValueStoreError", () => {
+  it.each<ValueStoreErrorCode>([
     "invalid-name", "invalid-value", "unavailable", "access-denied",
     "decryption-failed", "invalid-data", "operation-failed",
   ])("preserves the known category %s without accepting a raw cause", (code) => {
-    const error = Reflect.construct(SecretStoreError, [code, { cause: new Error("private-sentinel") }]);
+    const error = Reflect.construct(ValueStoreError, [code, { cause: new Error("private-sentinel") }]);
     expect(error).toBeInstanceOf(Error);
-    expect(error).toBeInstanceOf(SecretStoreError);
-    expect(error).toMatchObject({ name: "SecretStoreError", code });
+    expect(error).toBeInstanceOf(ValueStoreError);
+    expect(error).toMatchObject({ name: "ValueStoreError", code });
     expect((error as Error).message).toEqual(expect.any(String));
     expect(Object.hasOwn(error, "cause")).toBe(false);
     expect(JSON.stringify(error)).not.toContain("private-sentinel");
@@ -590,9 +586,9 @@ describe("SecretStoreError", () => {
   it("maps invalid untyped codes to a fixed failure without coercion", () => {
     const toString = vi.fn(() => { throw new Error("private-sentinel"); });
     for (const code of ["private-sentinel", "__proto__", "constructor", null, { toString }]) {
-      const error = new SecretStoreError(code as SecretStoreErrorCode);
+      const error = new ValueStoreError(code as ValueStoreErrorCode);
       expect(error.code).toBe("operation-failed");
-      expect(error.message).toBe("The secret store operation failed.");
+      expect(error.message).toBe("The storage operation failed.");
       expect(JSON.stringify(error)).not.toContain("private-sentinel");
     }
     expect(toString).not.toHaveBeenCalled();

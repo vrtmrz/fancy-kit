@@ -1,6 +1,6 @@
 # Secret store Node adapters
 
-`@vrtmrz/secret-store-node` provides a Node.js age-file adapter for the platform-neutral contracts in [`@vrtmrz/secret-store`](../secret-store/README.md). The package is currently an unpublished `0.0.0` development version. It requires Node.js `>=20.19.0` and has runtime dependencies on `@vrtmrz/secret-store` and `age-encryption` `0.3.1`.
+`@vrtmrz/secret-store-node` provides a Node.js age-file adapter for the platform-neutral contracts in [`@vrtmrz/secret-store`](../secret-store/README.md). The package is currently an unpublished `0.0.0` development version. It requires Node.js `>=20.19.0` and has runtime dependencies on `@vrtmrz/value-store`, `@vrtmrz/secret-store`, and `age-encryption` `0.3.1`.
 
 The package exposes only the `./age` entry point:
 
@@ -36,7 +36,7 @@ await store.setObject('example-api-settings', { enabled: false, retries: 0 });
 const settings = await reader.getObject('example-api-settings');
 ```
 
-The identity provider runs once for each read of an existing entry, after its bounded ciphertext read. It is not called for an absent entry or for writes. An empty identity list rejects with `unavailable`; provider failures reject with a fixed `SecretStoreError`. Recipients are validated and copied when the writable store is constructed. There is no automatic `recipients.txt` lookup.
+The identity provider runs once for each read of an existing entry, after its bounded ciphertext read. It is not called for an absent entry or for writes. An empty identity list rejects with `unavailable`; provider failures reject with a fixed `ValueStoreError` from `@vrtmrz/value-store`. Recipients are validated and copied when the writable store is constructed. There is no automatic `recipients.txt` lookup.
 
 The age adapter can also receive the core package's optional `ValueSerializer`. It transforms logical strings before the adapter encrypts them and restores them after authenticated decryption; object methods send JSON text through the same pair. This is an additional consumer-selected transform, not the age encryption boundary. Encryption, file permissions, and key provisioning remain owned by the age backend and its application composition.
 

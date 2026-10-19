@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createLocalValueStore, LocalStorageError, MemoryLocalValueStore } from "@vrtmrz/local-storage";
-import { MemorySecretStore, SecretStoreError } from "@vrtmrz/secret-store";
+import { createDeletableValueStore, ValueStoreError, MemoryValueStore } from "@vrtmrz/value-store";
+import { MemorySecretStore } from "@vrtmrz/secret-store";
 import { createOwHkdfSerializer } from "../../examples/value-stores/ow-hkdf-serializer.js";
 
 const passphrase = "synthetic-test-passphrase";
@@ -80,11 +80,11 @@ describe("OW HKDF serializer example", () => {
     await expect(serializer.serialize("key", "value")).rejects.toThrow("could not be serialised");
   });
 
-  it("stores only transformed strings in a local backend", async () => {
+  it("stores only transformed strings in a value backend", async () => {
     const entries = new Map<string, string>();
     const serialize = vi.fn(makeSerializer().serialize);
     const deserialize = vi.fn(makeSerializer().deserialize);
-    const store = createLocalValueStore({
+    const store = createDeletableValueStore({
       get: (key) => entries.get(key) ?? null,
       set: (key, value) => { entries.set(key, value); },
       delete: (key) => { entries.delete(key); },
@@ -96,12 +96,16 @@ describe("OW HKDF serializer example", () => {
     expect(deserialize).toHaveBeenCalledTimes(1);
     expect(await store.getObject("absent")).toBeUndefined();
     await store.setValue("entry", "");
+    expect(entries.has("entry")).toBe(true);
+    expect(await store.getValue("entry")).toBe("");
+    expect(serialize).toHaveBeenCalledTimes(2);
+    await store.delete("entry");
     expect(entries.has("entry")).toBe(false);
-    expect(serialize).toHaveBeenCalledTimes(1);
+    expect(serialize).toHaveBeenCalledTimes(2);
   });
 
   it("round-trips every top-level Object falsy value in both store families", async () => {
-    const local = new MemoryLocalValueStore({ serializer: makeSerializer() });
+    const local = new MemoryValueStore({ serializer: makeSerializer() });
     const secret = new MemorySecretStore({ serializer: makeSerializer() });
     for (const store of [local, secret]) {
       for (const value of [null, "", 0, false]) {
@@ -113,16 +117,16 @@ describe("OW HKDF serializer example", () => {
     expect(await secret.getValue("entry")).toBe("");
   });
 
-  it("reports failed decryption through each owning fixed error type", async () => {
+  it("reports failed decryption through the shared ValueStoreError", async () => {
     const entries = new Map<string, string>([["entry", "%$not-valid"]]);
-    const local = createLocalValueStore({ get: (key) => entries.get(key) ?? null, set() {}, delete() {} }, { serializer: makeSerializer() });
-    await expect(local.getValue("entry")).rejects.toBeInstanceOf(LocalStorageError);
+    const local = createDeletableValueStore({ get: (key) => entries.get(key) ?? null, set() {}, delete() {} }, { serializer: makeSerializer() });
+    await expect(local.getValue("entry")).rejects.toBeInstanceOf(ValueStoreError);
     const secret = new MemorySecretStore({ serializer: {
       serialize: (_key, value) => value,
       deserialize: makeSerializer().deserialize,
     } });
     await secret.setValue("entry", "%$not-valid");
-    await expect(secret.getValue("entry")).rejects.toBeInstanceOf(SecretStoreError);
+    await expect(secret.getValue("entry")).rejects.toBeInstanceOf(ValueStoreError);
     expect(entries.get("entry")).toBe("%$not-valid");
   });
 });

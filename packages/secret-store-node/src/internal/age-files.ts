@@ -1,7 +1,8 @@
+import { ValueStoreError } from "@vrtmrz/value-store";
 import { constants } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { SecretStoreError, validateSecretName, createSecretReader, createSecretStore, type SecretBackendReader, type SecretReader, type SecretStore } from "@vrtmrz/secret-store";
+import { validateSecretName, createSecretReader, createSecretStore, type SecretBackendReader, type SecretReader, type SecretStore } from "@vrtmrz/secret-store";
 import type { AgeFileSecretReaderOptions, AgeFileSecretStoreOptions, AgeIdentityProvider } from "../age-types.js";
 import { createAgeEncryptor, decryptAgeValue, encodeAgeValue, MAX_CIPHERTEXT_BYTES } from "./age-codec.js";
 import { createRootAuthority, fileErrorCode, sameFile, sanitiseFileError, validateSecretFile, type FileIdentity, type RootAuthority } from "./file-authority.js";
@@ -44,7 +45,7 @@ async function readCiphertext(root: RootAuthority, name: string, operations: Sec
     // An atomic replacement can unlink an already opened old inode. It remains
     // a valid complete read; a hard link to another pathname does not.
     validateSecretFile(stat, userId, true);
-    if (stat.size < 0n || stat.size > BigInt(MAX_CIPHERTEXT_BYTES)) throw new SecretStoreError("invalid-data");
+    if (stat.size < 0n || stat.size > BigInt(MAX_CIPHERTEXT_BYTES)) throw new ValueStoreError("invalid-data");
     const expectedSize = Number(stat.size);
     const buffer = new Uint8Array(expectedSize + 1);
     let offset = 0;
@@ -53,10 +54,10 @@ async function readCiphertext(root: RootAuthority, name: string, operations: Sec
       if (count === 0) break;
       offset += count;
     }
-    if (offset !== expectedSize) throw new SecretStoreError("invalid-data");
+    if (offset !== expectedSize) throw new ValueStoreError("invalid-data");
     const after = await handle.stat();
     validateSecretFile(after, userId, true);
-    if (after.size !== stat.size) throw new SecretStoreError("invalid-data");
+    if (after.size !== stat.size) throw new ValueStoreError("invalid-data");
     ciphertext = buffer.subarray(0, offset);
   } finally {
     await handle.close();
@@ -94,7 +95,7 @@ async function removeOwnedTemporary(
     throw error;
   }
   if (!sameFile(stat, identity) || !stat.isFile() || stat.nlink !== 1n) {
-    throw new SecretStoreError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
   await operations.unlink(path);
 }
@@ -112,7 +113,7 @@ async function replaceCiphertext(
     await inspectEntry(destination, userId, operations);
     const directory = await operations.openFile(root.path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
     try {
-      if (!sameFile(await directory.stat(), root.identity)) throw new SecretStoreError("unavailable");
+      if (!sameFile(await directory.stat(), root.identity)) throw new ValueStoreError("unavailable");
       let temporaryPath: string | undefined;
       let temporaryIdentity: FileIdentity | undefined;
       try {
@@ -128,7 +129,7 @@ async function replaceCiphertext(
           const stat = await temporary.stat();
           temporaryIdentity = stat;
           validateSecretFile(stat, userId);
-          if ((stat.mode & 0o600n) !== 0o600n) throw new SecretStoreError("access-denied");
+          if ((stat.mode & 0o600n) !== 0o600n) throw new ValueStoreError("access-denied");
           await temporary.writeFile(ciphertext);
           await temporary.sync();
         } finally {
@@ -138,7 +139,7 @@ async function replaceCiphertext(
         await inspectEntry(destination, userId, operations);
         const currentTemporary = await operations.statPath(candidate);
         validateSecretFile(currentTemporary, userId);
-        if (!sameFile(currentTemporary, temporaryIdentity)) throw new SecretStoreError("operation-failed");
+        if (!sameFile(currentTemporary, temporaryIdentity)) throw new ValueStoreError("operation-failed");
         replacementStarted = true;
         await operations.rename(candidate, destination);
         temporaryPath = undefined;
@@ -157,12 +158,12 @@ async function replaceCiphertext(
   } catch (error) {
     // Once replacement is attempted, the caller must not infer rollback from
     // any error, including a late sync/close failure or an uncertain rename.
-    throw replacementStarted ? new SecretStoreError("operation-failed") : sanitiseFileError(error);
+    throw replacementStarted ? new ValueStoreError("operation-failed") : sanitiseFileError(error);
   }
 }
 
 function validateReaderOptions(options: AgeFileSecretReaderOptions): void {
-  if (!options || typeof options.identityProvider !== "function") throw new SecretStoreError("invalid-value");
+  if (!options || typeof options.identityProvider !== "function") throw new ValueStoreError("invalid-value");
 }
 
 /** Private injected constructor; the public reader always uses real Node I/O. */

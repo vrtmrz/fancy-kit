@@ -1,6 +1,7 @@
+import { ValueStoreError } from "@vrtmrz/value-store";
 import { describe, expect, it } from "vitest";
 import type { ObjectValue, SecretStore } from "../src/index.js";
-import { SecretStoreError } from "../src/index.js";
+
 
 /** Shared behavioural cases for a newly created, empty store. */
 export function secretStoreContract(createStore: () => SecretStore | Promise<SecretStore>): void {
@@ -106,7 +107,7 @@ export function secretStoreContract(createStore: () => SecretStore | Promise<Sec
         await store.setValue("api-token", "original");
         await expect(store.setValue("api-token", value)).rejects.toMatchObject({ code: "invalid-value" });
         await expect(store.getValue("api-token")).resolves.toBe("original");
-        await expect(store.setValue("new-token", value)).rejects.toBeInstanceOf(SecretStoreError);
+        await expect(store.setValue("new-token", value)).rejects.toBeInstanceOf(ValueStoreError);
         await expect(store.getValue("new-token")).resolves.toBeNull();
       },
     );

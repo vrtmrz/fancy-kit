@@ -1,6 +1,6 @@
 # SecretStore
 
-Platform-neutral named-secret contracts and an explicitly chosen in-memory store. The package has no runtime dependencies and uses neither Node.js, DOM, nor Obsidian APIs.
+Platform-neutral named-secret contracts and an explicitly chosen in-memory store. It depends only on the dependency-free [`@vrtmrz/value-store`](../value-store/README.md) package for common value operations, JSON conversion, and fixed errors. Neither package imports Node.js, DOM, or Obsidian APIs through its root entry.
 
 This package is an unpublished development version (`0.0.0`). It implements the common contracts and `MemorySecretStore`. An injected Obsidian adapter is implemented separately in `@vrtmrz/obsidian-plugin-kit/secrets`. The separate [`@vrtmrz/secret-store-node/age`](../secret-store-node) adapter provides encrypted file persistence. Native credential stores, a management CLI, and encrypted transfer packs are future work. Memory storage is ephemeral and provides no encryption or secure-erasure guarantee.
 
@@ -33,7 +33,7 @@ Create a store at the application composition root and pass the narrow capabilit
 
 ## Names and values
 
-Names contain 1–64 ASCII characters matching `[a-z0-9]+(?:-[a-z0-9]+)*`, such as `example-api-token`. Names are exact, without case conversion, trimming, percent decoding, or namespace rewriting. `validateSecretName(name)` throws `SecretStoreError` with code `invalid-name` when the complete name is invalid; store methods return rejected promises for the same failure.
+Names contain 1–64 ASCII characters matching `[a-z0-9]+(?:-[a-z0-9]+)*`, such as `example-api-token`. Names are exact, without case conversion, trimming, percent decoding, or namespace rewriting. `validateSecretName(name)` throws `ValueStoreError` with code `invalid-name` when the complete name is invalid; store methods return rejected promises for the same failure.
 
 `setValue` accepts well-formed Unicode strings. Empty strings, whitespace, line endings, NUL characters, and a leading BOM are preserved exactly; empty strings are data. Without a default, `getValue` returns `null` for absence, while `getObject` returns `undefined` for absence and preserves a stored JSON `null` as `null`. Unpaired UTF-16 surrogates reject with `invalid-value`. `setObject` accepts finite JSON-shaped data: `null`, booleans, numbers, strings, arrays, and plain records. It snapshots and JSON-encodes the value, so negative zero becomes zero. Memory storage has no backend-specific value limit; available memory and host string limits still apply.
 
@@ -54,7 +54,7 @@ Names are references, not authorisation tokens. Applications may store reference
 
 ## Failures
 
-Store failures reject with `SecretStoreError`. Branch on its readonly `code`, not message text:
+Store failures reject with `ValueStoreError` from `@vrtmrz/value-store`. Branch on its readonly `code`, not message text:
 
 | Code | Meaning |
 | --- | --- |
@@ -64,6 +64,7 @@ Store failures reject with `SecretStoreError`. Branch on its readonly `code`, no
 | `access-denied` | A reliable platform status establishes denied access. |
 | `decryption-failed` | Decryption or authentication failed; this may mean a wrong identity or damaged ciphertext. |
 | `invalid-data` | A stored-data format or encoding violation is positively identified. |
+| `quota-exceeded` | A backend reports that its storage quota was exceeded. |
 | `operation-failed` | No more specific category is established, including an uncertain write outcome. |
 
 The constructor accepts only a recognised code and uses a fixed message. Unknown codes from untyped callers become `operation-failed` without echoing the input. Raw causes, paths, names, and secret values are not accepted as error constructor arguments. Adapter authors must catch external failures and create an appropriate sanitised error; the type alone does not sanitise an upstream exception.
@@ -75,8 +76,10 @@ Backend errors must never become `null` or an empty string. Persistent adapters 
 From the Fancy Kit workspace, build and pack a local tarball:
 
 ```bash
+npm run build --workspace @vrtmrz/value-store
 npm run build --workspace @vrtmrz/secret-store
+npm pack --workspace @vrtmrz/value-store
 npm pack --workspace @vrtmrz/secret-store
 ```
 
-Install that tarball in a consumer with `npm install <path-to-tarball>`. The package provides an ESM root export and TypeScript declarations, targeting ES2022. No browser global or platform module is needed to import it. A registry release requires a separately selected release version.
+Install both local tarballs in one consumer command: `npm install <value-store-tarball> <secret-store-tarball>`. The unpublished dependency cannot be fetched from the registry. The package provides an ESM root export and TypeScript declarations, targeting ES2022. No browser global or platform module is needed to import it. A registry release requires a separately selected release version.

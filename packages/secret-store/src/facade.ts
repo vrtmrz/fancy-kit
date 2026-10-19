@@ -1,3 +1,10 @@
+import {
+  createValueReader,
+  createValueStore,
+  ValueStoreError,
+  type ValueReader,
+  type ValueStoreOptions,
+} from "@vrtmrz/value-store";
 import type {
   ObjectValue,
   SecretBackend,
@@ -7,23 +14,10 @@ import type {
   SecretStoreOptions,
   ValueSerializer,
 } from "./contracts.js";
-import { sanitiseSecretStoreError, SecretStoreError } from "./errors.js";
-import { cloneObjectValue, snapshotObjectValue, validateStoredObjectValue } from "./object-value.js";
 import { validateSecretName, validateSecretValue } from "./validation.js";
 
-type CapturedBackend = {
-  receiver: unknown;
-  get: (name: string) => unknown;
-  set?: (name: string, value: string) => unknown;
-};
-type CapturedSerializer = {
-  receiver: unknown;
-  serialize: (key: string, value: string) => unknown;
-  deserialize: (key: string, value: string) => unknown;
-};
-
 /**
- * Creates a read-only facade over an explicitly selected raw string backend.
+ * Creates a read-only secret profile over an explicitly selected raw backend.
  * Construction captures methods and configuration but performs no backend I/O.
  * @param backend - A raw reader whose `get` method returns a string or absence.
  * @param options - Optional instance-scoped value serialisation.
@@ -32,14 +26,13 @@ export function createSecretReader(
   backend: SecretBackendReader,
   options?: SecretStoreOptions,
 ): SecretReader {
-  const capturedBackend = captureBackend(backend, false);
-  const serializer = captureSerializer(options);
-  return createReaderFacade(capturedBackend, serializer);
+  return createSecretReaderFacade(createValueReader(backend, profileOptions(options)));
 }
 
 /**
- * Creates a read/write facade over an explicitly selected raw string backend.
+ * Creates a read/write secret profile over an explicitly selected raw backend.
  * Construction captures methods and configuration but performs no backend I/O.
+ * The profile exposes no deletion or enumeration capability.
  * @param backend - A raw reader and writer.
  * @param options - Optional instance-scoped value serialisation.
  */
@@ -47,214 +40,91 @@ export function createSecretStore(
   backend: SecretBackend,
   options?: SecretStoreOptions,
 ): SecretStore {
-  const capturedBackend = captureBackend(backend, true);
-  const serializer = captureSerializer(options);
-  const reader = createReaderFacade(capturedBackend, serializer);
-
+  const store = createValueStore(backend, profileOptions(options));
+  const reader = createSecretReaderFacade(store);
   return {
     getValue: reader.getValue,
     getObject: reader.getObject,
     async setValue(name, value) {
       validateSecretName(name);
       validateSecretValue(value);
-      await writeValue(capturedBackend, serializer, name, value);
+      await store.setValue(name, value);
     },
     async setObject(name, value) {
       validateSecretName(name);
-      const snapshot = snapshotObjectValue(value);
-      let json: string;
-      try {
-        json = JSON.stringify(snapshot);
-      } catch {
-        throw new SecretStoreError("invalid-value");
-      }
-      if (typeof json !== "string" || json.length === 0) {
-        throw new SecretStoreError("invalid-value");
-      }
-      // Snapshotting and JSON conversion finish before writeValue reaches its first await.
-      await writeValue(capturedBackend, serializer, name, json);
+      // The shared facade validates and snapshots JSON before its first await.
+      await store.setObject(name, value);
     },
   };
 }
 
-function createReaderFacade(
-  backend: CapturedBackend,
-  serializer: CapturedSerializer | undefined,
-): SecretReader {
+function createSecretReaderFacade(reader: ValueReader): SecretReader {
   function getValue(name: string, defaultValue: string): Promise<string>;
   function getValue(name: string, defaultValue?: string): Promise<string | null>;
   async function getValue(name: string, defaultValue?: string): Promise<string | null> {
     validateSecretName(name);
     if (defaultValue !== undefined) validateSecretValue(defaultValue);
-    const value = await readValue(backend, serializer, name);
-    return value === null ? defaultValue ?? null : value;
+    return reader.getValue(name, defaultValue);
   }
 
   function getObject(name: string, defaultValue: ObjectValue): Promise<ObjectValue>;
   function getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
   async function getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined> {
     validateSecretName(name);
-    const snapshot = defaultValue === undefined ? undefined : cloneObjectValue(defaultValue);
-    const value = await readValue(backend, serializer, name);
-    if (value === null) {
-      return snapshot;
-    }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(value) as unknown;
-    } catch {
-      throw new SecretStoreError("invalid-data");
-    }
-    validateStoredObjectValue(parsed);
-    return parsed;
+    return reader.getObject(name, defaultValue);
   }
 
   return { getValue, getObject };
 }
 
-async function readValue(
-  backend: CapturedBackend,
-  serializer: CapturedSerializer | undefined,
-  name: string,
-): Promise<string | null> {
-  let raw: unknown;
-  try {
-    raw = await Reflect.apply(backend.get, backend.receiver, [name]);
-  } catch (error) {
-    throw sanitiseSecretStoreError(error);
-  }
-  if (raw === null) {
-    return null;
-  }
-  if (typeof raw !== "string") {
-    throw new SecretStoreError("invalid-data");
-  }
-  if (serializer === undefined) {
-    try {
-      validateSecretValue(raw);
-    } catch {
-      throw new SecretStoreError("invalid-data");
-    }
-    return raw;
-  }
-
-  let value: unknown;
-  try {
-    value = await Reflect.apply(serializer.deserialize, serializer.receiver, [name, raw]);
-  } catch (error) {
-    throw sanitiseSecretStoreError(error);
-  }
-  if (typeof value !== "string") {
-    throw new SecretStoreError("invalid-data");
-  }
-  try {
-    validateSecretValue(value);
-  } catch {
-    throw new SecretStoreError("invalid-data");
-  }
-  return value;
-}
-
-async function writeValue(
-  backend: CapturedBackend,
-  serializer: CapturedSerializer | undefined,
-  name: string,
-  value: string,
-): Promise<void> {
-  let raw = value;
-  if (serializer !== undefined) {
-    let serialized: unknown;
-    try {
-      serialized = await Reflect.apply(serializer.serialize, serializer.receiver, [name, value]);
-    } catch (error) {
-      throw sanitiseSecretStoreError(error);
-    }
-    if (typeof serialized !== "string") {
-      throw new SecretStoreError("invalid-value");
-    }
-    try {
-      validateSecretValue(serialized);
-    } catch {
-      throw new SecretStoreError("invalid-value");
-    }
-    raw = serialized;
-  }
-
-  const set = backend.set;
-  if (set === undefined) {
-    throw new SecretStoreError("operation-failed");
-  }
-  try {
-    await Reflect.apply(set, backend.receiver, [name, raw]);
-  } catch (error) {
-    throw sanitiseSecretStoreError(error);
-  }
-}
-
-function captureBackend(
-  backend: SecretBackendReader,
-  writable: boolean,
-): CapturedBackend {
-  if (!isObjectLike(backend)) {
-    throw new SecretStoreError("invalid-value");
-  }
-  let get: unknown;
-  let set: unknown;
-  try {
-    get = backend.get;
-    if (writable) {
-      set = (backend as SecretBackend).set;
-    }
-  } catch (error) {
-    throw sanitiseSecretStoreError(error);
-  }
-  if (typeof get !== "function" || (writable && typeof set !== "function")) {
-    throw new SecretStoreError("invalid-value");
-  }
+function profileOptions(options: SecretStoreOptions | undefined): ValueStoreOptions {
   return {
-    receiver: backend,
-    get: get as CapturedBackend["get"],
-    ...(writable ? { set: set as CapturedBackend["set"] } : {}),
+    // Defer capture until the common facade has captured the backend methods.
+    get serializer(): ValueSerializer {
+      const captured = captureSerializer(options);
+      return {
+        async serialize(name, value) {
+          const encoded: unknown = captured === undefined
+            ? value
+            : await Reflect.apply(captured.serialize, captured.receiver, [name, value]);
+          validateSecretValue(encoded);
+          return encoded;
+        },
+        async deserialize(name, raw) {
+          const value: unknown = captured === undefined
+            ? raw
+            : await Reflect.apply(captured.deserialize, captured.receiver, [name, raw]);
+          try {
+            validateSecretValue(value);
+          } catch {
+            throw new ValueStoreError("invalid-data");
+          }
+          return value;
+        },
+      };
+    },
   };
 }
+
+type CapturedSerializer = {
+  receiver: object;
+  serialize: (key: string, value: string) => unknown;
+  deserialize: (key: string, value: string) => unknown;
+};
 
 function captureSerializer(options: SecretStoreOptions | undefined): CapturedSerializer | undefined {
-  if (options === undefined) {
-    return undefined;
-  }
-  if (!isObjectLike(options)) {
-    throw new SecretStoreError("invalid-value");
-  }
-
-  let serializer: unknown;
-  try {
-    serializer = options.serializer;
-  } catch (error) {
-    throw sanitiseSecretStoreError(error);
-  }
-  if (serializer === undefined) {
-    return undefined;
-  }
-  if (!isObjectLike(serializer)) {
-    throw new SecretStoreError("invalid-value");
-  }
-
-  let serialize: unknown;
-  let deserialize: unknown;
-  try {
-    serialize = (serializer as ValueSerializer).serialize;
-    deserialize = (serializer as ValueSerializer).deserialize;
-  } catch (error) {
-    throw sanitiseSecretStoreError(error);
-  }
+  if (options === undefined) return undefined;
+  if (!isObjectLike(options)) throw new ValueStoreError("invalid-value");
+  const serializer = options.serializer;
+  if (serializer === undefined) return undefined;
+  if (!isObjectLike(serializer)) throw new ValueStoreError("invalid-value");
+  // The common facade sanitises errors from these getters and from callbacks.
+  const serialize = (serializer as ValueSerializer).serialize;
+  const deserialize = (serializer as ValueSerializer).deserialize;
   if (typeof serialize !== "function" || typeof deserialize !== "function") {
-    throw new SecretStoreError("invalid-value");
+    throw new ValueStoreError("invalid-value");
   }
-  return {
-    receiver: serializer,
-    serialize: serialize as CapturedSerializer["serialize"],
-    deserialize: deserialize as CapturedSerializer["deserialize"],
-  };
+  return { receiver: serializer, serialize, deserialize };
 }
 
 function isObjectLike(value: unknown): value is object {

@@ -9,7 +9,7 @@ Reusable, testable primitives for Obsidian plug-ins.
 npm install @vrtmrz/obsidian-plugin-kit
 ```
 
-The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. SecretStorage support is unreleased and depends on the unpublished `@vrtmrz/secret-store` core. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the unpublished `@vrtmrz/local-storage` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
+The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. SecretStorage support is unreleased and depends on the unpublished `@vrtmrz/secret-store` and `@vrtmrz/value-store` cores. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the unpublished `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
 
 Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, platform boundaries, and links to the tests that establish each documented contract. See [UI automation and scripted responses](docs/ui-automation.md) for the detailed driver rules.
 
@@ -43,18 +43,18 @@ Construct the adapter once at the plug-in boundary and pass a `SecretReader` or 
 
 ## Local string and JSON-object storage
 
-The unreleased `local-storage` entry adapts Obsidian's synchronous local-storage API behind asynchronous `getValue`/`setValue` and `getObject`/`setObject` methods. Obsidian owns the Vault scope; the application supplies a literal prefix for its plug-in:
+The unreleased `local-storage` entry adapts Obsidian's synchronous local-storage API behind the shared asynchronous `ValueStore` operations and explicit `ValueDeleter` capability. Obsidian owns the Vault scope; the application supplies a literal prefix for its plug-in:
 
 ```ts
 import type { App } from "obsidian";
 import { createObsidianLocalStore } from "@vrtmrz/obsidian-plugin-kit/local-storage";
-import type { LocalValueStore } from "@vrtmrz/local-storage";
+import type { ValueDeleter, ValueStore } from "@vrtmrz/value-store";
 
-export function createSettings(app: App): LocalValueStore {
+export function createSettings(app: App): ValueStore & ValueDeleter {
   return createObsidianLocalStore(app, { prefix: "example-plugin:settings:" });
 }
 
-export async function savePreferences(settings: LocalValueStore): Promise<void> {
+export async function savePreferences(settings: ValueStore & ValueDeleter): Promise<void> {
   await settings.setValue("device-label", "laptop");
   await settings.setObject("preferences", {
     theme: "dark",
@@ -63,14 +63,14 @@ export async function savePreferences(settings: LocalValueStore): Promise<void> 
 }
 ```
 
-The focused adapter uses `App.loadLocalStorage` and `App.saveLocalStorage` directly. It stores `setValue` strings raw and object values as JSON text; it adds no envelope, read-back, or probe write, and imports no Obsidian runtime globals. An empty `setValue` deletes before serialisation, and the adapter maps that operation to `saveLocalStorage(key, null)`. The host also deletes when a direct caller passes `''`. `setObject` preserves top-level `null`, empty strings, zero, negative zero, and `false` as JSON data. A missing object is `undefined`, while stored JSON `null` is `null`. Obsidian 1.13.6 was observed to suppress some internal storage failures, so an apparent miss may also be a hidden read failure, and a write acknowledgement cannot prove persistence. The asynchronous string/object scenario passes on reviewed Obsidian 1.13.6, including restart, prefix separation, and explicitly selected legacy Web Storage.
+The focused adapter uses `App.loadLocalStorage` and `App.saveLocalStorage` directly. It stores `setValue` strings raw and object values as JSON text; it adds no envelope, read-back, or probe write, and imports no Obsidian runtime globals. Empty `setValue` is ordinary data in ValueStore, but Obsidian treats a raw empty physical write as deletion, so this adapter rejects an empty physical output with `invalid-value` before the host call. Use `delete` for explicit deletion; the adapter maps it to `saveLocalStorage(key, null)`. A serializer can preserve a logical empty string only if it produces a non-empty physical output. `setObject` preserves top-level `null`, empty strings, zero, negative zero, and `false` as JSON data. A missing object is `undefined`, while stored JSON `null` is `null`. Obsidian 1.13.6 was observed to suppress some internal storage failures, so an apparent miss may also be a hidden read failure, and a write acknowledgement cannot prove persistence. The reviewed Obsidian 1.13.6 scenario passed with the ValueStore semantics, covering empty-write rejection before mutation, explicit deletion, restart, prefix separation, and explicitly selected legacy Web Storage. See the [validation evidence](../../docs/proven-in-use.md#valuestore-package-owned-evidence) for the qualified environment.
 
 For an explicitly selected legacy Web Storage source, supply its complete old prefix, including the application's Vault and plug-in scope:
 
 ```ts
-import { createWebStorageLocalStore } from "@vrtmrz/local-storage/web-storage";
+import { createWebStorageValueStore } from "@vrtmrz/value-store/web-storage";
 
-const legacySettings = createWebStorageLocalStore(window.localStorage, {
+const legacySettings = createWebStorageValueStore(window.localStorage, {
   prefix: "my-vault::example-plugin::settings:",
 });
 ```
@@ -91,7 +91,7 @@ const settings = createCompatibleObsidianLocalStore(app, {
 
 A partial official API fails rather than falling back. An absent key or operation error on the selected source never switches stores, and neither factory migrates values. Keep any key-by-key migration in application code. The compatibility path cannot restore an old Web Storage source that the host no longer exposes unless the application has another explicit source.
 
-The core package's root, `./web-storage`, and `./node` exports are documented in the [local-storage package README](../local-storage/README.md). Fancy Kit's existing IndexedDB `KeyValueStore` family and `PersistentMap` are separate APIs and remain unchanged. Use the [usage guide](docs/usage-guide.md#local-json-value-storage) for failure behaviour and test examples.
+The shared contracts and adapter exports, including `./web-storage` and `./node-json-file`, are documented in the [ValueStore package README](../value-store/README.md). Fancy Kit's existing IndexedDB `KeyValueStore` family and `PersistentMap` are separate APIs and remain unchanged. Use the [usage guide](docs/usage-guide.md#local-json-value-storage) for failure behaviour and test examples.
 
 ## Dialogs
 

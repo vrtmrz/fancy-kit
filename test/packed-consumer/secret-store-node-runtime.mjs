@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateIdentity, identityToRecipient } from "age-encryption";
-import { SecretStoreError } from "@vrtmrz/secret-store";
+import { ValueStoreError } from "@vrtmrz/value-store";
 import { createAgeFileSecretReader, createAgeFileSecretStore } from "@vrtmrz/secret-store-node/age";
 
 const rootPath = await mkdtemp(join(tmpdir(), "fancy-kit-packed-age-"));
@@ -28,7 +28,7 @@ try {
   assert.equal("setValue" in reader, false);
   assert.equal((await readFile(join(rootPath, "secret-token.age"))).subarray(0, 22).toString(), "age-encryption.org/v1\n");
   for (const name of ["INVALID", "a".repeat(65)]) {
-    await assert.rejects(reader.getValue(name), error => error instanceof SecretStoreError && error.code === "invalid-name");
+    await assert.rejects(reader.getValue(name), error => error instanceof ValueStoreError && error.code === "invalid-name");
   }
   await assert.rejects(import("@vrtmrz/secret-store-node/internal/age-codec"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
   await assert.rejects(import("@vrtmrz/secret-store-node"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });

@@ -66,7 +66,7 @@ async function main(): Promise<void> {
   }
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
   const npx = process.platform === "win32" ? "npx.cmd" : "npx";
-  await run(npm, ["run", "build", "--workspace", "@vrtmrz/local-storage"]);
+  await run(npm, ["run", "build", "--workspace", "@vrtmrz/value-store"]);
   await run(npm, ["run", "build", "--workspace", "@vrtmrz/secret-store"]);
   await run(npm, ["run", "build", "--workspace", "@vrtmrz/obsidian-plugin-kit"]);
   await run(npm, ["run", "build:harness"]);

@@ -11,7 +11,7 @@
     "noEmit": true,
     "baseUrl": "../..",
     "paths": {
-      "@vrtmrz/local-storage": ["packages/local-storage/src/index.ts"],
+      "@vrtmrz/value-store": ["packages/value-store/src/index.ts"],
       "@vrtmrz/secret-store": ["packages/secret-store/src/index.ts"],
       "octagonal-wheels/encryption/hkdf": ["packages/octagonal-wheels/src/encryption/hkdf.ts"]
     }

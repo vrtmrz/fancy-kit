@@ -53,7 +53,7 @@ export function planReleasePreparation({
   lockfile,
   uiManifest,
   secretStoreManifest,
-  localStorageManifest,
+  valueStoreManifest,
 }) {
   const packageDirectory = publishablePackages[packageName];
   if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
@@ -107,20 +107,24 @@ export function planReleasePreparation({
     }
   }
 
-  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
-    const dependency = "@vrtmrz/local-storage";
-    const localStorageVersion = manifest.dependencies?.[dependency];
+  if (
+    packageName === "@vrtmrz/secret-store" ||
+    packageName === "@vrtmrz/secret-store-node" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit"
+  ) {
+    const dependency = "@vrtmrz/value-store";
+    const valueStoreVersion = manifest.dependencies?.[dependency];
     if (
-      !isReleaseVersion(localStorageVersion) ||
-      !isReleaseVersion(localStorageManifest?.version) ||
-      localStorageVersion !== localStorageManifest.version
+      !isReleaseVersion(valueStoreVersion) ||
+      !isReleaseVersion(valueStoreManifest?.version) ||
+      valueStoreVersion !== valueStoreManifest.version
     ) {
       throw new Error(
-        `${packageName} requires ${dependency} ${localStorageVersion ?? "without an exact version"}, but the workspace contains ${localStorageManifest?.version ?? "no valid manifest version"}`,
+        `${packageName} requires ${dependency} ${valueStoreVersion ?? "without an exact version"}, but the workspace contains ${valueStoreManifest?.version ?? "no valid manifest version"}`,
       );
     }
-    if (lockEntry.dependencies?.[dependency] !== localStorageVersion) {
-      throw new Error(`${packageName} local-storage dependency does not match the lockfile`);
+    if (lockEntry.dependencies?.[dependency] !== valueStoreVersion) {
+      throw new Error(`${packageName} value-store dependency does not match the lockfile`);
     }
   }
 
@@ -132,9 +136,9 @@ export function planReleasePreparation({
 
 const releasePreparationOrder = [
   "@vrtmrz/ui-interactions",
+  "@vrtmrz/value-store",
   "@vrtmrz/secret-store",
   "@vrtmrz/secret-store-node",
-  "@vrtmrz/local-storage",
   "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
   "@vrtmrz/obsidian-test-session",
@@ -230,30 +234,37 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
     }
   }
 
-  const localStoragePackageName = "@vrtmrz/local-storage";
-  const localStorageVersion = selectedVersions.get(localStoragePackageName);
-  const pluginPackageName = "@vrtmrz/obsidian-plugin-kit";
-  if (localStorageVersion && selectedVersions.has(pluginPackageName)) {
-    const pluginManifest = nextManifests[pluginPackageName];
-    if (!pluginManifest) throw new Error(`Manifest is missing for ${pluginPackageName}`);
-    const pluginDirectory = publishablePackages[pluginPackageName];
-    const pluginLockEntry = nextLockfile.packages?.[pluginDirectory];
-    if (!pluginLockEntry) throw new Error(`Lockfile entry is missing for ${pluginDirectory}`);
+  const valueStorePackageName = "@vrtmrz/value-store";
+  const valueStoreVersion = selectedVersions.get(valueStorePackageName);
+  const valueStoreConsumerPackageNames = [
+    "@vrtmrz/secret-store",
+    "@vrtmrz/secret-store-node",
+    "@vrtmrz/obsidian-plugin-kit",
+  ];
+  if (valueStoreVersion) {
+    for (const consumerPackageName of valueStoreConsumerPackageNames) {
+      if (!selectedVersions.has(consumerPackageName)) continue;
+      const consumerManifest = nextManifests[consumerPackageName];
+      if (!consumerManifest) throw new Error(`Manifest is missing for ${consumerPackageName}`);
+      const consumerDirectory = publishablePackages[consumerPackageName];
+      const consumerLockEntry = nextLockfile.packages?.[consumerDirectory];
+      if (!consumerLockEntry) throw new Error(`Lockfile entry is missing for ${consumerDirectory}`);
 
-    nextManifests[pluginPackageName] = {
-      ...pluginManifest,
-      dependencies: {
-        ...pluginManifest.dependencies,
-        [localStoragePackageName]: localStorageVersion,
-      },
-    };
-    nextLockfile.packages[pluginDirectory] = {
-      ...pluginLockEntry,
-      dependencies: {
-        ...pluginLockEntry.dependencies,
-        [localStoragePackageName]: localStorageVersion,
-      },
-    };
+      nextManifests[consumerPackageName] = {
+        ...consumerManifest,
+        dependencies: {
+          ...consumerManifest.dependencies,
+          [valueStorePackageName]: valueStoreVersion,
+        },
+      };
+      nextLockfile.packages[consumerDirectory] = {
+        ...consumerLockEntry,
+        dependencies: {
+          ...consumerLockEntry.dependencies,
+          [valueStorePackageName]: valueStoreVersion,
+        },
+      };
+    }
   }
 
   const orderIndex = new Map(releasePreparationOrder.map((packageName, index) => [packageName, index]));
@@ -267,7 +278,7 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
     const uiManifest = nextManifests[uiPackageName];
     if (!uiManifest) throw new Error(`Manifest is missing for ${uiPackageName}`);
     const secretStoreManifest = nextManifests[secretStorePackageName];
-    const localStorageManifest = nextManifests[localStoragePackageName];
+    const valueStoreManifest = nextManifests["@vrtmrz/value-store"];
 
     const preparation = planReleasePreparation({
       packageName,
@@ -276,7 +287,7 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
       lockfile: nextLockfile,
       uiManifest,
       secretStoreManifest,
-      localStorageManifest,
+      valueStoreManifest,
     });
     nextManifests[packageName] = preparation.manifest;
     nextLockfile = preparation.lockfile;
@@ -318,8 +329,12 @@ export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRo
   ) {
     selectedPackageNames.add("@vrtmrz/secret-store");
   }
-  if (selectedPackageNames.has("@vrtmrz/obsidian-plugin-kit")) {
-    selectedPackageNames.add("@vrtmrz/local-storage");
+  if (
+    selectedPackageNames.has("@vrtmrz/secret-store") ||
+    selectedPackageNames.has("@vrtmrz/secret-store-node") ||
+    selectedPackageNames.has("@vrtmrz/obsidian-plugin-kit")
+  ) {
+    selectedPackageNames.add("@vrtmrz/value-store");
   }
 
   const manifests = {};

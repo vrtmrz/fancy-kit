@@ -1,6 +1,6 @@
 import { Plugin } from "obsidian";
-import { SecretStoreError } from "@vrtmrz/secret-store";
-import type { ObjectValue } from "@vrtmrz/secret-store";
+import { ValueStoreError } from "@vrtmrz/value-store";
+import type { ObjectValue } from "@vrtmrz/value-store";
 import { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";
 
 const cases = [
@@ -79,7 +79,7 @@ export default class SecretStorageFixture extends Plugin {
           results[`name-${length}-${operation}-rejected`] = false;
         } catch (error) {
           results[`name-${length}-${operation}-rejected`] =
-            error instanceof SecretStoreError && error.code === "invalid-name";
+            error instanceof ValueStoreError && error.code === "invalid-name";
         }
       }
       if (write) {

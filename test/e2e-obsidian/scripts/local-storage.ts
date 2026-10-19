@@ -78,10 +78,10 @@ async function main(): Promise<void> {
         "@vrtmrz/obsidian-plugin-kit/local-storage": resolve(
           "packages/obsidian-plugin-kit/src/local-storage.ts",
         ),
-        "@vrtmrz/local-storage/web-storage": resolve(
-          "packages/local-storage/src/web-storage.ts",
+        "@vrtmrz/value-store/web-storage": resolve(
+          "packages/value-store/src/web-storage.ts",
         ),
-        "@vrtmrz/local-storage": resolve("packages/local-storage/src/index.ts"),
+        "@vrtmrz/value-store": resolve("packages/value-store/src/index.ts"),
       },
     });
     await writeFile(join(artifactRoot, "manifest.json"), JSON.stringify({

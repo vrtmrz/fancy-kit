@@ -1,7 +1,8 @@
+import { ValueStoreError } from "@vrtmrz/value-store";
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Decrypter, Encrypter, generateIdentity, identityToRecipient } from 'age-encryption';
-import { SecretStoreError } from '@vrtmrz/secret-store';
+
 import { createAgeEncryptor, decryptAgeValue, MAX_CIPHERTEXT_BYTES } from './codec.mjs';
 import { valueCases } from './cases.mjs';
 
@@ -9,7 +10,7 @@ const identities = await Promise.all([generateIdentity(), generateIdentity(), ge
 const recipients = await Promise.all(identities.map(identityToRecipient));
 const encrypt = createAgeEncryptor(recipients.slice(0, 2));
 const provider = () => Promise.resolve([identities[0]]);
-const hasCode = (code) => (error) => error instanceof SecretStoreError && error.code === code && !('cause' in error);
+const hasCode = (code) => (error) => error instanceof ValueStoreError && error.code === code && !('cause' in error);
 
 async function encryptBytes(bytes) {
   const encrypter = new Encrypter();

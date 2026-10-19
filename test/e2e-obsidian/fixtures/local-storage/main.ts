@@ -3,9 +3,10 @@ import {
   createCompatibleObsidianLocalStore,
   createObsidianLocalStore,
 } from "@vrtmrz/obsidian-plugin-kit/local-storage";
-import type { ObjectValue } from "@vrtmrz/local-storage";
+import { ValueStoreError } from "@vrtmrz/value-store";
+import type { ObjectValue } from "@vrtmrz/value-store";
 import type { ObsidianLocalStorage } from "@vrtmrz/obsidian-plugin-kit/local-storage";
-import { createWebStorageLocalStore } from "@vrtmrz/local-storage/web-storage";
+import { createWebStorageValueStore } from "@vrtmrz/value-store/web-storage";
 
 /** Values which exercise exact JavaScript string preservation in both adapters. */
 const stringCases = [
@@ -61,12 +62,12 @@ export default class LocalStorageFixture extends Plugin {
       ? createObsidianLocalStore(officialStorage as ObsidianLocalStorage, { prefix: input.officialPrefix })
       : compatibleStore;
     const browserStorage = window.localStorage;
-    const legacyStore = createWebStorageLocalStore(browserStorage, {
+    const legacyStore = createWebStorageValueStore(browserStorage, {
       prefix: input.legacyPrefix,
     });
     const separatedStore = mode === "official"
       ? createObsidianLocalStore(officialStorage as ObsidianLocalStorage, { prefix: input.separatedPrefix })
-      : createWebStorageLocalStore(browserStorage, { prefix: input.separatedPrefix });
+      : createWebStorageValueStore(browserStorage, { prefix: input.separatedPrefix });
     const checks: Record<string, boolean> = {
       compatibilitySelectedAvailableBackend:
         legacySupplierCalls === (officialMethodsAvailable ? 0 : 1) &&
@@ -107,12 +108,33 @@ export default class LocalStorageFixture extends Plugin {
         JSON.stringify(await primaryStore.getObject(key, { fallback: true })) === JSON.stringify(value);
     }
 
-    const emptyValueKey = "empty-value-deletes";
+    const explicitDeleteKey = "empty-value-deletes";
     if (input.write) {
-      await primaryStore.setValue(emptyValueKey, "present");
-      await primaryStore.setValue(emptyValueKey, "");
+      await primaryStore.setValue(explicitDeleteKey, "present");
+      await primaryStore.delete(explicitDeleteKey);
     }
-    checks.emptyValueWriteDeletes = await primaryStore.getValue(emptyValueKey) === null;
+    checks.explicitDeleteReturnsToAbsence = await primaryStore.getValue(explicitDeleteKey) === null;
+
+    const emptyValueKey = "empty-value-write";
+    let emptyValueWriteRejected = false;
+    if (input.write) {
+      await primaryStore.setValue(emptyValueKey, "preserved-value");
+      try {
+        await primaryStore.setValue(emptyValueKey, "");
+      } catch (error) {
+        emptyValueWriteRejected =
+          error instanceof ValueStoreError && error.code === "invalid-value";
+      }
+      if (mode === "official") {
+        checks.officialEmptyValueWriteRejected = emptyValueWriteRejected;
+      } else {
+        checks.legacyEmptyValueWriteStored =
+          !emptyValueWriteRejected &&
+          browserStorage.getItem(input.legacyPrefix + emptyValueKey) === "";
+      }
+    }
+    checks.emptyValueStatePersists = await primaryStore.getValue(emptyValueKey) ===
+      (mode === "official" ? "preserved-value" : "");
 
     const externalEmptyKey = "external-empty-value";
     if (input.write) {

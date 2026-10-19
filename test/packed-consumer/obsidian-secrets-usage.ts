@@ -24,5 +24,5 @@ store.delete("example-token");
 const defaultString: Promise<string> = reader.getValue("missing", "");
 const defaultJson = reader.getObject("missing", null);
 void [defaultString, defaultJson];
-const defaultObject: Promise<import("@vrtmrz/secret-store").ObjectValue> = reader.getObject("missing", false);
+const defaultObject: Promise<import("@vrtmrz/value-store").ObjectValue> = reader.getObject("missing", false);
 void defaultObject;

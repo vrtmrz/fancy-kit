@@ -1,47 +1,13 @@
-import type { SecretStoreError } from "./errors.js";
+import type { ObjectValue, ValueSerializer, ValueStoreError } from "@vrtmrz/value-store";
 
-/** A finite JSON value supported by the secret object methods. */
-export type ObjectValue =
-  | string
-  | number
-  | boolean
-  | null
-  | ObjectValue[]
-  | { [key: string]: ObjectValue };
-
-/**
- * Converts string values at the boundary between a secret capability and its
- * backend. Implementations should be instance-scoped and must not expose values
- * through their own errors or logs.
- */
-export interface ValueSerializer {
-  /**
-   * Converts a validated caller string into the backend representation.
-   *
-   * The method is called once for each successful write operation, after name
-   * and input validation and before the backend write. Its receiver is preserved.
-   * @param key - The validated secret name.
-   * @param value - The validated logical string value.
-   */
-  serialize(key: string, value: string): string | Promise<string>;
-
-  /**
-   * Converts a stored backend string into its logical value.
-   *
-   * The method is skipped when the backend reports absence, and otherwise called
-   * once for each read operation. Its receiver is preserved.
-   * @param key - The validated secret name.
-   * @param value - The stored backend string.
-   */
-  deserialize(key: string, value: string): string | Promise<string>;
-}
+export type { ObjectValue, ValueSerializer } from "@vrtmrz/value-store";
 
 /** Optional instance-scoped value conversion for a secret capability. */
 export interface SecretStoreOptions {
   /**
    * A complete serializer pair. When omitted, values pass through unchanged.
    * Supplying a partial or malformed pair rejects construction with
-   * {@link SecretStoreError} code `invalid-value`.
+   * {@link ValueStoreError} code `invalid-value`.
    */
   serializer?: ValueSerializer;
 }

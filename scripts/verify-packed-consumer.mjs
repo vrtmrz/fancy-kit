@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +9,7 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packageNames = [
   "@vrtmrz/secret-store",
   "@vrtmrz/secret-store-node",
-  "@vrtmrz/local-storage",
+  "@vrtmrz/value-store",
   "@vrtmrz/obsidian-test-session",
   "@vrtmrz/ui-interactions",
   "@vrtmrz/browser-ui-kit",
@@ -17,9 +17,9 @@ const packageNames = [
 ];
 const runtimeSafeEntries = [
   "@vrtmrz/secret-store-node/age",
-  "@vrtmrz/local-storage",
-  "@vrtmrz/local-storage/web-storage",
-  "@vrtmrz/local-storage/node",
+  "@vrtmrz/value-store",
+  "@vrtmrz/value-store/web-storage",
+  "@vrtmrz/value-store/node-json-file",
   "@vrtmrz/obsidian-plugin-kit/secrets",
   "@vrtmrz/obsidian-plugin-kit/local-storage",
   "@vrtmrz/secret-store",
@@ -31,7 +31,7 @@ const runtimeSafeEntries = [
 const packagedDocumentation = new Map([
   ["@vrtmrz/secret-store", ["README.md"]],
   ["@vrtmrz/secret-store-node", ["README.md"]],
-  ["@vrtmrz/local-storage", ["README.md"]],
+  ["@vrtmrz/value-store", ["README.md"]],
   ["@vrtmrz/obsidian-test-session", ["docs/usage-guide.md"]],
   ["@vrtmrz/ui-interactions", ["docs/usage-guide.md"]],
   ["@vrtmrz/browser-ui-kit", ["docs/usage-guide.md"]],
@@ -213,7 +213,39 @@ async function main() {
         throw new Error(`npm pack returned no tarball for ${packageName}`);
       }
       verifyPackedDocumentation(packageName, packed[0]);
-      tarballs.push(resolve(temporaryRoot, packed[0].filename));
+      const tarballPath = resolve(temporaryRoot, packed[0].filename);
+      tarballs.push(tarballPath);
+      if (packageName === "@vrtmrz/value-store") {
+        const shippedPaths = (packed[0].files ?? []).map((file) => normaliseModulePath(file.path));
+        const forbiddenEntries = shippedPaths.filter((path) => /(?:^|[\/.-])(?:secret|age|crypto)(?:[\/.-]|$)/i.test(path));
+        if (forbiddenEntries.length > 0) {
+          throw new Error(`@vrtmrz/value-store tarball contains secret, age, or crypto entries: ${forbiddenEntries.join(", ")}`);
+        }
+
+        const isolatedRoot = await mkdtemp(join(temporaryRoot, "value-store-only-"));
+        await writeFile(
+          join(isolatedRoot, "package.json"),
+          `${JSON.stringify({ name: "value-store-only-consumer", private: true, type: "module" }, null, 2)}\n`,
+        );
+        runNpm(
+          ["install", "--offline", "--ignore-scripts", "--package-lock=false", "--no-audit", "--no-fund", "--no-save", tarballPath],
+          { cwd: isolatedRoot },
+        );
+        const isolatedManifest = await readJson(join(isolatedRoot, "node_modules", "@vrtmrz", "value-store", "package.json"));
+        if (isolatedManifest.name !== "@vrtmrz/value-store") {
+          throw new Error("Isolated tarball install does not contain @vrtmrz/value-store");
+        }
+        for (const dependencyField of ["dependencies", "optionalDependencies", "peerDependencies"]) {
+          if (Object.keys(isolatedManifest[dependencyField] ?? {}).length > 0) {
+            throw new Error(`@vrtmrz/value-store declares ${dependencyField} in its packed manifest`);
+          }
+        }
+        const installedScopes = (await readdir(join(isolatedRoot, "node_modules"))).filter((name) => !name.startsWith(".")).sort();
+        const installedScopedPackages = (await readdir(join(isolatedRoot, "node_modules", "@vrtmrz"))).sort();
+        if (JSON.stringify(installedScopes) !== JSON.stringify(["@vrtmrz"]) || JSON.stringify(installedScopedPackages) !== JSON.stringify(["value-store"])) {
+          throw new Error(`Isolated @vrtmrz/value-store install has extra packages: ${installedScopes.join(", ")} / ${installedScopedPackages.join(", ")}`);
+        }
+      }
     }
 
     const octagonalPackOutput = runNpm(
@@ -319,9 +351,9 @@ async function main() {
       );
     }
     for (const filename of [
-      "local-storage-usage.ts",
-      "local-storage-node-usage.ts",
-      "local-storage-runtime.mjs",
+      "value-store-usage.ts",
+      "value-store-node-usage.ts",
+      "value-store-runtime.mjs",
     ]) {
       await copyFile(
         join(repositoryRoot, "test", "packed-consumer", filename),
@@ -344,38 +376,39 @@ async function main() {
     ], { cwd: temporaryRoot });
     run(process.execPath, ["secret-store-node-runtime.mjs"], { cwd: temporaryRoot });
     await writeFile(
-      join(temporaryRoot, "tsconfig.local-storage-node.json"),
+      join(temporaryRoot, "tsconfig.value-store-node.json"),
       JSON.stringify({
         compilerOptions: {
           lib: ["ES2023"], module: "NodeNext", moduleResolution: "NodeNext",
           noEmit: true, strict: true, target: "ES2023", types: ["node"],
         },
-        files: ["local-storage-node-usage.ts"],
+        files: ["value-store-node-usage.ts"],
       }, null, 2),
     );
     run(process.execPath, [
       join(temporaryRoot, "node_modules", "typescript", "bin", "tsc"),
-      "-p", "tsconfig.local-storage-node.json",
+      "-p", "tsconfig.value-store-node.json",
     ], { cwd: temporaryRoot });
     await writeFile(
-      join(temporaryRoot, "tsconfig.local-storage.json"),
+      join(temporaryRoot, "tsconfig.value-store.json"),
       JSON.stringify({
         compilerOptions: {
           lib: ["ES2022"], module: "NodeNext", moduleResolution: "NodeNext",
           noEmit: true, strict: true, target: "ES2022", types: [],
         },
-        files: ["local-storage-usage.ts"],
+        files: ["value-store-usage.ts"],
       }, null, 2),
     );
     run(process.execPath, [
       join(temporaryRoot, "node_modules", "typescript", "bin", "tsc"),
-      "-p", "tsconfig.local-storage.json",
+      "-p", "tsconfig.value-store.json",
     ], { cwd: temporaryRoot });
-    run(process.execPath, ["local-storage-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["value-store-runtime.mjs"], { cwd: temporaryRoot });
     await writeFile(
       join(temporaryRoot, "secret-store-runtime.mjs"),
       `import assert from "node:assert/strict";
-import { MemorySecretStore, SecretStoreError } from "@vrtmrz/secret-store";
+import { MemorySecretStore } from "@vrtmrz/secret-store";
+import { ValueStoreError } from "@vrtmrz/value-store";
 import { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";
 const store = new MemorySecretStore();
 assert.equal(await store.getValue("token"), null);
@@ -383,7 +416,7 @@ await store.setValue("token", "");
 assert.equal(await store.getValue("token"), "");
 assert.equal(await new MemorySecretStore().getValue("token"), null);
 await assert.rejects(store.setValue("INVALID", "placeholder"), error =>
-  error instanceof SecretStoreError && error.code === "invalid-name");
+  error instanceof ValueStoreError && error.code === "invalid-name");
 const entries = new Map();
 const adapter = createObsidianSecretStore({
   getSecret: name => entries.get(name) ?? null,
@@ -393,13 +426,13 @@ assert.equal(await adapter.getValue("token"), null);
 await adapter.setValue("token", "");
 assert.equal(await adapter.getValue("token"), "");
 await assert.rejects(adapter.getValue("INVALID"), error =>
-  error instanceof SecretStoreError && error.code === "invalid-name");
+  error instanceof ValueStoreError && error.code === "invalid-name");
 assert.throws(() => createObsidianSecretStore(undefined), error =>
-  error instanceof SecretStoreError && error.code === "unavailable");
+  error instanceof ValueStoreError && error.code === "unavailable");
 for (const length of [65, 128]) {
   for (const reader of [store, adapter]) {
     await assert.rejects(reader.getValue("a".repeat(length)), error =>
-      error instanceof SecretStoreError && error.code === "invalid-name");
+      error instanceof ValueStoreError && error.code === "invalid-name");
   }
 }
 `,
@@ -463,15 +496,15 @@ for (const length of [65, 128]) {
     await verifyTreeShakenBundle({
       temporaryRoot,
       entryName: "neutral-secret-store.ts",
-      source: `export { MemorySecretStore, SecretStoreError, validateSecretName } from "@vrtmrz/secret-store";`,
+      source: `export { MemorySecretStore, validateSecretName } from "@vrtmrz/secret-store";
+export { ValueStoreError } from "@vrtmrz/value-store";`,
       requiredModules: [
         "node_modules/@vrtmrz/secret-store/dist/memory.js",
-        "node_modules/@vrtmrz/secret-store/dist/errors.js",
         "node_modules/@vrtmrz/secret-store/dist/validation.js",
       ],
       excludedModules: [],
       externalImports: [],
-      allowedPackages: ["@vrtmrz/secret-store"],
+      allowedPackages: ["@vrtmrz/secret-store", "@vrtmrz/value-store"],
     });
 
     await verifyTreeShakenBundle({
@@ -480,8 +513,8 @@ for (const length of [65, 128]) {
       source: `export { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";`,
       requiredModules: [
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/secrets.js",
-        "node_modules/@vrtmrz/secret-store/dist/errors.js",
         "node_modules/@vrtmrz/secret-store/dist/validation.js",
+        "node_modules/@vrtmrz/value-store/dist/errors.js",
       ],
       excludedModules: [
         "node_modules/@vrtmrz/secret-store/dist/memory.js",
@@ -489,42 +522,42 @@ for (const length of [65, 128]) {
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault.js",
       ],
       externalImports: [],
-      allowedPackages: ["@vrtmrz/secret-store", "@vrtmrz/obsidian-plugin-kit"],
+      allowedPackages: ["@vrtmrz/secret-store", "@vrtmrz/value-store", "@vrtmrz/obsidian-plugin-kit"],
     });
 
-    const localStorageNodeModules = [
-      "node_modules/@vrtmrz/local-storage/dist/node/index.js",
-      "node_modules/@vrtmrz/local-storage/dist/node/files.js",
-      "node_modules/@vrtmrz/local-storage/dist/node/format.js",
-      "node_modules/@vrtmrz/local-storage/dist/node/operations.js",
-      "node_modules/@vrtmrz/local-storage/dist/node/types.js",
+    const valueStoreNodeModules = [
+      "node_modules/@vrtmrz/value-store/dist/node/index.js",
+      "node_modules/@vrtmrz/value-store/dist/node/files.js",
+      "node_modules/@vrtmrz/value-store/dist/node/format.js",
+      "node_modules/@vrtmrz/value-store/dist/node/operations.js",
+      "node_modules/@vrtmrz/value-store/dist/node/types.js",
     ];
     await verifyTreeShakenBundle({
       temporaryRoot,
-      entryName: "neutral-local-storage.ts",
-      source: `export { MemoryLocalValueStore, LocalStorageError } from "@vrtmrz/local-storage";`,
+      entryName: "neutral-value-store.ts",
+      source: `export { MemoryValueStore, ValueStoreError } from "@vrtmrz/value-store";`,
       requiredModules: [
-        "node_modules/@vrtmrz/local-storage/dist/memory.js",
-        "node_modules/@vrtmrz/local-storage/dist/errors.js",
-        "node_modules/@vrtmrz/local-storage/dist/validation.js",
+        "node_modules/@vrtmrz/value-store/dist/memory.js",
+        "node_modules/@vrtmrz/value-store/dist/errors.js",
+        "node_modules/@vrtmrz/value-store/dist/validation.js",
       ],
-      excludedModules: localStorageNodeModules,
+      excludedModules: valueStoreNodeModules,
       externalImports: [],
-      allowedPackages: ["@vrtmrz/local-storage"],
+      allowedPackages: ["@vrtmrz/value-store"],
     });
 
     await verifyTreeShakenBundle({
       temporaryRoot,
       entryName: "web-storage-adapter.ts",
-      source: `export { createWebStorageLocalStore } from "@vrtmrz/local-storage/web-storage";`,
+      source: `export { createWebStorageValueStore } from "@vrtmrz/value-store/web-storage";`,
       requiredModules: [
-        "node_modules/@vrtmrz/local-storage/dist/web-storage.js",
-        "node_modules/@vrtmrz/local-storage/dist/errors.js",
-        "node_modules/@vrtmrz/local-storage/dist/validation.js",
+        "node_modules/@vrtmrz/value-store/dist/web-storage.js",
+        "node_modules/@vrtmrz/value-store/dist/errors.js",
+        "node_modules/@vrtmrz/value-store/dist/validation.js",
       ],
-      excludedModules: localStorageNodeModules,
+      excludedModules: valueStoreNodeModules,
       externalImports: [],
-      allowedPackages: ["@vrtmrz/local-storage"],
+      allowedPackages: ["@vrtmrz/value-store"],
     });
 
     await verifyTreeShakenBundle({
@@ -537,9 +570,9 @@ for (const length of [65, 128]) {
 `,
       requiredModules: [
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/local-storage.js",
-        "node_modules/@vrtmrz/local-storage/dist/web-storage.js",
-        "node_modules/@vrtmrz/local-storage/dist/errors.js",
-        "node_modules/@vrtmrz/local-storage/dist/validation.js",
+        "node_modules/@vrtmrz/value-store/dist/web-storage.js",
+        "node_modules/@vrtmrz/value-store/dist/errors.js",
+        "node_modules/@vrtmrz/value-store/dist/validation.js",
       ],
       excludedModules: [
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/secrets.js",
@@ -550,14 +583,13 @@ for (const length of [65, 128]) {
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault.js",
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/testing.js",
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/vault-testing.js",
-        ...localStorageNodeModules,
+        ...valueStoreNodeModules,
         "node_modules/@vrtmrz/secret-store/dist/index.js",
-        "node_modules/@vrtmrz/secret-store/dist/errors.js",
         "node_modules/@vrtmrz/secret-store/dist/validation.js",
         "node_modules/@vrtmrz/secret-store/dist/memory.js",
       ],
       externalImports: [],
-      allowedPackages: ["@vrtmrz/local-storage", "@vrtmrz/obsidian-plugin-kit"],
+      allowedPackages: ["@vrtmrz/value-store", "@vrtmrz/obsidian-plugin-kit"],
     });
 
     await verifyTreeShakenBundle({
@@ -650,18 +682,18 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
         "node_modules/@vrtmrz/ui-interactions/dist/contracts.js",
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/secrets.js",
         "node_modules/@vrtmrz/obsidian-plugin-kit/dist/local-storage.js",
-        "node_modules/@vrtmrz/local-storage/dist/web-storage.js",
-        "node_modules/@vrtmrz/local-storage/dist/errors.js",
-        "node_modules/@vrtmrz/local-storage/dist/validation.js",
-        ...localStorageNodeModules,
-        "node_modules/@vrtmrz/secret-store/dist/errors.js",
+        "node_modules/@vrtmrz/value-store/dist/web-storage.js",
+        "node_modules/@vrtmrz/value-store/dist/errors.js",
+        "node_modules/@vrtmrz/value-store/dist/validation.js",
+        ...valueStoreNodeModules,
         "node_modules/@vrtmrz/secret-store/dist/validation.js",
+        "node_modules/@vrtmrz/value-store/dist/errors.js",
       ],
       externalImports: ["obsidian"],
     });
 
     console.log(
-      `Verified ${packageNames.length} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node local-storage type fixtures and runtime fixture, and 8 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, and 8 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

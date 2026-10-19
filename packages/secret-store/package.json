@@ -18,7 +18,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,5 +34,8 @@
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.check.json",
     "test": "vitest run --maxWorkers=1",
     "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@vrtmrz/value-store": "0.0.0"
   }
 }

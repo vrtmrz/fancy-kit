@@ -1,4 +1,4 @@
-import type { ValueSerializer } from "@vrtmrz/local-storage";
+import type { ValueSerializer } from "@vrtmrz/value-store";
 import {
   decryptWithEphemeralSalt,
   encryptWithEphemeralSalt,
@@ -11,7 +11,7 @@ export type PassphraseProvider = () => string | Promise<string>;
 /**
  * Creates an example serializer using OW's salted HKDF and AES-GCM format.
  *
- * Supply this pair explicitly to a local or secret store. The caller owns the
+ * Supply this pair explicitly to a value or secret store. The caller owns the
  * provider and key provisioning. The example binds the logical key inside the
  * authenticated payload and JSON-encodes strings before OW's UTF-8 boundary,
  * preserving empty strings, BOMs, and lone UTF-16 surrogates. OW includes the

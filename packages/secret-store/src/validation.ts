@@ -1,4 +1,4 @@
-import { SecretStoreError } from "./errors.js";
+import { ValueStoreError } from "@vrtmrz/value-store";
 
 // Unlike $, this end assertion also rejects a final line terminator.
 const secretNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*(?![\s\S])/;
@@ -11,7 +11,7 @@ const secretNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*(?![\s\S])/;
  * paths, and URI references are rejected. There is no decoding or normalisation.
  *
  * @param name - The complete name to validate.
- * @throws {@link SecretStoreError} with code `invalid-name` for an invalid name,
+ * @throws {@link ValueStoreError} with code `invalid-name` for an invalid name,
  * including non-string input from an untyped caller. The input is not echoed.
  */
 export function validateSecretName(name: string): void {
@@ -21,24 +21,24 @@ export function validateSecretName(name: string): void {
     || name.length > 64
     || !secretNamePattern.test(name)
   ) {
-    throw new SecretStoreError("invalid-name");
+    throw new ValueStoreError("invalid-name");
   }
 }
 
 /** Validates strings without relying on post-ES2022 Unicode helpers. */
-export function validateSecretValue(value: string): void {
+export function validateSecretValue(value: unknown): asserts value is string {
   if (typeof value !== "string") {
-    throw new SecretStoreError("invalid-value");
+    throw new ValueStoreError("invalid-value");
   }
   for (let index = 0; index < value.length; index++) {
     const unit = value.charCodeAt(index);
     if (unit >= 0xd800 && unit <= 0xdbff) {
       const next = value.charCodeAt(++index);
       if (!(next >= 0xdc00 && next <= 0xdfff)) {
-        throw new SecretStoreError("invalid-value");
+        throw new ValueStoreError("invalid-value");
       }
     } else if (unit >= 0xdc00 && unit <= 0xdfff) {
-      throw new SecretStoreError("invalid-value");
+      throw new ValueStoreError("invalid-value");
     }
   }
 }

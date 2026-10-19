@@ -1,8 +1,8 @@
-import type { ValueSerializer as LocalSerializer } from "@vrtmrz/local-storage";
-import type { ValueSerializer as SecretSerializer } from "@vrtmrz/secret-store";
+import type { SecretStoreOptions } from "@vrtmrz/secret-store";
+import type { ValueSerializer, ValueStoreOptions } from "@vrtmrz/value-store";
 import { createOwHkdfSerializer } from "../../examples/value-stores/ow-hkdf-serializer.js";
 
-const local: LocalSerializer = createOwHkdfSerializer(async () => "example-passphrase");
-const secret: SecretSerializer = local;
-const localAgain: LocalSerializer = secret;
-void localAgain;
+const serializer: ValueSerializer = createOwHkdfSerializer(async () => "example-passphrase");
+const valueOptions: ValueStoreOptions = { serializer };
+const secretOptions: SecretStoreOptions = { serializer };
+void [valueOptions, secretOptions];

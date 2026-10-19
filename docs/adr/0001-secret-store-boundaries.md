@@ -4,6 +4,8 @@ Status: Accepted and implemented through Phase 3b; management utilities and addi
 
 Date: 2026-10-18
 
+[ADR 0003](0003-value-store-capabilities.md) supersedes the package naming, common error ownership, and value-operation implementation described here. It also replaces ADR 0002's implicit empty-string deletion with an explicit deletion capability. This record preserves the earlier decision; authority, key acquisition, and persistence boundaries remain applicable.
+
 Implementation status: The neutral core is implemented in [`@vrtmrz/secret-store`](../../packages/secret-store), with an injected Obsidian adapter in [`@vrtmrz/obsidian-plugin-kit/secrets`](../../packages/obsidian-plugin-kit/src/secrets.ts). The [`@vrtmrz/secret-store-node/age`](../../packages/secret-store-node) adapter implements the accepted encrypted-file boundary using the codec qualified in the [feasibility study](../design/secret-store-age-feasibility.md). Native adapters, key provisioning, the CLI, and encrypted packs remain future phases. No registry release or consumer migration is included.
 
 Related document: [Cross-platform SecretStore design](../design/secret-store.md).

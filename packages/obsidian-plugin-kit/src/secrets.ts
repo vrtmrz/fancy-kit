@@ -1,4 +1,5 @@
-import { SecretStoreError, createSecretStore } from "@vrtmrz/secret-store";
+import { createSecretStore } from "@vrtmrz/secret-store";
+import { ValueStoreError } from "@vrtmrz/value-store";
 import type { SecretStore, SecretStoreOptions } from "@vrtmrz/secret-store";
 
 /**
@@ -39,7 +40,7 @@ export interface ObsidianSecretStorage {
  * @param storage - The synchronous host capability, normally `app.secretStorage`.
  * @param options - Optional value serialisation for this store instance.
  * @returns An asynchronous reader and replacement writer with no delete or list capability.
- * @throws {@link SecretStoreError} with `unavailable` when required methods are
+ * @throws {@link ValueStoreError} with `unavailable` when required methods are
  * missing, or `operation-failed` if reading host methods throws.
  */
 export function createObsidianSecretStore(
@@ -52,10 +53,10 @@ export function createObsidianSecretStore(
     getSecret = storage?.getSecret;
     setSecret = storage?.setSecret;
   } catch {
-    throw new SecretStoreError("operation-failed");
+    throw new ValueStoreError("operation-failed");
   }
   if (typeof getSecret !== "function" || typeof setSecret !== "function") {
-    throw new SecretStoreError("unavailable");
+    throw new ValueStoreError("unavailable");
   }
 
   return createSecretStore({

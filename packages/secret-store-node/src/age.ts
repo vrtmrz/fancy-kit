@@ -18,7 +18,7 @@ export type { AgeIdentityProvider, AgeFileSecretReaderOptions, AgeFileSecretStor
  *
  * @param options - An explicit existing root and identity provider.
  * @returns A reader with no write, delete, list, or provisioning capability.
- * @throws SecretStoreError through rejection, with fixed messages and no causes.
+ * @throws ValueStoreError through rejection, with fixed messages and no causes.
  */
 export function createAgeFileSecretReader(options: AgeFileSecretReaderOptions): Promise<SecretReader> {
   return createAgeReaderWithOperations(options, nodeFileOperations);
@@ -42,7 +42,7 @@ export function createAgeFileSecretReader(options: AgeFileSecretReaderOptions): 
  *
  * @param options - Existing root, identity provider, and native X25519 recipients.
  * @returns A store with the reader's exact-value and finite-size contracts.
- * @throws SecretStoreError through rejection; failures never reveal values,
+ * @throws ValueStoreError through rejection; failures never reveal values,
  * identities, caller-supplied paths, or upstream messages, and never select a fallback store.
  */
 export function createAgeFileSecretStore(options: AgeFileSecretStoreOptions): Promise<SecretStore> {

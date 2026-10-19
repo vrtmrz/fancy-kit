@@ -1,5 +1,5 @@
 import { Decrypter, Encrypter } from 'age-encryption';
-import { SecretStoreError } from '@vrtmrz/secret-store';
+import { ValueStoreError } from '@vrtmrz/value-store';
 import type { AgeIdentityProvider } from '../age-types.js';
 
 /** Inclusive UTF-8 byte limit for one secret value. */
@@ -11,10 +11,10 @@ export const MAX_CIPHERTEXT_BYTES = 1_048_576;
 const recipientPattern = /^age1[0-9a-z]{58}(?![\s\S])/u;
 const identityPattern = /^AGE-SECRET-KEY-1[0-9A-Z]{58}(?![\s\S])/u;
 
-type SecretStoreErrorCode = ConstructorParameters<typeof SecretStoreError>[0];
+type ValueStoreErrorCode = ConstructorParameters<typeof ValueStoreError>[0];
 
-function fail(code: SecretStoreErrorCode): never {
-  throw new SecretStoreError(code);
+function fail(code: ValueStoreErrorCode): never {
+  throw new ValueStoreError(code);
 }
 
 /**
@@ -26,7 +26,7 @@ function fail(code: SecretStoreErrorCode): never {
  *
  * @param value - The value to encode.
  * @returns UTF-8 bytes for the value.
- * @throws {@link SecretStoreError} with code `invalid-value` for non-strings,
+ * @throws {@link ValueStoreError} with code `invalid-value` for non-strings,
  *   unpaired surrogates, or values above {@link MAX_PLAINTEXT_BYTES} bytes.
  */
 export function encodeAgeValue(value: string): Uint8Array {
@@ -47,7 +47,7 @@ export function encodeAgeValue(value: string): Uint8Array {
  *
  * @param recipients - Native X25519 recipient strings copied at construction.
  * @returns An encryptor that resolves to binary age ciphertext.
- * @throws {@link SecretStoreError} with code `invalid-value` for an empty,
+ * @throws {@link ValueStoreError} with code `invalid-value` for an empty,
  *   malformed, or unsupported recipient policy.
  */
 export function createAgeEncryptor(
@@ -95,7 +95,7 @@ export function createAgeEncryptor(
  * @param ciphertext - The already-read binary age ciphertext.
  * @param provideIdentities - Supplies native X25519 identities for this call.
  * @returns The decoded UTF-8 secret value.
- * @throws {@link SecretStoreError} with a fixed failure code for invalid input,
+ * @throws {@link ValueStoreError} with a fixed failure code for invalid input,
  *   unavailable identities, provider failures, or decryption failures.
  */
 export async function decryptAgeValue(

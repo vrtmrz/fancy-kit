@@ -1,6 +1,7 @@
+import { ValueStoreError, type ValueStoreErrorCode } from "@vrtmrz/value-store";
 import type { BigIntStats } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { SecretStoreError, type SecretStoreErrorCode } from "@vrtmrz/secret-store";
+
 import type { SecretFileOperations } from "./file-operations.js";
 
 /** Device and inode identity, retained only within this process. */
@@ -22,20 +23,20 @@ export function fileErrorCode(error: unknown): string | undefined {
 }
 
 /** Reconstructs a safe error rather than retaining an upstream message or cause. */
-export function sanitiseFileError(error: unknown): SecretStoreError {
+export function sanitiseFileError(error: unknown): ValueStoreError {
   try {
-    if (error instanceof SecretStoreError) return new SecretStoreError((fileErrorCode(error) ?? "operation-failed") as SecretStoreErrorCode);
+    if (error instanceof ValueStoreError) return new ValueStoreError((fileErrorCode(error) ?? "operation-failed") as ValueStoreErrorCode);
   } catch {
     // A thrown Proxy can fail even during prototype inspection.
-    return new SecretStoreError("operation-failed");
+    return new ValueStoreError("operation-failed");
   }
   switch (fileErrorCode(error)) {
     case "EACCES":
-    case "EPERM": return new SecretStoreError("access-denied");
-    case "ENOENT": return new SecretStoreError("unavailable");
+    case "EPERM": return new ValueStoreError("access-denied");
+    case "ENOENT": return new ValueStoreError("unavailable");
     case "ELOOP":
-    case "ENOTDIR": return new SecretStoreError("invalid-data");
-    default: return new SecretStoreError("operation-failed");
+    case "ENOTDIR": return new ValueStoreError("invalid-data");
+    default: return new ValueStoreError("operation-failed");
   }
 }
 
@@ -47,10 +48,10 @@ export function sameFile(left: FileIdentity, right: FileIdentity): boolean {
 /** Validates a private readable regular file, allowing an opened old inode. */
 export function validateSecretFile(stat: BigIntStats, userId: bigint, allowUnlinked = false): void {
   if (!stat.isFile() || stat.nlink > 1n || (stat.nlink === 0n && !allowUnlinked)) {
-    throw new SecretStoreError("invalid-data");
+    throw new ValueStoreError("invalid-data");
   }
   if (stat.uid !== userId || (stat.mode & 0o7177n) !== 0n || (stat.mode & 0o400n) === 0n) {
-    throw new SecretStoreError("access-denied");
+    throw new ValueStoreError("access-denied");
   }
 }
 
@@ -76,9 +77,9 @@ export async function createRootAuthority(
   operations: SecretFileOperations,
 ): Promise<RootAuthority> {
   if (typeof rootPath !== "string" || rootPath.length === 0 || rootPath.includes("\0")) {
-    throw new SecretStoreError("invalid-value");
+    throw new ValueStoreError("invalid-value");
   }
-  if (!operations.supportsAuthority()) throw new SecretStoreError("unavailable");
+  if (!operations.supportsAuthority()) throw new ValueStoreError("unavailable");
   const path = resolve(rootPath);
   const paths = [path];
   while (dirname(paths[0]) !== paths[0]) paths.unshift(dirname(paths[0]));
@@ -88,17 +89,17 @@ export async function createRootAuthority(
     const identities: BigIntStats[] = [];
     for (const component of paths) {
       const stat = await operations.statPath(component);
-      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new SecretStoreError("invalid-data");
+      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new ValueStoreError("invalid-data");
       if (component === path) {
         const required = needsWrite ? 0o700n : 0o500n;
         if (stat.uid !== userId || (stat.mode & 0o7077n) !== 0n || (stat.mode & required) !== required) {
-          throw new SecretStoreError("access-denied");
+          throw new ValueStoreError("access-denied");
         }
       } else if (
         (stat.uid !== 0n && stat.uid !== userId)
         || ((stat.mode & 0o022n) !== 0n && (stat.mode & 0o1000n) === 0n)
       ) {
-        throw new SecretStoreError("access-denied");
+        throw new ValueStoreError("access-denied");
       }
       identities.push(stat);
     }
@@ -112,7 +113,7 @@ export async function createRootAuthority(
     async validate(needsWrite = false) {
       const current = await inspect(needsWrite);
       if (current.identities.some((stat, index) => !sameFile(stat, initial.identities[index]))) {
-        throw new SecretStoreError("unavailable");
+        throw new ValueStoreError("unavailable");
       }
       return current.userId;
     },

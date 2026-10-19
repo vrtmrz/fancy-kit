@@ -14,7 +14,7 @@ on:
           - "@vrtmrz/obsidian-test-session"
           - "@vrtmrz/secret-store"
           - "@vrtmrz/secret-store-node"
-          - "@vrtmrz/local-storage"
+          - "@vrtmrz/value-store"
           - octagonal-wheels
       version:
         description: Exact version in the selected package manifest

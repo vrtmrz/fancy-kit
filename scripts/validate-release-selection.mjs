@@ -15,7 +15,7 @@ export const publishablePackages = Object.freeze({
   "@vrtmrz/obsidian-test-session": "packages/obsidian-test-session",
   "@vrtmrz/secret-store": "packages/secret-store",
   "@vrtmrz/secret-store-node": "packages/secret-store-node",
-  "@vrtmrz/local-storage": "packages/local-storage",
+  "@vrtmrz/value-store": "packages/value-store",
   "octagonal-wheels": "packages/octagonal-wheels",
 });
 
@@ -41,7 +41,7 @@ export function validateReleaseSelection({
   lockEntry,
   uiManifest,
   secretStoreManifest,
-  localStorageManifest,
+  valueStoreManifest,
 }) {
   const packageDirectory = publishablePackages[packageName];
   if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
@@ -92,20 +92,24 @@ export function validateReleaseSelection({
     }
   }
 
-  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
-    const dependency = "@vrtmrz/local-storage";
-    const localStorageVersion = manifest.dependencies?.[dependency];
+  if (
+    packageName === "@vrtmrz/secret-store" ||
+    packageName === "@vrtmrz/secret-store-node" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit"
+  ) {
+    const dependency = "@vrtmrz/value-store";
+    const valueStoreVersion = manifest.dependencies?.[dependency];
     if (
-      !isReleaseVersion(localStorageVersion) ||
-      !isReleaseVersion(localStorageManifest?.version) ||
-      localStorageVersion !== localStorageManifest.version
+      !isReleaseVersion(valueStoreVersion) ||
+      !isReleaseVersion(valueStoreManifest?.version) ||
+      valueStoreVersion !== valueStoreManifest.version
     ) {
       throw new Error(
-        `${packageName} requires ${dependency} ${localStorageVersion ?? "without an exact version"}, but the workspace contains ${localStorageManifest?.version ?? "no valid manifest version"}`,
+        `${packageName} requires ${dependency} ${valueStoreVersion ?? "without an exact version"}, but the workspace contains ${valueStoreManifest?.version ?? "no valid manifest version"}`,
       );
     }
-    if (lockEntry.dependencies?.[dependency] !== localStorageVersion) {
-      throw new Error(`${packageName} local-storage dependency does not match the lockfile`);
+    if (lockEntry.dependencies?.[dependency] !== valueStoreVersion) {
+      throw new Error(`${packageName} value-store dependency does not match the lockfile`);
     }
   }
 
@@ -123,13 +127,17 @@ export async function assertKitDependencyIsPublished(packageName, manifest, fetc
   const dependencies = [];
   if (dependsOnUiInteractions(packageName)) dependencies.push("@vrtmrz/ui-interactions");
   if (
+    packageName === "@vrtmrz/secret-store" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit" ||
+    packageName === "@vrtmrz/secret-store-node"
+  ) {
+    dependencies.push("@vrtmrz/value-store");
+  }
+  if (
     packageName === "@vrtmrz/obsidian-plugin-kit" ||
     packageName === "@vrtmrz/secret-store-node"
   ) {
     dependencies.push("@vrtmrz/secret-store");
-  }
-  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
-    dependencies.push("@vrtmrz/local-storage");
   }
 
   for (const dependency of dependencies) {
@@ -160,8 +168,12 @@ export function readReleaseSelectionMetadata(packageName, read = readJson) {
   ) {
     metadata.secretStoreManifest = read("packages/secret-store/package.json");
   }
-  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
-    metadata.localStorageManifest = read("packages/local-storage/package.json");
+  if (
+    packageName === "@vrtmrz/secret-store" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit" ||
+    packageName === "@vrtmrz/secret-store-node"
+  ) {
+    metadata.valueStoreManifest = read("packages/value-store/package.json");
   }
   return metadata;
 }
@@ -172,7 +184,7 @@ async function main() {
     throw new Error("Usage: node scripts/validate-release-selection.mjs <package> <version> <dist-tag> <expected-sha> <actual-sha> <confirmation>");
   }
 
-  const { manifest, lockEntry, uiManifest, secretStoreManifest, localStorageManifest } =
+  const { manifest, lockEntry, uiManifest, secretStoreManifest, valueStoreManifest } =
     readReleaseSelectionMetadata(packageName);
 
   const result = validateReleaseSelection({
@@ -186,7 +198,7 @@ async function main() {
     lockEntry,
     uiManifest,
     secretStoreManifest,
-    localStorageManifest,
+    valueStoreManifest,
   });
   await assertVersionIsUnpublished(packageName, expectedVersion);
   await assertKitDependencyIsPublished(packageName, manifest);

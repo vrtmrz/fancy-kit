@@ -1,3 +1,4 @@
+import { ValueStoreError } from "@vrtmrz/value-store";
 import { constants } from "node:fs";
 import { spawn } from "node:child_process";
 import { chmod, link, mkdir, mkdtemp, readFile, readdir, rename, rm, stat, symlink, truncate, writeFile } from "node:fs/promises";
@@ -6,7 +7,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { Encrypter, generateIdentity, identityToRecipient } from "age-encryption";
-import { SecretStoreError } from "@vrtmrz/secret-store";
+
 import { secretStoreContract } from "../../secret-store/test/contract-cases.js";
 import { createAgeFileSecretReader, createAgeFileSecretStore } from "../src/age.js";
 import { createAgeReaderWithOperations, createAgeStoreWithOperations } from "../src/internal/age-files.js";
@@ -171,12 +172,12 @@ describe("file authority and read bounds", () => {
     expect(calls).toEqual([]);
   });
 
-  it("sanitises even a thrown SecretStoreError with a hostile code getter", async () => {
-    const upstream = new SecretStoreError("operation-failed");
+  it("sanitises even a thrown ValueStoreError with a hostile code getter", async () => {
+    const upstream = new ValueStoreError("operation-failed");
     Object.defineProperty(upstream, "code", { get() { throw new Error("SENTINEL-PRIVATE-OPTION"); } });
     const options = { get rootPath(): string { throw upstream; }, identityProvider: provider };
     const error = await createAgeFileSecretReader(options).catch((error: unknown) => error);
-    expect(error).toBeInstanceOf(SecretStoreError);
+    expect(error).toBeInstanceOf(ValueStoreError);
     expect(error).toMatchObject({ code: "operation-failed" });
     expect(String(error) + JSON.stringify(error)).not.toContain("SENTINEL");
   });
@@ -185,7 +186,7 @@ describe("file authority and read bounds", () => {
     const upstream = new Proxy({}, { getPrototypeOf() { throw new Error("SENTINEL-PRIVATE-PROTOTYPE"); } });
     const options = { get rootPath(): string { throw upstream; }, identityProvider: provider };
     const error = await createAgeFileSecretReader(options).catch((error: unknown) => error);
-    expect(error).toBeInstanceOf(SecretStoreError);
+    expect(error).toBeInstanceOf(ValueStoreError);
     expect(error).toMatchObject({ code: "operation-failed" });
     expect(String(error) + JSON.stringify(error)).not.toContain("SENTINEL");
   });
@@ -352,7 +353,7 @@ describe("replacement failures and concurrency", () => {
       };
       const writer = await store(directory, operations);
       const error = await writer.setValue("api-token", "replacement").catch((error: unknown) => error);
-      expect(error).toBeInstanceOf(SecretStoreError);
+      expect(error).toBeInstanceOf(ValueStoreError);
       expect(error).toMatchObject({ code: "operation-failed" });
       expect(error).not.toHaveProperty("cause");
       expect(String(error) + JSON.stringify(error)).not.toContain("SENTINEL");
@@ -407,7 +408,7 @@ describe("replacement failures and concurrency", () => {
       },
       unlink: async () => { throw failure("EPERM"); },
     };
-    await expect((await store(directory, operations)).setValue("api-token", "replacement")).rejects.toBeInstanceOf(SecretStoreError);
+    await expect((await store(directory, operations)).setValue("api-token", "replacement")).rejects.toBeInstanceOf(ValueStoreError);
     expect(await realStore.getValue("api-token")).toBe("original");
     const temporary = (await readdir(directory)).find((name) => name.endsWith(".tmp"));
     expect(temporary).toBeDefined();
@@ -433,7 +434,7 @@ describe("replacement failures and concurrency", () => {
         } };
       },
     };
-    await expect((await store(directory, operations)).setValue("api-token", "replacement")).rejects.toBeInstanceOf(SecretStoreError);
+    await expect((await store(directory, operations)).setValue("api-token", "replacement")).rejects.toBeInstanceOf(ValueStoreError);
     expect(await readFile(foreignPath, "utf8")).toBe("foreign-operation");
     expect(await realStore.getValue("api-token")).toBe("original");
   });
