@@ -121,6 +121,35 @@ describe("createLocalValueStore", () => {
     expect(calls).toEqual(["serialize", "set", "get", "deserialize"]);
   });
 
+  it.each(["method", "getter"] as const)("ignores inherited toJSON %ss when encoding objects", async (kind) => {
+    const store = new MemoryLocalValueStore();
+    const originals = [Object.prototype, Array.prototype].map((prototype) => ({
+      prototype, descriptor: Object.getOwnPropertyDescriptor(prototype, "toJSON"),
+    }));
+    let hookCalls = 0;
+    const hook = () => { hookCalls += 1; return "rewritten"; };
+    let stored: string | null = null;
+    try {
+      for (const { prototype } of originals) {
+        Object.defineProperty(prototype, "toJSON", kind === "method"
+          ? { configurable: true, value: hook }
+          : { configurable: true, get: hook });
+      }
+      await store.setObject("entry", { nested: ["original", { count: 0 }], empty: "" });
+      stored = await store.getValue("entry");
+    } finally {
+      for (const { prototype, descriptor } of originals) {
+        if (descriptor === undefined) Reflect.deleteProperty(prototype, "toJSON");
+        else Object.defineProperty(prototype, "toJSON", descriptor);
+      }
+    }
+    expect(stored).toBe('{"nested":["original",{"count":0}],"empty":""}');
+    expect(hookCalls).toBe(0);
+    const result = await store.getObject("entry") as { nested: unknown[] };
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(result.nested)).toBe(Array.prototype);
+  });
+
   it("preserves JSON null and falsy values while empty local strings delete", async () => {
     const entries = new Map<string, string>();
     let serializeCalls = 0;

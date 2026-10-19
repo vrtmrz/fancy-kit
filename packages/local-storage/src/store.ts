@@ -8,7 +8,7 @@ import type {
   ValueSerializer,
 } from "./contracts.js";
 import { LocalStorageError, sanitiseLocalStorageError } from "./errors.js";
-import { cloneObjectValue, validateLocalKey, validateLocalValue, validateObjectValue } from "./validation.js";
+import { cloneObjectValue, snapshotObjectValue, validateLocalKey, validateLocalValue, validateObjectValue } from "./validation.js";
 
 type Method = (...args: unknown[]) => unknown;
 type CapturedSerializer = { receiver: object | Function; serialize: Method; deserialize: Method } | undefined;
@@ -42,7 +42,7 @@ export function createLocalValueStore(
     },
     async setObject(key: string, value: ObjectValue): Promise<void> {
       validateLocalKey(key);
-      const snapshot = cloneObjectValue(value);
+      const snapshot = snapshotObjectValue(value);
       let text: string;
       try {
         text = JSON.stringify(snapshot);

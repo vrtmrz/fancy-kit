@@ -34,8 +34,13 @@ export function validateObjectValue(
   inspectObjectValue(value, false, code);
 }
 
-/** Creates a detached copy using JSON-value semantics. */
+/** Creates a detached copy using JSON-value semantics and ordinary prototypes. */
 export function cloneObjectValue(value: unknown): ObjectValue {
+  return inspectObjectValue(value, true, "invalid-value", true);
+}
+
+/** Creates a JSON encoding snapshot without inherited getters or toJSON hooks. */
+export function snapshotObjectValue(value: unknown): ObjectValue {
   return inspectObjectValue(value, true, "invalid-value");
 }
 
@@ -55,6 +60,7 @@ function inspectObjectValue(
   root: unknown,
   clone: boolean,
   code: ObjectValueErrorCode,
+  ordinaryPrototypes = false,
 ): ObjectValue {
   try {
     const active = new WeakSet<object>();
@@ -93,9 +99,14 @@ function inspectObjectValue(
         throw new Error();
       }
       const children = readChildren(object);
-      const copy: ObjectValue = clone
-        ? children.kind === "array" ? [] : {}
-        : value as ObjectValue;
+      let copy = value as ObjectValue;
+      if (clone) {
+        if (children.kind === "array") {
+          copy = ordinaryPrototypes ? [] : createArraySnapshot();
+        } else {
+          copy = ordinaryPrototypes ? {} : Object.create(null) as { [key: string]: ObjectValue };
+        }
+      }
       task.assign(copy);
 
       active.add(object);
@@ -205,4 +216,10 @@ function assignChild(parent: ObjectValue, key: number | string, value: ObjectVal
     writable: true,
     configurable: true,
   });
+}
+
+function createArraySnapshot(): ObjectValue[] {
+  const copy: ObjectValue[] = [];
+  Object.setPrototypeOf(copy, null);
+  return copy;
 }

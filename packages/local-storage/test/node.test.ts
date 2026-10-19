@@ -55,6 +55,40 @@ describe("Node local storage", async () => {
     if (process.platform !== "win32") expect(statSync(options.filePath).mode & 0o777).toBe(0o600);
   });
 
+  it.each(["method", "getter"] as const)("ignores inherited toJSON %ss when replacing the document", async (kind) => {
+    const options = fixture();
+    const store = createNodeLocalStore(options);
+    await store.setValue("existing", "keep");
+    await store.setValue("removed", "remove");
+    const originals = [Object.prototype, Array.prototype].map((prototype) => ({
+      prototype, descriptor: Object.getOwnPropertyDescriptor(prototype, "toJSON"),
+    }));
+    let hookCalls = 0;
+    const hook = () => { hookCalls += 1; return "rewritten"; };
+    try {
+      for (const { prototype } of originals) {
+        Object.defineProperty(prototype, "toJSON", kind === "method"
+          ? { configurable: true, value: hook }
+          : { configurable: true, get: hook });
+      }
+      await store.setValue("added", "value");
+      await store.delete("removed");
+    } finally {
+      for (const { prototype, descriptor } of originals) {
+        if (descriptor === undefined) Reflect.deleteProperty(prototype, "toJSON");
+        else Object.defineProperty(prototype, "toJSON", descriptor);
+      }
+    }
+    expect(hookCalls).toBe(0);
+    const reopened = createNodeLocalStore(options);
+    expect(await reopened.getValue("existing")).toBe("keep");
+    expect(await reopened.getValue("added")).toBe("value");
+    expect(await reopened.getValue("removed")).toBeNull();
+    expect(JSON.parse(readFileSync(options.filePath, "utf8"))).toEqual({
+      version: 1, entries: [["plugin:existing", "keep"], ["plugin:added", "value"]],
+    });
+  });
+
   it("round-trips JSON objects with nested falsy values without retaining caller mutations", async () => {
     const options = fixture();
     const store = createNodeLocalStore(options);

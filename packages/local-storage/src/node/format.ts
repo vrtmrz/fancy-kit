@@ -1,4 +1,4 @@
-import { validateLocalValue } from "../validation.js";
+import { snapshotObjectValue, validateLocalValue } from "../validation.js";
 import { LocalStorageError } from "../errors.js";
 
 /** Inclusive limit for the complete UTF-8 JSON document. */
@@ -32,7 +32,8 @@ export function decodeDocument(bytes: Uint8Array): Map<string, string> {
 
 /** Serialises the complete candidate before any persistent mutation. */
 export function encodeDocument(entries: ReadonlyMap<string, string>): Uint8Array {
-  const bytes = new TextEncoder().encode(JSON.stringify({ version: 1, entries: [...entries] }));
+  const snapshot = snapshotObjectValue({ version: 1, entries: [...entries] });
+  const bytes = new TextEncoder().encode(JSON.stringify(snapshot));
   if (bytes.byteLength > MAX_DOCUMENT_BYTES) throw new LocalStorageError("quota-exceeded");
   return bytes;
 }

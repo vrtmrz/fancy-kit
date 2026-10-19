@@ -16,6 +16,22 @@ describe("OW HKDF serializer example", () => {
     }
   });
 
+  it("preserves the authenticated key and value without invoking an inherited toJSON", async () => {
+    const serializer = makeSerializer();
+    const original = Object.getOwnPropertyDescriptor(Array.prototype, "toJSON");
+    const hook = vi.fn(() => "rewritten");
+    let ciphertext: string;
+    try {
+      Object.defineProperty(Array.prototype, "toJSON", { configurable: true, value: hook });
+      ciphertext = await serializer.serialize("key", "original");
+    } finally {
+      if (original === undefined) Reflect.deleteProperty(Array.prototype, "toJSON");
+      else Object.defineProperty(Array.prototype, "toJSON", original);
+    }
+    expect(hook).not.toHaveBeenCalled();
+    expect(await serializer.deserialize("key", ciphertext)).toBe("original");
+  });
+
   it("uses fresh ciphertext for repeated values and carries its decryption salt", async () => {
     const serializer = makeSerializer();
     const first = await serializer.serialize("key", "value");

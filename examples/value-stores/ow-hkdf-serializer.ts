@@ -41,7 +41,9 @@ export function createOwHkdfSerializer(getPassphrase: PassphraseProvider): Value
     async serialize(key, value) {
       try {
         if (typeof key !== "string" || typeof value !== "string") throw new Error();
-        return await encryptWithEphemeralSalt(JSON.stringify([key, value]), await passphrase());
+        // Encoding the primitive strings separately avoids inherited array toJSON hooks.
+        const payload = `[${JSON.stringify(key)},${JSON.stringify(value)}]`;
+        return await encryptWithEphemeralSalt(payload, await passphrase());
       } catch {
         throw new Error("The value could not be serialised.");
       }
