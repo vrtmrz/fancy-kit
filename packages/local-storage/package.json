@@ -1,0 +1,46 @@
+{
+  "name": "@vrtmrz/local-storage",
+  "version": "0.0.0",
+  "description": "Explicit asynchronous value and object storage for browsers, Obsidian, and Node.js",
+  "type": "module",
+  "license": "MIT",
+  "author": "vorotamoroz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrtmrz/fancy-kit.git",
+    "directory": "packages/local-storage"
+  },
+  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/local-storage#readme",
+  "bugs": {
+    "url": "https://github.com/vrtmrz/fancy-kit/issues"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web-storage": {
+      "types": "./dist/web-storage.d.ts",
+      "import": "./dist/web-storage.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.check.json",
+    "test": "vitest run --maxWorkers=1",
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+  }
+}

@@ -12,6 +12,9 @@ on:
           - "@vrtmrz/browser-ui-kit"
           - "@vrtmrz/obsidian-plugin-kit"
           - "@vrtmrz/obsidian-test-session"
+          - "@vrtmrz/secret-store"
+          - "@vrtmrz/secret-store-node"
+          - "@vrtmrz/local-storage"
           - octagonal-wheels
       version:
         description: Exact version in the selected package manifest

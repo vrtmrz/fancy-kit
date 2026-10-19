@@ -8,6 +8,8 @@ const steps = [
   "session-lifecycle.ts",
   "smoke.ts",
   "profile-restart.ts",
+  "secrets.ts",
+  "local-storage.ts",
   "modes.ts",
   "dialogs.ts",
   "progress.ts",
@@ -64,6 +66,9 @@ async function main(): Promise<void> {
   }
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
   const npx = process.platform === "win32" ? "npx.cmd" : "npx";
+  await run(npm, ["run", "build", "--workspace", "@vrtmrz/local-storage"]);
+  await run(npm, ["run", "build", "--workspace", "@vrtmrz/secret-store"]);
+  await run(npm, ["run", "build", "--workspace", "@vrtmrz/obsidian-plugin-kit"]);
   await run(npm, ["run", "build:harness"]);
   for (const step of steps) {
     console.log(`\n# ${step}`);

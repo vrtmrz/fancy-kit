@@ -52,6 +52,14 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "import": "./dist/testing.js"
+    },
+    "./secrets": {
+      "types": "./dist/secrets.d.ts",
+      "import": "./dist/secrets.js"
+    },
+    "./local-storage": {
+      "types": "./dist/local-storage.d.ts",
+      "import": "./dist/local-storage.js"
     }
   },
   "scripts": {
@@ -61,7 +69,9 @@
     "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
   },
   "dependencies": {
-    "@vrtmrz/ui-interactions": "0.1.2"
+    "@vrtmrz/ui-interactions": "0.1.2",
+    "@vrtmrz/secret-store": "0.0.0",
+    "@vrtmrz/local-storage": "0.0.0"
   },
   "peerDependencies": {
     "obsidian": ">=1.8.7"

@@ -46,7 +46,15 @@ export function compareReleaseVersions(left, right) {
   return comparePrerelease(leftPrerelease, rightPrerelease);
 }
 
-export function planReleasePreparation({ packageName, version, manifest, lockfile, uiManifest }) {
+export function planReleasePreparation({
+  packageName,
+  version,
+  manifest,
+  lockfile,
+  uiManifest,
+  secretStoreManifest,
+  localStorageManifest,
+}) {
   const packageDirectory = publishablePackages[packageName];
   if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
   if (!isReleaseVersion(version)) throw new Error(`Invalid semantic version: ${version}`);
@@ -79,6 +87,43 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
     }
   }
 
+  if (
+    packageName === "@vrtmrz/obsidian-plugin-kit" ||
+    packageName === "@vrtmrz/secret-store-node"
+  ) {
+    const dependency = "@vrtmrz/secret-store";
+    const secretStoreVersion = manifest.dependencies?.[dependency];
+    if (
+      !isReleaseVersion(secretStoreVersion) ||
+      !isReleaseVersion(secretStoreManifest?.version) ||
+      secretStoreVersion !== secretStoreManifest.version
+    ) {
+      throw new Error(
+        `${packageName} requires ${dependency} ${secretStoreVersion ?? "without an exact version"}, but the workspace contains ${secretStoreManifest?.version ?? "no valid manifest version"}`,
+      );
+    }
+    if (lockEntry.dependencies?.[dependency] !== secretStoreVersion) {
+      throw new Error(`${packageName} SecretStore dependency does not match the lockfile`);
+    }
+  }
+
+  if (packageName === "@vrtmrz/obsidian-plugin-kit") {
+    const dependency = "@vrtmrz/local-storage";
+    const localStorageVersion = manifest.dependencies?.[dependency];
+    if (
+      !isReleaseVersion(localStorageVersion) ||
+      !isReleaseVersion(localStorageManifest?.version) ||
+      localStorageVersion !== localStorageManifest.version
+    ) {
+      throw new Error(
+        `${packageName} requires ${dependency} ${localStorageVersion ?? "without an exact version"}, but the workspace contains ${localStorageManifest?.version ?? "no valid manifest version"}`,
+      );
+    }
+    if (lockEntry.dependencies?.[dependency] !== localStorageVersion) {
+      throw new Error(`${packageName} local-storage dependency does not match the lockfile`);
+    }
+  }
+
   const nextManifest = { ...manifest, version };
   const nextLockfile = cloneJson(lockfile);
   nextLockfile.packages[packageDirectory].version = version;
@@ -87,6 +132,9 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
 
 const releasePreparationOrder = [
   "@vrtmrz/ui-interactions",
+  "@vrtmrz/secret-store",
+  "@vrtmrz/secret-store-node",
+  "@vrtmrz/local-storage",
   "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
   "@vrtmrz/obsidian-test-session",
@@ -149,6 +197,65 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
     }
   }
 
+  const secretStorePackageName = "@vrtmrz/secret-store";
+  const secretStoreVersion = selectedVersions.get(secretStorePackageName);
+  const secretStoreConsumerPackageNames = [
+    "@vrtmrz/obsidian-plugin-kit",
+    "@vrtmrz/secret-store-node",
+  ];
+  if (secretStoreVersion) {
+    for (const consumerPackageName of secretStoreConsumerPackageNames) {
+      if (!selectedVersions.has(consumerPackageName)) continue;
+
+      const consumerManifest = nextManifests[consumerPackageName];
+      if (!consumerManifest) throw new Error(`Manifest is missing for ${consumerPackageName}`);
+      const consumerDirectory = publishablePackages[consumerPackageName];
+      const consumerLockEntry = nextLockfile.packages?.[consumerDirectory];
+      if (!consumerLockEntry) throw new Error(`Lockfile entry is missing for ${consumerDirectory}`);
+
+      nextManifests[consumerPackageName] = {
+        ...consumerManifest,
+        dependencies: {
+          ...consumerManifest.dependencies,
+          [secretStorePackageName]: secretStoreVersion,
+        },
+      };
+      nextLockfile.packages[consumerDirectory] = {
+        ...consumerLockEntry,
+        dependencies: {
+          ...consumerLockEntry.dependencies,
+          [secretStorePackageName]: secretStoreVersion,
+        },
+      };
+    }
+  }
+
+  const localStoragePackageName = "@vrtmrz/local-storage";
+  const localStorageVersion = selectedVersions.get(localStoragePackageName);
+  const pluginPackageName = "@vrtmrz/obsidian-plugin-kit";
+  if (localStorageVersion && selectedVersions.has(pluginPackageName)) {
+    const pluginManifest = nextManifests[pluginPackageName];
+    if (!pluginManifest) throw new Error(`Manifest is missing for ${pluginPackageName}`);
+    const pluginDirectory = publishablePackages[pluginPackageName];
+    const pluginLockEntry = nextLockfile.packages?.[pluginDirectory];
+    if (!pluginLockEntry) throw new Error(`Lockfile entry is missing for ${pluginDirectory}`);
+
+    nextManifests[pluginPackageName] = {
+      ...pluginManifest,
+      dependencies: {
+        ...pluginManifest.dependencies,
+        [localStoragePackageName]: localStorageVersion,
+      },
+    };
+    nextLockfile.packages[pluginDirectory] = {
+      ...pluginLockEntry,
+      dependencies: {
+        ...pluginLockEntry.dependencies,
+        [localStoragePackageName]: localStorageVersion,
+      },
+    };
+  }
+
   const orderIndex = new Map(releasePreparationOrder.map((packageName, index) => [packageName, index]));
   const orderedSelections = [...selections].sort(
     (left, right) => orderIndex.get(left.packageName) - orderIndex.get(right.packageName),
@@ -159,6 +266,8 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
     if (!manifest) throw new Error(`Manifest is missing for ${packageName}`);
     const uiManifest = nextManifests[uiPackageName];
     if (!uiManifest) throw new Error(`Manifest is missing for ${uiPackageName}`);
+    const secretStoreManifest = nextManifests[secretStorePackageName];
+    const localStorageManifest = nextManifests[localStoragePackageName];
 
     const preparation = planReleasePreparation({
       packageName,
@@ -166,6 +275,8 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
       manifest,
       lockfile: nextLockfile,
       uiManifest,
+      secretStoreManifest,
+      localStorageManifest,
     });
     nextManifests[packageName] = preparation.manifest;
     nextLockfile = preparation.lockfile;
@@ -199,6 +310,16 @@ export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRo
     const packageDirectory = publishablePackages[packageName];
     if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
     selectedPackageNames.add(packageName);
+  }
+
+  if (
+    selectedPackageNames.has("@vrtmrz/obsidian-plugin-kit") ||
+    selectedPackageNames.has("@vrtmrz/secret-store-node")
+  ) {
+    selectedPackageNames.add("@vrtmrz/secret-store");
+  }
+  if (selectedPackageNames.has("@vrtmrz/obsidian-plugin-kit")) {
+    selectedPackageNames.add("@vrtmrz/local-storage");
   }
 
   const manifests = {};

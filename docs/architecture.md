@@ -1,6 +1,6 @@
 # Package architecture
 
-This repository contains five independently versioned packages and one public-source Obsidian harness application. Sharing a workspace does not make their APIs or release lifecycles inseparable.
+This repository contains eight independently versioned packages and one public-source Obsidian harness application. Sharing a workspace does not make their APIs or release lifecycles inseparable.
 
 ## Dependency direction
 
@@ -9,12 +9,22 @@ This repository contains five independently versioned packages and one public-so
           ↑                         ↑
 @vrtmrz/browser-ui-kit      @vrtmrz/obsidian-plugin-kit  ──peer──> obsidian
 
+@vrtmrz/secret-store  <────  @vrtmrz/obsidian-plugin-kit/secrets
+          ↑
+@vrtmrz/secret-store-node/age  ────> age-encryption and Node filesystem APIs
+
+@vrtmrz/local-storage  <──── @vrtmrz/obsidian-plugin-kit/local-storage
+  ├─ ./web-storage (injected Storage)
+  └─ ./node ────────────────> Node filesystem APIs
+
 octagonal-wheels             (independent shared utilities)
 
 @vrtmrz/obsidian-test-session  ──peer──> playwright
           ↑ dev-time
 consumer E2E suites and the public harness
 ```
+
+`@vrtmrz/secret-store` owns named-secret read/write contracts, portable validation, sanitised errors, and instance-scoped memory storage. It has no runtime dependencies or Node, DOM, Obsidian, or cryptographic imports. Consumers own reference parsing and backend selection. The plug-in kit provides a focused `./secrets` adapter; the Node package provides a focused `./age` adapter. Native credential adapters remain future work.
 
 `@vrtmrz/ui-interactions` owns framework-neutral interaction contracts, dispatch, scripted drivers, transcripts, and the App-free harness. It must not import Obsidian or browser APIs.
 
@@ -70,3 +80,21 @@ Fancy Kit does not yet expose a platform-neutral filesystem package. If repeated
 This resembles `createObsidianUi` only in placing concrete construction at the composition root. A storage factory must also bind filesystem authority. It must not open a directory picker, parse command-line arguments, or select a platform automatically. Prefer separate factories such as `createNodeStorage({ rootPath })` and `createFileSystemAccessStorage({ rootHandle })` over a union-typed generic factory; names are illustrative until the neutral contract is designed.
 
 Before extraction, settle lexical and symbolic-link containment, missing and permission errors, metadata fidelity, destructive-operation semantics, and atomicity. Keep absolute paths used by legacy consumers outside the neutral contract. Until those decisions are proven by more than one consumer, LiveSync-specific filesystem composition remains in `livesync-commonlib`, and Obsidian-specific Vault access remains in `@vrtmrz/obsidian-plugin-kit`.
+
+## Secret storage
+
+[ADR 0001](adr/0001-secret-store-boundaries.md) established the neutral core in `@vrtmrz/secret-store`; [ADR 0002](adr/0002-value-store-serialisation.md) records the accepted asynchronous value and object API. The core exports `SecretReader`, `SecretStore`, `ObjectValue`, `ValueSerializer`, fixed errors, and instance-scoped memory storage. Readers expose asynchronous `getValue` and `getObject`; stores add `setValue` and `setObject`, with no delete or list capability. Each instance may receive one paired serializer. Its public type is structurally compatible with the local-storage serializer type, without a runtime dependency between the packages.
+
+The [age feasibility checks](design/secret-store-age-feasibility.md) under `test/secret-store-age` exercise the Node package's internal codec. `@vrtmrz/secret-store-node/age` owns explicit-root filesystem authority, bounded reads, identity-provider calls, and ciphertext-only atomic replacement. Its public capabilities use asynchronous string/object methods even though file operations remain synchronous. The optional `ValueSerializer` is an additional consumer-owned transformation at the neutral core boundary, not a replacement for age encryption. The adapter depends on the neutral core and pinned `age-encryption`, and only the focused `./age` entry is exported.
+
+## Key/value and local storage
+
+The accepted [local-storage design](design/key-value-and-local-storage.md) defines a separate asynchronous string and JSON-object package. `@vrtmrz/local-storage` exports `LocalValueReader`, `LocalValueStore`, `ObjectValue`, `ValueSerializer`, fixed errors, and instance-scoped memory storage from its root entry. Readers provide `getValue` and `getObject`; stores add `setValue`, `setObject`, and explicit `delete`. A missing value is `null`; `getObject` returns `undefined` for absence and preserves stored JSON `null`. `setValue('')` deletes before serialisation, while `setObject` stores an empty string, `false`, zero, or `null` as JSON data.
+
+An optional paired `ValueSerializer` converts logical strings before a raw string backend and restores them on reads. Object operations pass JSON text through that same boundary. The pair may be synchronous or asynchronous, is captured once per store, and defaults to identity conversion. The neutral factories accept injected raw backends; the Web Storage adapter is at `./web-storage`, and the explicit Node file adapter at `./node`. All public operations return promises, even where a selected backend performs synchronous I/O. Keys and explicit prefixes remain literal.
+
+The focused `@vrtmrz/obsidian-plugin-kit/local-storage` entry adapts Obsidian's synchronous App methods through the same asynchronous contract. The App owns Vault scoping; the application supplies the complete literal plug-in prefix. Obsidian's `saveLocalStorage(key, null)` performs deletion, and the adapter maps local deletion to that call. JSON values are encoded to strings before reaching the host, so nested and top-level falsy JSON data are stored through `setObject`. A compatibility selector considers its explicit legacy Web Storage source only when both official methods are absent; it does not migrate data or switch sources after an operation failure.
+
+Earlier host probes observed that Obsidian 1.13.6 can suppress underlying storage failures. The adapter cannot distinguish a suppressed read failure from absence or confirm a write the host reports as complete. The Phase 3d workspace, packed-consumer, browser persistence, and reviewed Obsidian 1.13.6 checks have passed, including string/object persistence after restart. The existing `obsidian >=1.8.7` peer floor is unchanged; the 1.7.7 probe remains unverified. The Node file adapter keeps its strict version-1 string-pair document and inclusive 1 MiB UTF-8 limit; its public API is asynchronous although file operations remain synchronous.
+
+This package does not replace the existing IndexedDB `KeyValueStore` family or `PersistentMap`, whose formats and behaviour remain unchanged. Local value storage is not a secret store and adds no encryption or secret-management guarantees.

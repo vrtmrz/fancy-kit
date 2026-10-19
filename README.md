@@ -2,12 +2,15 @@
 
 This npm workspace develops small, independently publishable libraries for Obsidian plug-ins and their shared test fixtures.
 
-The libraries are extracted from, and continuously exercised by, maintained plug-ins and applications rather than existing only as sample abstractions. See [Proven in maintained consumers](docs/proven-in-use.md) for the concrete TagFolder, DiffZip, Screwdriver, and Self-hosted LiveSync integration and verification boundaries.
+The established libraries are extracted from, and continuously exercised by, maintained plug-ins and applications. New packages identify their implementation and adoption status separately. See [Proven in maintained consumers](docs/proven-in-use.md) for the concrete TagFolder, DiffZip, Screwdriver, and Self-hosted LiveSync integration and verification boundaries.
 
-The packages use independent `0.x` versions. Stable releases are available from npm through the default `latest` dist-tag. The workspace root and harness application are never published to npm.
+The packages use independent `0.x` versions. Released packages are available from npm through the default `latest` dist-tag. `@vrtmrz/local-storage`, `@vrtmrz/secret-store`, and `@vrtmrz/secret-store-node` are unpublished development packages. The workspace root and harness application are never published to npm.
 
 ## Packages
 
+- [`@vrtmrz/secret-store`](packages/secret-store): platform-neutral named-secret contracts, validation, sanitised errors, and an in-memory store. The core and the Obsidian adapter in `@vrtmrz/obsidian-plugin-kit/secrets` are available for local testing.
+- [`@vrtmrz/secret-store-node`](packages/secret-store-node): explicit Node.js secret adapters. The `./age` entry reads and atomically replaces encrypted files in an existing private POSIX directory; see its README for qualified filesystems, limits, and unpublished-package usage.
+- [`@vrtmrz/local-storage`](packages/local-storage): asynchronous string and JSON-object contracts with optional paired serializers, an instance-scoped memory store, and explicit Web Storage and Node.js adapters. Its root, `./web-storage`, and `./node` exports have separate runtime boundaries; see its README for value, prefix, and Node file limits.
 - [`@vrtmrz/browser-ui-kit`](packages/browser-ui-kit): framework-free browser DOM adapters for the neutral interaction and notification contracts. See its [usage guide](packages/browser-ui-kit/docs/usage-guide.md) for browser composition and custom presenter boundaries.
 - [`@vrtmrz/obsidian-plugin-kit`](packages/obsidian-plugin-kit): reusable, testable Obsidian UI primitives. See its [usage guide](packages/obsidian-plugin-kit/docs/usage-guide.md) for consumer integration.
 - [`@vrtmrz/obsidian-test-session`](packages/obsidian-test-session): local real-Obsidian session, bootstrap, and binary preparation infrastructure. See its [usage guide](packages/obsidian-test-session/docs/usage-guide.md) for lifecycle and platform boundaries.

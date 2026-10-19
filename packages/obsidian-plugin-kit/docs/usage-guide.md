@@ -22,6 +22,7 @@ The published package is ESM and declares `obsidian >=1.8.7`. Direct dialogs, No
 | Test that workflow without Obsidian                                    | Use `createUiTestHarness`                                                                 |
 | Observe selected interactions while allowing others to open real UI    | Pass an instance-scoped driver to `createObsidianUi`                                      |
 | Read and write text through a focused, injectable Vault boundary       | Accept `VaultTextAccess` and create it with `createObsidianVaultTextAccess`               |
+| Store asynchronous strings and JSON objects under a literal plug-in prefix | Use `createObsidianLocalStore`; select an explicit Web Storage source when needed          |
 | Test a Vault text workflow without Obsidian                            | Use `createVaultTextTestHarness`                                                          |
 | Mutate an existing Markdown file's frontmatter without passing `TFile` | Accept `VaultFrontmatterAccess` and create it with `createObsidianVaultFrontmatterAccess` |
 | Test frontmatter policy without parsing or serialising YAML            | Use `createVaultFrontmatterTestHarness`                                                   |
@@ -275,6 +276,105 @@ The first request receives its scripted result. The second is recorded, then pas
 
 Drivers and response queues must remain instance-scoped. Do not store them in modal static members, module globals, settings, or URI-controlled production state. See [UI automation and scripted responses](ui-automation.md) for the detailed driver contract.
 
+## Secret storage
+
+The unreleased `secrets` entry implements the neutral `SecretStore` contract using an explicitly supplied `app.secretStorage`. The host API was introduced in Obsidian 1.11.4. Existing package entry points retain their `obsidian >=1.8.7` peer requirement; constructing this adapter checks the new methods and throws `SecretStoreError` with code `unavailable` when either is missing.
+
+```ts
+import type { App } from "obsidian";
+import { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";
+import type { SecretReader } from "@vrtmrz/secret-store";
+
+export function createSecretReader(app: App): SecretReader {
+  return createObsidianSecretStore(app.secretStorage);
+}
+
+export async function readToken(secrets: SecretReader): Promise<string | null> {
+  return secrets.getValue("example-api-token");
+}
+```
+
+To try the unreleased adapter, build and pack both packages from the Fancy Kit workspace:
+
+```bash
+npm run build --workspace @vrtmrz/secret-store
+npm run build --workspace @vrtmrz/obsidian-plugin-kit
+npm pack --workspace @vrtmrz/secret-store --workspace @vrtmrz/obsidian-plugin-kit
+```
+
+Install both resulting tarballs together in the consumer with `npm install <secret-store-tarball> <obsidian-plugin-kit-tarball>`. The current adapter depends on the unpublished core version, so installing the plug-in tarball alone cannot resolve that dependency from npm.
+
+The factory accepts the structural `ObsidianSecretStorage` get/set subset, so tests can inject synchronous host methods without constructing an `App`. The host remains synchronous, while the returned `SecretReader` and `SecretStore` expose asynchronous `getValue`, `getObject`, `setValue`, and `setObject` methods. The focused entry imports no Obsidian runtime module. A read capability is a TypeScript boundary, not a revocation of the process's permissions.
+
+Names follow the 1–64-character portable profile validated by `validateSecretName` in the [neutral package](../../secret-store/README.md). The common limit matches the 64-character maximum observed in Obsidian 1.11.4 and 1.13.6; longer names reject with `invalid-name` before a host call. String values are exact well-formed Unicode, including empty strings, whitespace, NUL characters, and a leading BOM. `getValue` returns `null` for absence and preserves an empty string. `getObject` parses finite JSON data, returning `undefined` for absence and `null` for stored JSON `null`. The optional `ValueSerializer` pair handles strings and JSON text at the boundary; it may be synchronous or asynchronous, is captured per store instance, and does not replace Obsidian or age encryption. The [consumer-owned OW HKDF example](../../../examples/value-stores/ow-hkdf-serializer.ts) shows an explicit passphrase provider and a serializer without adding that dependency to the core. The adapter does not parse references such as `fancy-sec://example-api-token`, normalise names, list secrets, or emulate deletion.
+
+Each valid operation calls its bound host method exactly once. Invalid names or malformed values reject before any host operation. Host exceptions become fixed-message `operation-failed` errors without raw causes, values, names, or paths. An unexpected host result, including an unpaired surrogate, rejects with `invalid-data`. The library supplies no logger or transcript. A write failure may follow a completed mutation, so consumers must not assume rollback or retry automatically.
+
+Obsidian owns persistence, sharing, and access. This adapter adds no encryption, OS keychain guarantee, cross-device synchronisation, or cross-plug-in isolation. A synchronous host acknowledgement does not establish power-loss durability. Use application-owned prefixes to avoid accidental name collisions; names are not authorisation tokens.
+
+For application policy, inject a `SecretReader`, use `MemorySecretStore`, or return a `SecretStoreError` from a fake. Those tests should cover the application's missing-reference and persistence decisions. The package's [injected tests](../src/secrets.test.ts) own delegation, input validation, method binding, and error sanitisation. The [isolated real-host scenario](../../../test/e2e-obsidian/scripts/secrets.ts) owns supported value round trips and persistence after a normal renderer close and restart. It uses synthetic values and disposes the complete test profile because SecretStorage has no public delete method.
+
+## Local string and JSON-object storage
+
+The unreleased `local-storage` entry adapts Obsidian's official `App.loadLocalStorage` and `App.saveLocalStorage` methods through an explicit capability. The public declarations document these methods since Obsidian 1.8.7, and the existing `obsidian >=1.8.7` peer requirement is unchanged. The host owns Vault scoping; pass a complete literal prefix for the plug-in namespace:
+
+```ts
+import type { App } from "obsidian";
+import { createObsidianLocalStore } from "@vrtmrz/obsidian-plugin-kit/local-storage";
+import type { ObjectValue, LocalValueReader, LocalValueStore } from "@vrtmrz/local-storage";
+
+export function createSettings(app: App): LocalValueStore {
+  return createObsidianLocalStore(app, { prefix: "example-plugin:settings:" });
+}
+
+export async function savePreferences(settings: LocalValueStore): Promise<void> {
+  await settings.setValue("device-label", "laptop");
+  await settings.setObject("preferences", {
+    theme: "dark",
+    options: { showHints: false, retries: 0, label: "" },
+  });
+}
+
+export async function readPreferences(reader: LocalValueReader): Promise<ObjectValue | undefined> {
+  return reader.getObject("preferences");
+}
+```
+
+The returned methods are asynchronous. `setValue` stores a raw string; `setObject` validates and JSON-encodes finite JSON data before storing the resulting string. `getValue` returns a string or `null` for absence; `getObject` parses that string and returns `undefined` for absence, preserving a stored `null`. The optional paired `ValueSerializer` transforms strings and JSON text once per operation; it is instance-scoped and adds no runtime dependency between the local and secret packages. A default identity path leaves stored strings unchanged. The adapter passes strings directly to the official methods, with no persistence envelope, read-back, probe, App discovery, key enumeration, or derived Vault identifier. Empty `setValue` deletes before serialisation, and the adapter maps the delete to `saveLocalStorage(key, null)`; a direct host call with `''` also deletes. Empty string, zero, negative zero, `false`, and `null` passed through `setObject` are data, as are nested falsy values.
+
+Obsidian 1.13.6 was observed to remove empty strings supplied directly to `saveLocalStorage` and suppress some internal storage errors. A read failure may therefore look like an absent value, and a non-throwing write does not prove persistence. Errors which reach the adapter are sanitised; hidden host failures cannot be distinguished. The updated asynchronous string/object scenario passes on reviewed Obsidian 1.13.6, including raw strings, JSON data, prefix separation, selected-key copying, explicit legacy access, and restart. The same scenario passes on 1.7.7 as an unverified regression probe; that result does not extend the package's supported host versions.
+
+For a direct Web Storage integration, select the storage object and include the complete legacy Vault and plug-in scope in its literal prefix:
+
+```ts
+import { createWebStorageLocalStore } from "@vrtmrz/local-storage/web-storage";
+
+const legacySettings = createWebStorageLocalStore(window.localStorage, {
+  prefix: "my-vault::example-plugin::settings:",
+});
+await legacySettings.setObject("preferences", { theme: "dark", options: { showHints: false } });
+```
+
+An older-host application can opt into construction-time compatibility selection:
+
+```ts
+import { createCompatibleObsidianLocalStore } from "@vrtmrz/obsidian-plugin-kit/local-storage";
+
+const settings = createCompatibleObsidianLocalStore(app, {
+  prefix: "example-plugin:settings:",
+  legacy: () => ({
+    storage: window.localStorage,
+    prefix: "my-vault::example-plugin::settings:",
+  }),
+});
+```
+
+When both official methods exist, the selector uses them and never reads or invokes the legacy provider. It evaluates the provider once only when both methods are absent. A partial official API is an error; a missing key, malformed value, or operation failure does not select another source. Construction performs no migration. The Web adapter stores `setValue` strings raw and `setObject` values as JSON text; it does not guess that old unencoded values such as `Alice` are JSON. The browser `Storage` capability is explicit, and its package entry does not discover browser globals.
+
+The neutral `@vrtmrz/local-storage` root exports `ObjectValue`, `ValueSerializer`, `LocalValueReader`, `LocalValueStore`, the fixed error type, and `MemoryLocalValueStore`. Its `./web-storage` entry contains the injected Web adapter, and `./node` contains the explicit Node file adapter; the root and Web Storage entries do not load Node modules. See the [local-storage package README](../../local-storage/README.md) for the Node file format, limits, and failure details. Do not use this value store as a secret store or in place of the existing IndexedDB `KeyValueStore` family and `PersistentMap`.
+
+The plug-in adapter's [package-owned tests](../src/local-storage.test.ts) cover host delegation, input validation, and source selection. The core Web Storage adapter has separate [package-owned tests](../../local-storage/test/web-storage.test.ts). Use `MemoryLocalValueStore` for application policy tests which do not need Obsidian; test host persistence through the platform's own APIs.
+
 ## Vault text workflows
 
 `VaultTextAccess` deliberately exposes a small, path-based contract:
@@ -486,6 +586,7 @@ Prefer the focused public subpath that owns the feature:
 
 ```ts
 import { promptText } from "@vrtmrz/obsidian-plugin-kit/dialog";
+import { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";
 import { KeyedNoticeManager } from "@vrtmrz/obsidian-plugin-kit/notice";
 import { showProgressNotice } from "@vrtmrz/obsidian-plugin-kit/progress";
 import { createObsidianUi } from "@vrtmrz/obsidian-plugin-kit/ui";
@@ -522,6 +623,7 @@ The package uses focused tests for neutral or adapter-owned contracts and a real
 | Keyed and grouped Notice reuse, dismissal, expiry, and disposal                               | [`src/notice.test.ts`](../src/notice.test.ts)                                                                                                               | Notice stories in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts), [`test/e2e-obsidian/scripts/notices.ts`](../../../test/e2e-obsidian/scripts/notices.ts), and the mobile layout suite   |
 | Progress rendering, terminal states, callbacks, and Notice expiry                             | [`src/progress.test.ts`](../src/progress.test.ts)                                                                                                           | [`test/e2e-obsidian/scripts/progress.ts`](../../../test/e2e-obsidian/scripts/progress.ts) and mobile layout checks                                                                                                  |
 | Obsidian text Vault delegation and stable contract errors                                     | [`src/vault.test.ts`](../src/vault.test.ts)                                                                                                                 | Vault contract story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/contracts.ts`](../../../test/e2e-obsidian/scripts/contracts.ts)                   |
+| Injected SecretStorage delegation, validation, and sanitised errors | [`src/secrets.test.ts`](../src/secrets.test.ts) | Dedicated fixture in [`test/e2e-obsidian/scripts/secrets.ts`](../../../test/e2e-obsidian/scripts/secrets.ts); no maintained consumer adoption yet |
 | In-memory text operations, transcripts, and failure injection                                 | [`src/vault-testing.test.ts`](../src/vault-testing.test.ts)                                                                                                 | Public packed-consumer fixture in [`test/packed-consumer/obsidian-plugin-kit-usage.ts`](../../../test/packed-consumer/obsidian-plugin-kit-usage.ts)                                                                 |
 | Frontmatter adapter, synchronous updater enforcement, rollback, and isolated snapshots        | [`src/vault-frontmatter.test.ts`](../src/vault-frontmatter.test.ts) and [`src/vault-frontmatter-testing.test.ts`](../src/vault-frontmatter-testing.test.ts) | Frontmatter story in [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/frontmatter.ts`](../../../test/e2e-obsidian/scripts/frontmatter.ts)                  |
 
