@@ -73,6 +73,8 @@ export default class LocalStorageFixture extends Plugin {
         mode === (officialMethodsAvailable ? "official" : "legacy"),
       legacyProviderCallCount: legacySupplierCalls === (mode === "official" ? 0 : 1),
       absentValueIsNull: await primaryStore.getValue("absent") === null,
+      absentValueUsesDefault: await primaryStore.getValue("absent", "") === "",
+      absentObjectUsesDefault: await primaryStore.getObject("absent", false) === false,
     };
 
     const compatibilityKey = "compatibility-selection";
@@ -102,7 +104,7 @@ export default class LocalStorageFixture extends Plugin {
       const key = `object-top-${label}`;
       if (input.write) await primaryStore.setObject(key, value);
       checks[`object-top-${label}-persists`] =
-        JSON.stringify(await primaryStore.getObject(key)) === JSON.stringify(value);
+        JSON.stringify(await primaryStore.getObject(key, { fallback: true })) === JSON.stringify(value);
     }
 
     const emptyValueKey = "empty-value-deletes";

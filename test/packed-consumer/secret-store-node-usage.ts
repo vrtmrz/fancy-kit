@@ -25,3 +25,9 @@ await createAgeFileSecretReader(readerOptions, {});
 await import("@vrtmrz/secret-store-node/internal/age-codec");
 // @ts-expect-error There is no automatic backend selection through a root entry.
 await import("@vrtmrz/secret-store-node");
+
+const defaultString: Promise<string> = reader.getValue("missing", "");
+const defaultJson = reader.getObject("missing", null);
+void [defaultString, defaultJson];
+const defaultObject: Promise<import("@vrtmrz/secret-store").ObjectValue> = reader.getObject("missing", false);
+void defaultObject;

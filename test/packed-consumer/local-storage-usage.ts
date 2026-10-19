@@ -91,3 +91,9 @@ void [
   compatibleStore,
   validateLocalKey,
 ];
+
+const defaultString: Promise<string> = reader.getValue("missing", "");
+const defaultJson = reader.getObject("missing", null);
+void [defaultString, defaultJson];
+const defaultObject: Promise<ObjectValue> = reader.getObject("missing", false);
+void defaultObject;

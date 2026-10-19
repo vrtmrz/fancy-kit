@@ -56,12 +56,14 @@ Phase 1 exports `SecretReader`, `SecretStore`, `SecretStoreError`, `SecretStoreE
 
 | Operation | Contract |
 | --- | --- |
-| `getValue(name)` | Resolve to the exact logical string, including empty strings; resolve to `null` only for a confirmed absent entry; reject for validation, access, provider, serializer, and storage failures. |
-| `getObject(name)` | Parse a stored logical string as finite JSON data. Resolve to `undefined` for absence and preserve a stored JSON `null` as `null`; malformed data rejects with `invalid-data`. |
+| `getValue(name, defaultValue?)` | Resolve to the exact logical string, including empty strings; use a supplied default only for a confirmed absent entry, otherwise return `null`; reject for validation, access, provider, serializer, and storage failures. |
+| `getObject(name, defaultValue?)` | Parse a stored logical string as finite JSON data. Use a supplied default only for absence, otherwise return `undefined`; preserve a stored JSON `null` as `null`; malformed data rejects with `invalid-data`. |
 | `setValue(name, value)` | Create or replace that entry with the exact logical string. Validate before serialisation and backend operations. Resolve only after the backend acknowledges its documented write operation. |
 | `setObject(name, value)` | Validate and snapshot finite JSON data, encode it as JSON, then use the same string-serialisation boundary as `setValue`. Top-level `null`, empty strings, zero, and `false` remain data. |
 | `validateSecretName(name)` | Return normally for a portable name; throw a sanitised `invalid-name` error otherwise. Async store methods convert validation failures to rejected promises. |
 | `new MemorySecretStore()` | Create an empty, independent store. No shared map, persistence, logger, or initial-value aliasing. |
+
+Getter defaults are validated before I/O and are never transformed or persisted. Object defaults are detached snapshots taken before awaiting. A supplied default removes absence from the return type without asserting the shape of stored JSON; it never replaces storage, decryption, or parse failures.
 
 `ValueSerializer` is an optional instance-scoped pair of `serialize(name, value)` and `deserialize(name, value)` methods; each may return a string or a promise. It is captured with its receiver at construction, with no construction-time I/O. String operations call it once per present read or write; object operations pass JSON text through the same pair. A missing read bypasses deserialisation. Validate logical names and values before transforming them, validate serializer results before backend writes, and map failures to fixed errors without causes or fallback. Without a serializer, strings pass through unchanged. The structural type is owned by the neutral contract; no runtime dependency is added between local and secret storage.
 

@@ -6,7 +6,7 @@ The platform-neutral root entry exports `ObjectValue`, `ValueSerializer`, `Local
 
 ## Read and write strings or JSON objects
 
-`LocalValueReader` provides asynchronous `getValue` and `getObject`; `LocalValueStore` adds `setValue`, `setObject`, and `delete`. `getValue` returns the exact stored string or `null` when the backend reports absence. `getObject` parses stored JSON and returns `undefined` for absence, preserving a stored top-level JSON `null` as `null`. `ObjectValue` is JSON-shaped data: `null`, booleans, finite numbers, strings, arrays, and plain records composed recursively from those values.
+`LocalValueReader` provides asynchronous `getValue` and `getObject`; `LocalValueStore` adds `setValue`, `setObject`, and `delete`. `getValue` returns the exact stored string or, without a default, `null` when the backend reports absence. `getObject` parses stored JSON and, without a default, returns `undefined` for absence, preserving a stored top-level JSON `null` as `null`. `ObjectValue` is JSON-shaped data: `null`, booleans, finite numbers, strings, arrays, and plain records composed recursively from those values.
 
 `setValue(key, value)` stores a string, except that an empty string selects deletion without invoking the serializer. `setObject(key, value)` JSON-encodes the value and stores it as a string; top-level `null`, empty strings, zero, negative zero, and `false` are data in this mode. Empty arrays and records are data as well. These rules do not filter values returned by `getValue` or `getObject`.
 
@@ -31,6 +31,15 @@ const preferences = await readSetting(memory, 'preferences');
 Each `MemoryLocalValueStore` owns separate state and starts empty. It is useful for tests and other ephemeral state, but it does not persist values. It snapshots objects passed to `setObject` and returns fresh deep copies from `getObject`, so later caller mutation cannot change stored state. Create the store at the application composition root and pass a `LocalValueReader` to code that only needs to read.
 
 The `ObjectValue` validator rejects non-finite numbers, `undefined`, functions, symbols, bigints, class instances, accessors, and cyclic values with `invalid-value`. String values, keys, and prefixes remain exact JavaScript strings; they are not coerced, trimmed, encoded, or normalised. Empty strings, NUL characters, a leading BOM, and lone UTF-16 surrogates remain permitted where accepted. JSON serialisation represents negative zero as zero.
+
+Both getters accept an optional second argument used only for absence:
+
+```ts
+const label = await memory.getValue('missing-label', '');
+const options = await memory.getObject('missing-options', { enabled: false });
+```
+
+Defaults follow the corresponding string or JSON-value rules and are validated before I/O. Object defaults are detached snapshots taken before asynchronous work starts. Defaults are never passed to the serializer or stored. They do not replace stored empty strings, JSON `null`, other falsy data, or errors. Omit the argument or pass `undefined` to retain the absence sentinel. A supplied default removes absence from the return type without promising the shape of stored JSON.
 
 ## Transform stored strings
 

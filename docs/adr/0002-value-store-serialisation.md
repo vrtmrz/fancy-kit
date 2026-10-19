@@ -12,12 +12,14 @@ Use `LocalValueReader` / `LocalValueStore` for ordinary local values and `Secret
 
 Both families expose asynchronous `getValue` and `getObject` methods. Stores additionally expose asynchronous `setValue` and `setObject`. Local stores retain explicit asynchronous deletion; secret deletion remains outside the current capability because the Obsidian API does not provide it.
 
-- `getValue` returns a string, or `null` for absence.
+- `getValue` returns a string, or `null` for absence when no default is supplied.
 - `setValue` accepts a string. A local empty-string write deletes before serialisation; a secret empty-string write stores an empty value.
-- `getObject` parses the deserialised string as JSON. It returns `undefined` for absence and preserves a stored JSON `null`.
+- `getObject` parses the deserialised string as JSON. Without a default, it returns `undefined` for absence and preserves a stored JSON `null`.
 - `setObject` validates a JSON-shaped value and serialises it to a non-empty JSON string before the value-serialisation boundary. Objects, arrays, finite numbers, booleans, strings, and `null` are supported. Reject undefined, non-finite numbers, accessors, class instances, sparse arrays, and cycles without invoking getters or `toJSON`.
 
 `ObjectValue` denotes the supported recursive value shape; it is not restricted to TypeScript's built-in `object` type. JSON conversion represents negative zero as zero. String keys and explicit prefixes remain literal. Secret names and raw string values retain their established portable validation.
+
+Both getters accept an optional default as the second argument, used only for absence. Validate it before I/O and snapshot object defaults before awaiting, with ordinary object and array prototypes. Defaults are never passed through `ValueSerializer` or written back. Stored empty strings, JSON null, other falsy data, and errors retain their usual behaviour. An omitted or undefined argument preserves the absence sentinel. A supplied default removes absence from the return type without asserting the shape of stored JSON.
 
 ## Serialisation boundary
 
@@ -43,7 +45,7 @@ getValue: backend read -> deserialize -> validate string
 
 Validate names, keys, and caller values before invoking the serializer or backend. Local empty-string deletion and explicit deletion bypass the serializer. Backend absence bypasses the deserializer. A serializer must not turn a non-empty local value into an empty backend value: reject that output before writing. Deserialised empty strings remain values on reads.
 
-Each successful value operation invokes one captured serializer method and one backend operation; object methods reuse the same path. Operations without a serializer invoke only the backend. Validate serializer results. Failures use the owning package's fixed errors, retain no arbitrary cause or data, and never fall back to plaintext, a different backend, or an empty value. No retries, implicit read-back, or probe writes are added.
+Each present read and each non-deleting write invokes one captured serializer method and one backend operation; object methods reuse the same path. Operations without a serializer invoke only the backend. Validate serializer results. Failures use the owning package's fixed errors, retain no arbitrary cause or data, and never fall back to plaintext, a different backend, or an empty value. No retries, implicit read-back, or probe writes are added.
 
 The public API returns promises even when a memory, browser, Obsidian, or Node backend performs synchronous I/O. This permits asynchronous encryption without backend-specific subclasses. The Node local adapter still uses synchronous file operations and blocks while performing them. Callers await dependent operations; concurrent calls have no invocation-order or transaction guarantee. No background queue or persistent recovery state is introduced.
 

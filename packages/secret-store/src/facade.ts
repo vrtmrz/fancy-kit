@@ -8,7 +8,7 @@ import type {
   ValueSerializer,
 } from "./contracts.js";
 import { sanitiseSecretStoreError, SecretStoreError } from "./errors.js";
-import { snapshotObjectValue, validateStoredObjectValue } from "./object-value.js";
+import { cloneObjectValue, snapshotObjectValue, validateStoredObjectValue } from "./object-value.js";
 import { validateSecretName, validateSecretValue } from "./validation.js";
 
 type CapturedBackend = {
@@ -81,27 +81,35 @@ function createReaderFacade(
   backend: CapturedBackend,
   serializer: CapturedSerializer | undefined,
 ): SecretReader {
-  return {
-    async getValue(name) {
-      validateSecretName(name);
-      return readValue(backend, serializer, name);
-    },
-    async getObject(name) {
-      validateSecretName(name);
-      const value = await readValue(backend, serializer, name);
-      if (value === null) {
-        return undefined;
-      }
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(value) as unknown;
-      } catch {
-        throw new SecretStoreError("invalid-data");
-      }
-      validateStoredObjectValue(parsed);
-      return parsed;
-    },
-  };
+  function getValue(name: string, defaultValue: string): Promise<string>;
+  function getValue(name: string, defaultValue?: string): Promise<string | null>;
+  async function getValue(name: string, defaultValue?: string): Promise<string | null> {
+    validateSecretName(name);
+    if (defaultValue !== undefined) validateSecretValue(defaultValue);
+    const value = await readValue(backend, serializer, name);
+    return value === null ? defaultValue ?? null : value;
+  }
+
+  function getObject(name: string, defaultValue: ObjectValue): Promise<ObjectValue>;
+  function getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
+  async function getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined> {
+    validateSecretName(name);
+    const snapshot = defaultValue === undefined ? undefined : cloneObjectValue(defaultValue);
+    const value = await readValue(backend, serializer, name);
+    if (value === null) {
+      return snapshot;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(value) as unknown;
+    } catch {
+      throw new SecretStoreError("invalid-data");
+    }
+    validateStoredObjectValue(parsed);
+    return parsed;
+  }
+
+  return { getValue, getObject };
 }
 
 async function readValue(

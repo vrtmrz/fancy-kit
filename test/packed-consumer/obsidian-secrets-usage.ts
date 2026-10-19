@@ -20,3 +20,9 @@ createObsidianSecretStore({ getSecret: async () => null, setSecret() {} });
 store.list();
 // @ts-expect-error The adapter does not emulate deletion.
 store.delete("example-token");
+
+const defaultString: Promise<string> = reader.getValue("missing", "");
+const defaultJson = reader.getObject("missing", null);
+void [defaultString, defaultJson];
+const defaultObject: Promise<import("@vrtmrz/secret-store").ObjectValue> = reader.getObject("missing", false);
+void defaultObject;

@@ -35,7 +35,16 @@ Create a store at the application composition root and pass the narrow capabilit
 
 Names contain 1–64 ASCII characters matching `[a-z0-9]+(?:-[a-z0-9]+)*`, such as `example-api-token`. Names are exact, without case conversion, trimming, percent decoding, or namespace rewriting. `validateSecretName(name)` throws `SecretStoreError` with code `invalid-name` when the complete name is invalid; store methods return rejected promises for the same failure.
 
-`setValue` accepts well-formed Unicode strings. Empty strings, whitespace, line endings, NUL characters, and a leading BOM are preserved exactly; empty strings are data. `getValue` returns `null` for absence, while `getObject` returns `undefined` for absence and preserves a stored JSON `null` as `null`. Unpaired UTF-16 surrogates reject with `invalid-value`. `setObject` accepts finite JSON-shaped data: `null`, booleans, numbers, strings, arrays, and plain records. It snapshots and JSON-encodes the value, so nested negative zero becomes zero. Memory storage has no backend-specific value limit; available memory and host string limits still apply.
+`setValue` accepts well-formed Unicode strings. Empty strings, whitespace, line endings, NUL characters, and a leading BOM are preserved exactly; empty strings are data. Without a default, `getValue` returns `null` for absence, while `getObject` returns `undefined` for absence and preserves a stored JSON `null` as `null`. Unpaired UTF-16 surrogates reject with `invalid-value`. `setObject` accepts finite JSON-shaped data: `null`, booleans, numbers, strings, arrays, and plain records. It snapshots and JSON-encodes the value, so negative zero becomes zero. Memory storage has no backend-specific value limit; available memory and host string limits still apply.
+
+Both getters accept an optional second argument used only for absence:
+
+```ts
+const label = await secrets.getValue("missing-label", "");
+const options = await secrets.getObject("missing-options", { enabled: false });
+```
+
+Defaults follow the corresponding string or JSON-value rules and are validated before I/O. Object defaults are detached snapshots taken before asynchronous work starts. Defaults are never passed to the serializer or stored. They do not replace stored empty strings, JSON `null`, other falsy data, or errors. Omit the argument or pass `undefined` to retain the absence sentinel. A supplied default removes absence from the return type without promising the shape of stored JSON.
 
 `setValue` and `setObject` create or replace an entry. An awaited memory write is visible to subsequent reads unless another write intervenes. Invalid input leaves the memory store unchanged. Every memory instance starts empty and owns separate state; values are not logged or automatically persisted.
 

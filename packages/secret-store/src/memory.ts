@@ -21,14 +21,20 @@ export class MemorySecretStore implements SecretStore {
     }, options);
   }
 
-  /** Returns a stored string including `""`, or `null` if absent. */
-  getValue(name: string): Promise<string | null> {
-    return this.#store.getValue(name);
+  /** Returns stored text, using the supplied default only for absence. */
+  getValue(name: string, defaultValue: string): Promise<string>;
+  /** Returns stored text, or null when neither an entry nor a default is supplied. */
+  getValue(name: string, defaultValue?: string): Promise<string | null>;
+  getValue(name: string, defaultValue?: string): Promise<string | null> {
+    return this.#store.getValue(name, defaultValue);
   }
 
-  /** Returns parsed JSON data, or `undefined` if the entry is absent. */
-  getObject(name: string) {
-    return this.#store.getObject(name);
+  /** Returns parsed JSON, using a detached default snapshot only for absence. */
+  getObject(name: string, defaultValue: ObjectValue): Promise<ObjectValue>;
+  /** Returns parsed JSON, or undefined when no entry or default is supplied. */
+  getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
+  getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined> {
+    return this.#store.getObject(name, defaultValue);
   }
 
   /** Creates or replaces one exact logical string value. */

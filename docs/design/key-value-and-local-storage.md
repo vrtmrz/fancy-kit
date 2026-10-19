@@ -29,8 +29,10 @@ interface ValueSerializer {
 }
 
 interface LocalValueReader {
-  getValue(key: string): Promise<string | null>;
-  getObject(key: string): Promise<ObjectValue | undefined>;
+  getValue(key: string, defaultValue: string): Promise<string>;
+  getValue(key: string, defaultValue?: string): Promise<string | null>;
+  getObject(key: string, defaultValue: ObjectValue): Promise<ObjectValue>;
+  getObject(key: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
 }
 
 interface LocalValueStore extends LocalValueReader {
@@ -40,7 +42,7 @@ interface LocalValueStore extends LocalValueReader {
 }
 ```
 
-`getValue` returns a logical string or `null` for absence. `getObject` parses that logical string as JSON, returning `undefined` for absence and preserving a stored JSON `null`. `setValue` accepts strings; an empty local value deletes before the serializer runs. `setObject` snapshots and validates a JSON value, encodes it as JSON text, then uses the same string boundary. Thus a top-level `null`, empty string, zero, negative zero, or `false` passed to `setObject` is stored as data. JSON conversion represents nested negative zero as zero.
+`getValue` returns a logical string or `null` for absence. `getObject` parses that logical string as JSON, returning `undefined` for absence and preserving a stored JSON `null`. `setValue` accepts strings; an empty local value deletes before the serializer runs. `setObject` snapshots and validates a JSON value, encodes it as JSON text, then uses the same string boundary. Thus a top-level `null`, empty string, zero, negative zero, or `false` passed to `setObject` is stored as data. JSON conversion represents negative zero as zero.
 
 Runtime object values may contain only finite numbers, strings, booleans, `null`, arrays, and plain records. Reject `NaN`, infinities, `undefined`, functions, symbols, bigints, class instances, sparse arrays, accessors, and cycles as `invalid-value`, without invoking getters or `toJSON`. Parsed invalid or malformed stored data rejects as `invalid-data`. Keys and prefixes remain exact JavaScript strings, without coercion, trimming, encoding, or normalisation.
 
@@ -49,6 +51,8 @@ Neutral factories `createLocalValueReader` and `createLocalValueStore` accept ex
 The operation order is `setObject: validate and snapshot -> JSON text -> serialize -> backend write`; reads do `backend read -> deserialize -> parse and validate` for object methods. Validate caller keys and values before calling the serializer or backend. Deletion and empty local `setValue` bypass the serializer; absence bypasses `deserialize`. A serializer cannot turn a non-empty local value into an empty backend string. Validate transform outputs, map failures to fixed `LocalStorageError` codes, and never fall back to plaintext, another backend, or an empty value. Do not add retries, read-back, or probe writes. Calls return promises even when the backend is synchronous; callers await dependent operations, and concurrent calls have no invocation-order or transaction guarantee.
 
 `MemoryLocalValueStore` owns separate instance state, accepts optional serializer options, stores only strings in its private map, snapshots object inputs, and returns fresh object snapshots. It has no persistence or secure-erasure guarantee.
+
+Both getters accept an optional default as the second argument, used only for absence. Validate it before I/O and snapshot object defaults before awaiting, with ordinary object and array prototypes. Defaults are never passed through `ValueSerializer` or written back. Stored empty strings, JSON null, other falsy data, and errors retain their usual behaviour. An omitted or undefined argument preserves the absence sentinel. A supplied default removes absence from the return type without asserting the shape of stored JSON.
 
 ## Explicit prefixes and Obsidian construction
 

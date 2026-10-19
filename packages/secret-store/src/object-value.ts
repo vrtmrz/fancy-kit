@@ -12,6 +12,11 @@ export function snapshotObjectValue(value: unknown): ObjectValue {
   return inspectObjectValue(value, true, "invalid-value");
 }
 
+/** Copies JSON-shaped defaults with ordinary object and array prototypes. */
+export function cloneObjectValue(value: unknown): ObjectValue {
+  return inspectObjectValue(value, true, "invalid-value", true);
+}
+
 /** Validates a value parsed from a stored JSON string. */
 export function validateStoredObjectValue(value: unknown): asserts value is ObjectValue {
   inspectObjectValue(value, false, "invalid-data");
@@ -21,6 +26,7 @@ function inspectObjectValue(
   root: unknown,
   clone: boolean,
   code: ObjectValueErrorCode,
+  ordinaryPrototypes = false,
 ): ObjectValue {
   try {
     const active = new WeakSet<object>();
@@ -59,9 +65,14 @@ function inspectObjectValue(
         throw new Error();
       }
       const children = readChildren(object);
-      const copy: ObjectValue = clone
-        ? children.kind === "array" ? createArraySnapshot() : Object.create(null) as { [key: string]: ObjectValue }
-        : value as ObjectValue;
+      let copy = value as ObjectValue;
+      if (clone) {
+        if (children.kind === "array") {
+          copy = ordinaryPrototypes ? [] : createArraySnapshot();
+        } else {
+          copy = ordinaryPrototypes ? {} : Object.create(null) as { [key: string]: ObjectValue };
+        }
+      }
       task.assign(copy);
 
       active.add(object);

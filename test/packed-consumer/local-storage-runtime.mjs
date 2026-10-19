@@ -62,6 +62,9 @@ try {
   for (const store of [nodeStore, directLegacy, directOfficial, compatibleLegacy, compatibleOfficial, memory]) {
     assert.equal(await store.getValue("absent"), null);
     assert.equal(await store.getObject("absent"), undefined);
+    assert.equal(await store.getValue("absent", ""), "");
+    assert.deepEqual(await store.getObject("absent", { enabled: false }), { enabled: false });
+    assert.equal(await store.getValue("absent"), null);
     for (const { key, value } of cases) {
       await store.setValue(key, value);
       assert.equal(await store.getValue(key), value);
@@ -69,6 +72,7 @@ try {
     for (const value of [null, "", 0, -0, false, {}, []]) {
       await store.setObject("object", value);
       assert.deepEqual(await store.getObject("object"), Object.is(value, -0) ? 0 : value);
+      assert.deepEqual(await store.getObject("object", { fallback: true }), Object.is(value, -0) ? 0 : value);
     }
     const nested = { text: "", enabled: false, count: 0, empty: null, values: ["\uD800"] };
     await store.setObject("nested", nested);

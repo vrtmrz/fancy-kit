@@ -20,16 +20,7 @@ export function createLocalValueReader(
 ): LocalValueReader {
   const get = captureMethod(backend, "get");
   const serializer = captureSerializer(options);
-  const readLogicalValue = createLogicalReader(get, backend, serializer);
-
-  return {
-    getValue(key: string): Promise<string | null> {
-      return readLogicalValue(key);
-    },
-    getObject(key: string): Promise<ObjectValue | undefined> {
-      return readObject(key, readLogicalValue);
-    },
-  };
+  return createReaderFacade(createLogicalReader(get, backend, serializer));
 }
 
 /** Creates an asynchronous local-value store over a raw string backend. */
@@ -41,15 +32,11 @@ export function createLocalValueStore(
   const set = captureMethod(backend, "set");
   const remove = captureMethod(backend, "delete");
   const serializer = captureSerializer(options);
-  const readLogicalValue = createLogicalReader(get, backend, serializer);
+  const reader = createReaderFacade(createLogicalReader(get, backend, serializer));
 
   return {
-    getValue(key: string): Promise<string | null> {
-      return readLogicalValue(key);
-    },
-    getObject(key: string): Promise<ObjectValue | undefined> {
-      return readObject(key, readLogicalValue);
-    },
+    getValue: reader.getValue,
+    getObject: reader.getObject,
     setValue(key: string, value: string): Promise<void> {
       return writeLogicalValue(key, value, set, remove, backend, serializer);
     },
@@ -73,13 +60,35 @@ export function createLocalValueStore(
   };
 }
 
+function createReaderFacade(
+  readLogicalValue: (key: string) => Promise<string | null>,
+): LocalValueReader {
+  function getValue(key: string, defaultValue: string): Promise<string>;
+  function getValue(key: string, defaultValue?: string): Promise<string | null>;
+  async function getValue(key: string, defaultValue?: string): Promise<string | null> {
+    validateLocalKey(key);
+    if (defaultValue !== undefined) validateLocalValue(defaultValue);
+    const value = await readLogicalValue(key);
+    return value === null ? defaultValue ?? null : value;
+  }
+
+  function getObject(key: string, defaultValue: ObjectValue): Promise<ObjectValue>;
+  function getObject(key: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
+  async function getObject(key: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined> {
+    validateLocalKey(key);
+    const snapshot = defaultValue === undefined ? undefined : cloneObjectValue(defaultValue);
+    return readObject(key, readLogicalValue, snapshot);
+  }
+
+  return { getValue, getObject };
+}
+
 function createLogicalReader(
   get: Method,
   backend: object | Function,
   serializer: CapturedSerializer,
 ): (key: string) => Promise<string | null> {
   return async (key: string): Promise<string | null> => {
-    validateLocalKey(key);
     let stored: unknown;
     try {
       stored = await Reflect.apply(get, backend, [key]);
@@ -110,10 +119,11 @@ function createLogicalReader(
 async function readObject(
   key: string,
   readLogicalValue: (key: string) => Promise<string | null>,
+  defaultValue: ObjectValue | undefined,
 ): Promise<ObjectValue | undefined> {
   const text = await readLogicalValue(key);
   if (text === null) {
-    return undefined;
+    return defaultValue;
   }
 
   let value: unknown;

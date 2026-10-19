@@ -7,6 +7,24 @@ export type LocalValueStoreFactory = () => LocalValueStore;
 /** Applies the asynchronous local-value-store contract to an implementation. */
 export function runLocalValueStoreContract(createStore: LocalValueStoreFactory): void {
   describe("LocalValueStore contract", () => {
+    it("uses defaults only for absence without persisting them", async () => {
+      const store = createStore();
+      await expect(store.getValue("missing", "")).resolves.toBe("");
+      await expect(store.getValue("missing", "fallback")).resolves.toBe("fallback");
+      await expect(store.getObject("missing", null)).resolves.toBeNull();
+      await expect(store.getObject("missing", { nested: [false, 0, ""] })).resolves.toEqual({ nested: [false, 0, ""] });
+      await expect(store.getValue("missing", undefined)).resolves.toBeNull();
+      await expect(store.getObject("missing", undefined)).resolves.toBeUndefined();
+      await store.setValue("present", "stored");
+      await expect(store.getValue("present", "fallback")).resolves.toBe("stored");
+      for (const value of [null, false, 0, ""] as const) {
+        await store.setObject("object", value);
+        await expect(store.getObject("object", { fallback: true })).resolves.toBe(value);
+      }
+      await store.setValue("malformed", "not JSON");
+      await expect(store.getObject("malformed", null)).rejects.toMatchObject({ code: "invalid-data" });
+    });
+
     it("returns null or undefined for missing values", async () => {
       const store = createStore();
 

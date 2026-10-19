@@ -15,12 +15,20 @@ export class MemoryLocalValueStore implements LocalValueStore {
     }, options);
   }
 
-  getValue(key: string): Promise<string | null> {
-    return this.#store.getValue(key);
+  /** Returns stored text, using the supplied default only for absence. */
+  getValue(key: string, defaultValue: string): Promise<string>;
+  /** Returns stored text, or null when neither an entry nor a default is supplied. */
+  getValue(key: string, defaultValue?: string): Promise<string | null>;
+  getValue(key: string, defaultValue?: string): Promise<string | null> {
+    return this.#store.getValue(key, defaultValue);
   }
 
-  getObject(key: string): Promise<ObjectValue | undefined> {
-    return this.#store.getObject(key);
+  /** Returns parsed JSON, using a detached default snapshot only for absence. */
+  getObject(key: string, defaultValue: ObjectValue): Promise<ObjectValue>;
+  /** Returns parsed JSON, or undefined when no entry or default is supplied. */
+  getObject(key: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
+  getObject(key: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined> {
+    return this.#store.getObject(key, defaultValue);
   }
 
   setValue(key: string, value: string): Promise<void> {

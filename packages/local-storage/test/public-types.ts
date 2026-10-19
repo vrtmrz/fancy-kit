@@ -69,3 +69,21 @@ void [
   storeFacade,
   webStore,
 ];
+
+const defaultString: Promise<string> = reader.getValue("missing", "");
+const defaultObject: Promise<ObjectValue> = reader.getObject("missing", null);
+const memoryDefault: Promise<string> = store.getValue("missing", "fallback");
+const explicitUndefined: Promise<string | null> = reader.getValue("missing", undefined);
+const objectUndefined: Promise<ObjectValue | undefined> = reader.getObject("missing", undefined);
+// @ts-expect-error A string default must be a string.
+reader.getValue("missing", null);
+// @ts-expect-error A JSON default cannot contain undefined.
+reader.getObject("missing", { invalid: undefined });
+// @ts-expect-error A default does not promise that stored JSON has the same shape.
+const assumedObject: Promise<{ count: number }> = reader.getObject("missing", { count: 0 });
+void [defaultString, defaultObject, memoryDefault, explicitUndefined, objectUndefined, assumedObject];
+// @ts-expect-error Reads without defaults retain the absence sentinel.
+const assumedString: Promise<string> = reader.getValue("missing");
+const concreteMemory = new MemoryLocalValueStore();
+const concreteDefault: Promise<string> = concreteMemory.getValue("missing", "");
+void [assumedString, concreteDefault];

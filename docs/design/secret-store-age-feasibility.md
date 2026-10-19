@@ -14,7 +14,7 @@ The public Node package provides the `./age` entry point for explicit age-file r
 
 Phase 3b passed 54 filesystem tests, 17 codec tests, and 22 native interoperability tests (39 codec and interoperability cases combined) on Linux arm64 ext4 with Node.js 20.19.0, 22.23.3, and 24.18.0. The native suite includes public file-store round trips. The filesystem suite exercises real permission/link checks, injected I/O failures, concurrent replacement, bounded reads, and process termination before and after rename. Packed-consumer verification also passed with the installed public entry and Node-only type declarations. These are package-owned checks; no maintained consumer has adopted this adapter yet.
 
-Phase 3d replaces the original public get/set methods with asynchronous value/object methods and optional paired serialisation; it does not change the binary age codec or file layout. The updated filesystem suite passes 57 tests on Node.js 20.19.0, 22.23.3, and 24.18.0 on Linux arm64 ext4. The complete workspace and installed-tarball gates pass, and the 22 pinned native interoperability checks pass through the updated public file-store methods on Node.js 24.18.0.
+Phase 3d replaces the original public get/set methods with asynchronous value/object methods, optional defaults for absent entries, and paired serialisation; it does not change the binary age codec or file layout. The updated filesystem suite passes 58 tests on Node.js 20.19.0, 22.23.3, and 24.18.0 on Linux arm64 ext4. The complete workspace and installed-tarball gates pass, and the 22 pinned native interoperability checks pass through the updated public file-store methods on Node.js 24.18.0.
 
 ## Phase 3a historical codec evidence
 

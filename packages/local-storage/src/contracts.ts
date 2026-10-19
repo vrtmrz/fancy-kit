@@ -63,18 +63,37 @@ export interface LocalValueBackend extends LocalValueBackendReader {
 /** Asynchronous reader for logical strings and parsed JSON values. */
 export interface LocalValueReader {
   /**
-   * Returns a logical string, or `null` when the backend reports absence.
+   * Returns a logical string, using the supplied default only for absence.
+   * The default is validated before I/O, never transformed or stored, and does
+   * not replace an empty stored string or a surfaced read failure.
+   * @param key - The exact logical key.
+   * @param defaultValue - A string to return only when the backend reports absence.
+   */
+  getValue(key: string, defaultValue: string): Promise<string>;
+
+  /**
+   * Returns a logical string, or `null` for absence without a default.
    * Invalid inputs, malformed results, and surfaced backend or serializer failures
    * reject with a fixed LocalStorageError. A decoded empty string remains data.
    */
-  getValue(key: string): Promise<string | null>;
+  getValue(key: string, defaultValue?: string): Promise<string | null>;
 
   /**
-   * Parses the deserialised string as JSON. Absence is `undefined`; a stored JSON
+   * Parses stored JSON, using a detached default snapshot only for absence.
+   * The default is validated and copied before I/O and is never transformed or
+   * stored. Stored JSON null and other falsy data remain values; failures reject.
+   * @param key - The exact logical key.
+   * @param defaultValue - JSON data to return only when the backend reports absence.
+   */
+  getObject(key: string, defaultValue: ObjectValue): Promise<ObjectValue>;
+
+  /**
+   * Parses the deserialised string as JSON. Without a default, absence is
+   * `undefined`; a stored JSON
    * null is `null`. Invalid JSON rejects with `invalid-data` without trying value mode.
    * Returned objects and arrays are independent snapshots.
    */
-  getObject(key: string): Promise<ObjectValue | undefined>;
+  getObject(key: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
 }
 
 /** Asynchronous local-value writer with explicit deletion. */

@@ -14,12 +14,15 @@ try {
   const identityProvider = async () => { acquisitions += 1; return [identity]; };
   const store = await createAgeFileSecretStore({ rootPath, recipients, identityProvider });
   assert.equal(await store.getValue("missing"), null);
+  assert.equal(await store.getValue("missing", ""), "");
+  assert.deepEqual(await store.getObject("missing", { enabled: false }), { enabled: false });
+  assert.equal(await store.getValue("missing"), null);
   await store.setValue("empty", "");
   assert.equal(acquisitions, 0);
   const value = "\ufeffsynthetic\0value\n";
   await store.setValue("token", value);
   const reader = await createAgeFileSecretReader({ rootPath, identityProvider });
-  assert.equal(await reader.getValue("empty"), "");
+  assert.equal(await reader.getValue("empty", "fallback"), "");
   assert.equal(await reader.getValue("token"), value);
   assert.equal(acquisitions, 2);
   assert.equal("setValue" in reader, false);

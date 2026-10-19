@@ -64,20 +64,39 @@ export interface SecretBackend extends SecretBackendReader {
  */
 export interface SecretReader {
   /**
-   * Returns the exact string value, or `null` only when the entry is absent.
+   * Returns the exact string, using a supplied default only for absence.
+   * The default follows the string-value rules and is validated before I/O.
+   * It is never transformed or stored; empty stored strings and failures retain
+   * their usual behaviour.
+   * @param name - A portable secret name; never a path or URI.
+   * @param defaultValue - A well-formed Unicode string for an absent entry.
+   */
+  getValue(name: string, defaultValue: string): Promise<string>;
+
+  /**
+   * Returns the exact string value, or `null` for absence without a default.
    * Empty strings are data. Stored strings are deserialised when a serializer is
    * configured, and malformed decoded values reject with `invalid-data`.
    * @param name - A portable secret name; never a path or URI.
    */
-  getValue(name: string): Promise<string | null>;
+  getValue(name: string, defaultValue?: string): Promise<string | null>;
+
+  /**
+   * Parses stored JSON, using a detached default snapshot only for absence.
+   * The default is validated and copied before I/O and is never transformed or
+   * stored. Stored JSON null and other falsy data remain values; failures reject.
+   * @param name - A portable secret name; never a path or URI.
+   * @param defaultValue - JSON data to return only for an absent entry.
+   */
+  getObject(name: string, defaultValue: ObjectValue): Promise<ObjectValue>;
 
   /**
    * Parses a stored value as JSON and returns its validated JSON data. It returns
-   * `undefined` only when the entry is absent; a stored JSON `null` is returned
+   * `undefined` for absence without a default; a stored JSON `null` is returned
    * as `null`.
    * @param name - A portable secret name; never a path or URI.
    */
-  getObject(name: string): Promise<ObjectValue | undefined>;
+  getObject(name: string, defaultValue?: ObjectValue): Promise<ObjectValue | undefined>;
 }
 
 /**

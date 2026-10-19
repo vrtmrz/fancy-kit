@@ -18,3 +18,9 @@ const value: Promise<string> = reader.getValue("api-token");
 new SecretStoreError("unavailable", { cause: new Error("upstream") });
 // @ts-expect-error Internal value validation is not exported.
 import { validateSecretValue } from "@vrtmrz/secret-store";
+
+const defaultString: Promise<string> = reader.getValue("missing", "");
+const defaultJson = reader.getObject("missing", null);
+void [defaultString, defaultJson];
+const defaultObject: Promise<import("@vrtmrz/secret-store").ObjectValue> = reader.getObject("missing", false);
+void defaultObject;

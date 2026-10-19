@@ -17,6 +17,8 @@ export default class SecretStorageFixture extends Plugin {
     const store = createObsidianSecretStore(this.app.secretStorage);
     const results: Record<string, boolean> = {
       absent: await store.getValue(`${prefix}-absent`) === null,
+      "absent-value-default": await store.getValue(`${prefix}-absent`, "") === "",
+      "absent-object-default": await store.getObject(`${prefix}-absent`, false) === false,
     };
     for (const [label, value] of cases) {
       const name = `${prefix}-${label}`;
@@ -24,7 +26,7 @@ export default class SecretStorageFixture extends Plugin {
         try { await store.setValue(name, value); results[`${label}-write`] = true; }
         catch { results[`${label}-write`] = false; }
       }
-      try { results[label] = await store.getValue(name) === value; }
+      try { results[label] = await store.getValue(name, "fallback") === value; }
       catch { results[label] = false; }
     }
 
@@ -50,7 +52,7 @@ export default class SecretStorageFixture extends Plugin {
 
     const jsonNullName = `${prefix}-json-null`;
     if (write) await store.setObject(jsonNullName, null);
-    results["json-null-is-data"] = await store.getObject(jsonNullName) === null;
+    results["json-null-is-data"] = await store.getObject(jsonNullName, false) === null;
 
     const replacement = `${prefix}-replacement`;
     try {
