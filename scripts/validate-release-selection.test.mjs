@@ -96,13 +96,30 @@ test("accepts local-storage as an independent scoped package", () => {
   const selection = {
     ...base,
     packageName,
-    expectedVersion: "0.0.0",
-    confirmation: `stage ${packageName}@0.0.0 to next from ${sha}`,
-    manifest: { name: packageName, version: "0.0.0" },
-    lockEntry: { version: "0.0.0" },
+    expectedVersion: "0.1.0-rc.0",
+    confirmation: `stage ${packageName}@0.1.0-rc.0 to next from ${sha}`,
+    manifest: { name: packageName, version: "0.1.0-rc.0" },
+    lockEntry: { version: "0.1.0-rc.0" },
   };
   assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/local-storage");
 });
+
+for (const packageName of ["@vrtmrz/local-storage", "@vrtmrz/secret-store"]) {
+  for (const distTag of ["next", "latest"]) {
+    test(`rejects development version 0.0.0 for ${packageName} under ${distTag}`, () => {
+      const selection = {
+        ...base,
+        packageName,
+        expectedVersion: "0.0.0",
+        distTag,
+        confirmation: `stage ${packageName}@0.0.0 to ${distTag} from ${sha}`,
+        manifest: { name: packageName, version: "0.0.0" },
+        lockEntry: { version: "0.0.0" },
+      };
+      assert.throws(() => validateReleaseSelection(selection), /Development version 0\.0\.0 cannot be staged/);
+    });
+  }
+}
 
 test("accepts SecretStore as an independent scoped package", () => {
   const packageName = "@vrtmrz/secret-store";

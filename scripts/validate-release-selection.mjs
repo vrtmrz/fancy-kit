@@ -48,6 +48,7 @@ export function validateReleaseSelection({
   if (!isReleaseVersion(expectedVersion)) {
     throw new Error(`Invalid semantic version: ${expectedVersion}`);
   }
+  if (expectedVersion === "0.0.0") throw new Error("Development version 0.0.0 cannot be staged");
   if (!/^[0-9a-f]{40}$/.test(expectedSha)) throw new Error("Expected SHA must contain 40 lowercase hexadecimal characters");
   if (expectedSha !== actualSha) throw new Error(`Expected commit ${expectedSha}, but the workflow is running ${actualSha}`);
   if (manifest.name !== packageName) throw new Error(`Manifest name is ${manifest.name}, not ${packageName}`);
