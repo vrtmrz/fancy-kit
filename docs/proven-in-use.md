@@ -55,9 +55,9 @@ The [Node age tests](../packages/secret-store-node/test/age.test.ts) exercise re
 
 This is package-owned evidence, not consumer adoption, a mobile qualification, or an OS keychain guarantee. The file checks do not establish Windows ACL, macOS, network-filesystem, hardware power-loss, deployment, or application settings migration guarantees. Add consumer and further real-runtime evidence when those integrations exist.
 
-## ValueStore: package-owned evidence
+## ValueStore: package and consumer evidence
 
-`@vrtmrz/value-store`, its Web Storage and Node adapters, and the Obsidian adapter have no maintained consumer integration yet. [ADR 0003](adr/0003-value-store-capabilities.md) separates value operations, the secret profile, and storage adapters. Deletion is explicit; empty string writes remain values, and the official Obsidian raw adapter rejects physical empty output which the host would delete.
+`@vrtmrz/value-store` has an unreleased integration in [Commonlib](https://github.com/vrtmrz/livesync-commonlib) and [Self-hosted LiveSync](https://github.com/vrtmrz/obsidian-livesync), tested with an immutable development tarball. This is candidate integration evidence, not adoption in a published consumer release. [ADR 0003](adr/0003-value-store-capabilities.md) separates value operations, the secret profile, and storage adapters. Deletion is explicit; empty string writes remain values, and the official Obsidian raw adapter rejects physical empty output which the host would delete.
 
 Fresh validation on 2026-10-19 passed the complete workspace and packed-consumer gate. The [ValueStore package tests](../packages/value-store/test) cover defaults used only for absence, snapshots, stored falsy values, serializers, sanitised errors, capability boundaries, and adapter failure paths. ValueStore, SecretStore, and the Node age adapter passed 123, 114, and 58 tests respectively on Node.js 20.19.0, 22.23.3, and 24.18.0 on Linux arm64; real-file fixtures ran on ext4.
 
@@ -65,7 +65,11 @@ The [browser scenario](../test/value-store-browser/web-storage.mjs) passed in Ch
 
 The [Obsidian adapter tests](../packages/obsidian-plugin-kit/src/local-storage.test.ts) and [real-host scenario](../test/e2e-obsidian/scripts/local-storage.ts) passed the changed contract. The complete twelve-scenario suite passed on reviewed Obsidian 1.13.6 on Linux arm64, including rejection-before-mutation of raw empty output, JSON empty values, explicit deletion, selected legacy storage, and persistence after restart. The earlier 1.7.7 probe remains historical evidence outside the reviewed catalogue; it does not qualify the revised contract on that version.
 
-This is package-owned evidence rather than consumer adoption. It does not establish application migration compatibility, encryption by default, secret management, hidden Obsidian storage failures, or filesystem durability beyond the qualified environment. The injected OW HKDF example demonstrates composition, not a cryptographic audit.
+The unreleased Commonlib integration requires an injected `ValueStore & ValueDeleter` and retains exact device keys and the existing Vault and database-suffix configuration scope. LiveSync composes the Web Storage adapter in its Obsidian and browser hosts. Its CLI supplies a backend for the existing flat JSON file format, rather than adopting the Kit Node adapter's different on-disk format. Consumer-owned tests cover awaited writes, absent-value defaults, failed persistence, asynchronous initialisation, and store isolation without changing the Kit API.
+
+On 2026-10-19, this candidate passed Commonlib's type, unit, boundary, and packed-consumer checks; LiveSync's source checks, unit tests, CLI runtime tests, and browser production-bundle tests; and focused real-Obsidian settings, configuration-encryption, Review Harness, and dialogue scenarios on Obsidian 1.13.6 on Linux arm64. Those host checks include persistence through restart and saved P2P device-name loading. The mobile checks used Obsidian's mobile display mode, not physical iOS or Android devices.
+
+The consumer evidence is limited to those settings and device-value workflows. It does not establish a complete synchronisation or upgrade matrix, encryption by default, secret management, hidden Obsidian storage failures, or filesystem durability beyond the qualified environment. The Kit Node adapter and official Obsidian raw adapter still have package-owned evidence only; this consumer uses its own CLI backend and the Web Storage adapter. The injected OW HKDF example demonstrates composition, not a cryptographic audit.
 
 ## Reusing the patterns
 

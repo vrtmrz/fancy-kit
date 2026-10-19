@@ -390,7 +390,36 @@ test("prepares SecretStore before selected consumers", () => {
   );
 });
 
-test("updates only selected SecretStore consumers in a coordinated release", () => {
+test("aligns all direct SecretStore consumers in a coordinated release", () => {
+  const secretStoreOnly = coordinatedSecretStoreRelease();
+  secretStoreOnly.selections = [{ packageName: "@vrtmrz/secret-store", version: "0.1.0-rc.0" }];
+  const secretStoreOnlyResult = planReleaseSetPreparation(secretStoreOnly);
+  assert.deepEqual(
+    secretStoreOnlyResult.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/secret-store"],
+  );
+  for (const [packageName, directory] of [
+    ["@vrtmrz/obsidian-plugin-kit", "packages/obsidian-plugin-kit"],
+    ["@vrtmrz/secret-store-node", "packages/secret-store-node"],
+  ]) {
+    assert.equal(
+      secretStoreOnlyResult.manifests[packageName].dependencies["@vrtmrz/secret-store"],
+      "0.1.0-rc.0",
+    );
+    assert.equal(
+      secretStoreOnlyResult.lockfile.packages[directory].dependencies["@vrtmrz/secret-store"],
+      "0.1.0-rc.0",
+    );
+    assert.equal(
+      secretStoreOnlyResult.manifests[packageName].version,
+      secretStoreOnly.manifests[packageName].version,
+    );
+  }
+  assert.equal(secretStoreOnlyResult.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.equal(secretStoreOnlyResult.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"], "0.1.0");
+  assert.equal(secretStoreOnlyResult.manifests["@vrtmrz/secret-store-node"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.equal(secretStoreOnlyResult.manifests["@vrtmrz/secret-store-node"].dependencies["age-encryption"], "0.3.1");
+
   const nodeSelected = coordinatedSecretStoreRelease();
   nodeSelected.selections = [
     { packageName: "@vrtmrz/secret-store", version: "0.1.0-rc.0" },
@@ -403,7 +432,13 @@ test("updates only selected SecretStore consumers in a coordinated release", () 
   );
   assert.equal(
     nodeResult.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/secret-store"],
-    "0.0.0",
+    "0.1.0-rc.0",
+  );
+  assert.equal(nodeResult.manifests["@vrtmrz/obsidian-plugin-kit"].version, "0.1.0");
+  assert.equal(nodeResult.manifests["@vrtmrz/secret-store"].version, "0.1.0-rc.0");
+  assert.deepEqual(
+    nodeResult.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/secret-store", "@vrtmrz/secret-store-node"],
   );
 
   const pluginSelected = coordinatedSecretStoreRelease();
@@ -418,11 +453,16 @@ test("updates only selected SecretStore consumers in a coordinated release", () 
   );
   assert.equal(
     pluginResult.manifests["@vrtmrz/secret-store-node"].dependencies["@vrtmrz/secret-store"],
-    "0.0.0",
+    "0.1.0-rc.0",
+  );
+  assert.equal(pluginResult.manifests["@vrtmrz/secret-store-node"].version, "0.1.0");
+  assert.deepEqual(
+    pluginResult.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/secret-store", "@vrtmrz/obsidian-plugin-kit"],
   );
 });
 
-test("updates only the selected plugin value-store pin and prepares storage first", () => {
+test("aligns all ValueStore pins and prepares selected consumers after storage", () => {
   const input = coordinatedSecretStoreRelease();
   input.selections = [
     { packageName: "@vrtmrz/obsidian-plugin-kit", version: "0.1.1" },
@@ -442,10 +482,98 @@ test("updates only the selected plugin value-store pin and prepares storage firs
     result.lockfile.packages["packages/obsidian-plugin-kit"].dependencies["@vrtmrz/value-store"],
     "0.0.1",
   );
+  for (const [packageName, directory] of [
+    ["@vrtmrz/secret-store", "packages/secret-store"],
+    ["@vrtmrz/secret-store-node", "packages/secret-store-node"],
+  ]) {
+    assert.equal(result.manifests[packageName].dependencies["@vrtmrz/value-store"], "0.0.1");
+    assert.equal(result.lockfile.packages[directory].dependencies["@vrtmrz/value-store"], "0.0.1");
+    assert.equal(result.manifests[packageName].version, input.manifests[packageName].version);
+  }
+  assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].version, "0.1.1");
   assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/ui-interactions"], "0.1.0");
   assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/secret-store"], "0.0.0");
   assert.equal(result.manifests["@vrtmrz/secret-store-node"].dependencies["@vrtmrz/secret-store"], "0.0.0");
   assert.equal(result.manifests["@vrtmrz/secret-store-node"].dependencies["age-encryption"], "0.3.1");
+  assert.equal(result.lockfile.packages["packages/secret-store-node"].dependencies["age-encryption"], "0.3.1");
+  assert.equal(input.manifests["@vrtmrz/secret-store"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.equal(input.manifests["@vrtmrz/secret-store-node"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.equal(input.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/value-store"], "0.0.0");
+});
+
+test("aligns every ValueStore consumer when only ValueStore is selected", () => {
+  const input = coordinatedSecretStoreRelease();
+  input.selections = [{ packageName: "@vrtmrz/value-store", version: "0.1.0-rc.0" }];
+  const originalInput = JSON.parse(JSON.stringify(input));
+  const result = planReleaseSetPreparation(input);
+
+  assert.deepEqual(
+    result.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/value-store"],
+  );
+  for (const [packageName, directory] of [
+    ["@vrtmrz/secret-store", "packages/secret-store"],
+    ["@vrtmrz/secret-store-node", "packages/secret-store-node"],
+    ["@vrtmrz/obsidian-plugin-kit", "packages/obsidian-plugin-kit"],
+  ]) {
+    assert.equal(result.manifests[packageName].dependencies["@vrtmrz/value-store"], "0.1.0-rc.0");
+    assert.equal(result.lockfile.packages[directory].dependencies["@vrtmrz/value-store"], "0.1.0-rc.0");
+    assert.equal(result.manifests[packageName].version, input.manifests[packageName].version);
+  }
+  assert.equal(result.manifests["@vrtmrz/secret-store-node"].dependencies["age-encryption"], "0.3.1");
+  assert.equal(result.lockfile.packages["packages/secret-store-node"].dependencies["age-encryption"], "0.3.1");
+  assert.equal(input.manifests["@vrtmrz/value-store"].version, "0.0.0");
+  assert.equal(input.manifests["@vrtmrz/secret-store"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.equal(input.lockfile.packages["packages/secret-store"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.deepEqual(input, originalInput);
+});
+
+test("aligns every UI interactions consumer when only UI interactions is selected", () => {
+  const manifests = {
+    "@vrtmrz/ui-interactions": { name: "@vrtmrz/ui-interactions", version: "0.1.0" },
+    "@vrtmrz/browser-ui-kit": {
+      name: "@vrtmrz/browser-ui-kit",
+      version: "0.1.0",
+      dependencies: { "@vrtmrz/ui-interactions": "0.1.0" },
+    },
+    "@vrtmrz/obsidian-plugin-kit": {
+      name: "@vrtmrz/obsidian-plugin-kit",
+      version: "0.1.1",
+      dependencies: {
+        "@vrtmrz/ui-interactions": "0.1.0",
+        "@vrtmrz/secret-store": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
+      },
+    },
+  };
+  const lockfile = {
+    packages: {
+      "packages/ui-interactions": { version: "0.1.0" },
+      "packages/browser-ui-kit": { version: "0.1.0", dependencies: { ...manifests["@vrtmrz/browser-ui-kit"].dependencies } },
+      "packages/obsidian-plugin-kit": { version: "0.1.1", dependencies: { ...manifests["@vrtmrz/obsidian-plugin-kit"].dependencies } },
+    },
+  };
+  const result = planReleaseSetPreparation({
+    selections: [{ packageName: "@vrtmrz/ui-interactions", version: "0.1.1" }],
+    manifests,
+    lockfile,
+  });
+
+  assert.deepEqual(
+    result.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/ui-interactions"],
+  );
+  for (const [packageName, directory] of [
+    ["@vrtmrz/browser-ui-kit", "packages/browser-ui-kit"],
+    ["@vrtmrz/obsidian-plugin-kit", "packages/obsidian-plugin-kit"],
+  ]) {
+    assert.equal(result.manifests[packageName].dependencies["@vrtmrz/ui-interactions"], "0.1.1");
+    assert.equal(result.lockfile.packages[directory].dependencies["@vrtmrz/ui-interactions"], "0.1.1");
+    assert.equal(result.manifests[packageName].version, manifests[packageName].version);
+  }
+  assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/secret-store"], "0.0.0");
+  assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].dependencies["@vrtmrz/value-store"], "0.0.0");
+  assert.equal(manifests["@vrtmrz/browser-ui-kit"].dependencies["@vrtmrz/ui-interactions"], "0.1.0");
 });
 
 test("prepares coordinated UI and adapter releases with one exact dependency", () => {
@@ -518,6 +646,10 @@ test("prepares coordinated UI and adapter releases with one exact dependency", (
     lockfile,
   });
 
+  assert.deepEqual(
+    result.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/ui-interactions", "@vrtmrz/browser-ui-kit", "@vrtmrz/obsidian-plugin-kit"],
+  );
   assert.equal(result.manifests["@vrtmrz/ui-interactions"].version, "0.1.1");
   assert.equal(result.manifests["@vrtmrz/browser-ui-kit"].version, "0.1.1");
   assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].version, "0.1.2");
@@ -662,6 +794,80 @@ test("loads value-store metadata when preparing the plugin", (context) => {
   });
   assert.equal(result.manifests["@vrtmrz/value-store"].version, "0.0.0");
   assert.equal(result.manifests["@vrtmrz/obsidian-plugin-kit"].version, "0.1.1");
+});
+
+test("writes updated direct consumer manifests for a ValueStore-only release", (context) => {
+  const repositoryRoot = mkdtempSync(join(tmpdir(), "fancy-kit-value-store-release-"));
+  context.after(() => rmSync(repositoryRoot, { recursive: true, force: true }));
+  const manifests = {
+    "@vrtmrz/ui-interactions": { name: "@vrtmrz/ui-interactions", version: "0.1.0" },
+    "@vrtmrz/value-store": { name: "@vrtmrz/value-store", version: "0.0.0" },
+    "@vrtmrz/secret-store": {
+      name: "@vrtmrz/secret-store",
+      version: "0.0.0",
+      dependencies: { "@vrtmrz/value-store": "0.0.0" },
+    },
+    "@vrtmrz/secret-store-node": {
+      name: "@vrtmrz/secret-store-node",
+      version: "0.1.0",
+      dependencies: {
+        "@vrtmrz/secret-store": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
+        "age-encryption": "0.3.1",
+      },
+    },
+    "@vrtmrz/obsidian-plugin-kit": {
+      name: "@vrtmrz/obsidian-plugin-kit",
+      version: "0.1.1",
+      dependencies: {
+        "@vrtmrz/ui-interactions": "0.1.0",
+        "@vrtmrz/secret-store": "0.0.0",
+        "@vrtmrz/value-store": "0.0.0",
+      },
+    },
+  };
+  const packages = {};
+  for (const [packageName, manifest] of Object.entries(manifests)) {
+    const packageDirectory = `packages/${packageName.slice("@vrtmrz/".length)}`;
+    mkdirSync(join(repositoryRoot, packageDirectory), { recursive: true });
+    writeFileSync(join(repositoryRoot, packageDirectory, "package.json"), `${JSON.stringify(manifest)}\n`);
+    packages[packageDirectory] = {
+      version: manifest.version,
+      ...(manifest.dependencies ? { dependencies: { ...manifest.dependencies } } : {}),
+    };
+  }
+  writeFileSync(join(repositoryRoot, "package-lock.json"), `${JSON.stringify({ packages })}\n`);
+
+  const result = prepareReleaseSetMetadata({
+    repositoryRoot,
+    selections: [{ packageName: "@vrtmrz/value-store", version: "0.1.0" }],
+  });
+  const writtenLockfile = JSON.parse(readFileSync(join(repositoryRoot, "package-lock.json"), "utf8"));
+
+  assert.deepEqual(
+    result.preparations.map(({ packageName }) => packageName),
+    ["@vrtmrz/value-store"],
+  );
+  for (const [packageName, packageDirectory] of [
+    ["@vrtmrz/secret-store", "packages/secret-store"],
+    ["@vrtmrz/secret-store-node", "packages/secret-store-node"],
+    ["@vrtmrz/obsidian-plugin-kit", "packages/obsidian-plugin-kit"],
+  ]) {
+    const writtenManifest = JSON.parse(readFileSync(join(repositoryRoot, packageDirectory, "package.json"), "utf8"));
+    assert.equal(writtenManifest.dependencies["@vrtmrz/value-store"], "0.1.0");
+    assert.equal(writtenManifest.version, manifests[packageName].version);
+    assert.equal(result.manifests[packageName].version, manifests[packageName].version);
+    assert.equal(result.lockfile.packages[packageDirectory].dependencies["@vrtmrz/value-store"], "0.1.0");
+    assert.equal(writtenLockfile.packages[packageDirectory].dependencies["@vrtmrz/value-store"], "0.1.0");
+  }
+  assert.equal(
+    JSON.parse(readFileSync(join(repositoryRoot, "packages/secret-store-node/package.json"), "utf8")).dependencies[
+      "age-encryption"
+    ],
+    "0.3.1",
+  );
+  assert.equal(result.lockfile.packages["packages/secret-store-node"].dependencies["age-encryption"], "0.3.1");
+  assert.equal(writtenLockfile.packages["packages/secret-store-node"].dependencies["age-encryption"], "0.3.1");
 });
 
 test("writes the selected manifest and lockfile while preserving their indentation", (context) => {

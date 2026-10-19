@@ -145,6 +145,22 @@ const releasePreparationOrder = [
   "octagonal-wheels",
 ];
 
+const releaseDependencyConsumers = {
+  "@vrtmrz/ui-interactions": [
+    "@vrtmrz/browser-ui-kit",
+    "@vrtmrz/obsidian-plugin-kit",
+  ],
+  "@vrtmrz/secret-store": [
+    "@vrtmrz/obsidian-plugin-kit",
+    "@vrtmrz/secret-store-node",
+  ],
+  "@vrtmrz/value-store": [
+    "@vrtmrz/secret-store",
+    "@vrtmrz/secret-store-node",
+    "@vrtmrz/obsidian-plugin-kit",
+  ],
+};
+
 export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
   if (!Array.isArray(selections) || selections.length === 0) {
     throw new Error("At least one package release must be selected");
@@ -165,52 +181,9 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
   const nextManifests = cloneJson(manifests);
   let nextLockfile = cloneJson(lockfile);
   const uiPackageName = "@vrtmrz/ui-interactions";
-  const uiVersion = selectedVersions.get(uiPackageName);
-  const uiAdapterPackageNames = [
-    "@vrtmrz/browser-ui-kit",
-    "@vrtmrz/obsidian-plugin-kit",
-  ];
-
-  if (uiVersion) {
-    for (const adapterPackageName of uiAdapterPackageNames) {
-      if (!selectedVersions.has(adapterPackageName)) continue;
-
-      const adapterManifest = nextManifests[adapterPackageName];
-      if (!adapterManifest) {
-        throw new Error(`Manifest is missing for ${adapterPackageName}`);
-      }
-      const adapterDirectory = publishablePackages[adapterPackageName];
-      const adapterLockEntry = nextLockfile.packages?.[adapterDirectory];
-      if (!adapterLockEntry) {
-        throw new Error(`Lockfile entry is missing for ${adapterDirectory}`);
-      }
-      nextManifests[adapterPackageName] = {
-        ...adapterManifest,
-        dependencies: {
-          ...adapterManifest.dependencies,
-          [uiPackageName]: uiVersion,
-        },
-      };
-      nextLockfile.packages[adapterDirectory] = {
-        ...adapterLockEntry,
-        dependencies: {
-          ...adapterLockEntry.dependencies,
-          [uiPackageName]: uiVersion,
-        },
-      };
-    }
-  }
-
   const secretStorePackageName = "@vrtmrz/secret-store";
-  const secretStoreVersion = selectedVersions.get(secretStorePackageName);
-  const secretStoreConsumerPackageNames = [
-    "@vrtmrz/obsidian-plugin-kit",
-    "@vrtmrz/secret-store-node",
-  ];
-  if (secretStoreVersion) {
-    for (const consumerPackageName of secretStoreConsumerPackageNames) {
-      if (!selectedVersions.has(consumerPackageName)) continue;
-
+  for (const [dependencyPackageName, dependencyVersion] of selectedVersions) {
+    for (const consumerPackageName of releaseDependencyConsumers[dependencyPackageName] ?? []) {
       const consumerManifest = nextManifests[consumerPackageName];
       if (!consumerManifest) throw new Error(`Manifest is missing for ${consumerPackageName}`);
       const consumerDirectory = publishablePackages[consumerPackageName];
@@ -221,47 +194,14 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
         ...consumerManifest,
         dependencies: {
           ...consumerManifest.dependencies,
-          [secretStorePackageName]: secretStoreVersion,
+          [dependencyPackageName]: dependencyVersion,
         },
       };
       nextLockfile.packages[consumerDirectory] = {
         ...consumerLockEntry,
         dependencies: {
           ...consumerLockEntry.dependencies,
-          [secretStorePackageName]: secretStoreVersion,
-        },
-      };
-    }
-  }
-
-  const valueStorePackageName = "@vrtmrz/value-store";
-  const valueStoreVersion = selectedVersions.get(valueStorePackageName);
-  const valueStoreConsumerPackageNames = [
-    "@vrtmrz/secret-store",
-    "@vrtmrz/secret-store-node",
-    "@vrtmrz/obsidian-plugin-kit",
-  ];
-  if (valueStoreVersion) {
-    for (const consumerPackageName of valueStoreConsumerPackageNames) {
-      if (!selectedVersions.has(consumerPackageName)) continue;
-      const consumerManifest = nextManifests[consumerPackageName];
-      if (!consumerManifest) throw new Error(`Manifest is missing for ${consumerPackageName}`);
-      const consumerDirectory = publishablePackages[consumerPackageName];
-      const consumerLockEntry = nextLockfile.packages?.[consumerDirectory];
-      if (!consumerLockEntry) throw new Error(`Lockfile entry is missing for ${consumerDirectory}`);
-
-      nextManifests[consumerPackageName] = {
-        ...consumerManifest,
-        dependencies: {
-          ...consumerManifest.dependencies,
-          [valueStorePackageName]: valueStoreVersion,
-        },
-      };
-      nextLockfile.packages[consumerDirectory] = {
-        ...consumerLockEntry,
-        dependencies: {
-          ...consumerLockEntry.dependencies,
-          [valueStorePackageName]: valueStoreVersion,
+          [dependencyPackageName]: dependencyVersion,
         },
       };
     }
@@ -316,29 +256,35 @@ export function prepareReleaseMetadata({ repositoryRoot = defaultRepositoryRoot,
 }
 
 export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRoot, selections }) {
-  const selectedPackageNames = new Set(["@vrtmrz/ui-interactions"]);
+  const packageNamesToLoad = new Set(["@vrtmrz/ui-interactions"]);
+  const packageNamesToWrite = new Set();
   for (const { packageName } of selections) {
     const packageDirectory = publishablePackages[packageName];
     if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
-    selectedPackageNames.add(packageName);
+    packageNamesToLoad.add(packageName);
+    packageNamesToWrite.add(packageName);
+    for (const consumerPackageName of releaseDependencyConsumers[packageName] ?? []) {
+      packageNamesToLoad.add(consumerPackageName);
+      packageNamesToWrite.add(consumerPackageName);
+    }
   }
 
   if (
-    selectedPackageNames.has("@vrtmrz/obsidian-plugin-kit") ||
-    selectedPackageNames.has("@vrtmrz/secret-store-node")
+    packageNamesToLoad.has("@vrtmrz/obsidian-plugin-kit") ||
+    packageNamesToLoad.has("@vrtmrz/secret-store-node")
   ) {
-    selectedPackageNames.add("@vrtmrz/secret-store");
+    packageNamesToLoad.add("@vrtmrz/secret-store");
   }
   if (
-    selectedPackageNames.has("@vrtmrz/secret-store") ||
-    selectedPackageNames.has("@vrtmrz/secret-store-node") ||
-    selectedPackageNames.has("@vrtmrz/obsidian-plugin-kit")
+    packageNamesToLoad.has("@vrtmrz/secret-store") ||
+    packageNamesToLoad.has("@vrtmrz/secret-store-node") ||
+    packageNamesToLoad.has("@vrtmrz/obsidian-plugin-kit")
   ) {
-    selectedPackageNames.add("@vrtmrz/value-store");
+    packageNamesToLoad.add("@vrtmrz/value-store");
   }
 
   const manifests = {};
-  for (const packageName of selectedPackageNames) {
+  for (const packageName of packageNamesToLoad) {
     const packageDirectory = publishablePackages[packageName];
     manifests[packageName] = readJson(resolve(repositoryRoot, packageDirectory, "package.json"));
   }
@@ -349,7 +295,7 @@ export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRo
     lockfile: readJson(lockfilePath),
   });
 
-  for (const { packageName } of selections) {
+  for (const packageName of packageNamesToWrite) {
     const packageDirectory = publishablePackages[packageName];
     writeJsonPreservingIndentation(
       resolve(repositoryRoot, packageDirectory, "package.json"),

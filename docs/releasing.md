@@ -21,13 +21,13 @@ Inspect the selected package's entry in the `pack:workspace` output. A scoped pa
 
 ## Version and dependency order
 
-Use a prerelease when consumer validation requires a registry version before the stable release. A compatible patch may instead be validated from an immutable local or CI-built tarball before staging the stable version under `latest`. Use `next` when registry-based consumer validation must precede promotion to `latest`. Do not publish a `0.0.0` package; staging validation rejects that development version.
+Choose a prerelease only when a separately versioned candidate is useful. A stable version may be validated from an immutable local or CI-built tarball before staging under `latest`, or staged under `next` for registry-based validation before promotion of that same version to `latest`. Neither path requires an RC. Do not publish a `0.0.0` package; staging validation rejects that development version.
 
 `@vrtmrz/ui-interactions` must be versioned and published before a browser-kit or plug-in-kit release that depends on it. Update each selected adapter package to the exact intended published UI package version, and refresh the root lockfile before packing it.
 
 `@vrtmrz/value-store` is an independent core with no runtime, peer, or optional dependencies, initially at unpublished `0.0.0`. Choose its first release version explicitly; an independent ValueStore release does not require a dependent package release. `@vrtmrz/secret-store` depends on ValueStore for shared operations and errors, while the plug-in kit and `@vrtmrz/secret-store-node` depend on ValueStore directly as well. Publish and validate ValueStore before SecretStore, then publish SecretStore before the plug-in kit or Node adapter versions which require it. The Node package also depends on the pinned age implementation. Browser-kit and UI-only selections remain independent of these packages.
 
-`@vrtmrz/value-store` owns the shared asynchronous string and JSON-object operations, explicit deletion, and the Web Storage and Node JSON-file adapters. Its package has no runtime, peer, or optional dependencies, so it can be selected independently. When a ValueStore version is selected together with SecretStore, the Node adapter, or the plug-in kit, preparation updates only those selected direct consumers and orders ValueStore first.
+`@vrtmrz/value-store` owns the shared asynchronous string and JSON-object operations, explicit deletion, and the Web Storage and Node JSON-file adapters. Its package has no runtime, peer, or optional dependencies, so it can be selected independently. When a ValueStore version is selected, preparation aligns its direct workspace consumers with that version and orders ValueStore first among selected releases. Unselected consumers retain their own versions and are not added to the release selection.
 
 `@vrtmrz/obsidian-test-session` is independent of the runtime packages and can be released separately. `octagonal-wheels` retains its existing version history and should be released only when its own public artefacts change.
 
@@ -37,9 +37,9 @@ Choose the version deliberately before preparing the release:
 
 - use a patch version for compatible fixes, internal maintenance, and compatible additions;
 - use the next minor version while the packages are in `0.x` when the public contract changes intentionally or consumers must review migration work;
-- add a prerelease suffix, such as `-rc.0`, when registry Consumer validation must precede the stable version.
+- add a prerelease suffix, such as `-rc.0`, only when a separately versioned candidate is useful; a stable version on `next` can also support registry-based validation.
 
-The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and a package dependency that does not exactly match its workspace package. It accepts multiple package/version pairs when a reviewed source change crosses workspace package boundaries. When UI interactions is selected with an adapter that consumes it, preparation pins that adapter to the exact selected UI version. When ValueStore is selected with SecretStore, the Node adapter, or the plug-in kit, preparation updates the selected direct consumer pins and orders ValueStore first. When SecretStore is selected with the plug-in kit or Node adapter, preparation updates those selected consumer pins and orders SecretStore after ValueStore. Unselected consumers remain unchanged; staging verifies that each selected package dependency is already published. Preparing the SecretStore version leaves the Node adapter's pinned age dependency unchanged.
+The preparation script does not infer the release level. It rejects unsupported packages, malformed versions, unchanged versions, an out-of-sync lockfile, and a selected package dependency that does not exactly match its workspace package. It accepts multiple package/version pairs when a reviewed source change crosses workspace package boundaries. Preparation updates direct workspace consumers of selected UI interactions, ValueStore, and SecretStore versions, including consumers which are not selected for release, and updates their lockfile entries together. This keeps a clean workspace install on the intended local packages. Only selected packages receive new versions and build or release selections; unrelated dependencies, including the Node adapter's pinned age implementation, remain unchanged. Selected packages are prepared in dependency order, and staging verifies that each selected package dependency is already published.
 
 ## Preparing a release pull request
 
@@ -53,7 +53,7 @@ npm ci
 npm run release:prepare -- <package-name> <version>
 ```
 
-`release:prepare` updates each selected package manifest and its workspace lockfile entry together, then runs each selected package's `build` script. It deliberately does not commit, push, stage, approve, publish, or promote anything.
+`release:prepare` updates selected versions, their direct workspace consumers' dependency pins, and the corresponding lockfile entries together, then runs each selected package's `build` script. Review dependent manifest changes even when those packages are not being released. The command does not commit, push, stage, approve, publish, or promote anything.
 
 When browser-kit or plug-in-kit source requires a new UI interactions contract, prepare the affected runtime packages as one metadata set:
 
@@ -79,10 +79,10 @@ The expected release preparation differs by package:
 
 | Package | Preparation and order | Tracked release output | Additional consumer validation |
 | --- | --- | --- | --- |
-| `@vrtmrz/secret-store` | Pin the exact published `@vrtmrz/value-store` version. Publish ValueStore first, then SecretStore before selected plugin or Node adapters. | Manifest and root lockfile. Compiled `dist` is ignored. | Run secret-profile contract cases and packed type, runtime, and browser-bundle checks. Consumer composition and each platform adapter require their own evidence. |
+| `@vrtmrz/secret-store` | Pin the exact published `@vrtmrz/value-store` version. Publish ValueStore first, then SecretStore before selected plugin or Node adapters. | Manifest, direct consumers' dependency pins, and root lockfile. Compiled `dist` is ignored. | Run secret-profile contract cases and packed type, runtime, and browser-bundle checks. Consumer composition and each platform adapter require their own evidence. |
 | `@vrtmrz/secret-store-node` | Pin exact published ValueStore and SecretStore versions, and the reviewed age dependency. Publish both cores first. | Manifest and root lockfile. Compiled `dist` is ignored. | Run real filesystem and injected failure tests, native age/rage interoperability, and installed-tarball checks on the Node versions and filesystems claimed. Qualify deployment ownership separately. |
-| `@vrtmrz/value-store` | Select its first release explicitly. It has no runtime, peer, or optional dependencies; publish before SecretStore or adapters that require it. | Manifest and root lockfile. Compiled `dist` is ignored. | Check the asynchronous string/object contract, explicit deletion, standalone offline installation, and neutral, Web Storage, and Node entry boundaries in packed consumers; qualify Node filesystem behaviour and Obsidian host composition against the claimed runtimes. |
-| `@vrtmrz/ui-interactions` | Release before a browser-kit or plug-in-kit version that requires it. | Manifest and root lockfile. Compiled `dist` is ignored. | Exercise the changed contracts through scripted tests and at least one maintained consumer. Run the local Obsidian suite when visible Obsidian UI behaviour changes. |
+| `@vrtmrz/value-store` | Select its first release explicitly. It has no runtime, peer, or optional dependencies; publish before SecretStore or adapters that require it. | Manifest, direct consumers' dependency pins, and root lockfile. Consumer versions remain unchanged unless selected. Compiled `dist` is ignored. | Check the asynchronous string/object contract, explicit deletion, standalone offline installation, and neutral, Web Storage, and Node entry boundaries in packed consumers; qualify Node filesystem behaviour and Obsidian host composition against the claimed runtimes. |
+| `@vrtmrz/ui-interactions` | Release before a browser-kit or plug-in-kit version that requires it. | Manifest, direct consumers' dependency pins, and root lockfile. Compiled `dist` is ignored. | Exercise the changed contracts through scripted tests and at least one maintained consumer. Run the local Obsidian suite when visible Obsidian UI behaviour changes. |
 | `@vrtmrz/browser-ui-kit` | Keep `@vrtmrz/ui-interactions` pinned to the exact intended published version. | Manifest and root lockfile. Compiled `dist` is ignored. | Build and test representative browser consumers, including native DOM interaction and notification paths. |
 | `@vrtmrz/obsidian-plugin-kit` | Pin `@vrtmrz/ui-interactions`, `@vrtmrz/secret-store`, and `@vrtmrz/value-store` to their exact intended published versions. Publish each required dependency first. | Manifest and root lockfile. Compiled `dist` is ignored. | Build and test representative consuming plug-ins. Run the local Obsidian suite for adapter or visible UI changes. |
 | `@vrtmrz/obsidian-test-session` | Independent of the runtime packages. | Manifest and root lockfile. Compiled `dist` is ignored. | Run the local Obsidian lifecycle suite on each platform whose support is claimed. |
@@ -170,27 +170,30 @@ GitHub Pages must use **GitHub Actions** as its publishing source. The installer
 
 The release tag and manifest version must match. Do not publish the Harness to npm, treat a package release as an implied Harness release, or make the Pages cache authoritative. The Fancy Kit source commit and its release assets remain authoritative.
 
-## Initial npm bootstrap
+## Initial npm staged publication
 
-An npm package must exist before npm Trusted Publishing or staged publishing can be configured. Bootstrap each new scoped package once from a reviewed release commit using an interactive npm session with 2FA. Do not put a temporary bypass token in GitHub Actions.
+Stage the first release of each new scoped package from a reviewed release commit on `main` with an authenticated npm CLI session that has publish access to the `@vrtmrz` scope. Use npm CLI 11.15.0 or later with Node.js 22.14.0 or later. Staging and publication are separate operations: staging a new package creates a public `0.0.0-stage` placeholder, while the candidate version and its contents remain private until a maintainer reviews and approves the stage. `npm stage publish` does not require 2FA; approving the stage does.
 
-Use an `-rc.0` version and the `next` dist-tag for this one-off publication:
+Pack the selected package once, inspect the archive and metadata, record its SHA-256, and stage that exact tarball:
 
 ```bash
-FANCY_KIT_BOOTSTRAP_PUBLISH=1 npm publish --workspace <package-name> --tag next --access public
+stage_dir=/tmp/fancy-kit-npm-stage
+mkdir -p "$stage_dir"
+npm pack --workspace <package-name> --pack-destination "$stage_dir"
+tarball="$stage_dir/<generated-tarball-name>"
+sha256sum "$tarball"
+npm stage publish "$tarball" --tag next --access public
 ```
 
-Publish `@vrtmrz/ui-interactions` before `@vrtmrz/browser-ui-kit` or `@vrtmrz/obsidian-plugin-kit`, and update each adapter to depend on that exact UI release candidate. Publish `@vrtmrz/value-store` before `@vrtmrz/secret-store`, then publish SecretStore before a plug-in-kit or `@vrtmrz/secret-store-node` release that requires it. Adapters can then be bootstrapped independently. `@vrtmrz/obsidian-test-session` is independent. Confirm the authenticated npm account, `@vrtmrz` scope ownership, public-package permission, package name, packed contents, and target commit immediately before each command.
+Use `next` when registry-based consumer validation must precede promotion to `latest`, regardless of whether the selected package version is stable or a prerelease. After reviewing the staged entry and its checksum, approve it separately with `npm stage approve <stage-id>`. Install the exact published version in a relevant consumer and run its build and focused tests. Once a stable version passes those checks, promote that same version to `latest` in a separate operation with `npm dist-tag add <package>@<version> latest`. A release candidate is optional when the selected stable version can be validated this way.
 
-npm requires every package to have a `latest` dist-tag. For a package's first publication, the bootstrap release therefore receives `latest` even when `--tag next` is supplied, and npm will reject an attempt to remove that sole `latest` tag. This is expected for the initial release candidate. Leave both tags in place, and replace `latest` with the first reviewed stable release later.
+Release `@vrtmrz/ui-interactions` before `@vrtmrz/browser-ui-kit` or `@vrtmrz/obsidian-plugin-kit`, and update each adapter to depend on that exact published UI version. Release `@vrtmrz/value-store` before `@vrtmrz/secret-store`, then SecretStore before a plug-in-kit or `@vrtmrz/secret-store-node` release that requires it. Adapters can then be released independently. `@vrtmrz/obsidian-test-session` is independent. Confirm the authenticated npm account, scope ownership, public-package permission, package name, packed contents, checksum, and target commit immediately before staging.
 
-The bootstrap release is deliberately a release candidate. Install its exact registry version in one consumer and run the consumer's build and focused tests before preparing a stable package version.
-
-The scoped packages' `prepublishOnly` guard rejects routine manual publication and requires the explicit bootstrap environment variable shown above. It is a procedural safeguard rather than an npm access control: package access settings, 2FA, and the trusted staged workflow remain the security boundary.
+The scoped packages' `prepublishOnly` guard rejects source-directory publication, including when the former `FANCY_KIT_BOOTSTRAP_PUBLISH=1` flag is set. It is a procedural safeguard; use `npm stage publish` with the verified tarball for a new package's first release, then use the protected workflow below for subsequent releases.
 
 ## Trusted staged publishing
 
-After a bootstrap package exists, configure its npm Trusted Publisher for:
+After a package's first staged version has been approved and published, configure its npm Trusted Publisher for:
 
 - GitHub owner and repository: `vrtmrz/fancy-kit`;
 - workflow file: `publish-npm.yml`;
@@ -217,7 +220,7 @@ gh workflow run publish-npm.yml \
   -f confirmation="stage <package-name>@<version> to $dist_tag from $sha"
 ```
 
-After the protected GitHub environment has approved the stage job, inspect the staged entry with npm 11.15.0 or later:
+After a stage has been submitted, inspect the staged entry with npm 11.15.0 or later:
 
 ```bash
 npx --yes npm@11.18.0 stage list <package-name> --json
@@ -240,7 +243,7 @@ After publication, verify the exact registry artefact and its selected dist-tag.
 
 `octagonal-wheels` is maintained in this monorepo while retaining its independent package version and release cadence. Its former standalone repository is a read-only signpost to Fancy Kit. Keep the package `repository.directory`, homepage, issue tracker, npm Trusted Publisher, and release workflow pointed at `packages/octagonal-wheels` here.
 
-The package already exists on npm, so it does not need the interactive bootstrap used for a new package. Stage releases through `publish-npm.yml`, review them on npm, and approve them with 2FA like subsequent scoped-package releases.
+The package already exists on npm, so it uses the protected workflow directly and does not need the first-release interactive stage. Stage releases through `publish-npm.yml`, review them on npm, and approve them with 2FA like subsequent scoped-package releases.
 
 The old standalone build copied package metadata into `dist`. Fancy Kit publishes from `packages/octagonal-wheels` with an explicit `files` list, so that copy step is obsolete. The workspace build and `npm pack --workspace octagonal-wheels` are the authoritative build and package-content checks.
 

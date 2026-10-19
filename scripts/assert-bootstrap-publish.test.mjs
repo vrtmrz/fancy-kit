@@ -3,29 +3,46 @@ import test from "node:test";
 
 import { assertBootstrapPublish } from "./assert-bootstrap-publish.mjs";
 
-const allowed = {
+const legacyBootstrap = {
   FANCY_KIT_BOOTSTRAP_PUBLISH: "1",
   npm_package_name: "@vrtmrz/ui-interactions",
   npm_package_version: "0.1.0-rc.0",
   npm_config_tag: "next",
 };
 
-test("allows the explicit prerelease bootstrap on next", () => {
-  assert.doesNotThrow(() => assertBootstrapPublish(allowed));
+test("rejects direct prerelease publication with the legacy flag and next tag", () => {
+  assert.throws(
+    () => assertBootstrapPublish(legacyBootstrap),
+    /stage a verified tarball.*protected npm workflow/,
+  );
+});
+
+test("rejects direct prerelease publication with the legacy flag and latest tag", () => {
+  assert.throws(
+    () => assertBootstrapPublish({ ...legacyBootstrap, npm_config_tag: "latest" }),
+    /stage a verified tarball.*protected npm workflow/,
+  );
 });
 
 test("rejects ordinary manual publication", () => {
-  assert.throws(() => assertBootstrapPublish({ ...allowed, FANCY_KIT_BOOTSTRAP_PUBLISH: undefined }), /protected npm workflow/);
+  assert.throws(
+    () => assertBootstrapPublish({ ...legacyBootstrap, FANCY_KIT_BOOTSTRAP_PUBLISH: undefined }),
+    /stage a verified tarball.*protected npm workflow/,
+  );
 });
 
-test("rejects a stable bootstrap and the latest dist-tag", () => {
-  assert.throws(() => assertBootstrapPublish({ ...allowed, npm_package_version: "0.1.0" }), /prerelease version/);
-  assert.throws(() => assertBootstrapPublish({ ...allowed, npm_config_tag: "latest" }), /--tag next/);
-});
+for (const tag of ["next", "latest"]) {
+  test(`rejects direct stable publication with the legacy flag and ${tag} tag`, () => {
+    assert.throws(
+      () => assertBootstrapPublish({ ...legacyBootstrap, npm_package_version: "0.1.0", npm_config_tag: tag }),
+      /stage a verified tarball.*protected npm workflow/,
+    );
+  });
+}
 
 test("requires octagonal-wheels to use the protected staged workflow", () => {
   assert.throws(
-    () => assertBootstrapPublish({ ...allowed, npm_package_name: "octagonal-wheels", npm_package_version: "0.1.48-preview.0" }),
+    () => assertBootstrapPublish({ ...legacyBootstrap, npm_package_name: "octagonal-wheels", npm_package_version: "0.1.48-preview.0" }),
     /protected npm workflow/,
   );
 });
