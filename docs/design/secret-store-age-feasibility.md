@@ -1,30 +1,38 @@
-# Age file-store feasibility and evidence
+---
+date: 2026-10-19
+value-store-version: "0.0.0"
+secret-store-version: "0.0.0"
+secret-store-node-version: "0.0.0"
+status: unreleased
+---
 
-Status: Phases 3a, 3b, and the Phase 3d value/object facade are implemented and locally verified. The Node adapter remains an unpublished `0.0.0` package.
+# age file adapter feasibility
 
-Date: 2026-10-18
+## Purpose and baseline
 
-Related design: [Cross-platform SecretStore](secret-store.md#age-files).
+This report records the runtime, format, identity, and filesystem evidence for
+the explicit-root age adapter in `@vrtmrz/secret-store-node`. Its public `./age`
+entry creates readers and read/write stores. The byte codec is an internal
+module, not a package export. The private feasibility facade at
+[`test/secret-store-age/codec.mjs`](../../test/secret-store-age/codec.mjs)
+imports the built internal codec, so package and feasibility checks exercise the
+same implementation.
 
-## Result and scope
+The package remains unreleased at version `0.0.0` and targets Node.js
+`>=20.19.0`. It depends on the unreleased `@vrtmrz/value-store` and
+`@vrtmrz/secret-store` packages at version `0.0.0`, plus `age-encryption`
+`0.3.1`. No maintained consumer uses the Node age adapter yet. This is
+package-owned evidence, not consumer adoption or deployment qualification.
 
-The public Node package provides the `./age` entry point for explicit age-file readers and read/write stores. The byte codec lives in `packages/secret-store-node/src/internal/age-codec.ts`; it is not a package export. The private feasibility facade at [`test/secret-store-age/codec.mjs`](../../test/secret-store-age/codec.mjs) now imports that built internal module, so package and feasibility checks exercise the same codec implementation.
+The broader package boundaries are in the [SecretStore design](secret-store.md),
+and current package evidence is summarised in
+[Proven in use](../proven-in-use.md#secretstore-package-owned-evidence).
 
-`@vrtmrz/secret-store-node` remains at unpublished version `0.0.0`, targets Node.js `>=20.19.0`, and has exact direct runtime dependencies on `@vrtmrz/value-store` `0.0.0`, `@vrtmrz/secret-store` `0.0.0`, and `age-encryption` `0.3.1`. The platform-neutral `@vrtmrz/secret-store` package depends only on `@vrtmrz/value-store`; `value-store` has no package dependencies. There is no registry release yet; a consumer trial must install local tarballs for all three workspace packages.
+## Runtime dependencies
 
-Phase 3b passed 54 filesystem tests, 17 codec tests, and 22 native interoperability tests (39 codec and interoperability cases combined) on Linux arm64 ext4 with Node.js 20.19.0, 22.23.3, and 24.18.0. The native suite includes public file-store round trips. The filesystem suite exercises real permission/link checks, injected I/O failures, concurrent replacement, bounded reads, and process termination before and after rename. Packed-consumer verification also passed with the installed public entry and Node-only type declarations. These are package-owned checks; no maintained consumer has adopted this adapter yet.
-
-Phase 3d replaces the original public get/set methods with asynchronous value/object methods, optional defaults for absent entries, and paired serialisation; it does not change the binary age codec or file layout. The updated filesystem suite passes 58 tests on Node.js 20.19.0, 22.23.3, and 24.18.0 on Linux arm64 ext4. The complete workspace and installed-tarball gates pass, and the 22 pinned native interoperability checks pass through the updated public file-store methods on Node.js 24.18.0.
-
-## Phase 3a historical codec evidence
-
-Before the file adapter was added, a private codec prototype demonstrated the proposed binary age representation with exact UTF-8 values, native X25519 recipients, and a per-operation identity provider. Bidirectional tests passed against official `age` 1.3.2 and `rage` 0.12.1 binaries on Linux arm64. Both native tools decrypted codec output with either of two recipients, and the codec decrypted each tool's output. Native-generated and JavaScript-generated identities were exercised. The 37 codec and interoperability checks passed on Linux arm64 with Node.js 20.19.0, 22.23.3, and 24.18.0.
-
-This historical evidence establishes codec interoperability only. It does not qualify the Phase 3b filesystem adapter, macOS or Windows behaviour, network filesystems, hardware power-loss durability, deployment, or the cryptographic implementations as a whole. Node.js 20.19.0 was a dependency-floor probe, not a new workspace support promise; repository CI uses Node.js 24.
-
-## Dependencies and runtime evidence
-
-The [lockfile](../../package-lock.json) records exact resolved packages and integrity digests. The Node adapter directly depends on `age-encryption` `0.3.1`; the selected package brings these reviewed runtime dependencies:
+The lockfile records exact package versions and integrity digests. The selected
+age dependency graph has no install lifecycle scripts, native npm add-ons, or
+external executable in the runtime codec path.
 
 | Dependency | Resolved version | Licence | Runtime requirement |
 | --- | --- | --- | --- |
@@ -35,52 +43,132 @@ The [lockfile](../../package-lock.json) records exact resolved packages and inte
 | `@noble/post-quantum` | 0.5.4 | MIT | Node.js >=20.19.0; brings nested curves and hashes 2.0.1. |
 | `@scure/base` | 2.4.0 | MIT | No `engines` field. |
 
-The selected packages have no install lifecycle scripts. The age entry statically imports the post-quantum dependency even when only X25519 is used. Restricting the adapter's accepted key forms does not remove that dependency or its review burden. There are no native npm add-ons or external executables in the runtime codec path; `age` and `rage` are test tools only. The root workspace also retains `age-encryption` as a development dependency for the private native interoperability tests.
+The age entry statically imports the post-quantum dependency even though this
+adapter accepts only native X25519 identity forms. Restricting accepted key
+forms does not remove that dependency or its review burden. The root workspace
+also keeps `age-encryption` as a development dependency for the private native
+interoperability checks. The `age` and `rage` executables are test tools only.
 
-Neither the historical codec probes nor the Phase 3b runtime matrix qualifies other operating systems or architectures. Current filesystem qualification is limited to Linux arm64 on a local ext4 filesystem. Windows returns `unavailable`. macOS and network filesystems remain unqualified.
+## Recorded validation evidence
+
+| Evidence set | Recorded result | Limit |
+| --- | --- | --- |
+| Current age filesystem suite | 58 tests on Linux arm64 ext4 with Node.js 20.19.0, 22.23.3, and 24.18.0. | Package-owned filesystem and injected-failure coverage. |
+| Current codec suite | 17 codec tests against the production internal codec. | Targeted codec and error-boundary checks, not a cryptographic audit. |
+| Current native interoperability suite | 22 pinned age/rage checks, including public file-store round trips, on Node.js 24.18.0. | Pinned tools and synthetic identities; no consumer deployment. |
+| Earlier Phase 3b snapshot | 54 filesystem tests, 17 codec tests, and 22 native interoperability tests on Linux arm64 ext4. | Earlier file-store implementation before the later ValueStore facade checks. |
+| Historical Phase 3a prototype | 37 combined codec and interoperability checks using a private codec prototype. | Codec interoperability only; it did not test the production filesystem adapter. |
+
+The current file suite covers real permissions and links, bounded reads, atomic
+replacement, concurrent writers, injected I/O failures, and process termination
+before and after rename. The current native suite exchanges actual file-store
+entries with the pinned tools. The current package and packed-consumer results
+are recorded in [Proven in use](../proven-in-use.md); a packed consumer verifies
+the focused public entry and Node-only declarations.
+
+The historical Phase 3a checks ran on Linux arm64 with Node.js 20.19.0,
+22.23.3, and 24.18.0. The later filesystem suite also passed on those Node
+versions, while the latest recorded native interoperability run used Node.js
+24.18.0. Node.js 20.19.0 was a dependency-floor probe, not a new workspace
+support promise; repository CI uses Node.js 24.
 
 ## Value and authentication boundaries
 
-Each ciphertext contains the UTF-8 encoding of the string delivered to the backend. The codec adds no JSON envelope, custom header, or filename. Object methods supply JSON text, and an explicitly injected serializer may transform that string before the codec encrypts it. Tests preserve empty strings, whitespace, NUL, a leading BOM, Unicode, and values at the 64 KiB plaintext limit. The limit counts encoded bytes: 16,384 four-byte characters fit, while one additional ASCII byte is rejected. Lone surrogates are rejected before encoding.
+Each ciphertext contains the UTF-8 encoding of the string delivered to the
+backend. Object operations deliver JSON text, and an explicitly injected
+serialiser may transform that string before encryption. There is no JSON
+envelope, custom header, or filename in the ciphertext.
 
-The codec uses `decrypt(ciphertext, 'uint8array')`, followed by `TextDecoder('utf-8', { fatal: true, ignoreBOM: true })`. Upstream text mode removes a leading BOM and replaces malformed UTF-8; a test retains that evidence so an upstream change prompts a review of the integration. The byte API buffers the complete output and resolves only after header and payload authentication. Streaming output is unsuitable for the whole-entry contract because earlier chunks can be returned before a later authentication failure.
+The codec decrypts to bytes and decodes with strict UTF-8 while preserving a
+leading BOM. Upstream text mode removes that BOM and replaces malformed UTF-8;
+the test retains this evidence so an upstream change prompts review. The byte
+API buffers the complete output and resolves only after header and payload
+authentication. Streaming output is unsuitable for the whole-entry contract
+because it could return earlier chunks before a later authentication failure.
 
-The adapter bounds the filesystem read to 1 MiB before invoking the codec. The codec also rejects ciphertext over that limit before identity acquisition. Authenticated plaintext above 64 KiB is `invalid-data`. A 1 MiB ciphertext still requires bounded allocation during decryption; the library does not impose the application's limits.
+Tests cover empty strings, whitespace, line endings, NUL, a leading BOM,
+Unicode, and the 64 KiB plaintext boundary. The limit counts encoded bytes:
+16,384 four-byte characters fit, while one additional ASCII byte is rejected.
+Lone surrogates are rejected before encoding. The filesystem adapter limits
+ciphertext reads to 1 MiB before invoking the codec; the codec enforces the same
+ciphertext maximum before identity acquisition. Authenticated plaintext above
+64 KiB is `invalid-data`. Decryption still requires bounded allocation up to the
+ciphertext limit.
 
-Negative cases cover wrong identities, malformed headers, payload tampering, truncation, appended data, authenticated invalid UTF-8, oversized data, and a validly encoded all-zero X25519 public point. Native tools also reject a damaged codec ciphertext. These are targeted interoperability and integration checks, not a substitute for a cryptographic audit. Phase 3b adds filesystem authority and failure-path coverage, including fixed errors when an upstream exception has a throwing property getter or prototype trap.
+Negative cases cover wrong identities, malformed headers, payload tampering,
+truncation, appended data, authenticated invalid UTF-8, oversized data, and a
+validly encoded all-zero X25519 public point. These tests establish selected
+integration properties, not a cryptographic audit.
 
-## Key, authority, and error boundaries
+## Identity, authority, and write outcomes
 
-The codec copies a non-empty recipient policy at construction and uses no identity provider for encryption. Only native X25519 string forms are accepted. The codec creates a fresh decrypter and requests identities once per decryption; a later call uses the provider's current result. It neither caches identities globally nor generates, loads, or persists a key. Test setup creates disposable synthetic keys explicitly.
+The codec copies a non-empty recipient policy at construction and uses no
+identity provider for encryption. It creates a fresh decrypter and requests
+identities once for each read of an existing entry. A missing entry does not
+acquire identities, and a write does not acquire a decryption identity. The
+provider's current result is used on each call. The codec neither caches,
+generates, loads, nor persists identities.
 
-The public reader and writer require an existing private root directory. Construction does not create paths, change permissions, or acquire identities. The root must be owned by the effective user and private to that user; ancestors must meet trusted-owner and writable-path checks. Symbolic path components are rejected, authority is rechecked during operations, and a more permissive root is rejected rather than repaired. The adapter relies on POSIX ownership and no-follow operations and does not claim to defeat a trusted owner racing path replacement.
+Factories require an explicit, existing private root. Construction does not
+create paths, change permissions, or acquire identities. The root must belong to the effective user and have no group/other access or
+special bits: readers require owner read/search permissions (`0500`), and
+writers also require owner write permission (`0700`). Ancestors must belong to
+root or the effective user; group/other-writable ancestors require the sticky
+bit, with trusted ownership checked for each child. Every component rejects
+symlinks. Device and inode identities are retained in memory and rechecked over
+the ancestry during operations. Permissive paths are rejected rather than
+repaired. The adapter relies on POSIX ownership and no-follow operations; it
+does not claim to defeat a trusted owner racing path replacement.
 
-The writer maps each portable secret name to `<root>/secret-<name>.age`. It encrypts in memory, creates an exclusive mode-0600 temporary file, writes and synchronises the ciphertext, closes the file, renames it within the root, and synchronises the directory. Concurrent writers use last-writer-wins replacement. There is no lock, retry, backup, journal, or transaction. Once replacement starts, a rejected write has an uncertain outcome. Cleanup only removes the operation's verified temporary inode; residue can remain if the adapter cannot prove ownership or cleanup itself fails. `sync()` requests filesystem synchronisation but does not establish hardware power-loss guarantees.
+A write encrypts in memory, exclusively creates a mode-0600 temporary ciphertext
+file in the same directory, writes and synchronises the file, closes it, renames
+it within the root, and synchronises the directory. Concurrent writers use
+last-writer-wins replacement. There is no lock, retry, backup, journal, or
+transaction. Before replacement, a failure leaves the previous entry intact.
+Once replacement starts, a rejected write has an uncertain outcome. Cleanup
+removes only the operation's verified temporary inode; residue can remain if
+ownership cannot be proved or cleanup fails.
 
-The identity provider runs once after a bounded successful read of an existing entry and is not called for absence or writes. An empty list means `unavailable`; provider errors are sanitised as `operation-failed`. A missing entry returns `null` only while the original root remains available. Error categorisation remains conservative:
+The adapter returns `unavailable` on Windows rather than substituting POSIX
+permission checks for Windows ACL authority. Local filesystem qualification is
+limited to Linux arm64 on ext4. macOS, network filesystems, and hardware
+power-loss behaviour remain unqualified. A successful `sync()` request does
+not establish hardware power-loss durability. The factory cannot detect every
+unsuitable filesystem, so deployments must select a qualified local filesystem.
 
-| Observed boundary | Sanitised code |
-| --- | --- |
-| Invalid name, value, or recipient/identity policy | `invalid-name` or `invalid-value` |
-| Missing root, unavailable platform capability, or empty identity list | `unavailable` |
-| Reliably identified permission denial | `access-denied` |
-| Upstream ciphertext parsing, key selection, or authentication failure | `decryption-failed` |
-| Ciphertext over the limit, malformed stored encoding, or oversized authenticated plaintext | `invalid-data` |
-| Provider exception or uncertain filesystem/encryption failure | `operation-failed` |
+Errors are sanitised and fixed. Upstream ciphertext parsing, key selection, and
+authentication failures map to `decryption-failed`; the dependency has no stable
+typed taxonomy, so its messages are not parsed to distinguish wrong identities
+from damaged ciphertext. Ciphertext over the size limit, invalid stored
+encoding, authenticated invalid UTF-8, and oversized authenticated plaintext
+are `invalid-data`. Reliably identified permission failures are
+`access-denied`; absent roots, unavailable platform support, or an empty
+identity list are `unavailable`. Provider exceptions and uncertain encryption
+or filesystem failures are `operation-failed`. Provider failures never select a
+fallback identity source, and errors do not include values, identities, or
+caller-supplied paths.
 
-Upstream cryptographic errors have no stable code taxonomy. Do not parse their text to distinguish wrong keys from damaged ciphertext. The adapter uses fixed core errors without upstream messages or causes. A provider failure never triggers another source, and no error output includes values, identity strings, or caller-supplied paths.
+## File format and metadata limits
 
-## Format implications
+The file mapping is `<explicit-root>/secret-<portable-name>.age`, with one
+standard binary age ciphertext per entry. Recipients are explicit writer
+configuration. An optional management file such as `recipients.txt` is not
+reader state and is never discovered by the package. Identities are supplied by
+the application and kept elsewhere.
 
-The file mapping is `<explicit-root>/secret-<portable-name>.age`, with one standard binary age ciphertext per entry. Recipients are explicit writer configuration; an optional management file such as `recipients.txt` is not reader state and is never discovered by the package. Identities are supplied by the application and kept elsewhere.
+Names, entry counts, approximate value sizes, and change timing remain visible.
+age does not bind ciphertext to its filename, identify its writer, establish
+freshness, or prevent replay. A party able to replace files can replay or swap
+valid ciphertext; a holder of a public recipient can create new ciphertext.
+Directory authority and trusted provisioning remain necessary. These properties
+do not imply an envelope, hidden namespace, journal, fallback backend, or
+automatic key provisioning.
 
-Names, counts, approximate value sizes, and change timing remain visible. age does not bind a ciphertext to its filename, identify its writer, establish freshness, or prevent replay. These properties support the documented directory-authority requirements; they do not justify a hidden namespace, extra envelope, journal, fallback backend, or automatic provisioning.
+## Reproduction
 
-## Reproduction and consumer trial
+From the workspace, the recorded package checks can be reproduced with:
 
-From the workspace, build and run the package and feasibility checks:
-
-```bash
+```sh
 npm run check --workspace @vrtmrz/secret-store-node
 npm run test --workspace @vrtmrz/secret-store-node
 npm run test:age:codec
@@ -88,16 +176,27 @@ npm run test:age:install-tools
 npm run test:age:interop
 ```
 
-The codec checks run through the private facade against the package's built internal codec. CI installs pinned native tools and runs interoperability. Missing tools or a version mismatch fail the interoperability command; they are not reported as skipped passes.
+The private codec facade uses the built internal codec. CI installs pinned
+native tools and runs interoperability; a missing tool or version mismatch
+fails the command rather than counting as a skipped pass.
 
-For a consumer trial, build and pack both local packages, then install both resulting tarballs in the consumer project. The package README gives the exact commands. No registry release has been made.
+The installer verifies the SHA-256 digests recorded in
+[tools.json](../../test/secret-store-age/tools.json), then extracts only the
+named executables below ignored `_testdata/age-interop`. It does not install a
+system command. Existing binaries may be selected through `AGE_INTEROP_BIN` and
+`RAGE_INTEROP_BIN`; the matching `-keygen` executable must be beside each, and
+version checks still require the pinned releases.
 
-The installer verifies the SHA-256 digests recorded in [tools.json](../../test/secret-store-age/tools.json), obtained from the official GitHub release assets, before extracting only the named executables below ignored `_testdata/age-interop`. It does not install a system command. To use an existing pair, set `AGE_INTEROP_BIN` and `RAGE_INTEROP_BIN` to exact executable paths; the matching `-keygen` executable must be beside each binary. Version checks still require the pinned releases.
-
-The interoperability suite creates a unique temporary directory, writes synthetic identities with restricted permissions, passes plaintext and ciphertext through captured pipes, and removes its directory in `finally`. No user store, Vault, credentials, or persistent identity is involved.
+The interoperability suite creates a unique temporary directory, writes
+synthetic identities with restricted permissions, passes plaintext and
+ciphertext through captured pipes, and removes its directory in `finally`. It
+uses no user store, Vault, credentials, or persistent identity.
 
 ## Primary sources
 
-- [typage 0.3.1 source](https://github.com/FiloSottile/typage/tree/38b8b10cb22409de0eaa8a617a01f16dc2e3f9f4) and [published metadata](https://registry.npmjs.org/age-encryption/0.3.1): API, licence, dependencies, byte/text behaviour, and error boundaries. The reviewed local source is the exact npm artefact selected by the lockfile.
-- [age 1.3.2 release](https://github.com/FiloSottile/age/releases/tag/v1.3.2) and [rage 0.12.1 release](https://github.com/str4d/rage/releases/tag/v0.12.1): historical native interoperability versions and artefacts.
+These sources document inspected dependency behaviour; the recorded test suites
+establish the Fancy Kit runtime results above.
+
+- [typage 0.3.1 source](https://github.com/FiloSottile/typage/tree/38b8b10cb22409de0eaa8a617a01f16dc2e3f9f4) and [published metadata](https://registry.npmjs.org/age-encryption/0.3.1): API, licence, dependencies, byte/text behaviour, and error boundaries. The reviewed local source was the exact npm artefact selected by the lockfile.
+- [age 1.3.2 release](https://github.com/FiloSottile/age/releases/tag/v1.3.2) and [rage 0.12.1 release](https://github.com/str4d/rage/releases/tag/v0.12.1): pinned native interoperability versions and artefacts.
 - [Node.js 20.19.0](https://nodejs.org/dist/v20.19.0/SHASUMS256.txt) and [Node.js 22.23.3](https://nodejs.org/dist/v22.23.3/SHASUMS256.txt): checksums for additional runtime probes. These are test runtimes, not changes to the workspace's Node.js selection.

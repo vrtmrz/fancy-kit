@@ -1,429 +1,469 @@
-# Cross-platform SecretStore design
+---
+date: 2026-10-19
+value-store-version: "0.0.0"
+secret-store-version: "0.0.0"
+secret-store-node-version: "0.0.0"
+status: unreleased
+---
 
-Status: SecretStore Phases 1 through 3d are implemented and locally verified, including the shared value operations and separate package boundaries in [ADR 0003](../adr/0003-value-store-capabilities.md). No consumer migration or registry release is included.
+# SecretStore and platform adapters
 
-Date: 2026-10-19
+## Purpose and baseline
 
-Decision records: [ADR 0001](../adr/0001-secret-store-boundaries.md), [ADR 0002](../adr/0002-value-store-serialisation.md), and the superseding shared-capability decision [ADR 0003](../adr/0003-value-store-capabilities.md).
+`@vrtmrz/value-store` defines neutral asynchronous string and JSON value
+operations. `@vrtmrz/secret-store` adds a portable named-secret profile over
+those shared operations. Neither package selects persistence or encryption. An
+application constructs the adapter it needs at its composition root and passes
+the narrow reader or writer capability to each workflow.
 
-## Purpose and scope
+This document records the implemented package boundaries and contracts, then
+marks management tools and additional adapters as proposals. All three packages
+remain at unreleased version `0.0.0`. The current Commonlib and Self-hosted
+LiveSync integration uses ValueStore for device-local data; its use of
+SecretStore remains prospective. Fancy Kit has no maintained SecretStore
+consumer integration or registry release.
 
-Provide named secret access that applications can use across Node.js, Obsidian, desktop, and headless environments. Settings hold references; explicitly selected adapters own storage. Applications use `SecretReader` for normal execution and request writing only where needed.
+The accepted boundaries are recorded in [ADR 0001](../adr/0001-secret-store-boundaries.md),
+[ADR 0002](../adr/0002-value-store-serialisation.md), and the superseding shared
+capability decision in [ADR 0003](../adr/0003-value-store-capabilities.md).
+Package-owned checks and the current consumer boundary are summarised in
+[Proven in use](../proven-in-use.md).
 
-This design preserves the separation between secret access, reference resolution, encryption, and identity provisioning. It adds no automatic synchronisation, environment injection, application settings schema, password manager, or migration of existing encrypted data. Self-hosted LiveSync is a prospective consumer, not a dependency or evidence of an implemented integration.
+## Package boundaries
 
-## Fit with the current repository
-
-The [package architecture](../architecture.md) already places neutral capabilities in `ui-interactions`, concrete integration in platform packages, and composition policy in consumers. [Vault contracts](../../packages/obsidian-plugin-kit/src/vault-contracts.ts) and their [App-free tests](../../packages/obsidian-plugin-kit/src/vault-testing.test.ts) demonstrate narrow injected capabilities and explicit error semantics. SecretStore should reuse that pattern without a transcript that records secrets.
-
-Octagonal Wheels retains its existing encryption APIs, subtree history, and release lifecycle. SecretStore neither wraps all encryption through age nor replaces existing synchronisation encryption. The repository has no neutral filesystem package; secret file operations do not justify extracting one as a prerequisite.
-
-The root workspace glob discovers package directories, but the build, check, test, packed-consumer, and release machinery contains explicit package lists. Implementation therefore requires more than adding a manifest. [CONTRIBUTING.md](../../CONTRIBUTING.md), [packed-consumer verification](../../scripts/verify-packed-consumer.mjs), and [the release runbook](../releasing.md) remain authoritative for those paths.
-
-## Package and dependency layout
+The neutral value package owns shared operation types, validation, serialisation,
+and fixed errors. Its `./web-storage` and `./node-json-file` entries provide
+explicit storage adapters; Node built-ins stay out of the neutral entry.
+SecretStore depends on ValueStore for those shared operations and adds portable
+secret names and instance-scoped memory storage.
 
 ```text
-Application workflow
-  ├─ SecretReader / SecretStore ──> @vrtmrz/secret-store ──> @vrtmrz/value-store
-  └─ ValueReader / ValueStore ─────────────────────────────> @vrtmrz/value-store
+Application composition
+  ├─ ValueReader / ValueStore ──> @vrtmrz/value-store
+  └─ SecretReader / SecretStore ─> @vrtmrz/secret-store
+                                      └─> @vrtmrz/value-store
 
-@vrtmrz/obsidian-plugin-kit/secrets ──> @vrtmrz/secret-store
 @vrtmrz/obsidian-plugin-kit/local-storage ──> @vrtmrz/value-store
-@vrtmrz/secret-store-node/age ──> @vrtmrz/secret-store, @vrtmrz/value-store (shared errors),
-                                  age-encryption, and Node filesystem APIs
-
-@vrtmrz/value-store
-  ├─ ./web-storage
-  └─ ./node-json-file (Node built-ins isolated to this entry)
+@vrtmrz/obsidian-plugin-kit/secrets ────────> @vrtmrz/secret-store
+@vrtmrz/secret-store-node/age ──────────────> @vrtmrz/secret-store
+                                              @vrtmrz/value-store, age-encryption,
+                                              and Node filesystem APIs
 ```
 
-This diagram shows the current package boundaries. `@vrtmrz/secret-store` depends on `@vrtmrz/value-store`; the Obsidian and Node adapters consume the secret profile, and the Node adapter also imports the shared error type from ValueStore. Arrows towards a package denote dependencies. All backend construction stays at the application's composition root.
+Arrows show package dependencies. The Obsidian local-storage entry consumes
+ValueStore. Its separate secrets entry adapts the official SecretStorage API.
+The Node age entry uses SecretStore for named operations and ValueStore for its
+shared error type. Applications own backend construction and identity-provider
+composition. Root workspace discovery does not imply that build, test, packed
+consumer, or release scripts discover every new package; a future package must
+also be added to those explicit selections.
 
-| Entry | Runtime and dependencies | Timing |
-| --- | --- | --- |
-| `@vrtmrz/secret-store` | Secret-profile contracts and memory storage; depends on `@vrtmrz/value-store` for shared operations, types, and fixed errors, with no Node built-in, DOM, or Obsidian import. | Secret profile implemented; unpublished. |
-| `@vrtmrz/obsidian-plugin-kit/secrets` | SecretStore and ValueStore, plus an injected structural subset of Obsidian SecretStorage; retain Obsidian as the platform peer. | Phase 2 implemented; unreleased. |
-| `@vrtmrz/secret-store-node/age` | SecretStore, ValueStore for shared errors, `age-encryption`, and Node filesystem APIs. | Phase 3b implemented; unpublished. |
-| `@vrtmrz/secret-store-cli` | Node age adapter initially; a separately reviewed backend selector if other management adapters are added. | Phase 4. |
-| `@vrtmrz/secret-store-node/systemd` | Neutral package and Node file reads; this entry must not evaluate the age codec. | Phase 5, when needed. |
-| `@vrtmrz/secret-store-keychain` | Neutral package and a native binding selected after platform tests. | Phase 5, when needed. |
-
-Use ESM, declarations, explicit export maps, `sideEffects: false` where accurate, package-name imports between workspaces, and the repository's existing build conventions. Keep testing imports free of platform modules. Do not add an umbrella import that loads every adapter or dynamically chooses one.
-
-The Node package groups file-based adapters, rather than publishing separate age and systemd packages. Its age byte codec is internally portable and separate from Node I/O, but a public browser persistence adapter is outside the first scope. A later browser adapter should use an explicitly supplied storage capability, with its own authority and atomicity contract; it must not import the Node entry. The systemd subpath avoids evaluating age code, although installing the shared Node package still installs its declared age dependency.
-
-## Core public contract
-
-The secret package exports `SecretReader`, `SecretStore`, `validateSecretName`, `MemorySecretStore`, and `SecretStoreOptions`. `ObjectValue`, `ValueSerializer`, `ValueStoreError`, and `ValueStoreErrorCode` are shared public contracts from `@vrtmrz/value-store`. The original profile boundary is defined in [ADR 0001](../adr/0001-secret-store-boundaries.md#keep-the-common-contract-small); the accepted shared-capability update is [ADR 0003](../adr/0003-value-store-capabilities.md), which supersedes the value-package split in ADR 0002. Exported declarations and option fields require TSDoc covering these behaviours:
-
-| Operation | Contract |
+| Boundary | Current responsibility |
 | --- | --- |
-| `getValue(name, defaultValue?)` | Resolve to the exact logical string, including empty strings; use a supplied default only for a confirmed absent entry, otherwise return `null`; reject for validation, access, provider, serializer, and storage failures. |
-| `getObject(name, defaultValue?)` | Parse a stored logical string as finite JSON data. Use a supplied default only for absence, otherwise return `undefined`; preserve a stored JSON `null` as `null`; malformed data rejects with `invalid-data`. |
-| `setValue(name, value)` | Create or replace that entry with the exact logical string. Validate before serialisation and backend operations. Resolve only after the backend acknowledges its documented write operation. |
-| `setObject(name, value)` | Validate and snapshot finite JSON data, encode it as JSON, then use the same string-serialisation boundary as `setValue`. Top-level `null`, empty strings, zero, and `false` remain data. |
-| `validateSecretName(name)` | Return normally for a portable name; throw a sanitised `invalid-name` error otherwise. Async store methods convert validation failures to rejected promises. |
-| `new MemorySecretStore()` | Create an empty, independent store. No shared map, persistence, logger, or initial-value aliasing. |
+| `@vrtmrz/value-store` | Neutral string and JSON value contracts, shared errors, and explicit Web Storage and Node JSON-file adapters. |
+| `@vrtmrz/secret-store` | `SecretReader`, `SecretStore`, portable-name validation, and instance-scoped memory storage. |
+| `@vrtmrz/obsidian-plugin-kit/local-storage` | Obsidian composition for ValueStore. |
+| `@vrtmrz/obsidian-plugin-kit/secrets` | Injected adapter for Obsidian SecretStorage, without an Obsidian runtime import in the adapter. |
+| `@vrtmrz/secret-store-node/age` | Explicit-root age-file reader and writer, with Node filesystem authority checks. |
 
-Getter defaults are validated before I/O and are never transformed or persisted. Object defaults are detached snapshots taken before awaiting. A supplied default removes absence from the return type without asserting the shape of stored JSON; it never replaces storage, decryption, or parse failures.
+The secret and value packages use ESM, declarations, explicit export maps, and
+the repository's package conventions. Do not add an umbrella import that loads
+platform adapters or chooses a backend dynamically. The Node age codec remains
+internal. A future browser persistence adapter would require an explicit storage
+capability and its own authority and atomicity contract.
 
-`ValueSerializer` is an optional instance-scoped pair of `serialize(name, value)` and `deserialize(name, value)` methods; each may return a string or a promise. It is captured with its receiver at construction, with no construction-time I/O. String operations call it once per present read or write; object operations pass JSON text through the same pair. A missing read bypasses deserialisation. Validate logical names and values before transforming them, validate serializer results before backend writes, and map failures to fixed errors without causes or fallback. Without a serializer, strings pass through unchanged. The structural type and shared value operations are owned by `@vrtmrz/value-store`; `@vrtmrz/secret-store` depends on that package without selecting a backend.
+## SecretStore contract
 
-Empty values, line endings, leading or trailing whitespace, NUL characters, and well-formed Unicode are data. Do not trim, normalise, interpolate, or treat a falsy string as missing. Reject unpaired UTF-16 surrogates as `invalid-value`, since portable UTF-8 storage cannot round-trip them unchanged. Do not promise a universal maximum value size: each backend documents its limit and rejects oversized values before writing. A backend which cannot preserve a supported value must explicitly reject it; compatibility tests must expose any such restriction.
+`SecretReader` exposes the shared string and object read operations under the
+portable secret-name profile. `SecretStore` adds the corresponding write
+operations. The current secret profile exports no delete or list operation.
+`SecretDeleter` and `SecretLister` remain future structural capabilities.
+Deletion must be separate from setting an empty string. Listing must return
+names only, document its namespace, and avoid reading every secret; a list is
+not a transactional snapshot.
 
-After an awaited memory write, a read observes that value unless another write intervenes. Memory operations need no I/O queue. The common interface promises no transactions, compare-and-swap, cross-process ordering, secure erasure, or persistence through a power failure. A rejected platform mutation may already have taken effect; callers must not infer rollback or retry it automatically.
+The separate secret profile exists to give secret adapters portable names and a
+well-formed text boundary across host adapters. Ordinary ValueStore consumers
+retain generic JavaScript string behaviour and do not take on secret naming or
+secret-adapter dependencies. The shared ValueStore operations, defaults,
+serialiser, adapters, and explicit deletion capability are defined in the
+[ValueStore design](key-value-and-local-storage.md).
 
-### Names and namespaces
+SecretStore preserves exact well-formed Unicode text, including empty strings,
+line endings, whitespace, NUL, and a leading BOM. It does not trim, normalise,
+interpolate, or treat a falsy string as absence. Reject unpaired UTF-16
+surrogates as `invalid-value` at the secret-profile boundary so its text remains
+portable across adapters. Backend-specific size limits are documented by each
+adapter; the neutral profile does not set a universal maximum.
 
-Names contain 1–64 ASCII characters matching `[a-z0-9]+(?:-[a-z0-9]+)*`. Validate the whole input. Reject uppercase letters, slashes, backslashes, dots, percent escapes, colons, whitespace, leading or trailing dashes, and repeated dashes. Neither URI parsing nor URL decoding belongs here.
+## Secret names and errors
 
-This is a deliberately conservative profile within Obsidian's documented lowercase alphanumeric and dash convention. Real-host qualification on 1.11.4 and 1.13.6 established a 64-character maximum: 63 and 64 succeeded, while 65 and 128 failed. The common limit was narrowed from the initial 128-character proposal before publication. Shared regression cases retain the 128-character input as an explicit rejection and require the adapter to reject it before I/O. Application-owned prefixes such as `example-api-token` are ordinary names, not an authorisation mechanism. Store roots, native service identifiers, and host permissions establish isolation. Do not prepend an undisclosed global namespace or silently rename existing platform entries.
+A portable secret name contains 1–64 ASCII characters matching
+`[a-z0-9]+(?:-[a-z0-9]+)*`. Validate the whole name. Reject uppercase letters,
+slashes, backslashes, dots, percent escapes, colons, whitespace, and leading,
+trailing, or repeated dashes. URI parsing and URL decoding are outside this
+boundary.
 
-The file adapter uses `secret-<name>.age`; the fixed prefix avoids Windows device-name collisions such as `con.age` while retaining a readable mapping. Lowercase-only names avoid case-insensitive filesystem collisions. This naming decision is part of the file layout, not a path interpretation in `SecretReader`.
+The profile fits Obsidian's lowercase alphanumeric and dash convention. Reviewed
+real-host checks on Obsidian 1.13.6 established a 64-character maximum; the
+unreviewed 1.11.4 probe observed the same limit, but does not establish supported
+version status. Application prefixes are ordinary names, not authorisation.
+The selected store root, native service identifier, or host permissions define
+isolation. Do not add an undisclosed global namespace or silently rename entries.
 
-### Optional capabilities
+The age adapter maps a name to `secret-<name>.age`. The fixed prefix avoids
+Windows device-name collisions, and lowercase names avoid case-insensitive
+filesystem collisions. This is a file-layout rule, not path interpretation in
+the neutral API.
 
-When management needs them, add separate structural capabilities:
+`ValueStoreError` exposes a fixed code and fixed message. Errors do not retain
+raw causes, upstream messages, values, identity strings, or caller paths.
+Use the most specific category supported by reliable evidence:
 
-```ts
-/** Deletes entries without requiring read or write access in the type. */
-export interface SecretDeleter {
-    /** Returns true if removed, false if absent, and rejects on failure. */
-    delete(name: string): Promise<boolean>;
-}
-
-/** Enumerates names visible within the adapter's documented scope. */
-export interface SecretLister {
-    /** Returns a sorted, unique list of names, without fetching their values. */
-    list(): Promise<readonly string[]>;
-}
-```
-
-These declarations are future API proposals, not Phase 1 exports. A list is not a transactional snapshot. The age lister owns only final `secret-<portable-name>.age` entries: ignore the recipient policy and temporary files, reject malformed entries using the managed prefix, and never open files outside that mapping. An adapter must document its namespace and treatment of foreign entries before exposing enumeration. Do not emulate deletion by setting an empty string, or list by reading every secret. Read-only adapters simply implement `SecretReader`; they do not have write methods which always throw.
-
-Passing a reader type limits application coupling. Actual read-only operation requires process permissions or a backend that has no write facility.
-
-### Failure categories and redaction
-
-`ValueStoreError` has a readonly `code` and a fixed message selected from that code. SecretStore uses this shared error class; its public constructor takes the code, not a user-supplied message or raw cause.
-
-| Code | Evidence needed |
+| Code | Evidence |
 | --- | --- |
-| `invalid-name` | The name fails the documented portable profile. |
-| `invalid-value` | A supplied value cannot be represented or exceeds a documented backend limit. |
-| `unavailable` | The required API, configured root, service, or identity source is unavailable or unconfigured. |
+| `invalid-name` | The name fails the portable profile. |
+| `invalid-value` | A value is unrepresentable or exceeds a documented backend limit. |
+| `unavailable` | A required API, configured root, service, or identity source is absent or unavailable. |
 | `access-denied` | A reliable platform status establishes denied access. |
-| `decryption-failed` | Encrypted input cannot be authenticated or decrypted with the supplied identities. |
+| `decryption-failed` | Encrypted input cannot be authenticated or decrypted with supplied identities. |
 | `invalid-data` | A format, encoding, or storage-layout violation is positively identified. |
-| `operation-failed` | The operation failed without enough reliable information for a more specific category, including an uncertain write outcome. |
+| `operation-failed` | A failure cannot be classified reliably, including an uncertain write outcome. |
 
-Do not parse arbitrary human-readable errors to manufacture precision. An unknown host exception is `operation-failed`; an absent entry is the success value `null`. A configured directory that has disappeared is unavailable storage, not an empty store. `EACCES` and `EPERM` are failures even during a missing-entry probe.
+Do not parse arbitrary human-readable errors to manufacture precision. A missing
+entry is a successful absence result; a configured root that has disappeared
+is not an empty store. Permission errors remain failures during absence checks.
+The age implementation maps its upstream decryption failures conservatively
+because the dependency does not provide a stable typed taxonomy.
 
-Sanitise errors at every external boundary, including injected identity providers. Do not retain arbitrary upstream errors in `cause`, enumerable properties, debug output, or CLI output. Names, paths, public recipients, ciphertext, and error payloads can also contain sensitive operational information; fixed library messages omit them. Applications may add carefully selected context themselves. No library logging or value-bearing testing transcript is required.
+Read-only consumers should receive `SecretReader`, while actual read-only
+enforcement remains a process or backend permission.
 
-Authentication failure cannot always distinguish a wrong identity from corruption. With the inspected age library, decryption exceptions are not a stable typed taxonomy, so they map conservatively to `decryption-failed`. Independently detected invalid UTF-8 or file-layout violations can use `invalid-data`. A finer upstream error API can improve classification later without turning failure into absence.
-
-## Backend designs and evidence
+## Implemented adapters and ownership
 
 ### Memory
 
-Use a private, instance-owned `Map<string, string>`. Validate inputs consistently with persistent adapters. Implement the asynchronous string and object methods through the neutral facade, including the optional serializer. Return empty strings unchanged and expose no persistence or enumeration implicitly. Memory storage is for tests or explicitly chosen ephemeral use; it is not a fallback when a persistent backend fails.
+`MemorySecretStore` owns a private map per instance and starts empty. It uses the
+same names, values, errors, and serialiser rules as persistent adapters. It has
+no persistence, shared map, logger, implicit initial-value alias, or enumeration.
+Use it for tests or deliberately ephemeral state.
 
-### Obsidian
+### Obsidian SecretStorage
 
-The lockfile currently resolves `obsidian` 1.14.4. Its official type declarations mark `App.secretStorage` and the get, set, and list operations as available since 1.11.4. Calls are synchronous; the adapter presents rejected or resolved promises. The public API has no delete method. The inspected declarations and official guide are linked under [Sources](#sources).
+The `@vrtmrz/obsidian-plugin-kit/secrets` entry accepts an injected structural
+subset of Obsidian SecretStorage and exposes asynchronous neutral operations over
+the host's synchronous get and set methods. Its factory constructs no `App` and
+does not import an Obsidian runtime module or inspect internal storage.
 
-The implemented `createObsidianSecretStore(storage, options?)` factory accepts the structural `ObsidianSecretStorage` get/set subset and optional serializer settings. The host methods stay synchronous; the returned neutral `SecretReader` and `SecretStore` expose asynchronous `getValue`, `getObject`, `setValue`, and `setObject`. The factory constructs no `App` and imports no Obsidian runtime module or internal storage implementation. The composition root obtains `app.secretStorage`; construction checks that the required methods exist. Missing support produces `unavailable`. An injected fake supplies the same shape for unit tests. Do not read Obsidian's local storage directly, infer disk layout, or emulate its lifecycle.
+The official API is available from Obsidian 1.11.4. The plugin kit's existing
+minimum remains Obsidian `>=1.8.7`; consumers use this focused entry only after
+feature detection or after setting their own higher minimum. Do not raise the
+package-wide minimum or make root imports access `app.secretStorage`.
+Obsidian controls persistence and access; the adapter does not claim OS keychain,
+cross-device synchronisation, plugin isolation, or cross-Vault isolation.
+The API has no delete operation, and the adapter does not expose listing.
 
-The plugin kit currently accepts Obsidian `>=1.8.7`, as does the Harness manifest. Preserve compatibility for existing features: document the 1.11.4 requirement on the new focused entry and feature-detect its use. Do not raise the package-wide minimum or make root imports access `app.secretStorage`. Consumers requiring secrets on every startup can independently raise their plugin minimum.
-
-Obsidian controls persistence, sharing, and access. Do not describe this adapter as an OS keychain, promise cross-device synchronisation, or claim plugin-level or cross-Vault isolation. An API return does not prove disk durability. Do not expose listing initially, because the host's shared namespace needs a separate policy; never fake deletion. Linux arm64 qualification on reviewed Obsidian 1.13.6 established empty-string, whitespace, NUL, BOM, and Unicode round trips, replacement, and persistence after normal renderer close and restart. An explicit 1.11.4 regression probe observed the same behaviours and name limit; this version remains outside the reviewed catalogue, so the probe is not supported-version qualification. Other desktop platforms and mobile have not been qualified for this adapter.
-
-Real-host tests use unique, disposable names in an isolated test Vault and profile. Because no supported delete API exists, cleanup discards the owned test profile; it must not edit a user's internal storage. No secret input UI or SecretComponent wrapper is included in this adapter phase.
+Reviewed Linux arm64 tests on Obsidian 1.13.6 cover exact values, replacement,
+and persistence through restart. The separate 1.11.4 probe is not reviewed
+supported-version evidence. Other desktop platforms and mobile remain
+unqualified. Since the API has no delete method, real-host tests use unique
+synthetic names in an isolated profile and discard that profile during cleanup.
+No secret-entry UI or application migration is part of this adapter.
 
 ### age files
 
-#### Dependency and key boundary
+#### Dependency and identity boundary
 
-`age-encryption` 0.3.1 is pinned as a runtime dependency of the Node adapter and as a development dependency for the completed [Phase 3a feasibility study](secret-store-age-feasibility.md). It is an ESM implementation of age, with a BSD-3-Clause licence and pure JavaScript cryptographic dependencies. The locked transitive dependencies require Node.js 20.19.0 or later. Codec and native interoperability checks passed on Linux arm64 with Node.js 20.19.0, 22.23.3, and 24.18.0; the dependency-floor probe does not extend repository support. The report records the exact dependency graph, upstream text-decoding mismatch, sanitised error mapping, and unqualified platforms. The Node adapter now uses that codec internally; there is no public codec export.
+The Node adapter pins `age-encryption` 0.3.1. Its locked runtime dependency
+requirements establish Node.js `>=20.19.0`; the codec is internal, uses standard
+binary age, and accepts native X25519 recipient and identity strings. Multiple
+recipients may decrypt the same ciphertext. Passphrase, SSH, plugin, hardware,
+and post-quantum identity modes are deferred.
 
-Use native X25519 recipients and identity strings for the first backend. Multiple recipients are supported; each can decrypt the same secret. Passphrase, SSH, plugin, hardware, and post-quantum identity modes are deferred. Do not invoke `age` or `rage` from application code; those executables are interoperability test or provisioning tools.
+`createAgeFileSecretReader` and `createAgeFileSecretStore` bind an explicit,
+existing root. Construction validates the configured root but does not create
+directories, change permissions, or acquire identities. A writer receives a
+non-empty recipient list copied at construction. It encrypts with recipients and
+does not request a decryption identity.
 
-Keep byte encryption/decryption separate from Node file operations as an internal seam. Inject identities with the backend-specific function:
+The age adapter injects an `AgeIdentityProvider`. A read first validates and
+reads an existing entry within the ciphertext limit, then requests identities
+once for that operation. Absence does not acquire identities. The adapter does
+not cache identities, generate them, load them implicitly, or retain them
+between operations. An empty identity result is `unavailable`; provider errors
+are sanitised. Headless consumers supply a non-interactive provider explicitly.
 
-```ts
-/** Supplies provisioned age identities for one read operation. */
-export type AgeIdentityProvider = () => Promise<readonly string[]>;
-```
+#### File format and resource limits
 
-This type belongs to the age adapter, not the neutral package. The reader factory binds an explicit root and provider. The store factory additionally requires a non-empty, validated recipient list, copied at construction. Factories are asynchronous to validate their configured roots; neither creates directories. The public factories are `createAgeFileSecretReader` and `createAgeFileSecretStore`.
-
-Read the encrypted file before acquiring identities, so an absent entry does not unlock a key store or prompt the user. Request identities once per read; do not cache them globally or retain them between calls. An empty identity result is an unavailable key source; supplied identities that cannot decrypt the file cause `decryption-failed`. Writes use only recipients and must not acquire a decryption identity. Provider implementations may be interactive, but headless composition must explicitly supply a non-interactive one. Provider dependency cycles remain a composition error.
-
-#### File layout
+The layout is one file per secret:
 
 ```text
 <caller-selected-root>/
-    recipients.txt                 # optional future CLI configuration
-    secret-connstr-foo-bar.age
-    secret-github-api-token.age
+    secret-<name>.age
 ```
 
-Each `.age` file contains one standard age ciphertext whose plaintext is the string delivered to the backend, encoded as UTF-8. For object methods that string is JSON text; when configured, the consumer serializer transforms it before encryption and restores it after decryption. Use binary age output, not a new cryptographic format or a file-level application envelope. Decrypt to bytes, authenticate the complete file, and decode UTF-8 strictly while preserving a leading BOM. Never return partially authenticated plaintext. Reject unpaired surrogates before encoding writes.
+Each file contains one standard binary age ciphertext. Its plaintext is the
+UTF-8 encoding of the string delivered to the backend; object operations deliver
+JSON text, and an injected serialiser may transform that string. There is no
+application envelope or filename in the ciphertext. Decode authenticated bytes
+with strict UTF-8 while preserving a leading BOM. Reject malformed UTF-8 and
+unpaired surrogates. Do not return plaintext before the complete ciphertext has
+authenticated.
 
-`recipients.txt` is optional management configuration, not runtime reader state. The reader never needs it. An application writer receives recipients explicitly; the CLI can load the file into that option. The file contains public X25519 recipients, with documented blank-line and comment handling. Invalid or empty policy fails before mutation. Do not store identities beside ciphertext or generate them during initialisation.
+The backend enforces a 64 KiB plaintext limit and a 1 MiB ciphertext limit per
+entry. It bounds file reads before decryption. These are age-backend resource
+limits, not limits on the neutral ValueStore or native adapters.
 
-The layout leaks names, entry count, approximate value sizes, and change timing. Hashing a filename would not reliably hide guessable names. Separate files permit independent replacement and decryption, but many small files cost more filesystem work. There is no claim that binary ciphertext produces meaningful textual Git diffs. If name confidentiality or very large entry counts become requirements, revisit the aggregate-file alternative before declaring this layout stable.
+#### Filesystem authority and write outcomes
 
-Enforce a 64 KiB plaintext limit and 1 MiB ciphertext limit per entry, with bounded reads and validation before writes. These are resource limits for this backend, not limits of the core interface or native stores. Pin them in tests and document any later change.
+The root is caller-selected and must already exist. The adapter rejects symlink
+components, non-regular entries, unexpected hard links, and roots or ancestors
+which do not meet the implemented POSIX ownership and permission checks.
+Authorities are rechecked during operations; lexical containment or `realpath`
+alone would not protect against parent replacement. The implementation does not
+claim to defeat a trusted owner racing path replacement.
 
-#### File authority and atomic replacement
+The root must belong to the effective user and have no group/other access
+or special bits. Readers require owner read/search permissions (`0500`); writers
+also require owner write permission (`0700`). Ancestors must belong to root or
+the effective user. Group/other-writable ancestors require the sticky bit, and
+each child must retain trusted ownership. The implementation retains device and
+inode identities in memory and rechecks the full ancestry during operations.
+Every component rejects symlinks. Entries must be private, owner-readable regular
+files with one link. More permissive paths are rejected, not repaired.
 
-The caller selects a dedicated root. Resolve it during factory creation and validate it again when necessary to distinguish a missing entry from a lost root. Do not discover a root from working-directory traversal or settings references. Initialisation is a separate, explicit CLI operation.
+A write encrypts in memory, creates a random exclusive mode-0600 temporary
+ciphertext file inside the root, writes and synchronises it, closes it, atomically
+renames it over the entry, and synchronises the directory where supported. The
+adapter removes only the temporary inode owned by that operation. Concurrent
+writers use last-writer-wins replacement. Before rename, failure leaves the old
+entry intact; after replacement begins, a rejection has an uncertain outcome.
+There is no lock, compare-and-swap, retry, backup, journal, transaction, or
+automatic stale-file recovery. A crash can leave a ciphertext temporary file.
 
-Require a root and ancestors that untrusted principals cannot replace. Reject entry symlinks, junctions, non-regular files, and unexpected hard links. Use no-follow opening where available and verify the opened file descriptor. Lexical containment and `realpath` checks alone do not defeat an attacker racing replacement of a parent directory. Portable Node APIs do not justify claiming protection against a hostile owner of the root; deployments requiring that boundary need a stronger OS capability or native implementation.
+The adapter returns `unavailable` on Windows rather than substituting POSIX mode
+checks for ACL enforcement. Linux arm64 ext4 is the qualified local filesystem.
+macOS, network filesystems, hostile-owner races, and hardware power-loss
+durability remain unqualified. `sync()` requests synchronisation; it does not
+prove hardware power-loss behaviour. Deployments must select a qualified local
+filesystem and provision ownership and permissions for the runtime user.
 
-Future POSIX management commands must create directories with mode `0700` and files with mode `0600`, set at creation, and validate rather than silently repair permissive existing paths. This first writer model assumes the runtime reads as the owning user. Separate service-user provisioning, shared-group access, and Windows ACLs require explicit integration evidence; POSIX mode bits are not a Windows ACL guarantee. Do not claim unsupported ACL protection or broaden access automatically.
+#### Security properties and limits
 
-For each write:
+Recipients configure future writes; changing a recipient list does not re-encrypt
+existing files or revoke access to retained ciphertext. The age format provides
+confidentiality and ciphertext authentication. It does not bind ciphertext to a
+filename, identify its writer, establish freshness, or prevent replay or swapping
+of valid files. A holder of a public recipient can also create ciphertext.
+Directory authority and trusted provisioning remain necessary. These tests are
+targeted integration evidence, not a cryptographic audit.
 
-1. Validate inputs, recipient policy, limits, and root authority before mutating persistent state.
-2. Encrypt in memory. Never create a plaintext temporary file.
-3. Exclusively create a randomly named temporary ciphertext file in the same directory, with restricted permissions.
-4. Complete the write, flush and close the file, then atomically replace the final entry using the tested platform operation.
-5. Sync the directory where supported by the stated durability contract. A failure after replacement is an uncertain outcome, not proof that the old value remains.
-6. Remove only the current operation's owned temporary file in `finally`, when it still exists.
+The optional `recipients.txt` file is management configuration for a future CLI,
+not reader state. The adapter never discovers it. Identities remain application
+supplied and stored elsewhere.
 
-Before replacement, a failure leaves the previous final entry intact. Concurrent readers see a complete old or new entry on filesystems for which atomic replacement has been verified. Concurrent writers use last-writer-wins at replacement, with no compare-and-swap guarantee. Applications needing conflict rejection must coordinate writers externally; a future conditional-write API is a separate design decision.
+## Proposed adapters and management tools
 
-There is no on-disk lock, transaction journal, automatic retry, backup-copy fallback, or stale-file recovery service in the initial implementation. A crash may leave a ciphertext temporary file. Readers ignore it; explicit operator cleanup must avoid removing a live writer's file. Permission errors, sharing violations, unsupported replacement semantics, and network filesystems need real integration tests. Start with qualified local filesystems; do not silently degrade to non-atomic overwrite.
-
-The implemented POSIX authority check requires the root to belong to the effective user, with no group/other permissions or special bits: reads require owner read/search (`0500`), and writes additionally require owner write (`0700`). Ancestors must belong to root or the effective user; group/other writable ancestors require the sticky bit, with every child still checked for trusted ownership. All components reject symlinks. Device and inode identities are retained in memory and rechecked for the entire ancestry. Secret entries must be private, owner-readable regular files with one link; an already opened old inode may become unlinked during atomic replacement.
-
-The public implementation returns `unavailable` on Windows rather than substituting mode checks for ACL authority. Linux arm64 ext4 fixtures establish the tested replacement, concurrency, and process-interruption behaviour. They do not prove hardware power-loss durability or qualify macOS and network mounts. The factory cannot identify every unsuitable filesystem automatically; deployments must select a qualified local filesystem. See the [Node adapter README](../../packages/secret-store-node/README.md) for usage and operational limits.
-
-#### Identity and recipient changes
-
-Recipients configure future encryption. Changing a recipient file or reconstructing a writer does not alter existing ciphertext. New recipients cannot read old entries until those entries are re-encrypted. Removing a recipient does not revoke access to retained historical ciphertext.
-
-To support device replacement and deployment, the proposed CLI includes re-encryption into a separate output store. It leaves the source unchanged and encrypts every selected entry to an explicit replacement recipient set. This is a proposed operational extension, not an implemented migration facility. In-place `recipients add/remove`, resumable rewriting, and automatic activation remain deferred: they would require a separate consistency and recovery design. The [migration and deployment paths](#device-migration-and-server-deployment) below define the initial workflow. Credential rotation at the issuing service is distinct from re-encryption and may be required after exposure.
-
-age provides ciphertext confidentiality and authentication, not writer identity, binding to a filename, freshness, or rollback prevention. Someone able to replace files can replay or swap valid ciphertext, and someone with a public recipient can create new ciphertext. Trusted provisioning and directory write controls remain necessary. Application-level provenance would require another reviewed design.
+The following work is not implemented. Each adapter or tool requires its own
+runtime evidence and must preserve the neutral package boundary.
 
 ### Native keychain
 
-Evaluate the pinned candidates before choosing an implementation:
+A separate optional package may wrap a native credential store if a consumer
+requires it. The inspected `@napi-rs/keyring` 2.1.1 candidate has native bindings;
+on Linux, configuration must select Secret Service explicitly and disable
+kernel-keyutils fallback. Prefer its `AsyncEntry` get/set operations. Do not use
+`withTarget`: inspected Windows target construction can write a placeholder
+credential, which is unsuitable for a read. Confirm constructor side effects and
+platform namespace mapping in native tests.
 
-| Candidate inspected | Relevant properties | Proposed disposition |
-| --- | --- | --- |
-| `@napi-rs/keyring` 2.1.1, MIT | Native Rust bindings and platform-specific npm binaries; async entry API. Linux defaults can fall back from Secret Service to kernel keyutils. | Preferred candidate for a separate optional package, with `{ linux: { store: 'secret-service' } }` on every entry. No kernel fallback. |
-| `just-secrets` 0.0.2, MIT | No npm runtime dependency or native addon, but invokes OS tools: `security`, `secret-tool`, or PowerShell. Node.js 22+ and documented value/identifier limits. | Useful alternative if subprocess trade-offs are accepted; does not satisfy the preferred in-process execution model. |
-
-Require an explicit application service identifier and map the portable name to the credential account. Prefer `AsyncEntry` and get/set operations. Do not use `withTarget`: in the inspected source, Windows target construction can write a placeholder credential, which is unsuitable for a read operation. Confirm constructor side effects and platform namespace mapping in native integration tests.
-
-The inspected binding maps only the native missing-entry result to `null`; other failures propagate. Sanitise those errors and map reliably coded statuses only. The inspected conversion does not establish a portable fine-grained error taxonomy. Test locked stores, denied access, unavailable sessions, missing binaries, Unicode and empty values, service isolation, read side effects, and native limits. A session bus and Secret Service provider are still required on Linux even without subprocesses.
-
-Keep the binding out of neutral, browser, Obsidian, and ordinary file-reader dependency paths. Verify supported OS/CPU/libc binaries and install behaviour before claiming cross-platform support. Package presence or successful mocked tests do not prove native store access, reboot persistence, or platform consent behaviour.
+`just-secrets` 0.0.2 is an inspected subprocess alternative, with different
+runtime and value-limit trade-offs. Neither candidate is an accepted dependency
+or a cross-platform guarantee. Any adapter needs an explicit application service
+identifier and validated account mapping. Only a reliably identified missing
+entry may become absence; sanitise other errors and never fall back to another
+store. Qualify empty and Unicode values, read side effects, locked and denied
+stores, persistence, namespace isolation, supported native binaries, and Linux
+session-bus requirements. Keep native bindings out of neutral, browser, Obsidian,
+and ordinary file-reader dependency paths. Mocked tests and package availability
+do not establish native store access.
 
 ### systemd credentials
 
-Provide a read-only adapter in the Node package when a consumer needs it. The composition root supplies a credentials directory, normally obtained explicitly from `CREDENTIALS_DIRECTORY`; the module does not inspect environment state during import. An unset or inaccessible root is `unavailable` or `access-denied`, not a reason to search another directory.
+The Node package groups file-based adapters. A systemd reader, if added,
+should be a subpath which does not evaluate the age codec; installing the shared
+package still installs its declared age dependency.
 
-systemd resolves `LoadCredential=` and decrypts `LoadCredentialEncrypted=` before presenting the service with files. Read the exact credential filename for a validated portable name, with no `.age` suffix, and decode UTF-8 strictly without trimming a trailing newline. Enforce bounded reads, regular-file and link checks, and confirmed absence semantics. Reject invalid text as `invalid-data`; the core API is not a binary credential interface.
+A future Node adapter may read one systemd credential from an explicitly
+supplied credentials directory, normally obtained from
+`CREDENTIALS_DIRECTORY`. It would open the exact validated secret name, without
+the age-file `.age` suffix, and perform bounded reads with regular-file and link
+checks. Decode UTF-8 strictly, preserving a trailing newline; reject invalid text
+as `invalid-data`.
 
-Do not run `systemd-creds`, implement systemd decryption, chmod its supplied directory, copy credentials into settings, or expose a write operation. Unit configuration and permissions remain deployment responsibilities. A real transient-unit test owns service provisioning evidence; an ordinary temporary-directory test only proves the adapter's file handling.
+The adapter would be read-only. It must not inspect environment state during
+module import, search fallback directories, change permissions, or copy secrets
+into settings. systemd decrypts `LoadCredentialEncrypted=` input before the
+service reads its credential file. Unit configuration remains deployment-owned,
+and a real transient-unit test is required for service provisioning evidence.
+This adapter is not a writable import target.
 
-## Management CLI proposal
+### Management CLI
 
-The executable name `fancy-sec` remains provisional. The first CLI manages an explicitly selected age root; it does not become a runtime dependency of application reads.
+The provisional `fancy-sec` CLI is a separate proposed management tool. It would
+manage an explicitly selected age root and would not be a runtime dependency of
+application reads. The first command set is:
 
-| Command shape | Intended behaviour |
+| Command | Proposed responsibility |
 | --- | --- |
-| `init --store <path> --recipient <public-recipient>` | Explicitly create a restricted root and initial public policy. Reject an existing conflicting layout; create no identity. Permit repeated recipient options. |
-| `set <name> --store <path>` | Use concealed TTY input; cancellation performs no write. Never accept a secret value as a positional argument. |
-| `set <name> --store <path> --stdin` | Explicit bounded stdin input, preserved exactly, including terminal newlines; reject accidental mixed input modes. |
-| `get <name> --store <path> --reveal` | Write the exact plaintext to stdout only with this explicit flag, with no added newline. Without it, fail usage validation before reading. |
-| `list --store <path>` | Print names only, without acquiring identities or decrypting values. |
-| `delete <name> --store <path>` | Use a TTY confirmation or an explicit non-interactive confirmation flag; require the delete capability. |
-| `recipients list --store <path>` | Inspect public policy. In-place recipient mutation remains deferred. |
-| `identity generate --output <path>` | Explicitly generate an X25519 identity into a new, restricted file outside the store. Refuse overwrite and print only its public recipient. |
-| `identity recipient <identity-source>` | Derive public recipients from an explicitly selected identity source without printing identities. |
-| `reencrypt --from <source> --to <new-store> --recipients-file <policy> <identity-source>` | Build a separate encrypted store for an explicit recipient set. Keep the source unchanged; never export plaintext or silently inherit recipients. |
-| `verify --store <path> <identity-source> [--require-name <name>]` | Authenticate and decode every managed entry, additionally require each explicitly named entry to exist, and report success or failure without values. Permit repeated required-name options. |
+| `init` | Create a new restricted root and explicit public recipient policy; reject a conflicting existing layout and create no identity. |
+| `set` | Read concealed TTY input; cancellation performs no write. Never accept a secret value as a positional argument. |
+| `set --stdin` | Read bounded stdin exactly, including terminal newlines; reject mixed input modes. |
+| `get --reveal` | Write exact plaintext to stdout without an added newline. Without the flag, reject usage before reading. |
+| `list` and `delete` | List names without acquiring identities or decrypting values; delete only with a separate capability and explicit TTY or non-interactive confirmation. |
+| `recipients list` | Inspect public recipient policy. In-place recipient changes remain deferred. |
+| `identity generate` and `identity recipient` | Generate a private identity into a new restricted file outside the store with exclusive creation, refusing overwrite, or derive its public recipient without printing identity material. |
+| `reencrypt` | Prepare a separate store for an explicit recipient set while leaving the source unchanged. |
+| `verify` | Authenticate every managed entry and check required names without revealing values. |
 
-Identity acquisition remains behind `AgeIdentityProvider`. The proposed Node helpers and CLI support these explicitly selected sources; the core package never reads `process.env`:
+Identity input would remain behind `AgeIdentityProvider`. A command requiring
+identities must select exactly one explicit source and reject missing or
+conflicting sources before reading any of them. File input would use bounded
+parsing, link and permission checks, documented X25519 identity lines and
+comments, and sanitised failures. A named environment variable may hold an
+identity-file path, which receives the same checks, or explicitly injected
+identity text. Pass the variable name, never its private value, in command
+arguments.
 
-| Identity-source option | Meaning |
-| --- | --- |
-| `--identity-file <path>` | Read a separately provisioned, permission-restricted identity file outside the store root. |
-| `--identity-file-env <variable-name>` | Read the file whose path is supplied by that environment variable. The variable contains a path, not key material. |
-| `--identity-env <variable-name>` | Read identity text injected into the selected environment variable by the caller or deployment platform. |
+Do not auto-discover identities or silently fall back to another source.
+Environment variables do not securely erase values or prevent child-process
+inheritance; a credential file is preferable where supported.
 
-Require exactly one source for a CLI operation that needs identities; reject conflicting sources before reading any of them. Missing, empty, invalid, or inaccessible selected sources fail without trying another file, variable, or provider. Accept documented X25519 identity lines and comments, with bounded input and sanitised failures. Apply link and permission checks to file sources. File-path selection through an environment variable has the same checks as an explicit path.
+Concealed input must restore terminal state after cancellation, signals, and
+errors. Non-interactive use requires an explicit input mode. Diagnostics and
+stable exit categories must distinguish absence, invalid input, and operational
+failure without printing values or raw exceptions. A failed mutation can have an
+uncertain outcome. Ordinary age library operations need no shell subprocess.
 
-Pass the variable's name to `--identity-env`, never expand the private value into a command argument. The example variable names in this document are illustrative and have no automatic discovery behaviour. Reading an environment variable does not securely erase it, stop inheritance by child processes, or turn the environment into an encrypted store. Environment injection is an explicit deployment option; a mounted identity file or service credential is preferable where the platform offers it. In particular, systemd advises credential delivery rather than unit environment variables for secrets; see its [environment and credentials guidance](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#Environment=).
+### Device migration and server deployment
 
-Automatic key discovery, generation during `init`, copying into a store, and module-global caching remain excluded. `identity generate` is a separate, explicit provisioning operation. It requires a caller-selected output path, restrictive creation permissions, and exclusive creation; it neither prints the private key nor provisions a remote machine. Native-store identity helpers can follow with that adapter. A systemd-delivered age identity file can already be consumed by the file provider, independently of the later `SystemdCredentialReader` for application secrets.
+These are proposed workflows for the future CLI, not current SecretStore
+operations. Device replacement may either provision an existing identity through
+a separately trusted channel or create a destination identity and re-encrypt to
+its public recipient. Use a distinct identity when devices need independent
+provisioning. An independently held recovery identity must be included in the
+recipient policy at creation if recovery from device loss is required. Every
+recipient is a full decryption authority; losing all working recipient identities
+makes the existing ciphertext unavailable to this workflow.
 
-Send fixed operational diagnostics to stderr, never values or raw exceptions. Concealed input must restore terminal state on cancellation, signals, and errors. Non-TTY execution requires an explicit input mode and must not wait for an invisible prompt. Document reveal output as deliberate disclosure to the chosen terminal or pipe.
+Re-encryption requires a stable source snapshot or externally paused writers.
+Capture the complete selected name set and fail if any selected entry cannot be
+read or written. Stage ciphertext in an owned directory below an exclusively
+controlled destination parent, reject an existing destination, and verify the
+complete staged file set before publication. Publish only through a qualified
+same-filesystem directory operation; reject unsupported behaviour rather than
+copying partial output into the destination. Keep the source unchanged.
 
-Define and test stable exit categories before implementation: success, absent entry, usage/invalid input, and operational failure. Do not report failure as absence or success, and document that an operational failure after a mutation can have an uncertain outcome. Backend capabilities must be checked before requesting a secret. No shell subprocess should be necessary for ordinary library or CLI age operations.
+On ordinary failure, clean only staging files owned by the command. A killed
+process may leave ciphertext staging files. Errors after publication have an
+uncertain outcome and must not trigger deployment automatically. There is no
+universal transaction, recovery journal, resumable mutation, plaintext bundle,
+automatic activation, or rollback. Restart with a fresh output from the
+unchanged source snapshot.
 
-## Device migration and server deployment
+`verify` checks decryption, invalid data, and explicitly required names, but
+checking only discovered files cannot detect an omitted source entry. Deployment
+tooling must also compare the complete expected name inventory and transfer
+integrity. Existing transfer and deployment tools own transport, service-user
+ownership, activation, and release rollback.
 
-The following operational workflows extend the CLI proposal. They keep the neutral API unchanged and add explicit provisioning, environment input, re-encryption, and verification to the management phase. The commands are illustrative and are not available yet.
+On a server, application releases, ciphertext artefacts, and identity provisioning
+are separate inputs. Provision the identity through the deployment secret
+facility or on the server, keep it out of images and repositories, and provide it
+to the runtime through an explicitly selected file, environment, or service
+credential source. Verify the expected names with the runtime identity and
+permissions before activation. Decryption does not prove that a credential is
+still valid with its issuing service; application-owned connection checks remain
+separate. Rotate issued credentials when exposure requires it.
 
-### Device replacement
+### Later utility: encrypted packs for bulk provisioning
 
-Two paths are supported by the proposed design:
+A later utility may export caller-selected names and values from a reader,
+then import them into a caller-selected writable store. Selection and
+authorisation belong to the caller: a selected value can itself contain key
+material, so the utility cannot infer safe entries from their contents. The
+utility remains outside the neutral core and does not require `SecretLister`. Its
+transport recipient policy is independent of the source and destination backend
+keys. Keep transport identities separate from backend identities.
 
-| Path | Procedure | Trade-off |
-| --- | --- | --- |
-| Keep the existing identity | Transfer the encrypted store and application references, provision the existing identity through a separate trusted channel, and verify on the destination. | No re-encryption, but both devices share the same decryption authority. |
-| Give the destination its own identity | Generate the identity on the destination, transfer only its public recipient to an authorised source machine, re-encrypt into a new store, transfer that ciphertext, and verify with the destination identity. | The private identity stays on the destination; the transfer requires an existing identity capable of decrypting every source entry. |
+The proposed format is one versioned UTF-8 JSON document encrypted as a standard
+age file. Encrypt names and values. Do not include archive paths, executable
+hooks, or a destination selector. Do not automatically include source-backend
+or transport identities, authentication caches, or host configuration.
+Authenticate the complete ciphertext before parsing or writing. Validate the
+version, shape, names, duplicate names, count, and finite per-entry and total
+size limits before the first target write. Use bounded memory and ciphertext-only
+temporary files. Never emit plaintext pack contents.
 
-Prefer a distinct identity when devices need independent provisioning. Include an independently held recovery recipient when creating the store if recovery from device loss is required. All named recipients can decrypt; a recovery identity must therefore be protected as another full decryption authority. Without any working recipient identity, existing ciphertext cannot be migrated by this CLI.
+Age decryption establishes ciphertext authentication, not sender identity or
+authorisation. An interactive import should show a value-free name plan;
+automated deployments must supply an expected-name selection from an independently
+trusted source.
 
-For the distinct-identity path:
+Import checks destination capabilities, limits, and existing names before
+writing. Existing entries are rejected by default. Since the core has no
+conditional write, require an exclusively controlled destination or externally
+paused writers. Write entries sequentially and stop on the first failure. Report
+completed, failed or uncertain, and unattempted names with sanitised status codes.
+Do not promise atomic installation, automatic rollback, or a durable recovery
+journal; interruption can leave partial installation.
 
-1. On the new device, explicitly generate an identity outside the encrypted store and share its public recipient.
-2. On the source, obtain a stable snapshot or pause writers. Prepare the complete intended recipient set, including any retained devices and recovery recipient; do not infer it from an old policy file.
-3. Run `reencrypt` with the source identity and a fresh destination. This produces standard age ciphertext for the same names and values under the new recipient policy.
-4. Transfer the completed output using the existing file-transfer or deployment mechanism, including its integrity checks. Transfer application settings containing references separately as needed.
-5. On the destination, run `verify` with the new identity and the application's required names, then point the application at the new root. Verify application connectivity separately; decryption success does not prove that a credential remains valid at its issuing service.
-6. Retire the old deployment after the destination works. Omitting the old device from the new recipient set does not revoke its access to retained old ciphertext or already learned credentials; rotate actual service credentials when that is required.
+A fresh isolated destination can be prepared, verified, and activated through the
+existing deployment mechanism. An age store is the first proposed target.
+Obsidian import must run inside an Obsidian-owned integration through its official
+API. A read-only systemd credential adapter is not an import target. Each
+writable native backend owns its partial-installation evidence.
 
-The CLI does not provide SSH transport, synchronisation, host enrolment, or remote execution. Directly migrating values in `ObsidianSecretStore` requires an Obsidian-side workflow using its official API; a Node CLI must not rewrite Obsidian's internal storage. An application can keep an age identity in Obsidian SecretStorage through an injected provider, but its import and device provisioning need an explicit host workflow.
+## Compatibility and validation
 
-### Re-encryption completion and failure
+The packages are additive. They do not change existing encryption formats,
+settings schemas, synchronisation behaviour, or application configuration.
+Applications choose whether to accept literal values, references, or both; the
+store never interprets arbitrary strings as references.
 
-Re-encryption is a preparation operation into a new store, not a transaction over the running source. Require a stable source snapshot or externally paused writers; per-file atomicity alone cannot provide a consistent multi-file snapshot. Capture the selected name set before conversion and require every selected entry to decrypt and write successfully. A missing or failed entry aborts the command rather than producing a successful subset.
+A consumer migration is consumer-owned: write the secret, verify its readable
+value without logging it, then persist the reference. Keep the old setting
+recoverable until that application's configuration update succeeds. Naming,
+rollback, backups, and removal of legacy plaintext follow the application's
+migration policy. Do not introduce a universal settings migration engine.
 
-Write only ciphertext and public recipient policy into an owned staging directory. Use a destination parent whose namespace is exclusively controlled for the operation, reject an existing destination, and expose the completed output at the requested destination only after validating the complete selected file set. Qualify the same-filesystem directory publication operation on each supported platform; reject unsupported behaviour rather than copying partial output into the final path. Errors after publication have an uncertain outcome and must not trigger deployment automatically.
+Kit owns neutral contracts and adapter behaviour. Consumers own reference
+parsing, configuration persistence, and workflow composition. Current
+Commonlib/LiveSync tests exercise ValueStore use only; they are not SecretStore
+adoption evidence. Package-owned, consumer-owned, and real-host evidence are
+separated in [Proven in use](../proven-in-use.md#secretstore-package-owned-evidence)
+and [its ValueStore section](../proven-in-use.md#valuestore-package-and-consumer-evidence).
 
-On ordinary failure, clean only the command's owned staging files. A killed process may leave staging ciphertext; it is not a completed deployment and must never be auto-selected by a reader or deployment script. Restart by creating a fresh output from the unchanged snapshot. No recovery journal, resumable mutation, plaintext bundle, identity export, or live-root switch is added. Tests must establish publication, collision, interruption, and cleanup behaviour before the command is released.
-
-`verify` detects missing explicitly required names, authentication failures, invalid text, and invalid layouts without revealing values. Checking only the files found cannot prove that transfer preserved the source's complete inventory. Deployment tooling must also validate the completed artefact's file set and integrity, and the application or its deployment configuration supplies required names. Do not inspect arbitrary settings or automatically resolve `fancy-sec://` references in the CLI.
-
-### Server deployment
-
-Treat application releases, encrypted secret artefacts, and identity provisioning as three independent inputs:
-
-1. Provision the server's identity once through the selected deployment secret facility or generate it on the server. Keep it out of the application image, repository, and encrypted store. Share its public recipient with the authorised secret-management process.
-2. Prepare an encrypted store for that server or environment, normally with an independently held recovery recipient. Use a separate store and actual credentials where development and production must remain isolated.
-3. Deploy the application, reference-only configuration, and completed ciphertext artefact. Ordinary builds and transfers need no decryption identity. Re-encrypting existing entries does require an authorised source identity, so it belongs in secret provisioning rather than every application build.
-4. Supply the runtime identity by an explicit file source, environment source, or service credential. Configure the store path and provider at the application's composition root; application reads call the library directly.
-5. Before activation, verify with the same service identity and permissions as the runtime, require the application's expected names, and perform application-owned connection checks. Use the existing deployment mechanism to activate or roll back the complete release and encrypted store together.
-
-For systemd, `LoadCredential=` or `LoadCredentialEncrypted=` can provide an age identity as `age-identity`. The application reads that file below `CREDENTIALS_DIRECTORY` through the file provider; systemd performs any outer credential decryption. There is no need to wait for the separate systemd application-secret adapter. Qualify the provider against the service's actual permissions and credential mount. The library does not create or change a unit file.
-
-For a deployment platform that supplies secret environment variables, select its injected identity variable explicitly. If it supports secret files instead, the environment can carry only the file path. The management CLI and runtime helpers use the same parsing and failure rules. Neither silently switches sources, saves an environment identity to disk, nor requires a management command at each application read.
-
-Provision files with ownership and permissions suitable for the runtime user before verification. The file adapter does not solve deployment-user versus service-user ownership, modify systemd's credential permissions, or guarantee every container secret mount. Include a service-user integration scenario in qualification rather than relying on successful checks as the deploying administrator.
-
-A recovery identity protects against lost device keys only while a compatible encrypted store remains available. Back up the encrypted store and recovery identity separately. Release rollback and recipient removal do not undo a credential rotation performed at the issuing service.
-
-## Later utility: encrypted packs for bulk provisioning
-
-Propose a later management utility for preparing several named secrets locally and installing them into a selected writable store on another machine. This is useful for initial server provisioning and cross-backend transfer. It does not require operators to enter every secret again on the destination. The extra work is the transfer schema, target-specific behaviour, and partial-failure contract; an encrypted pack is not inherently excluded as unsafe.
-
-Keep the utility above `SecretReader` and `SecretStore`, outside the core contract. Export takes an explicit name selection and a reader; it needs no mandatory list capability. Import takes a caller-selected store and validated entries. Reuse these operations from the Node CLI or an Obsidian-hosted integration when the relevant adapters are available. Do not create another package solely for the command names before the runtime boundaries require it.
-
-Illustrative commands, not implemented interfaces:
-
-```text
-fancy-sec pack --from <source> --names-file <selection> --recipients-file <policy> --output <bundle.age>
-fancy-sec import --input <bundle.age> --to <target> <identity-source>
-```
-
-Source adapter options remain explicit. The pack's recipient policy selects who can open the transport file, independently of the source store's own encryption policy and the destination backend. A destination using OS keychain storage can decrypt the pack with a separately provisioned, possibly temporary age identity and then store values through the keychain API. It need not use age for normal application reads afterwards. Establish the transport identity separately; putting its private key into the pack would not solve initial key provisioning.
-
-### Transfer data and trust
-
-Propose one versioned UTF-8 JSON document containing an array of name/value entries, encrypted as one standard age file. The application schema describes data inside age; it introduces no new cryptographic format and does not change the per-entry age storage layout. Start without ZIP, archive paths, compression, executable hooks, configuration templates, or an embedded destination selector.
-
-Encrypt both names and values. Include only the explicitly selected application entries; never automatically include source-backend identities, transport identities, authentication caches, or host configuration. A selected application secret may itself contain key material, so the utility cannot infer a safe export selection from its string contents. Selection and authorisation belong to the caller.
-
-Authenticate the complete ciphertext before parsing or writing entries. Validate the schema version, input types, portable names, unique names, value representation, entry count, and total and per-value size limits before any target write. Use bounded memory and ciphertext-only temporary files. Set concrete finite limits before implementation; an oversized, malformed, or unsupported pack must fail without partial import. Never emit plaintext JSON or secret values to logs, reports, or standard output.
-
-The caller chooses the destination and its namespace outside the pack. Show a value-free name plan for an interactive import; automated deployments supply an independently trusted expected-name selection. The encrypted pack provides confidentiality and ciphertext integrity, but does not identify its sender or authorise its contents. Use the deployment's trusted transfer mechanism; do not infer source authenticity merely because age decryption succeeded.
-
-### Import behaviour and limitations
-
-Before writing, read the selected destination names and reject existing entries by default. Perform all available schema, name, capability, conflict, and backend-limit checks first. This is not an atomic create-if-absent guarantee: the core API has no conditional write. For the first importer, require an exclusively controlled destination or externally paused writers; platforms that cannot meet that precondition need a different qualified import mode. Explicit replacement, conflict merging, and unattended retry are separate later decisions.
-
-Apply entries sequentially and stop on the first write failure. Report completed, failed or uncertain, and unattempted names with sanitised status codes and no values. A failed write may already have taken effect. Do not claim that a multi-entry import is atomic, promise automatic rollback, or introduce a durable recovery journal. A process interruption may leave partial installation with no final report; recovery must inspect the destination or provision a new isolated target before retrying.
-
-Where a backend supports a fresh isolated store, prefer preparing it, verifying all expected entries, and activating it through the existing deployment mechanism. This permits application-level switching without pretending that every `SecretStore` offers a batch transaction. Verification establishes readable values and expected names; application connection checks remain separate.
-
-| Destination | Import boundary |
-| --- | --- |
-| age file store | Import into a new explicit root and recipient policy, then verify before activation. Direct copying or `reencrypt` remains simpler when the existing directory layout is already suitable. |
-| OS keychain | Run the importer under the destination user and explicit service namespace, through the writable adapter. Qualify partial installation and existing-entry handling. |
-| Obsidian SecretStorage | Reuse the import utility inside Obsidian through the official API; a standalone Node CLI cannot write its internal storage. |
-| systemd credentials | The runtime reader is read-only and is not an import target. A separate deployment provisioning operation would prepare service credentials; this is outside the first writable-store importer. |
-
-### Sequencing and tests
-
-Place this utility after the basic age backend and management CLI. Initially qualify transfer between age stores; add a writable target only when its adapter and runtime integration are available. Keep the two-method core, file format, and initial CLI usable without the pack feature.
-
-Test selected-name export, source failure producing no completed pack, multi-recipient transport, wrong identities, authenticated malformed input, duplicate names, unsupported schema versions, limits, conflicting destination names, and zero writes after preflight rejection. Inject failures before and after individual commits to verify truthful partial-result reporting. Include a fresh-target end-to-end provisioning scenario, output redaction, and the separation of transport keys from backend keys. A fake store establishes orchestration only; each real destination owns its platform-specific import evidence.
-
-## Migration and compatibility
-
-The feature is additive. Keep existing encryption formats, settings, versions, and APIs intact. Applications decide whether to support literal values, references, or both; the store never treats an arbitrary string as a reference automatically.
-
-A consumer migration should write the secret, verify its readable value without logging it, and only then persist the reference. Keep the old setting recoverable until that application's configuration update succeeds. Name collisions, legacy naming, rollback, backups containing old secrets, and removing the old plaintext belong to the consumer's migration policy. Keep application settings migration separate from the focused named-entry pack utility; do not introduce a universal settings migration engine here.
-
-Use injected readers to test reference parsing, absent references, provider failure, and configuration persistence in consumers. Kit owns storage contracts and platform integration. The [proven-in-use evidence](../proven-in-use.md#secretstore-package-owned-evidence) records the core and adapters' package-owned checks and distinguishes reviewed real-host evidence from a minimum-version probe. Add maintained consumer evidence only after a consumer actually adopts the relevant boundary.
-
-## Verification strategy
-
-| Boundary | Required evidence |
-| --- | --- |
-| Neutral contracts | Compile-time fixture accepts a reader-only object and rejects it where a store is required. Shared behavioural cases cover missing versus empty, exact string preservation, JSON `null` versus absence, object snapshots, serializer pair semantics, invalid names/values, replacement, instance isolation, and sanitised failures. |
-| Dependency isolation | Install packed tarballs outside workspace resolution; compile documented imports. Bundle the neutral entry for a browser and inspect for Node, Obsidian, crypto, and native modules. Test focused adapter imports separately. |
-| Obsidian adapter | Injected sync get/set, missing API, host throws containing sentinel secrets, and zero platform calls on invalid input. Real isolated-profile checks for minimum/current qualified API versions, values, persistence across restart, and device-specific behaviour where support is claimed. |
-| age codec | Multi-recipient decryption, wrong identity, tampering, truncation, invalid text, and size limits. Bidirectional fixtures against pinned `age` and `rage` versions, recorded in the [feasibility report](secret-store-age-feasibility.md). Round-tripping only through typage is insufficient interoperability evidence. |
-| age files | Real local filesystem fixtures for permissions, links, traversal, reserved names, missing root versus missing entry, atomic replacement, competing writers, interrupted writes, cleanup, and failures before and after rename. Inject failures at I/O boundaries; assert the final entry, not only the error. |
-| Key acquisition | Missing entry performs no identity request; existing entry calls the provider once; writes and listing do not request identities. Provider failures are sanitised. No module-global retention or implicit fallback. |
-| CLI | PTY tests for concealed input and terminal restoration; pipe tests for exact bytes, reveal gating, exit categories, cancellation, and stdout/stderr separation. Assert that secret sentinels are absent from errors, traces, and process arguments. Test identity-source conflicts, missing environment variables, exclusive key generation, and no implicit fallback. |
-| Migration and deployment | New-device recipient round trip; no modification of the source; complete name inventory; target verification with required names; failure and interruption during staging/publication; existing-output rejection; recovery identity; and deployment checks as the service user. Distinguish ciphertext transfer integrity, decryption, and application authentication. |
-| Native store | Per-platform tests with disposable service namespaces and cleanup, real unavailable/locked/denied behaviour where reproducible, native installation, persistence, and evidence of no fallback. |
-| systemd | File-boundary tests plus a real transient unit using both plain and encrypted provisioning. Record the systemd version and distinguish skipped integration from a passing test. |
-
-No benchmark is needed for the initial core. Deterministic operation counts should detect accidental whole-store scans, value reads during listing, or repeated key acquisition. Benchmark file count or startup costs only if a concrete usage pattern identifies a remaining performance question.
-
-For implementation, run focused package checks while iterating, then the complete `verify:workspace` gate for package and dependency changes, including packed-consumer verification. Real Obsidian UI checks apply if later work introduces visible UI; this API adapter alone does not justify repeating every consumer UI suite. Before claiming mobile or another native platform, record real evidence for that specific boundary.
-
-The core and Obsidian adapter have shared behavioural cases, compile-time fixtures, and isolated packed-consumer checks. The dedicated Obsidian scenario establishes the platform behaviour described above. The [age feasibility checks](secret-store-age-feasibility.md) now reuse the production codec, while the Node package owns real filesystem and injected failure tests. Native tools also exchange entries through the public file-store API. These checks do not establish native credential-store, deployment, hardware power-loss, or cryptographic audit guarantees. Keep Markdown links, the diff, and the ADR consistent with the implemented scope.
-
-## Implementation plan
-
-| Phase | Deliverables | Completion evidence and remaining decision |
-| --- | --- | --- |
-| 1: Neutral core | Add `secret-store`, two interfaces, name/value validation, fixed-code errors, and a memory store. Add TSDoc, package README, compile-time and behavioural tests. Wire workspace and packed-consumer checks. | Accepted and implemented with the portable name profile and exact Unicode value policy. Package tests, public type fixtures, and packed-consumer checks cover the core. The initial phase had no runtime dependency; ADR 0003 later adds the shared `value-store` engine. It does not introduce backend selection, URI helpers, optional management capabilities, or platform implementations. |
-| 2: Obsidian | Add a focused adapter and export, neutral dependency, injected tests, and feature-specific compatibility documentation. | Implemented with injected host tests, packed-consumer checks, and isolated-profile value and restart verification on reviewed 1.13.6. The 1.11.4 minimum was exercised as an unverified regression probe. Common names are limited to 64 characters; existing package minimums are preserved. Mobile and other desktop platforms remain unqualified for this adapter. |
-| 3a: age feasibility | Pin and review typage and transitive requirements; keep the codec and file operations separate; prove bidirectional interoperability. | Completed initially in a private test seam, now reusing the production internal codec: exact values, error classification, size limits, per-call identities, and bidirectional age 1.3.2/rage 0.12.1 checks. The [report](secret-store-age-feasibility.md) records the runtime matrix and metadata/layout implications. Filesystem authority and persistence are covered separately by Phase 3b. |
-| 3b: age reader and writer | Implement explicit-root factories, bounded safe reads, injected identities, recipient-only writes, permissions, and atomic replacement. | Implemented with real Linux arm64 ext4 fixtures, injected failure and concurrency tests, process termination before/after rename, installed-tarball checks, and public file-store/native-tool interoperability. Windows returns unavailable; macOS, network mounts, and hardware power loss remain unqualified. No recovery journal or automatic key provisioning. |
-| 3c: Local value backends | Add instance-owned memory storage, injected Web Storage, Node JSON-file storage, direct official Obsidian storage, and explicit legacy selection. | The initial synchronous JSON-value API was verified against shared cases, Chromium restart, Node filesystem tests, packed consumers, and reviewed Obsidian 1.13.6 E2E. Its package and empty-string semantics were superseded; those results do not validate ADR 0003. No consumer migration is included. |
-| 3d: Value and object API with injected serialisation | Use asynchronous `getValue`/`setValue` and `getObject`/`setObject`, raw string backends, paired serializer DI, and a tested consumer-owned OW HKDF example across memory, Web Storage, Obsidian, and Node adapters. | Implemented under [ADR 0003](../adr/0003-value-store-capabilities.md), which supersedes the package split and empty-string rule in [ADR 0002](../adr/0002-value-store-serialisation.md). Fresh workspace, packed-consumer, Chromium, Node.js 20/22/24, native age/rage, and reviewed Obsidian 1.13.6 validation passed on 2026-10-19. The isolated ValueStore tarball install added no dependencies. No consumer migration or release is included. |
-| 4a: Management and provisioning | Add the separate CLI, explicit init/input/reveal paths, optional delete/list capabilities, recipient-policy inspection, explicit identity generation, file/environment identity sources, re-encryption into a new store, and non-revealing verification. | Review the proposed operational extension before implementation. PTY, pipe, failure, permission, headless, device-migration, and service-user deployment tests must qualify completion and publication. In-place recipient mutation and automatic activation remain deferred. |
-| 4b: Encrypted provisioning packs | Add explicit selected-entry pack creation, whole-pack validation, writable-store import, and value-free verification/reporting after the basic CLI. | Review the transfer schema, finite limits, existing-entry policy, and partial-failure semantics. Initially qualify age targets; add native or Obsidian targets when their adapters are ready. No universal batch transaction or automatic rollback. |
-| 5: Additional adapters | Add systemd or native keychain only for demonstrated consumer needs; qualify each independently. | Native dependency choice, persistence, platform matrix, and error limits must be evidenced. Other secret managers remain future adapters, not speculative interfaces. |
-
-When a package is introduced, update root script ordering, lockfile, package exports, packed-consumer fixtures, the publishable-package map in `scripts/validate-release-selection.mjs`, `scripts/prepare-release.mjs` dependency handling, relevant release-tool tests, workflow choices, architecture, and release documentation. Extend the dependency checks for each new shared contract. Review `scripts/assert-bootstrap-publish.mjs` and the publishing workflow for their explicit selections as well. No release version or publication is selected by this design.
-
-The secret profile and age adapter retain their earlier validation and persistence contracts. Phase 3a established codec feasibility, Phase 3b added the explicit-root age reader and writer, and Phase 3c added the first ordinary value-storage package. ADR 0003 consolidates shared value operations in `@vrtmrz/value-store`, changes empty-string writes to stored data, and exposes deletion as a separate capability. Its current package and runtime evidence is recorded in [Proven in use](../proven-in-use.md). Phase 4a and 4b split the original management phase into basic management/provisioning and later encrypted transfer packs. Phase 5 retains independently qualified additional backends. The later phases remain a roadmap with explicit design and evidence gates; acceptance of the common contracts does not settle every backend or management command.
+The implemented contract evidence covers absent versus empty values, stored JSON
+`null`, defaults and snapshots, paired serialisers, sanitised failures, package
+isolation, and adapter failure paths. Real Obsidian evidence is limited to the
+reviewed host and platform described above. The age adapter evidence is limited
+to Linux arm64 on ext4 and the exact Node matrix in the
+[feasibility report](secret-store-age-feasibility.md). Native stores, systemd
+units, CLI interaction, migration, encrypted-pack import, other filesystems,
+and further host platforms remain proposals requiring their own validation.
 
 ## Sources
 
-The following primary sources were inspected on 2026-10-18. Registry versions and repository revisions identify the evaluated dependency candidates; implementation must recheck them when selecting a lockfile. These are source and documentation findings, not Fancy Kit runtime validation.
+The following primary sources were inspected on 2026-10-18. Their dependency
+versions and revisions identify the evaluated candidates; a later implementation
+must recheck them when selecting its lockfile. These source findings are not
+Fancy Kit runtime validation.
 
-- [Obsidian API](https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts), compared with the workspace's locked `obsidian@1.14.4` declarations, and the official [Store secrets guide](https://docs.obsidian.md/plugins/guides/secret-storage): API availability, signatures, naming, and host ownership.
-- [typage 0.3.1 source](https://github.com/FiloSottile/typage/tree/38b8b10cb22409de0eaa8a617a01f16dc2e3f9f4) and [published metadata](https://registry.npmjs.org/age-encryption/0.3.1): format implementation, recipient/identity APIs, module requirements, dependencies, and untyped decryption failures.
-- [`@napi-rs/keyring` 2.1.1 source](https://github.com/Brooooooklyn/keyring-node/tree/97aa4e0412a0ba8a0d47541cebe0474eea5efe02) and [published metadata](https://registry.npmjs.org/@napi-rs%2fkeyring/2.1.1): explicit Linux store selection, native packages, missing-entry conversion, and Windows target-construction side effects.
-- [`just-secrets` 0.0.2 source](https://github.com/vercel-labs/just-secrets/tree/31719436bccf5ecfee621391e94c771b7484c0cf) and [published metadata](https://registry.npmjs.org/just-secrets/0.0.2): subprocess bridges, runtime requirements, and representation limits.
-- [age manual](https://github.com/FiloSottile/age/blob/main/doc/age.1.ronn): recipient and identity roles, multi-recipient access, and standard identity-file input.
-- [systemd.exec credentials](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#Credentials): provisioning, plaintext presentation to services, directory ownership, and `CREDENTIALS_DIRECTORY`.
-- [Node filesystem API](https://nodejs.org/api/fs.html): open flags, file descriptor operations, permissions, and platform-specific constraints. Tests, rather than this API reference alone, must establish the promised replacement and durability semantics.
+- [Obsidian API declarations](https://github.com/obsidianmd/obsidian-api/blob/master/obsidian.d.ts) and the official [Secret Storage guide](https://docs.obsidian.md/plugins/guides/secret-storage): API signatures, availability, and host ownership.
+- [typage 0.3.1 source](https://github.com/FiloSottile/typage/tree/38b8b10cb22409de0eaa8a617a01f16dc2e3f9f4) and [published metadata](https://registry.npmjs.org/age-encryption/0.3.1): codec API, licence, dependencies, and error boundaries.
+- [`@napi-rs/keyring` 2.1.1 source](https://github.com/Brooooooklyn/keyring-node/tree/97aa4e0412a0ba8a0d47541cebe0474eea5efe02) and [published metadata](https://registry.npmjs.org/@napi-rs%2fkeyring/2.1.1): native packages, Linux store selection, and inspected side effects.
+- [`just-secrets` 0.0.2 source](https://github.com/vercel-labs/just-secrets/tree/31719436bccf5ecfee621391e94c771b7484c0cf) and [published metadata](https://registry.npmjs.org/just-secrets/0.0.2): subprocess bridge, runtime requirement, and value limits.
+- The [age manual](https://github.com/FiloSottile/age/blob/main/doc/age.1.ronn): recipient and identity roles, multi-recipient access, and identity-file format.
+- [systemd credentials](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#Credentials): service provisioning and `CREDENTIALS_DIRECTORY`.
+- The [Node.js filesystem API](https://nodejs.org/api/fs.html): file descriptors, permissions, and platform-specific constraints. Tests establish replacement and durability behaviour; the API reference alone does not.
