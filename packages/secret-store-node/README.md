@@ -54,20 +54,23 @@ Names, entry counts, approximate value sizes, and change timing are visible. age
 
 ## Use the unpublished workspace packages
 
-There is no registry release yet. Build and pack both packages from the Fancy Kit workspace:
+There is no registry release yet. After installing the workspace dependencies, build and pack all three packages from the Fancy Kit workspace:
 
 ```bash
+npm run build --workspace @vrtmrz/value-store
 npm run build --workspace @vrtmrz/secret-store
 npm run build --workspace @vrtmrz/secret-store-node
 mkdir -p /tmp/fancy-kit-secret-store-tarballs
+npm pack --workspace @vrtmrz/value-store --pack-destination /tmp/fancy-kit-secret-store-tarballs
 npm pack --workspace @vrtmrz/secret-store --pack-destination /tmp/fancy-kit-secret-store-tarballs
 npm pack --workspace @vrtmrz/secret-store-node --pack-destination /tmp/fancy-kit-secret-store-tarballs
 ```
 
-From a consumer project, install both local tarballs so the Node adapter's core dependency is satisfied by the matching workspace package:
+From a consumer project, install all three local tarballs together so the adapter's unpublished dependencies resolve to the matching workspace packages:
 
 ```bash
 npm install \
+  /tmp/fancy-kit-secret-store-tarballs/vrtmrz-value-store-0.0.0.tgz \
   /tmp/fancy-kit-secret-store-tarballs/vrtmrz-secret-store-0.0.0.tgz \
   /tmp/fancy-kit-secret-store-tarballs/vrtmrz-secret-store-node-0.0.0.tgz
 ```

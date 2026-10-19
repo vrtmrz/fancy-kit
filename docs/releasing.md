@@ -50,8 +50,11 @@ git switch main
 git pull --ff-only
 git switch -c release-<short-package-name>-<version>
 npm ci
+npm run build
 npm run release:prepare -- <package-name> <version>
 ```
+
+The root build generates the declarations needed from workspace dependencies, including those not selected for release. It does not change package versions or the release selection.
 
 `release:prepare` updates selected versions, their direct workspace consumers' dependency pins, and the corresponding lockfile entries together, then runs each selected package's `build` script. Review dependent manifest changes even when those packages are not being released. The command does not commit, push, stage, approve, publish, or promote anything.
 
