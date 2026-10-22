@@ -46,7 +46,15 @@ export function compareReleaseVersions(left, right) {
   return comparePrerelease(leftPrerelease, rightPrerelease);
 }
 
-export function planReleasePreparation({ packageName, version, manifest, lockfile, uiManifest }) {
+export function planReleasePreparation({
+  packageName,
+  version,
+  manifest,
+  lockfile,
+  uiManifest,
+  secretStoreManifest,
+  valueStoreManifest,
+}) {
   const packageDirectory = publishablePackages[packageName];
   if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
   if (!isReleaseVersion(version)) throw new Error(`Invalid semantic version: ${version}`);
@@ -79,6 +87,47 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
     }
   }
 
+  if (
+    packageName === "@vrtmrz/obsidian-plugin-kit" ||
+    packageName === "@vrtmrz/secret-store-node"
+  ) {
+    const dependency = "@vrtmrz/secret-store";
+    const secretStoreVersion = manifest.dependencies?.[dependency];
+    if (
+      !isReleaseVersion(secretStoreVersion) ||
+      !isReleaseVersion(secretStoreManifest?.version) ||
+      secretStoreVersion !== secretStoreManifest.version
+    ) {
+      throw new Error(
+        `${packageName} requires ${dependency} ${secretStoreVersion ?? "without an exact version"}, but the workspace contains ${secretStoreManifest?.version ?? "no valid manifest version"}`,
+      );
+    }
+    if (lockEntry.dependencies?.[dependency] !== secretStoreVersion) {
+      throw new Error(`${packageName} SecretStore dependency does not match the lockfile`);
+    }
+  }
+
+  if (
+    packageName === "@vrtmrz/secret-store" ||
+    packageName === "@vrtmrz/secret-store-node" ||
+    packageName === "@vrtmrz/obsidian-plugin-kit"
+  ) {
+    const dependency = "@vrtmrz/value-store";
+    const valueStoreVersion = manifest.dependencies?.[dependency];
+    if (
+      !isReleaseVersion(valueStoreVersion) ||
+      !isReleaseVersion(valueStoreManifest?.version) ||
+      valueStoreVersion !== valueStoreManifest.version
+    ) {
+      throw new Error(
+        `${packageName} requires ${dependency} ${valueStoreVersion ?? "without an exact version"}, but the workspace contains ${valueStoreManifest?.version ?? "no valid manifest version"}`,
+      );
+    }
+    if (lockEntry.dependencies?.[dependency] !== valueStoreVersion) {
+      throw new Error(`${packageName} value-store dependency does not match the lockfile`);
+    }
+  }
+
   const nextManifest = { ...manifest, version };
   const nextLockfile = cloneJson(lockfile);
   nextLockfile.packages[packageDirectory].version = version;
@@ -87,11 +136,30 @@ export function planReleasePreparation({ packageName, version, manifest, lockfil
 
 const releasePreparationOrder = [
   "@vrtmrz/ui-interactions",
+  "@vrtmrz/value-store",
+  "@vrtmrz/secret-store",
+  "@vrtmrz/secret-store-node",
   "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
   "@vrtmrz/obsidian-test-session",
   "octagonal-wheels",
 ];
+
+const releaseDependencyConsumers = {
+  "@vrtmrz/ui-interactions": [
+    "@vrtmrz/browser-ui-kit",
+    "@vrtmrz/obsidian-plugin-kit",
+  ],
+  "@vrtmrz/secret-store": [
+    "@vrtmrz/obsidian-plugin-kit",
+    "@vrtmrz/secret-store-node",
+  ],
+  "@vrtmrz/value-store": [
+    "@vrtmrz/secret-store",
+    "@vrtmrz/secret-store-node",
+    "@vrtmrz/obsidian-plugin-kit",
+  ],
+};
 
 export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
   if (!Array.isArray(selections) || selections.length === 0) {
@@ -113,37 +181,27 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
   const nextManifests = cloneJson(manifests);
   let nextLockfile = cloneJson(lockfile);
   const uiPackageName = "@vrtmrz/ui-interactions";
-  const uiVersion = selectedVersions.get(uiPackageName);
-  const uiAdapterPackageNames = [
-    "@vrtmrz/browser-ui-kit",
-    "@vrtmrz/obsidian-plugin-kit",
-  ];
+  const secretStorePackageName = "@vrtmrz/secret-store";
+  for (const [dependencyPackageName, dependencyVersion] of selectedVersions) {
+    for (const consumerPackageName of releaseDependencyConsumers[dependencyPackageName] ?? []) {
+      const consumerManifest = nextManifests[consumerPackageName];
+      if (!consumerManifest) throw new Error(`Manifest is missing for ${consumerPackageName}`);
+      const consumerDirectory = publishablePackages[consumerPackageName];
+      const consumerLockEntry = nextLockfile.packages?.[consumerDirectory];
+      if (!consumerLockEntry) throw new Error(`Lockfile entry is missing for ${consumerDirectory}`);
 
-  if (uiVersion) {
-    for (const adapterPackageName of uiAdapterPackageNames) {
-      if (!selectedVersions.has(adapterPackageName)) continue;
-
-      const adapterManifest = nextManifests[adapterPackageName];
-      if (!adapterManifest) {
-        throw new Error(`Manifest is missing for ${adapterPackageName}`);
-      }
-      const adapterDirectory = publishablePackages[adapterPackageName];
-      const adapterLockEntry = nextLockfile.packages?.[adapterDirectory];
-      if (!adapterLockEntry) {
-        throw new Error(`Lockfile entry is missing for ${adapterDirectory}`);
-      }
-      nextManifests[adapterPackageName] = {
-        ...adapterManifest,
+      nextManifests[consumerPackageName] = {
+        ...consumerManifest,
         dependencies: {
-          ...adapterManifest.dependencies,
-          [uiPackageName]: uiVersion,
+          ...consumerManifest.dependencies,
+          [dependencyPackageName]: dependencyVersion,
         },
       };
-      nextLockfile.packages[adapterDirectory] = {
-        ...adapterLockEntry,
+      nextLockfile.packages[consumerDirectory] = {
+        ...consumerLockEntry,
         dependencies: {
-          ...adapterLockEntry.dependencies,
-          [uiPackageName]: uiVersion,
+          ...consumerLockEntry.dependencies,
+          [dependencyPackageName]: dependencyVersion,
         },
       };
     }
@@ -159,6 +217,8 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
     if (!manifest) throw new Error(`Manifest is missing for ${packageName}`);
     const uiManifest = nextManifests[uiPackageName];
     if (!uiManifest) throw new Error(`Manifest is missing for ${uiPackageName}`);
+    const secretStoreManifest = nextManifests[secretStorePackageName];
+    const valueStoreManifest = nextManifests["@vrtmrz/value-store"];
 
     const preparation = planReleasePreparation({
       packageName,
@@ -166,6 +226,8 @@ export function planReleaseSetPreparation({ selections, manifests, lockfile }) {
       manifest,
       lockfile: nextLockfile,
       uiManifest,
+      secretStoreManifest,
+      valueStoreManifest,
     });
     nextManifests[packageName] = preparation.manifest;
     nextLockfile = preparation.lockfile;
@@ -194,15 +256,35 @@ export function prepareReleaseMetadata({ repositoryRoot = defaultRepositoryRoot,
 }
 
 export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRoot, selections }) {
-  const selectedPackageNames = new Set(["@vrtmrz/ui-interactions"]);
+  const packageNamesToLoad = new Set(["@vrtmrz/ui-interactions"]);
+  const packageNamesToWrite = new Set();
   for (const { packageName } of selections) {
     const packageDirectory = publishablePackages[packageName];
     if (!packageDirectory) throw new Error(`Unsupported package: ${packageName}`);
-    selectedPackageNames.add(packageName);
+    packageNamesToLoad.add(packageName);
+    packageNamesToWrite.add(packageName);
+    for (const consumerPackageName of releaseDependencyConsumers[packageName] ?? []) {
+      packageNamesToLoad.add(consumerPackageName);
+      packageNamesToWrite.add(consumerPackageName);
+    }
+  }
+
+  if (
+    packageNamesToLoad.has("@vrtmrz/obsidian-plugin-kit") ||
+    packageNamesToLoad.has("@vrtmrz/secret-store-node")
+  ) {
+    packageNamesToLoad.add("@vrtmrz/secret-store");
+  }
+  if (
+    packageNamesToLoad.has("@vrtmrz/secret-store") ||
+    packageNamesToLoad.has("@vrtmrz/secret-store-node") ||
+    packageNamesToLoad.has("@vrtmrz/obsidian-plugin-kit")
+  ) {
+    packageNamesToLoad.add("@vrtmrz/value-store");
   }
 
   const manifests = {};
-  for (const packageName of selectedPackageNames) {
+  for (const packageName of packageNamesToLoad) {
     const packageDirectory = publishablePackages[packageName];
     manifests[packageName] = readJson(resolve(repositoryRoot, packageDirectory, "package.json"));
   }
@@ -213,7 +295,7 @@ export function prepareReleaseSetMetadata({ repositoryRoot = defaultRepositoryRo
     lockfile: readJson(lockfilePath),
   });
 
-  for (const { packageName } of selections) {
+  for (const packageName of packageNamesToWrite) {
     const packageDirectory = publishablePackages[packageName];
     writeJsonPreservingIndentation(
       resolve(repositoryRoot, packageDirectory, "package.json"),

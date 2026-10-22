@@ -1,0 +1,41 @@
+{
+  "name": "@vrtmrz/secret-store",
+  "version": "0.0.0",
+  "description": "Platform-neutral named-secret contracts and in-memory storage",
+  "type": "module",
+  "license": "MIT",
+  "author": "vorotamoroz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrtmrz/fancy-kit.git",
+    "directory": "packages/secret-store"
+  },
+  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/secret-store#readme",
+  "bugs": {
+    "url": "https://github.com/vrtmrz/fancy-kit/issues"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.check.json",
+    "test": "vitest run --maxWorkers=1",
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@vrtmrz/value-store": "0.0.0"
+  }
+}

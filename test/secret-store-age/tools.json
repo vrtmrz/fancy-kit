@@ -1,0 +1,26 @@
+{
+  "linux-arm64": [
+    {
+      "name": "age",
+      "url": "https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-linux-arm64.tar.gz",
+      "sha256": "6b8dc4333c53a5a57c9e5834e3a48f92605d7154014cd07269ff3327db5d37f4"
+    },
+    {
+      "name": "rage",
+      "url": "https://github.com/str4d/rage/releases/download/v0.12.1/rage-v0.12.1-arm64-linux.tar.gz",
+      "sha256": "d6814986f9fb0c62bdd4f40a3672468ef3d64d0a3e894ffceb6d1a618309964b"
+    }
+  ],
+  "linux-x64": [
+    {
+      "name": "age",
+      "url": "https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-linux-amd64.tar.gz",
+      "sha256": "cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10"
+    },
+    {
+      "name": "rage",
+      "url": "https://github.com/str4d/rage/releases/download/v0.12.1/rage-v0.12.1-x86_64-linux.tar.gz",
+      "sha256": "c5d7ab41fbf1213590e89721fd2b8eb122e84518c155ce35866f1c5759a3a29f"
+    }
+  ]
+}

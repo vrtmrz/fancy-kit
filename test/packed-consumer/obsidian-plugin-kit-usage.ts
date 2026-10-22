@@ -198,3 +198,9 @@ export function exerciseNoticesAndProgress(document: Document): void {
   document.body.append(fragment.fragment);
   fragment.increment();
 }
+
+import { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";
+
+export function createSecretServices(app: App) {
+  return createObsidianSecretStore(app.secretStorage);
+}

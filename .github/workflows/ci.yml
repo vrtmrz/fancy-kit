@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium for octagonal-wheels tests
+      - name: Install Chromium for browser tests
         run: npm exec --workspace octagonal-wheels -- playwright install --with-deps chromium
 
       - name: Check workspace
@@ -42,3 +42,12 @@ jobs:
 
       - name: Verify package contents
         run: npm run pack:workspace
+
+      - name: Verify packed consumers
+        run: npm run verify:packed-consumer
+
+      - name: Install pinned age interoperability tools
+        run: npm run test:age:install-tools
+
+      - name: Verify age interoperability
+        run: npm run test:age:interop

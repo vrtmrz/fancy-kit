@@ -1,0 +1,46 @@
+{
+  "name": "@vrtmrz/secret-store-node",
+  "version": "0.0.0",
+  "description": "Explicit Node.js adapters for named secret storage",
+  "type": "module",
+  "license": "MIT",
+  "author": "vorotamoroz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrtmrz/fancy-kit.git",
+    "directory": "packages/secret-store-node"
+  },
+  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/secret-store-node#readme",
+  "bugs": {
+    "url": "https://github.com/vrtmrz/fancy-kit/issues"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./age": {
+      "types": "./dist/age.d.ts",
+      "import": "./dist/age.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.check.json",
+    "test": "npm run build && vitest run --maxWorkers=1",
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "dependencies": {
+    "@vrtmrz/secret-store": "0.0.0",
+    "age-encryption": "0.3.1",
+    "@vrtmrz/value-store": "0.0.0"
+  }
+}

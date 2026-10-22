@@ -22,6 +22,8 @@ Run the automated scenarios:
 npm run test:e2e:obsidian:smoke
 npm run test:e2e:obsidian:session-lifecycle
 npm run test:e2e:obsidian:profile-restart
+npm run test:e2e:obsidian:secrets
+npm run test:e2e:obsidian:local-storage
 npm run test:e2e:obsidian:modes
 npm run test:e2e:obsidian:dialogs
 npm run test:e2e:obsidian:progress
@@ -33,7 +35,7 @@ npm run test:e2e:obsidian:local-suite
 npm run test:e2e:obsidian:validated
 ```
 
-`local-suite` runs the selected target and reports its review status. `validated` runs the same scenarios but rejects the unverified-version override, making it the release-qualification command.
+`local-suite` runs all configured scenarios, including local-storage, against the selected target and reports its review status. `validated` runs the same scenarios but rejects the unverified-version override, making it the release-qualification command.
 
 Set `E2E_OBSIDIAN_MOBILE_SCREENSHOT` to capture the mobile scenario while its text-prompt dialogue and simulated iPhone safe-area insets are active:
 
@@ -46,6 +48,12 @@ The screenshot is an optional local diagnostic and is not retained by the test s
 The session-lifecycle scenario uses a dedicated fixture plug-in to prove that supplied local-storage values are written and `beforePluginStart` completes before the fixture's first `onload()`, that lifecycle callbacks retain their documented order, that the plug-in loads exactly once, and that its enabled state is persisted. Set `E2E_OBSIDIAN_SESSION_LIFECYCLE_SCREENSHOT` to capture the final isolated Vault for diagnostics.
 
 The profile-restart scenario writes a sentinel to the isolated renderer's local storage, stops Obsidian through the high-level session, and starts a second session with the same `TemporaryVault`. It requires the sentinel to remain available without reseeding it. The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, guided wake-lock and post-release evidence, and Markdown report generation. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, horizontal overflow, Close-control touch-target size, and safe-area containment.
+
+The SecretStorage scenario builds a dedicated fixture rather than opening Harness UI. It uses the lower-level session launcher so it can also exercise Obsidian versions predating the CLI, verifies the observed API version against the selected version policy, and preserves the same isolated profile for restart. Synthetic values cover absence, replacement, empty strings, whitespace, NUL, BOM, and Unicode. Name cases retain the 63/64-character success boundary and explicit 65/128-character rejection, including the original overlong-name regression. The fixture and profile are removed in `finally`; there is no public SecretStorage delete API. Launch-argument overrides which disable profile isolation are rejected.
+
+The [local-storage scenario](scripts/local-storage.ts) uses a dedicated fixture, an isolated Vault, and an isolated profile. It verifies asynchronous `getValue`/`setValue` and `getObject`/`setObject` operations, raw strings, JSON data, prefix separation, and persistence after renderer restart. Object mode retains top-level JSON `null`, empty strings, zero, and `false` as data; negative zero becomes JSON zero. Deletion uses the explicit `delete` capability. The official host deletes a direct `saveLocalStorage(key, '')` call, so the raw adapter rejects an empty physical write before calling the host and preserves the previous value. A serializer may encode an empty logical value into non-empty text. Direct and explicitly selected legacy Web Storage preserve empty writes as data. The scenario also exercises the lazy legacy selector with the official capability explicitly omitted. Selected-key copying preserves the source and any existing destination.
+
+The revised ValueStore local-storage scenario and the complete twelve-scenario suite passed on reviewed Obsidian 1.13.6 on Linux arm64 on 2026-10-19. Obsidian's public API may hide some underlying failures: it cannot distinguish absence from a read failure which the host suppresses, or confirm a write which the host reports as complete despite a hidden failure. The earlier 1.7.7 regression probe remains historical evidence outside the reviewed catalogue. Both previously exercised versions expose the official methods, so those results do not qualify an actual host version lacking them; unit tests own partial-capability and unavailable-capability selection cases.
 
 ## Local prerequisites
 
@@ -76,9 +84,13 @@ For a quick regression probe against an exact public release which is not yet in
 ```bash
 E2E_OBSIDIAN_VERSION=1.13.4 E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true npm run test:e2e:obsidian:install-appimage
 E2E_OBSIDIAN_VERSION=1.13.4 E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true npm run test:e2e:obsidian:local-suite
+E2E_OBSIDIAN_VERSION=1.7.7 E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true npm run test:e2e:obsidian:install-appimage
+E2E_OBSIDIAN_VERSION=1.7.7 E2E_OBSIDIAN_ALLOW_UNVERIFIED_VERSION=true npm run test:e2e:obsidian:local-storage
 ```
 
 The output labels this run `unverified`. It still checks the exact release tag and AppImage asset, observes the running Obsidian version, and runs all E2E assertions, but a pass does not establish supported-version status. `test:e2e:obsidian:validated` rejects the override.
+
+The earlier 1.7.7 probe exercised the asynchronous string/object API before the value-store reorganisation. It has not validated the revised empty-write contract, remains unreviewed, and does not establish support for that host version.
 
 Headless Linux automatically uses `xvfb-run` when available. Set `E2E_OBSIDIAN_KEEP_VAULT=true` to preserve temporary state for inspection.
 
