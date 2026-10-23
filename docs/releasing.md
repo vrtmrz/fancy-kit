@@ -276,3 +276,23 @@ For consumer testing before a changed package version is published, use one of t
 3. run `npm pack --workspace <package-name>` and install the generated tarball locally or from a controlled build artefact location.
 
 When an unpublished browser-kit or plug-in-kit change depends on an unpublished UI interactions change, install the adapter and UI package directories or tarballs from the same Fancy Kit commit. Install each unpublished dependency with the adapter that consumes it: ValueStore with SecretStore and the plug-in kit, and SecretStore with the plug-in or Node adapter. Treat `@vrtmrz/obsidian-test-session` as a development dependency. Keep temporary filesystem dependencies out of long-lived branches unless the repository layout is part of the documented consumer build contract.
+
+### CI package preview artefacts
+
+The `ci.yml` workflow creates a package preview artefact after every existing workspace check, including age interoperability. It checks out the exact pull-request head SHA, or the push commit SHA, builds the packages, and uploads only the tarballs and `preview.json` from an empty directory outside the checkout. The upload is named `package-preview-<full lowercase source SHA>-<run attempt>` and expires after 14 days. Each package-build attempt keeps its own immutable artefact ID.
+
+Consumers can install an unpublished Commonlib or Fancy Kit commit through the fixed [`install-library-preview` action](../.github/actions/install-library-preview/action.yml). Pin the action itself to a reviewed full commit SHA; the action pin is independent of `kit-sha`:
+
+```yaml
+- uses: vrtmrz/fancy-kit/.github/actions/install-library-preview@<reviewed-full-action-commit>
+  with:
+    commonlib-sha: <full-commonlib-source-sha>
+    kit-sha: <full-fancy-kit-source-sha>
+    github-token: ${{ github.token }}
+```
+
+Leave either input blank to retain that dependency's normal lockfile version. Non-empty `commonlib-sha` and `kit-sha` values must be full, lowercase, 40-character commit SHAs. The action accepts a Commonlib source commit only when it is an ancestor of `main` or the exact head of an open same-repository pull request into `main`. The same rule applies to a Fancy Kit source commit. It then requires a successful, completed run of the fixed producer workflow (`package-ci.yml` for Commonlib or `ci.yml` for Fancy Kit), with the exact `head_sha` and the same source and head repository. It selects the newest available package-build attempt no later than the successful workflow attempt and rejects duplicate artefacts for that build attempt. This also permits a previously successful package job to retain its artefact when only a failed integration job is rerun. The summary records both attempt numbers and the immutable artefact ID.
+
+Before modifying the temporary consumer `package.json` or lockfile, the action verifies the producer identity, complete package manifest, allowed package names, and SHA-256 digest of every tarball. The consumer workflow must run `npm ci` after the action. Use a GitHub-hosted Linux runner with Node.js 24, npm 11, and read-only `actions: read` and `contents: read` permissions. A missing or expired artefact fails validation. Actions artefacts are short-lived CI evidence, not a durable package URL or distribution channel; use an immutable release or registry version for long-lived dependencies.
+
+CI package previews do not change release version policy. Packages which remain at `0.0.0` can be checked as source tarballs in the CI artefact, but this does not publish those versions to npm or create a GitHub consumer preview release.
