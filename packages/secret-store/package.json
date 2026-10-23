@@ -36,6 +36,6 @@
     "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
   },
   "dependencies": {
-    "@vrtmrz/value-store": "0.0.0"
+    "@vrtmrz/value-store": "0.1.0"
   }
 }

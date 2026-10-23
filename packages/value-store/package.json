@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/value-store",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Explicit asynchronous value and object storage for browsers and Node.js",
   "type": "module",
   "license": "MIT",

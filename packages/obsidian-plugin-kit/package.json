@@ -71,7 +71,7 @@
   "dependencies": {
     "@vrtmrz/ui-interactions": "0.1.2",
     "@vrtmrz/secret-store": "0.0.0",
-    "@vrtmrz/value-store": "0.0.0"
+    "@vrtmrz/value-store": "0.1.0"
   },
   "peerDependencies": {
     "obsidian": ">=1.8.7"

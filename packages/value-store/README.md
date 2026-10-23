@@ -1,6 +1,6 @@
 # @vrtmrz/value-store
 
-`@vrtmrz/value-store` provides asynchronous string and JSON-value operations, optional paired serialisers, an instance-scoped memory store, an injected Web Storage adapter, and an isolated Node JSON-file adapter. The package is an unpublished development version (`0.0.0`). It has no package dependencies. Its platform-neutral root entry does not load browser globals, Node modules, Obsidian APIs, or secret-store code.
+`@vrtmrz/value-store` provides asynchronous string and JSON-value operations, optional paired serialisers, an instance-scoped memory store, an injected Web Storage adapter, and an isolated Node JSON-file adapter. It has no package dependencies. Its platform-neutral root entry does not load browser globals, Node modules, Obsidian APIs, or secret-store code.
 
 The root exports `ObjectValue`, `ValueSerializer`, `ValueStoreOptions`, `ValueReader`, `ValueStore`, `ValueDeleter`, the raw backend capability types, `ValueStoreError`, `sanitiseValueStoreError`, and `MemoryValueStore`. Import Web Storage from `@vrtmrz/value-store/web-storage` and the Node file adapter from `@vrtmrz/value-store/node-json-file`.
 
