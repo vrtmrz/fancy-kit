@@ -93,19 +93,34 @@ The expected release preparation differs by package:
 
 When a new UI interactions version is required by adapter source, use the coordinated preparation command above. If neither adapter consumes the changed contract, a UI-only release remains valid. Otherwise, publish and validate UI interactions before publishing either adapter. When a release changes ValueStore, prepare it together with any selected direct consumers, then stage packages in dependency order: ValueStore, SecretStore, and each selected adapter. Packages which do not consume the changed contract remain valid independent selections.
 
-Stage only the reviewed release files. For `octagonal-wheels`, use `git add -u` for already tracked build output because the general `dist` ignore rule remains in place:
+Stage only the reviewed release files. Include the root lockfile and every manifest changed by preparation, including dependency-pin updates in consumers which are not selected for release. List each reviewed path explicitly. For example, preparing ValueStore alone requires:
 
 ```bash
-git add package-lock.json packages/<package-directory>/package.json
+git add package-lock.json packages/value-store/package.json \
+  packages/secret-store/package.json \
+  packages/secret-store-node/package.json \
+  packages/obsidian-plugin-kit/package.json
+```
+
+For other release selections, use the manifest paths changed by that preparation. For `octagonal-wheels`, also stage already tracked build output with `git add -u` because the general `dist` ignore rule remains in place:
+
+```bash
 git add -u packages/octagonal-wheels/dist
+```
+
+Review the complete staged diff before committing:
+
+```bash
+git diff --cached --check
+git diff --cached
 git commit -m "release: prepare <package-name> <version>"
 git push -u origin release-<short-package-name>-<version>
 gh pr create --draft --base main --title "Prepare <package-name> <version>"
 ```
 
-Omit the `octagonal-wheels/dist` command for the scoped packages. The release pull request should state the version choice, package and consumer checks, tarball inspection, and any platform limits. Merge it before dispatching staged publishing; the workflow accepts exact commits on `main` only.
+The release pull request should state the version choice, package and consumer checks, tarball inspection, and any platform limits. Merge it before dispatching staged publishing; the workflow accepts exact commits on `main` only.
 
-For a coordinated runtime-package release, stage both manifests and the root lockfile, and name both versions in the commit and pull request. Do not dispatch a combined npm publication: the staged workflow continues to select and publish exactly one package per run.
+For a coordinated runtime-package release, name every selected package and version in the commit and pull request. Consumer dependency-pin updates do not add those packages to the release selection. Do not dispatch a combined npm publication: the staged workflow continues to select and publish exactly one package per run.
 
 ## Repository snapshot releases
 
