@@ -4,7 +4,7 @@ This npm workspace develops small, independently publishable libraries for Obsid
 
 The established libraries are extracted from, and continuously exercised by, maintained plug-ins and applications. New packages identify their implementation and adoption status separately. See [Proven in maintained consumers](docs/proven-in-use.md) for the concrete TagFolder, DiffZip, Screwdriver, and Self-hosted LiveSync integration and verification boundaries.
 
-The packages use independent `0.x` versions. Released packages are available from npm through the default `latest` dist-tag. `@vrtmrz/value-store`, `@vrtmrz/secret-store`, and `@vrtmrz/secret-store-node` are unpublished development packages. The workspace root and harness application are never published to npm.
+The packages use independent `0.x` versions. Use `npm view <package-name> version dist-tags` to check package availability and release tags; `latest` is the default dist-tag. `@vrtmrz/secret-store` and `@vrtmrz/secret-store-node` are unpublished development packages. The workspace root and harness application are never published to npm.
 
 ## Packages
 
