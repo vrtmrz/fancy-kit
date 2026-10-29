@@ -146,6 +146,8 @@ atomicity, and follow-up state updates belong to the consumer.
 
 The focused entry has no host globals or DOM/Node declaration dependency.
 The `.js` alias and root `content` namespace expose the same implementation.
+See [the composition example](../../../docs/runtime-composition.md#keep-content-policy-in-the-adapter)
+for a complete adapter and the distinction between missing and unreadable content.
 
 ## Own one delayed callback
 

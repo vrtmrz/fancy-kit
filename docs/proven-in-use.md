@@ -43,6 +43,85 @@ Its compatibility-review workflow also uses the Obsidian `confirmAction` adapter
 
 LiveSync's WebApp and WebPeer create `@vrtmrz/browser-ui-kit` interaction and notification adapters at their browser composition roots. Consumer tests own Root selection, persistence, P2P settings, and runtime composition, while the browser kit owns typed choice mapping, native DOM lifecycle, safe plain-text defaults, and keyed notification expiry. A Compose-backed Playwright scenario then verifies the LiveSync-specific WebApp-to-WebPeer-to-CLI transfer without treating the browser adapter as a Harness or Obsidian substitute.
 
+## Blob utilities: construction, normalisation, and comparison
+
+The unreleased `octagonal-wheels/binary/blob` entry extracts text and binary
+Blob construction from Commonlib 0.2.0. Self-hosted LiveSync 1.0.40 uses the
+original Commonlib helpers to prepare hidden-file content. Its existing
+`createBlob` helper returns Blob inputs unchanged; the new normalisation API
+is named `toBlob` to make that identity contract explicit. `isBlobContentEqual`
+compares two Blobs in sequential parts of at most 10,000 bytes and accepts an
+optional synchronous or asynchronous ArrayBuffer equality predicate.
+
+The [browser contract tests](../packages/octagonal-wheels/src/binary/blob.test.ts)
+cover text parts, Unicode, line endings, MIME types, empty inputs, binary view
+ranges, byte snapshots, and existing Blob identity. Comparison tests cover
+size and MIME handling, bounded read order, early termination, injected
+predicates, and unchanged failures. The
+[Node boundary test](../packages/octagonal-wheels/test-node/blob.test.ts) checks
+import and use without browser services. Packed-consumer fixtures check the
+installed module's [public types](../test/packed-consumer/blob-usage.ts) and
+[runtime behaviour](../test/packed-consumer/blob-runtime.mjs).
+
+These fixtures define package-owned verification. An unreleased
+[Commonlib](https://github.com/vrtmrz/livesync-commonlib) candidate now delegates
+its existing creation imports to this entry and wraps `toBlob` under the
+legacy `createBlob` name. Its `isDocContentSame` fallback delegates to
+`isBlobContentEqual`, retaining Commonlib's Base64 and Buffer fallbacks; native
+IndexedDB comparison stays in Commonlib. Existing result contracts pass
+before and after delegation. Composition tests spy on the real shared
+function, and packed type and runtime fixtures verify the selected Octagonal
+Wheels tarball through the legacy imports.
+
+A Self-hosted LiveSync candidate installs the same tested Commonlib and
+Octagonal Wheels tarballs. Its hidden-file loading tests call the real
+Commonlib helpers with injected storage, assert the storage calls, and verify
+text, binary, empty, missing-file, and read-failure behaviour. Its revision
+tests exercise real content comparison to distinguish matching content from
+content which requires a new revision. The consumer's
+unit suite, type and lint checks, and production build pass with those
+artefacts; installed package contents and dependency resolution are also
+checked against the selected tarballs.
+
+This is candidate compatibility evidence. Released dependency declarations
+remain to be updated. Subsequent candidate verification includes CLI builds,
+browser workflows, and focused real-Obsidian hidden-file and Customisation Sync
+scenarios. Those checks cover their named workflows; physical-mobile validation
+remains separate. Document interpretation and content-equality policy remain with
+Commonlib.
+
+## Deferred action ownership: candidate integration
+
+The unreleased `octagonal-wheels/concurrency/deferredAction` entry provides
+`createDeferredAction` for one replaceable delayed callback per owner.
+Cancellation permits another schedule; disposal ends the action's
+lifetime. An injected `TimeoutScheduler` selects the host operation without
+sharing keys or timer state between owners.
+
+[Browser contracts](../packages/octagonal-wheels/src/concurrency/deferredAction.test.ts)
+cover replacement order, cancellation, terminal disposal, independent
+instances, stale callbacks, re-entrant scheduling, and unchanged failures.
+The [Node boundary](../packages/octagonal-wheels/test-node/deferredAction.test.ts)
+and [packed runtime fixture](../test/packed-consumer/timeout-runtime.mjs)
+check import and construction without host globals, injected scheduling, and
+native timers. Packed type checks cover focused and alias imports without
+DOM or Node declarations, the category entry, and the isolated browser bundle.
+
+A Self-hosted LiveSync candidate uses the real deferred action for status-counter
+minimum visibility and inactive linger. Consumer tests retain timing, width,
+timer receivers, zero-valued handles, independent displays, and source
+unsubscription. Composition spies verify scheduling, cancellation, child
+action disposal, and the injected host operation. The consumer's unit,
+type, lint, Svelte, production-build, and iOS syntax checks pass with the
+selected tarballs. The same Octagonal Wheels candidate also passes the
+existing Commonlib packed-consumer gate.
+
+This is candidate integration evidence. Released dependency declarations and
+physical-mobile checks remain separate work. Subsequent consumer verification
+includes CLI builds, browser workflows, and real-Obsidian status and log lifecycle
+scenarios. These are workflow-specific checks. The existing Promise-delay
+cancellation contracts are unchanged.
+
 ## SecretStore: package-owned evidence
 
 The `@vrtmrz/secret-store` core, Obsidian adapter, and Node age adapter have no maintained consumer integration yet. Its [shared contract cases](../packages/secret-store/test/contract-cases.ts) and [memory-store tests](../packages/secret-store/test/secret-store.test.ts) cover asynchronous string and object operations, absent versus empty values, stored JSON null, exact string preservation, validation, replacement, instance isolation, paired serializers, getter defaults used only for absence, and sanitised failures before backend writes. [Packed-consumer verification](../scripts/verify-packed-consumer.mjs) exercises the installed tarball, compiles its public API without Node or DOM types, and checks that its browser bundle loads only the neutral secret and value packages.
@@ -81,4 +160,137 @@ The examples demonstrate a recurring composition rule:
 - retain real-runtime tests only for the platform behaviour which the shared contract does not claim; and
 - import the smallest documented entry point so that unrelated platform code stays out of the consumer bundle.
 
-Start with the package-specific usage guide, then use the linked consumer source as a complete application example. When a consumer changes or stops using a boundary, this page should be corrected rather than preserving the project name as an unqualified endorsement.
+Start with the [shared runtime composition guide](runtime-composition.md) and the
+package-specific usage guide, then use the linked consumer source as a complete application example. When a consumer changes or stops using a boundary, this page should be corrected rather than preserving the project name as an unqualified endorsement.
+
+## Semaphore permits: candidate integration
+
+The unreleased `withSemaphore` export from
+`octagonal-wheels/concurrency/semaphore` runs a callback after acquiring a
+permit and releases it once after the callback settles. It retains the
+acquisition receiver, default quantity, and ordinary `finally` failure
+semantics. Callers can inject an object with only an `acquire` operation.
+
+[Browser contracts](../packages/octagonal-wheels/src/concurrency/semaphore.scope.test.ts)
+cover delayed acquisition, synchronous values, asynchronous results, thenables,
+processing and acquisition failures, and release failures. Real semaphore
+tests verify bounded queued work and permit reuse after success and failure.
+The [Node boundary](../packages/octagonal-wheels/test-node/semaphore.test.ts)
+and [packed fixture](../test/packed-consumer/semaphore-runtime.mjs) exercise
+the same scope without timer, DOM, or fetch globals. Packed type checks cover
+the focused and `.js` imports without DOM or Node declarations, result
+inference, rejected inputs, and the category entry. A bundle check retains
+the helper without the semaphore implementation; the existing entry's Promise
+factory selection remains.
+
+ConfigSync initially adopted this helper with characterisation coverage of its
+database and extra-file batches. The current unpublished candidate uses
+`forEachInScope` for those batches; the semaphore helper retains its independent
+contracts above. Its acquisition and release failure fixtures remain package
+tests rather than assertions about ConfigSync's current implementation.
+
+## Execution scopes: candidate integration
+
+The unpublished scope APIs combine a borrowed value, registered cleanup, typed
+pipelines, child scopes, cancellation observation, and bounded iteration.
+The [scope contracts](../packages/octagonal-wheels/src/resource/scope.test.ts),
+[cancellation contracts](../packages/octagonal-wheels/src/concurrency/cancellation.test.ts),
+and [iteration contracts](../packages/octagonal-wheels/src/concurrency/scopedIteration.test.ts)
+cover ownership, retained failures, partial results, and waiting for child cleanup.
+The [packed runtime fixture](../test/packed-consumer/scope-runtime.mjs) and
+[type fixture](../test/packed-consumer/scope-usage.ts) exercise focused imports;
+the [neutral fixture](../test/packed-consumer/scope-neutral-usage.ts) checks the
+base and iteration declarations without DOM or Node types.
+
+LiveSync's ConfigSync candidate uses bounded iteration after database enumeration,
+retaining the limit of ten, database-before-extra-file ordering, filtering,
+per-item logging and continuation, and matched-file retry after a failed store.
+Its consumer tests check that iteration failures stay outside item recovery.
+Commonlib's integrity diagnostic candidate registers owned remote closure on a
+scope covering all source use. Its characterisations cover awaiting closure,
+close-error reports, cancellation during acquisition, and retained evidence.
+Report assembly remains after cleanup. Borrowed local sources remain open.
+
+These are candidate integrations with package and consumer contract coverage.
+Released dependency selection and publication remain separate work.
+
+
+## Shared runtime and value utilities
+
+The unreleased extraction connects `withCounting` to LiveSync's replication
+processor and count-based `CoalescingNotifier` instances to hidden-file batch
+progress. The private `performBatchWithProgress` helper retains LiveSync's
+per-item failure logging and completion policy. The same notifier also replaces
+count-only callbacks in offline reconciliation and rebuilding, retaining attempted
+counts and the absence of a final partial notification.
+
+The unreleased `content` entry now owns `createContentApplier`. ConfigSync's text
+and binary adapters retain read fallback, content equality, write ordering, and
+the decision to update stored state. The [content contracts](../packages/octagonal-wheels/src/content.test.ts)
+exercise synchronous and asynchronous callbacks, unchanged content, completion
+before returning `changed`, and failure propagation. Installed-tarball type and
+runtime fixtures cover its focused and `.js` imports. Consumer tests continue to
+exercise the actual text and binary application paths.
+
+Commonlib retains its duration and delimiter-list compatibility functions
+and its internal `asCopy` adapter around the focused formatting, string, and
+JSON utilities.
+LiveSync retains its 255-byte path-component warning default and uses the
+shared byte measurement. History and conflict navigation retain their DOM and
+reset policy around `stepCyclicIndex`.
+
+Browser contract tests and the packed [runtime fixture](../test/packed-consumer/runtime-tools-runtime.mjs)
+cover count and timer triggers, pending latest values, flush, disposal, and
+native timer use. The [neutral type fixture](../test/packed-consumer/runtime-tools-neutral-usage.ts)
+checks the new declarations without DOM or Node types. Consumer fixtures
+exercise the actual wrappers and application methods with the candidate
+packages. Existing real-Obsidian and mobile workflow validation remains a
+separate boundary from these package and consumer checks.
+
+
+## Resource ownership: candidate integration
+
+The unreleased `resource` entry separates a disposal capability from ownership
+of a value. LiveSync's `withOwnedRemoteResource` delegates its existing finite
+operation scope to `withOwnedResource`. Its Replicator disposer uses
+`createOwnedResource` while preserving deferred closing, the original receiver,
+and one shared completion promise, including rejected cleanup.
+
+Package tests and the packed runtime and neutral type fixtures cover values
+without disposal methods, independent owners, synchronous and asynchronous
+cleanup, failure retention, and ordinary `finally` precedence. Consumer tests
+cover the existing remote-resource wrappers and Replicator factories before
+and after their integration. These checks do not establish Logger migration
+or real-Obsidian and mobile workflow validation.
+
+
+## Multi-key locks and callback utilities: candidate integration
+
+The unreleased `serializedByKeys` export from `octagonal-wheels/concurrency/lock`
+shares the existing single-key lock groups. Commonlib's offline Metadata repair
+and file-event processing now import it directly. Those consumers still own
+key namespaces, deduplication, sorting, and conflict hooks deferred until every
+lock has been released. The existing cross-consumer tests cover overlapping
+rename and Metadata-repair operations, independent keys, and release on failure.
+
+LiveSync imports `wrapMemo` from `octagonal-wheels/function` for settings-control
+updates. The callback retains the existing strict-equality and initial
+`undefined` behaviour. Its command features import `createCommandCheck` from
+`@vrtmrz/obsidian-plugin-kit/command`, retaining fresh selection, falsey-value
+rejection, synchronous checking, and consumer-owned asynchronous failures.
+
+The package-owned [lock contracts](../packages/octagonal-wheels/src/concurrency/serializedByKeys.test.ts),
+[value callback contracts](../packages/octagonal-wheels/src/function.wrapMemo.test.ts),
+and [command contracts](../packages/obsidian-plugin-kit/src/command.test.ts)
+exercise the promoted implementations. Packed [runtime](../test/packed-consumer/upstream-primitives-runtime.mjs)
+and [type](../test/packed-consumer/upstream-primitives-usage.ts)
+fixtures verify installed imports, shared lock groups, callback results, and
+error behaviour. The existing lock entry requires `AbortController` declarations;
+the [neutral type fixture](../test/packed-consumer/upstream-primitives-neutral-usage.ts)
+checks command and value callbacks without DOM or Node declarations. The Obsidian type fixture also checks `Command.checkCallback`
+compatibility through focused and root package imports.
+
+Consumer tests own document-lock composition, settings updates, and command
+actions. This is an unreleased integration; dependency-version selection and
+publication remain separate work. These utility contracts do not establish
+filesystem durability or additional physical-device coverage.
