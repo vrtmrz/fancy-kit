@@ -4,6 +4,7 @@ import { _decodeToArrayBuffer, decodeToArrayBuffer } from './encodedUTF16.js';
 export { _encodeBinary, encodeBinaryEach } from './encodedUTF16.js';
 export { toArrayBuffer } from './arrayBuffer.js';
 export { hexStringToUint8Array, hexStringToUint8ArrayBrowser, hexStringToUint8ArrayNative, uint8ArrayToHexString, uint8ArrayToHexStringBrowser, uint8ArrayToHexStringNative } from './hex.js';
+export { createBinaryBlob, createTextBlob, isBlobContentEqual, toBlob } from './blob.js';
 
 /**
  * Concatenates multiple Uint8Array arrays into a single Uint8Array.

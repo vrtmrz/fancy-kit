@@ -265,6 +265,7 @@ async function main() {
       throw new Error("npm pack returned no tarball for octagonal-wheels");
     }
     verifyPackedDocumentation("octagonal-wheels", octagonalPacked[0]);
+    tarballs.push(resolve(temporaryRoot, octagonalPacked[0].filename));
 
     await writeFile(
       join(temporaryRoot, "package.json"),
@@ -344,6 +345,16 @@ async function main() {
       join(repositoryRoot, "test", "packed-consumer", "obsidian-secrets-usage.ts"),
       join(temporaryRoot, "obsidian-secrets-usage.ts"),
     );
+    for (const filename of [
+      "blob-usage.ts",
+      "blob-runtime.mjs",
+    ]) {
+      await copyFile(
+        join(repositoryRoot, "test", "packed-consumer", filename),
+        join(temporaryRoot, filename),
+      );
+    }
+    run(process.execPath, ["blob-runtime.mjs"], { cwd: temporaryRoot });
     for (const filename of ["secret-store-node-usage.ts", "secret-store-node-runtime.mjs"]) {
       await copyFile(
         join(repositoryRoot, "test", "packed-consumer", filename),
@@ -469,6 +480,7 @@ for (const length of [65, 128]) {
           },
           files: [
             "public-exports.ts",
+            "blob-usage.ts",
             "browser-ui-kit-usage.ts",
             "obsidian-plugin-kit-usage.ts",
             "scripted-step-types.ts",
@@ -492,6 +504,16 @@ for (const length of [65, 128]) {
         .join("\n")}\n`,
     );
     run(process.execPath, ["runtime-imports.mjs"], { cwd: temporaryRoot });
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "blob.ts",
+      source: `export { createTextBlob, createBinaryBlob, toBlob } from "octagonal-wheels/binary/blob";`,
+      requiredModules: ["node_modules/octagonal-wheels/dist/binary/blob.js"],
+      excludedModules: [],
+      externalImports: [],
+      allowedPackages: ["octagonal-wheels"],
+    });
 
     await verifyTreeShakenBundle({
       temporaryRoot,
@@ -693,7 +715,7 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, and 8 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length + 1} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, the Blob, DeferredAction, semaphore, execution scope, callback utility, and runtime utility type and runtime fixtures, and 18 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

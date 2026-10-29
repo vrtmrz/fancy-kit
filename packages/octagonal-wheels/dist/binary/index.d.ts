@@ -27,3 +27,4 @@ export * from "./base64.ts";
 export * from "./arrayBuffer.ts";
 export * from "./encodedUTF16.ts";
 export * from "./hex.ts";
+export * from "./blob.ts";

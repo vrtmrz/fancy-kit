@@ -143,6 +143,14 @@
             "import": "./dist/binary/base64.js",
             "types": "./dist/binary/base64.d.ts"
         },
+        "./binary/blob": {
+            "import": "./dist/binary/blob.js",
+            "types": "./dist/binary/blob.d.ts"
+        },
+        "./binary/blob.js": {
+            "import": "./dist/binary/blob.js",
+            "types": "./dist/binary/blob.d.ts"
+        },
         "./binary/encodedUTF16": {
             "import": "./dist/binary/encodedUTF16.js",
             "types": "./dist/binary/encodedUTF16.d.ts"
@@ -1098,6 +1106,12 @@
             ],
             "binary/base64.js": [
                 "dist/binary/base64.d.ts"
+            ],
+            "binary/blob": [
+                "dist/binary/blob.d.ts"
+            ],
+            "binary/blob.js": [
+                "dist/binary/blob.d.ts"
             ],
             "binary/encodedUTF16": [
                 "dist/binary/encodedUTF16.d.ts"

@@ -74,6 +74,61 @@ if (uint8ArrayToHexString(bytes) !== encoded.toLowerCase()) {
 
 The category import `octagonal-wheels/binary` exposes the same helpers alongside the other binary APIs.
 
+## Blob creation and normalisation
+
+Use `octagonal-wheels/binary/blob` to prepare text or bytes for an API which
+accepts a Blob:
+
+```ts
+import { createBinaryBlob, createTextBlob, toBlob } from "octagonal-wheels/binary/blob";
+
+const text = createTextBlob(["first\r", "\nsecond"]);
+const bytes = new Uint8Array([255, 1, 2, 255]);
+const binary = createBinaryBlob(bytes.subarray(1, 3));
+const sameBlob = toBlob(text); // sameBlob === text
+```
+
+`createTextBlob` always creates a new `text/plain` Blob. String parts are
+concatenated without separators, with transparent line endings and the native
+Blob constructor's conversion of each string part. `createBinaryBlob` always
+creates a new `application/octet-stream` Blob from an ArrayBuffer or an
+ArrayBuffer-backed Uint8Array. It snapshots only the view's visible bytes, so
+later input changes do not alter the Blob.
+
+`toBlob` accepts either input family or an existing Blob. It returns an existing
+Blob unchanged, including its identity and MIME type; it creates a text or
+binary Blob for other supported inputs. This is normalisation, which explains
+the `to` prefix. It does not decode bytes, inspect file extensions, or interpret
+application document metadata. Instance checks use the current realm's global
+constructors.
+
+To compare content independently of MIME types, pass two Blobs to
+`isBlobContentEqual`:
+
+```ts
+import { isBlobContentEqual, toBlob } from "octagonal-wheels/binary/blob";
+
+const equal = await isBlobContentEqual(toBlob("same"), new Blob(["same"], { type: "application/custom" }));
+```
+
+Different sizes return false without reading content; empty Blobs return true.
+Equal-sized inputs are read sequentially in pairs of parts containing at most
+10,000 bytes each. The default predicate compares their Base64 encodings. An
+optional `ArrayBufferContentEquality` predicate receives the left and right
+ArrayBuffers and returns a boolean or `PromiseLike<boolean>`. Each predicate
+finishes before the next pair is read, and false stops further reads. Read and
+predicate failures propagate unchanged. Host-specific comparison selection
+remains with the caller; this function does not select IndexedDB.
+
+The focused entry imports without DOM, fetch, IndexedDB, FileReader, or Blob
+globals. Creation and normalisation require the standard global Blob
+constructor. Comparison uses the supplied Blobs; its default predicate uses
+the existing Base64 encoder, including its native Uint8Array or `btoa` path.
+Browser contract tests and Node tests cover this boundary; packed-consumer
+checks also exercise the installed entry and its public declarations. The
+category entry `octagonal-wheels/binary` exposes the same functions alongside
+other binary utilities.
+
 ## Ordered and completion-order concurrency
 
 `asyncMapWithConcurrency` limits the number of in-flight callbacks and yields results in input order:

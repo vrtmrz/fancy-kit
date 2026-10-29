@@ -39,6 +39,7 @@ console.log(uint8ArrayToHexString(bytes)); // "00ff10"
 
 Public subpaths are declared by the package export map. Extensionless imports, such as `octagonal-wheels/iterable/map`, are the recommended form; `.js` aliases exist for compatibility. Do not import package `src` or `dist` files.
 
+
 ## Module areas
 
 | Area | Examples |
@@ -50,6 +51,15 @@ Public subpaths are declared by the package export map. Extensionless imports, s
 | Platform integration | `browser`, including the reference-counted screen wake-lock manager |
 
 The [generated API index](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/docs/modules.md) links to per-module and per-symbol TSDoc. The [import and runtime guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/guides/imports-and-runtime.md) explains entry-point selection, platform dependencies, testing boundaries, and maintained examples.
+
+## Blob conversion and comparison
+
+`binary/blob` provides `createTextBlob`, `createBinaryBlob`, and `toBlob` for
+standard Blob inputs. Creation returns a new Blob; `toBlob` preserves an
+existing Blob's identity and MIME type. `isBlobContentEqual` compares bytes in
+bounded parts, with an optional synchronous or asynchronous equality predicate.
+See the [Blob guide](guides/imports-and-runtime.md#blob-creation-and-normalisation)
+for input types, line endings, binary view ranges, comparison, and runtime requirements.
 
 ## Bounded asynchronous work
 
