@@ -3,3 +3,6 @@ export * as processor from "./processor.ts";
 export * as semaphore from "./semaphore.ts";
 export * as task from "./task.ts";
 export * as bulk from "./bulk.ts";
+export * as deferredAction from "./deferredAction.ts";
+export * as counting from "./counting.ts";
+export * as coalescingNotifier from "./coalescingNotifier.ts";

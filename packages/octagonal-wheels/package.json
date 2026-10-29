@@ -355,6 +355,30 @@
             "import": "./dist/concurrency/bulk.js",
             "types": "./dist/concurrency/bulk.d.ts"
         },
+        "./concurrency/coalescingNotifier": {
+            "import": "./dist/concurrency/coalescingNotifier.js",
+            "types": "./dist/concurrency/coalescingNotifier.d.ts"
+        },
+        "./concurrency/coalescingNotifier.js": {
+            "import": "./dist/concurrency/coalescingNotifier.js",
+            "types": "./dist/concurrency/coalescingNotifier.d.ts"
+        },
+        "./concurrency/counting": {
+            "import": "./dist/concurrency/counting.js",
+            "types": "./dist/concurrency/counting.d.ts"
+        },
+        "./concurrency/counting.js": {
+            "import": "./dist/concurrency/counting.js",
+            "types": "./dist/concurrency/counting.d.ts"
+        },
+        "./concurrency/deferredAction": {
+            "import": "./dist/concurrency/deferredAction.js",
+            "types": "./dist/concurrency/deferredAction.d.ts"
+        },
+        "./concurrency/deferredAction.js": {
+            "import": "./dist/concurrency/deferredAction.js",
+            "types": "./dist/concurrency/deferredAction.d.ts"
+        },
         "./concurrency/index.js": {
             "import": "./dist/concurrency/index.js",
             "types": "./dist/concurrency/index.d.ts"
@@ -1015,6 +1039,14 @@
             "import": "./dist/promises.js",
             "types": "./dist/promises.d.ts"
         },
+        "./resource": {
+            "import": "./dist/resource.js",
+            "types": "./dist/resource.d.ts"
+        },
+        "./resource.js": {
+            "import": "./dist/resource.js",
+            "types": "./dist/resource.d.ts"
+        },
         "./string": {
             "import": "./dist/string.js",
             "types": "./dist/string.d.ts"
@@ -1313,6 +1345,24 @@
             ],
             "concurrency/bulk.js": [
                 "dist/concurrency/bulk.d.ts"
+            ],
+            "concurrency/coalescingNotifier": [
+                "dist/concurrency/coalescingNotifier.d.ts"
+            ],
+            "concurrency/coalescingNotifier.js": [
+                "dist/concurrency/coalescingNotifier.d.ts"
+            ],
+            "concurrency/counting": [
+                "dist/concurrency/counting.d.ts"
+            ],
+            "concurrency/counting.js": [
+                "dist/concurrency/counting.d.ts"
+            ],
+            "concurrency/deferredAction": [
+                "dist/concurrency/deferredAction.d.ts"
+            ],
+            "concurrency/deferredAction.js": [
+                "dist/concurrency/deferredAction.d.ts"
             ],
             "concurrency/index.js": [
                 "dist/concurrency/index.d.ts"
@@ -1808,6 +1858,12 @@
             ],
             "promises.js": [
                 "dist/promises.d.ts"
+            ],
+            "resource": [
+                "dist/resource.d.ts"
+            ],
+            "resource.js": [
+                "dist/resource.d.ts"
             ],
             "string": [
                 "dist/string.d.ts"

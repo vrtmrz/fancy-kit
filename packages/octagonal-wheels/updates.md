@@ -7,6 +7,10 @@
 - Added the focused `binary/blob` entry with `createTextBlob`, `createBinaryBlob`, and `toBlob`. Creation preserves line endings and binary view ranges; normalisation preserves existing Blob identity. The entry can be imported without DOM or fetch globals; creation and normalisation use the standard Blob constructor when called.
 - Added `isBlobContentEqual` for sequential byte comparison in parts of at most 10,000 bytes, independently of MIME types. Its optional `ArrayBufferContentEquality` predicate supports synchronous or asynchronous host strategies.
 
+### Resource ownership
+
+- Added the focused `resource` entry with `DisposableResource`, `OwnedResource<T>`, `createOwnedResource`, and `withOwnedResource`. Owners can pair any value with synchronous or asynchronous cleanup, retain one disposal outcome, and await cleanup after a scoped operation. `DeferredAction` and `CoalescingNotifier` share the disposal interface while preserving their existing behaviour.
+
 ### Shared value utilities
 
 - Added `formatDuration`, `cloneViaJSON`, `findPathComponentsExceedingUtf8Limit`, `splitDelimitedList`, `joinDelimitedList`, and `stepCyclicIndex`, with focused imports and explicit conversion and boundary contracts.
@@ -18,6 +22,15 @@
 ### Callback utilities
 
 - Consumers can suppress consecutive duplicate callback arguments with `wrapMemo` from `function`. Each wrapper retains its own last value, initially `undefined`, and uses strict equality. Synchronous failures leave the previous value intact; callback return values are discarded.
+
+### Concurrency
+
+- Added `withCounting` for an operation-scoped mutable count and `createCoalescingNotifier` for the latest pending update after a count increase or maximum wait. The notifier supports explicit flush and disposal, an optional progress-count selector, and an injected scheduler.
+
+### Scheduling
+
+- We can reschedule, cancel, and dispose a delayed callback independently for each owner.
+    - `concurrency/deferredAction` provides `createDeferredAction`, `DeferredAction`, and `TimeoutScheduler`, with an injectable scheduler and a focused entry which imports without timer or browser globals.
 
 ## 0.1.55
 

@@ -39,6 +39,7 @@ console.log(uint8ArrayToHexString(bytes)); // "00ff10"
 
 Public subpaths are declared by the package export map. Extensionless imports, such as `octagonal-wheels/iterable/map`, are the recommended form; `.js` aliases exist for compatibility. Do not import package `src` or `dist` files.
 
+The shared runtime utilities include `createOwnedResource`, `withOwnedResource`, `createDeferredAction`, `createCoalescingNotifier`, `withCounting`, compact duration formatting, JSON-based cloning, delimiter lists, UTF-8 component inspection, and cyclic indices. Their contracts and focused imports are described in the [runtime guide](guides/imports-and-runtime.md).
 
 ## Module areas
 
@@ -68,6 +69,15 @@ decoding, comparison, and conditional writing. Inject storage and recovery polic
 only a read failure invokes the supplied fallback. The result distinguishes a
 completed write from an unchanged target. See the
 [content guide](guides/imports-and-runtime.md#apply-content-when-it-changes).
+
+## Deferred actions
+
+Use `createDeferredAction` from `concurrency/deferredAction` when one owner
+needs to reschedule, cancel, or dispose a delayed callback. Each action owns
+at most one pending timeout. An injected `TimeoutScheduler` selects the host
+operation; the default uses global timers only when needed. See the
+[deferred action guide](guides/imports-and-runtime.md#own-one-delayed-callback) for
+lifecycle and testing contracts.
 
 ## Repeated callback values
 

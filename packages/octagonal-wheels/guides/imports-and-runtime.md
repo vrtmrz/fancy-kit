@@ -147,6 +147,43 @@ atomicity, and follow-up state updates belong to the consumer.
 The focused entry has no host globals or DOM/Node declaration dependency.
 The `.js` alias and root `content` namespace expose the same implementation.
 
+## Own one delayed callback
+
+`createDeferredAction` gives each owner an independent pending callback:
+
+```ts
+import { createDeferredAction } from "octagonal-wheels/concurrency/deferredAction";
+
+declare function refreshPreview(): void;
+
+const refresh = createDeferredAction(refreshPreview);
+refresh.schedule(250);
+refresh.schedule(500); // cancels and replaces the pending registration
+refresh.cancel(); // a later schedule is still allowed
+refresh.dispose(); // ends this action's lifetime
+```
+
+The action starts idle. `schedule(delayMs)` cancels the pending
+registration before creating another and passes the delay unchanged to its
+scheduler. `cancel()` is idempotent while idle. `dispose()` is idempotent,
+cancels pending work, and makes later scheduling a no-op. Expiry releases the
+registration before invoking the callback, allowing the callback to schedule
+again. It does not interrupt work which the callback has already started.
+
+Inject a `TimeoutScheduler` as the second argument to select a host or drive
+the callback in a unit test. It receives a callback and delay and returns a
+cancellation function for that registration. The scheduler must invoke the
+callback asynchronously. Wrap host methods to retain their receiver. Stale
+callbacks are suppressed after cancellation, replacement, or disposal;
+scheduling, cancellation, and callback errors propagate.
+
+The focused entry imports and creates actions without accessing timer,
+DOM, or fetch globals. Its public types need neither DOM nor Node declarations.
+The default resolves global timer methods when scheduling or cancelling.
+Source and packed-consumer tests cover the injected and native Node boundary.
+This action owns callbacks; the existing `cancelableDelay` and
+`extendableDelay` Promise contracts retain their existing behaviour.
+
 ## Suppress consecutive duplicate arguments
 
 `wrapMemo` from `function` owns one last-argument value per wrapper. It invokes
@@ -239,6 +276,54 @@ export async function exportArchive(
 
 `ScreenWakeLockManager` satisfies this structural type in a browser. A focused application test can supply a small fake without emulating `navigator`, visibility events, or power policy. Apply the same technique around IndexedDB or Web Crypto when the consumer is testing orchestration rather than the platform implementation.
 
+## Own a value and its cleanup
+
+`DisposableResource` from `octagonal-wheels/resource` describes an explicit
+`dispose(): void | Promise<void>` operation. The owner ends the lifetime;
+borrowers receive the capabilities they use. `OwnedResource<T>` adds a readonly
+`value` without requiring `T` to implement disposal.
+
+```ts
+import { createOwnedResource, withOwnedResource } from "octagonal-wheels/resource";
+
+const listener = () => console.log("Changed");
+const events = new EventTarget();
+events.addEventListener("change", listener);
+const registration = createOwnedResource(listener, value => {
+  events.removeEventListener("change", value);
+});
+
+await withOwnedResource(registration, async owned => {
+  events.dispatchEvent(new Event("change"));
+  // Borrowers can use owned.value without receiving the cleanup capability.
+  owned.value();
+});
+```
+
+`createOwnedResource(value, release)` wraps an already acquired value, preserves
+its identity, and calls `release(value)` only on the first disposal. Synchronous
+cleanup runs immediately. Later calls retain the first completion promise or
+synchronous failure, including rejected cleanup, without retrying. The wrapper
+does not modify the value or prevent its use after disposal. The value's own
+contract determines what further use means.
+
+`withOwnedResource(resource, operation)` passes the original resource to the
+operation and awaits its result before awaiting `dispose()` in `finally`.
+It accepts ownership wrappers and existing objects with a disposal method.
+A cleanup failure takes precedence when both the operation and cleanup fail.
+Acquire asynchronous resources before entering the scope, and give each
+lifetime one owner. For a host-owned lifetime, keep the wrapper with the host
+and register disposal with that host's termination mechanism.
+
+`DeferredAction` and `CoalescingNotifier` satisfy `DisposableResource` while
+retaining their synchronous disposal contracts. Notifier disposal discards
+pending updates; request `flush()` explicitly when the last update should be
+delivered. A plain log or notification function can be borrowed directly when
+there is no owned registration or other cleanup.
+
+These APIs use ordinary methods and promises. They do not require disposal
+symbols, `using`, a host global, or a polyfill.
+
 ## Lifecycle and side effects
 
 Review object ownership for stateful APIs. Caches, queues, event hubs, reactive objects, locks, and browser managers can retain mutable state or listeners. Keep instances scoped to an explicit owner and call their documented release, close, or disposal operation when one exists.
@@ -258,6 +343,7 @@ Focused tests and maintained consumers establish representative contracts:
 | Promise delays, cancellation sentinels, and scheduling helpers | [`src/promises.test.ts`](../src/promises.test.ts) |
 | Semaphore, lock, task, processor, and bulk coordination | Tests under [`src/concurrency`](../src/concurrency) |
 | IndexedDB and memory-backed storage contracts | Tests under [`src/databases`](../src/databases) and [`src/BackedQueue`](../src/BackedQueue) |
+| Ownership wrappers, cleanup completion, failure propagation, and disposal scopes | [`src/resource.test.ts`](../src/resource.test.ts) |
 | Screen wake-lock leases, visibility, failure handling, injection, and disposal | [`src/browser/wakeLock.test.ts`](../src/browser/wakeLock.test.ts) |
 | Screen wake-lock import and best-effort use without DOM globals | [`test-node/wakeLock.test.ts`](../test-node/wakeLock.test.ts) |
 | Real Obsidian/Electron wake-lock composition | [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/mobile.ts`](../../../test/e2e-obsidian/scripts/mobile.ts) |
@@ -266,6 +352,59 @@ The Chromium suite is broad, but support claims still belong to the selected ent
 
 For maintained application examples, see [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md). Self-hosted LiveSync exercises concurrency, reactive state, storage, binary, and browser-lifecycle modules at scale; DiffZip composes wake-lock, encryption, promise, and binary entries; and Screwdriver applies the path contract before restoring untrusted document paths. These are entry-point-specific examples rather than a package-wide platform guarantee.
 
+
+## Count operations and coalesce notifications
+
+`withCounting` in `concurrency/counting` increments a mutable numeric `value`
+before calling an operation, awaits the result, and decrements in `finally`.
+It supports plain objects and reactive sources without importing a reactive
+implementation. Overlapping operations share the count while their lifetimes
+remain independent. An increment failure prevents the operation; a decrement
+failure takes precedence over the result or error, as with ordinary `finally`.
+
+`createCoalescingNotifier<T>` in `concurrency/coalescingNotifier` returns a
+`CoalescingNotifier<T>` with `update`, `flush`, and `dispose`:
+
+```ts
+import { createCoalescingNotifier } from "octagonal-wheels/concurrency/coalescingNotifier";
+
+declare function showProgress(value: { count: number; bytes: number }): void;
+const progress = createCoalescingNotifier({
+  onNotify: showProgress,
+  everyCount: 100,
+  maxWaitMs: 2000,
+  getCount: value => value.count,
+  leading: true,
+});
+progress.update({ count: 1, bytes: 512 });
+progress.update({ count: 2, bytes: 1024 });
+progress.flush();
+progress.dispose();
+```
+
+Supply a positive integer `everyCount`, a finite non-negative `maxWaitMs`, or
+both. Without `getCount`, each update counts once; with it, the caller supplies
+a cumulative, non-decreasing count. Each notification establishes the next
+count baseline. `leading` defaults to false; enabling it preserves schedules
+such as the first, 101st, and 201st updates for a count interval of 100.
+
+The first pending update starts the maximum wait. Later updates replace its
+value without extending the deadline. A count-triggered notification cancels
+that timer. No timer runs when nothing is pending. Values are retained by
+reference: pass fresh snapshots when later mutation would be misleading.
+`flush` delivers only the pending latest value; `dispose` discards it and
+permanently ignores further updates. Flush before disposal when a final
+notification is required.
+
+Callbacks are synchronous observers; returned values are ignored. Pending
+state is cleared before invoking a callback, allowing reentrant updates.
+Callback and scheduler errors propagate without retries. A callback invoked
+by a timer throws through the scheduler, so it cannot reject an earlier
+`update` call. Consumers retain responsibility for their error boundary.
+The optional `scheduleTimeout` uses the same contract as `DeferredAction`.
+Both focused entries import without timer or DOM globals and their declarations
+require neither DOM nor Node types. Timed use resolves the selected scheduler
+only when pending work needs a timer.
 
 ## Format and transform small values
 

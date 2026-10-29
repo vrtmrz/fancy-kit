@@ -348,6 +348,9 @@ async function main() {
     for (const filename of [
       "blob-usage.ts",
       "blob-runtime.mjs",
+      "timeout-usage.ts",
+      "timeout-neutral-usage.ts",
+      "timeout-runtime.mjs",
       "runtime-tools-runtime.mjs",
       "runtime-tools-neutral-usage.ts",
       "upstream-primitives-runtime.mjs",
@@ -359,6 +362,7 @@ async function main() {
       );
     }
     run(process.execPath, ["blob-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["timeout-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["runtime-tools-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["upstream-primitives-runtime.mjs"], { cwd: temporaryRoot });
     await writeFile(
@@ -368,7 +372,7 @@ async function main() {
           lib: ["ES2022"], module: "NodeNext", moduleResolution: "NodeNext",
           noEmit: true, strict: true, target: "ES2022", types: [],
         },
-        files: ["runtime-tools-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
+        files: ["timeout-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
       }, null, 2),
     );
     run(process.execPath, [
@@ -501,6 +505,7 @@ for (const length of [65, 128]) {
           files: [
             "public-exports.ts",
             "blob-usage.ts",
+            "timeout-usage.ts",
             "browser-ui-kit-usage.ts",
             "obsidian-plugin-kit-usage.ts",
             "scripted-step-types.ts",
@@ -526,6 +531,8 @@ for (const length of [65, 128]) {
     run(process.execPath, ["runtime-imports.mjs"], { cwd: temporaryRoot });
 
     for (const [name, entry, modules] of [
+      ["withCounting", "concurrency/counting", ["concurrency/counting"]],
+      ["createCoalescingNotifier", "concurrency/coalescingNotifier", ["concurrency/coalescingNotifier", "concurrency/deferredAction"]],
       ["formatDuration", "notation/duration", ["notation/duration"]],
       ["cloneViaJSON", "encoding/json", ["encoding/json"]],
       ["findPathComponentsExceedingUtf8Limit", "path", ["path"]],
@@ -542,6 +549,16 @@ for (const length of [65, 128]) {
         allowedPackages: ["octagonal-wheels"],
       });
     }
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "timeout.ts",
+      source: 'export { createDeferredAction } from "octagonal-wheels/concurrency/deferredAction";',
+      requiredModules: ["node_modules/octagonal-wheels/dist/concurrency/deferredAction.js"],
+      excludedModules: ["node_modules/octagonal-wheels/dist/concurrency/task.js"],
+      externalImports: [],
+      allowedPackages: ["octagonal-wheels"],
+    });
 
     await verifyTreeShakenBundle({
       temporaryRoot,
