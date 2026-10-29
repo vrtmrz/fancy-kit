@@ -36,7 +36,7 @@ const packagedDocumentation = new Map([
   ["@vrtmrz/ui-interactions", ["docs/usage-guide.md"]],
   ["@vrtmrz/browser-ui-kit", ["docs/usage-guide.md"]],
   ["@vrtmrz/obsidian-plugin-kit", ["docs/usage-guide.md"]],
-  ["octagonal-wheels", ["guides/imports-and-runtime.md"]],
+  ["octagonal-wheels", ["guides/imports-and-runtime.md", "guides/execution-scopes.md"]],
 ]);
 
 function npmInvocation(args) {
@@ -351,9 +351,16 @@ async function main() {
       "timeout-usage.ts",
       "timeout-neutral-usage.ts",
       "timeout-runtime.mjs",
+      "semaphore-usage.ts",
+      "semaphore-neutral-usage.ts",
+      "semaphore-runtime.mjs",
       "runtime-tools-runtime.mjs",
       "runtime-tools-neutral-usage.ts",
+      "scope-usage.ts",
+      "scope-neutral-usage.ts",
+      "scope-runtime.mjs",
       "upstream-primitives-runtime.mjs",
+      "upstream-primitives-usage.ts",
       "upstream-primitives-neutral-usage.ts",
     ]) {
       await copyFile(
@@ -363,7 +370,9 @@ async function main() {
     }
     run(process.execPath, ["blob-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["timeout-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["semaphore-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["runtime-tools-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["scope-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["upstream-primitives-runtime.mjs"], { cwd: temporaryRoot });
     await writeFile(
       join(temporaryRoot, "tsconfig.timeout.json"),
@@ -372,7 +381,7 @@ async function main() {
           lib: ["ES2022"], module: "NodeNext", moduleResolution: "NodeNext",
           noEmit: true, strict: true, target: "ES2022", types: [],
         },
-        files: ["timeout-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
+        files: ["timeout-neutral-usage.ts", "semaphore-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "scope-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
       }, null, 2),
     );
     run(process.execPath, [
@@ -506,6 +515,9 @@ for (const length of [65, 128]) {
             "public-exports.ts",
             "blob-usage.ts",
             "timeout-usage.ts",
+            "semaphore-usage.ts",
+            "scope-usage.ts",
+            "upstream-primitives-usage.ts",
             "browser-ui-kit-usage.ts",
             "obsidian-plugin-kit-usage.ts",
             "scripted-step-types.ts",
@@ -549,6 +561,19 @@ for (const length of [65, 128]) {
         allowedPackages: ["octagonal-wheels"],
       });
     }
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "semaphore-scope.ts",
+      source: 'export { withSemaphore } from "octagonal-wheels/concurrency/semaphore";',
+      requiredModules: ["node_modules/octagonal-wheels/dist/concurrency/semaphore.js"],
+      excludedModules: [
+        "node_modules/octagonal-wheels/dist/concurrency/semaphore_v2.js",
+        "node_modules/octagonal-wheels/dist/concurrency/task.js",
+      ],
+      externalImports: [],
+      allowedPackages: ["octagonal-wheels"],
+    });
 
     await verifyTreeShakenBundle({
       temporaryRoot,

@@ -25,7 +25,12 @@
 
 ### Concurrency
 
+- Operations can acquire several shared lock groups with `serializedByKeys` from `concurrency/lock`. The helper awaits the callback and releases every acquired lock on success or failure. Callers provide unique keys in a consistent order and retain responsibility for avoiding nested acquisition of held keys.
+
 - Added `withCounting` for an operation-scoped mutable count and `createCoalescingNotifier` for the latest pending update after a count increase or maximum wait. The notifier supports explicit flush and disposal, an optional progress-count selector, and an injected scheduler.
+
+- We can hold a semaphore permit for an operation and release it on success or failure.
+    - `withSemaphore` in `concurrency/semaphore` starts a callback after acquisition, awaits its result, and releases once in `finally`. An injected acquisition capability supports composition tests.
 
 ### Scheduling
 

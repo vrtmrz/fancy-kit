@@ -1,3 +1,6 @@
+import * as resource_scope from './resource/scope.js';
+export { resource_scope as scope };
+
 /**
  * Pairs an existing value with cleanup that runs at most once.
  *

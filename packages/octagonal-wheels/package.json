@@ -355,6 +355,14 @@
             "import": "./dist/concurrency/bulk.js",
             "types": "./dist/concurrency/bulk.d.ts"
         },
+        "./concurrency/cancellation": {
+            "import": "./dist/concurrency/cancellation.js",
+            "types": "./dist/concurrency/cancellation.d.ts"
+        },
+        "./concurrency/cancellation.js": {
+            "import": "./dist/concurrency/cancellation.js",
+            "types": "./dist/concurrency/cancellation.d.ts"
+        },
         "./concurrency/coalescingNotifier": {
             "import": "./dist/concurrency/coalescingNotifier.js",
             "types": "./dist/concurrency/coalescingNotifier.d.ts"
@@ -430,6 +438,14 @@
         "./concurrency/processor.js": {
             "import": "./dist/concurrency/processor.js",
             "types": "./dist/concurrency/processor.d.ts"
+        },
+        "./concurrency/scopedIteration": {
+            "import": "./dist/concurrency/scopedIteration.js",
+            "types": "./dist/concurrency/scopedIteration.d.ts"
+        },
+        "./concurrency/scopedIteration.js": {
+            "import": "./dist/concurrency/scopedIteration.js",
+            "types": "./dist/concurrency/scopedIteration.d.ts"
         },
         "./concurrency/semaphore": {
             "import": "./dist/concurrency/semaphore.js",
@@ -1047,6 +1063,14 @@
             "import": "./dist/resource.js",
             "types": "./dist/resource.d.ts"
         },
+        "./resource/scope": {
+            "import": "./dist/resource/scope.js",
+            "types": "./dist/resource/scope.d.ts"
+        },
+        "./resource/scope.js": {
+            "import": "./dist/resource/scope.js",
+            "types": "./dist/resource/scope.d.ts"
+        },
         "./string": {
             "import": "./dist/string.js",
             "types": "./dist/string.d.ts"
@@ -1346,6 +1370,12 @@
             "concurrency/bulk.js": [
                 "dist/concurrency/bulk.d.ts"
             ],
+            "concurrency/cancellation": [
+                "dist/concurrency/cancellation.d.ts"
+            ],
+            "concurrency/cancellation.js": [
+                "dist/concurrency/cancellation.d.ts"
+            ],
             "concurrency/coalescingNotifier": [
                 "dist/concurrency/coalescingNotifier.d.ts"
             ],
@@ -1402,6 +1432,12 @@
             ],
             "concurrency/processor.js": [
                 "dist/concurrency/processor.d.ts"
+            ],
+            "concurrency/scopedIteration": [
+                "dist/concurrency/scopedIteration.d.ts"
+            ],
+            "concurrency/scopedIteration.js": [
+                "dist/concurrency/scopedIteration.d.ts"
             ],
             "concurrency/semaphore": [
                 "dist/concurrency/semaphore.d.ts"
@@ -1864,6 +1900,12 @@
             ],
             "resource.js": [
                 "dist/resource.d.ts"
+            ],
+            "resource/scope": [
+                "dist/resource/scope.d.ts"
+            ],
+            "resource/scope.js": [
+                "dist/resource/scope.d.ts"
             ],
             "string": [
                 "dist/string.d.ts"

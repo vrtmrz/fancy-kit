@@ -63,6 +63,29 @@ export function serialized<T>(key: string | symbol, proc: Task<T>): Promise<T> {
     return p.promise;
 }
 
+/**
+ * Acquire each supplied key in order, then run and await the callback.
+ *
+ * Uses the same lock groups as {@link serialized}. The caller must provide
+ * unique keys in a consistent order across all overlapping operations, such
+ * as lexicographically sorted strings. Keys are not sorted or deduplicated
+ * here. Repeated keys, inconsistent acquisition orders, or reacquiring a key
+ * already held by the callback can deadlock.
+ *
+ * An empty list invokes the callback immediately. Its result or failure is
+ * preserved, and every acquired lock is released after the callback settles.
+ * The input list is not modified.
+ *
+ * @param keys - Unique lock keys in the caller's shared acquisition order.
+ * @param callback - Operation to run after every key has been acquired.
+ * @returns The callback's result after releasing the acquired locks.
+ */
+export async function serializedByKeys<T>(keys: readonly string[], callback: () => Promise<T>): Promise<T> {
+    const [key, ...remainingKeys] = keys;
+    if (key === undefined) return await callback();
+    return await serialized(key, () => serializedByKeys(remainingKeys, callback));
+}
+
 const latestProcessMap = new Map<string | symbol, Promise<any>>();
 export const SYMBOL_SKIPPED = Symbol("SKIPPED");
 

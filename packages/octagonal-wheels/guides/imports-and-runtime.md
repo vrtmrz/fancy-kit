@@ -184,6 +184,66 @@ Source and packed-consumer tests cover the injected and native Node boundary.
 This action owns callbacks; the existing `cancelableDelay` and
 `extendableDelay` Promise contracts retain their existing behaviour.
 
+## Hold a semaphore permit
+
+`withSemaphore` owns the acquisition and release around one callback:
+
+```ts
+import { Semaphore, withSemaphore } from "octagonal-wheels/concurrency/semaphore";
+
+const semaphore = Semaphore(3);
+declare function saveRecord(): Promise<string>;
+
+const result: string = await withSemaphore(semaphore, () => saveRecord());
+```
+
+The helper calls `acquire()` on the supplied object with its original receiver
+and default quantity. It starts the callback only after acquisition succeeds,
+awaits its value or thenable, and calls the acquired release function exactly
+once in `finally`. The semaphore retains its existing queue and concurrency
+policy. Pass a callback so work starts while the permit is held.
+
+An acquisition failure rejects without starting the callback. When release
+succeeds, callback failures propagate unchanged. A throwing release function
+replaces the callback's result or error, following ordinary `finally` semantics.
+Keep application logging and decisions to continue inside the callback when
+they apply only to processing failures. This retains a separate boundary for
+acquisition failures.
+
+Tests can inject an object with only `acquire(): Promise<() => void>` to control
+acquisition and inspect release. Browser contracts also use the real semaphore
+to verify bounded queued work after successful and failed operations. Node and
+packed-consumer fixtures cover the focused entry without timer, DOM, or fetch
+globals; its public declarations need neither DOM nor Node types. The `.js`
+alias exports the same helper, and the concurrency category exposes it as
+`semaphore.withSemaphore`.
+
+## Serialise an operation across several keys
+
+Use `serializedByKeys` from `concurrency/lock` when an operation must hold
+every supplied lock before its callback starts. It shares lock groups with
+`serialized`, retains the callback result or failure, and releases all acquired
+locks when the callback settles. An empty list invokes the callback immediately.
+
+```ts
+import { serializedByKeys } from "octagonal-wheels/concurrency/lock";
+
+declare const sourceId: string;
+declare const destinationId: string;
+declare function moveEntry(): Promise<void>;
+
+const keys = [...new Set([sourceId, destinationId])].sort();
+await serializedByKeys(keys, moveEntry);
+```
+
+Callers supply unique keys in the same acquisition order across overlapping
+operations. The helper neither sorts nor deduplicates the input. Duplicate
+keys, inconsistent ordering, or reacquiring a held key from the callback can
+deadlock. Keep application namespaces and any work which must run after
+unlocking in the consumer. The input list is not modified. The existing
+`concurrency/lock` entry includes APIs whose declarations require
+`AbortController` types.
+
 ## Suppress consecutive duplicate arguments
 
 `wrapMemo` from `function` owns one last-argument value per wrapper. It invokes
@@ -323,6 +383,15 @@ there is no owned registration or other cleanup.
 
 These APIs use ordinary methods and promises. They do not require disposal
 symbols, `using`, a host global, or a polyfill.
+
+## Execute with deferred cleanup
+
+Use `withScope` for an operation which registers cleanup during execution.
+`scoped().pipe()` composes typed steps with the same cleanup owner;
+`pipeScoped()` closes a child before the next step. Cancellation and bounded
+iteration use that same context shape. See the
+[execution scope guide](execution-scopes.md) for ownership, failure aggregation,
+partial results, and the distinction from existing `finally`-based helpers.
 
 ## Lifecycle and side effects
 

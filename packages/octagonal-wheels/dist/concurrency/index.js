@@ -14,4 +14,8 @@ import * as concurrency_counting from './counting.js';
 export { concurrency_counting as counting };
 import * as concurrency_coalescingNotifier from './coalescingNotifier.js';
 export { concurrency_coalescingNotifier as coalescingNotifier };
+import * as concurrency_cancellation from './cancellation.js';
+export { concurrency_cancellation as cancellation };
+import * as concurrency_scopedIteration from './scopedIteration.js';
+export { concurrency_scopedIteration as scopedIteration };
 //# sourceMappingURL=index.js.map

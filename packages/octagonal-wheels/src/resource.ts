@@ -1,3 +1,5 @@
+export * as scope from "./resource/scope.ts";
+
 /**
  * An explicit cleanup capability, independent of standard disposal symbols.
  *

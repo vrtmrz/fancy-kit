@@ -6,3 +6,5 @@ export * as bulk from "./bulk.ts";
 export * as deferredAction from "./deferredAction.ts";
 export * as counting from "./counting.ts";
 export * as coalescingNotifier from "./coalescingNotifier.ts";
+export * as cancellation from "./cancellation.ts";
+export * as scopedIteration from "./scopedIteration.ts";

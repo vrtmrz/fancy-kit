@@ -9,6 +9,7 @@
             "DOM.Iterable",
             "ESNext.Promise",
             "ES2021.WeakRef",
+            "ES2021.Promise",
             "ES2024.Promise"
         ],
         "skipLibCheck": true,

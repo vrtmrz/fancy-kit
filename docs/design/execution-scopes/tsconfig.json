@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": false,
+        "exactOptionalPropertyTypes": true,
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "types": [],
+        "lib": ["ES2020", "DOM"]
+    },
+    "files": ["usage.typecheck.ts"]
+}

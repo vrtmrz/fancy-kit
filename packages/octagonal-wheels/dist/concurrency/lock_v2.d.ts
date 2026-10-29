@@ -6,6 +6,24 @@ export type Task<T> = () => Promise<T> | T;
  * @returns result of the process
  */
 export declare function serialized<T>(key: string | symbol, proc: Task<T>): Promise<T>;
+/**
+ * Acquire each supplied key in order, then run and await the callback.
+ *
+ * Uses the same lock groups as {@link serialized}. The caller must provide
+ * unique keys in a consistent order across all overlapping operations, such
+ * as lexicographically sorted strings. Keys are not sorted or deduplicated
+ * here. Repeated keys, inconsistent acquisition orders, or reacquiring a key
+ * already held by the callback can deadlock.
+ *
+ * An empty list invokes the callback immediately. Its result or failure is
+ * preserved, and every acquired lock is released after the callback settles.
+ * The input list is not modified.
+ *
+ * @param keys - Unique lock keys in the caller's shared acquisition order.
+ * @param callback - Operation to run after every key has been acquired.
+ * @returns The callback's result after releasing the acquired locks.
+ */
+export declare function serializedByKeys<T>(keys: readonly string[], callback: () => Promise<T>): Promise<T>;
 export declare const SYMBOL_SKIPPED: unique symbol;
 export declare function onlyLatest<T>(key: string | symbol, proc: Task<T>): Promise<T | typeof SYMBOL_SKIPPED>;
 /**

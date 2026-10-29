@@ -1,9 +1,35 @@
 import assert from "node:assert/strict";
+import { serialized, serializedByKeys, isLockAcquired } from "octagonal-wheels/concurrency/lock";
+import { serializedByKeys as aliasLock } from "octagonal-wheels/concurrency/lock.js";
 import { wrapMemo } from "octagonal-wheels/function";
 import { wrapMemo as aliasMemo } from "octagonal-wheels/function.js";
 
+assert.equal(aliasLock, serializedByKeys);
 assert.equal(aliasMemo, wrapMemo);
+const keys = Object.freeze(["packed:primitives:a", "packed:primitives:b"]);
+let release;
+const gate = new Promise(resolve => { release = resolve; });
+let singleRan = false;
+const locked = serializedByKeys(keys, async () => {
+  assert.ok(keys.every(isLockAcquired));
+  await gate;
+  return "complete";
+});
+const single = serialized(keys[1], () => { singleRan = true; });
+try {
+  await serializedByKeys(["packed:primitives:c"], async () => {});
+  assert.equal(singleRan, false);
+} finally {
+  release();
+  assert.equal(await locked, "complete");
+  await single;
+}
+assert.equal(singleRan, true);
+assert.equal(keys.some(isLockAcquired), false);
 const failure = new Error("callback failure");
+await assert.rejects(serializedByKeys(keys, async () => { throw failure; }), error => error === failure);
+assert.equal(await serializedByKeys(keys, async () => 42), 42);
+assert.equal(await serializedByKeys([], async () => 7), 7);
 
 const values = [];
 const remember = wrapMemo(value => { values.push(value); });

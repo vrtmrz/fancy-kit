@@ -79,9 +79,20 @@ operation; the default uses global timers only when needed. See the
 [deferred action guide](guides/imports-and-runtime.md#own-one-delayed-callback) for
 lifecycle and testing contracts.
 
-## Repeated callback values
+## Hold a semaphore permit
 
-Use `wrapMemo` from `function` to suppress consecutive strictly equal callback arguments. The [runtime guide](guides/imports-and-runtime.md#suppress-consecutive-duplicate-arguments) describes initial values and failure behaviour.
+Use `withSemaphore` from `concurrency/semaphore` to acquire a permit, run a
+callback, and release the permit when the callback settles. Pass an existing
+semaphore or an injected acquisition capability. See the
+[semaphore guide](guides/imports-and-runtime.md#hold-a-semaphore-permit) for
+result, failure, and ownership contracts.
+
+## Multi-key operations and repeated values
+
+Use `serializedByKeys` from `concurrency/lock` to hold a caller-ordered set of
+unique keys for one asynchronous operation. Use `wrapMemo` from `function` to
+suppress consecutive strictly equal callback arguments. The [runtime guide](guides/imports-and-runtime.md#serialise-an-operation-across-several-keys)
+describes lock ordering, initial values, and failure behaviour.
 
 ## Bounded asynchronous work
 
