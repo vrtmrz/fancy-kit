@@ -278,7 +278,7 @@ Drivers and response queues must remain instance-scoped. Do not store them in mo
 
 ## Secret storage
 
-The unreleased `secrets` entry implements the neutral `SecretStore` contract using an explicitly supplied `app.secretStorage`. The host API was introduced in Obsidian 1.11.4. Existing package entry points retain their `obsidian >=1.8.7` peer requirement; constructing this adapter checks the new methods and throws `ValueStoreError` with code `unavailable` when either is missing.
+The `secrets` entry implements the neutral `SecretStore` contract using an explicitly supplied `app.secretStorage`. The host API was introduced in Obsidian 1.11.4. Existing package entry points retain their `obsidian >=1.8.7` peer requirement; constructing this adapter checks the new methods and throws `ValueStoreError` with code `unavailable` when either is missing.
 
 ```ts
 import type { App } from "obsidian";
@@ -294,16 +294,13 @@ export async function readToken(secrets: SecretReader): Promise<string | null> {
 }
 ```
 
-To try the unreleased adapter, build and pack the three unpublished packages from the Fancy Kit workspace:
+The `secrets` and `local-storage` entries are added in Kit 0.1.5. Install the exact Kit version and declare the core packages directly when importing their types in application code:
 
 ```bash
-npm run build --workspace @vrtmrz/value-store
-npm run build --workspace @vrtmrz/secret-store
-npm run build --workspace @vrtmrz/obsidian-plugin-kit
-npm pack --workspace @vrtmrz/value-store --workspace @vrtmrz/secret-store --workspace @vrtmrz/obsidian-plugin-kit
+npm install --save-exact @vrtmrz/obsidian-plugin-kit@0.1.5 @vrtmrz/secret-store@0.1.0 @vrtmrz/value-store@0.1.0
 ```
 
-Install the resulting tarballs together with `npm install <value-store-tarball> <secret-store-tarball> <obsidian-plugin-kit-tarball>`. The current adapter depends on the unpublished core version, so installing the plug-in tarball alone cannot resolve that dependency from npm.
+For unpublished source changes, build and install local tarballs together as described in [Testing unpublished package changes](../../../docs/releasing.md#testing-unpublished-package-changes). The Kit manifest pins the exact core versions; source changes spanning those packages must be validated together.
 
 The factory accepts the structural `ObsidianSecretStorage` get/set subset, so tests can inject synchronous host methods without constructing an `App`. The host remains synchronous, while the returned `SecretReader` and `SecretStore` expose asynchronous `getValue`, `getObject`, `setValue`, and `setObject` methods. The focused entry imports no Obsidian runtime module. A read capability is a TypeScript boundary, not a revocation of the process's permissions.
 
@@ -317,7 +314,7 @@ For application policy, inject a `SecretReader`, use `MemorySecretStore`, or ret
 
 ## Local string and JSON-object storage
 
-The unreleased `local-storage` entry adapts Obsidian's official `App.loadLocalStorage` and `App.saveLocalStorage` methods through an explicit capability. The public declarations document these methods since Obsidian 1.8.7, and the existing `obsidian >=1.8.7` peer requirement is unchanged. The host owns Vault scoping; pass a complete literal prefix for the plug-in namespace:
+The `local-storage` entry adapts Obsidian's official `App.loadLocalStorage` and `App.saveLocalStorage` methods through an explicit capability. The public declarations document these methods since Obsidian 1.8.7, and the existing `obsidian >=1.8.7` peer requirement is unchanged. The host owns Vault scoping; pass a complete literal prefix for the plug-in namespace:
 
 ```ts
 import type { App } from "obsidian";

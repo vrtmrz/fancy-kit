@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/obsidian-plugin-kit",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Reusable, testable primitives for Obsidian plugins",
   "type": "module",
   "license": "MIT",
@@ -70,7 +70,7 @@
   },
   "dependencies": {
     "@vrtmrz/ui-interactions": "0.1.2",
-    "@vrtmrz/secret-store": "0.0.0",
+    "@vrtmrz/secret-store": "0.1.0",
     "@vrtmrz/value-store": "0.1.0"
   },
   "peerDependencies": {
