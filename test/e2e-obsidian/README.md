@@ -45,6 +45,12 @@ E2E_OBSIDIAN_MOBILE_SCREENSHOT=/tmp/fancy-kit-mobile.png npm run test:e2e:obsidi
 
 The screenshot is an optional local diagnostic and is not retained by the test suite.
 
+The dialogue scenario compares the left and right edges of the Markdown message and action area in both layouts at viewport widths of 1024 and 375 CSS pixels. It also checks wrapping of long labels, horizontal overflow, keyboard focus indicators, independent scrolling of long messages, action results, and Escape dismissal. Set `E2E_OBSIDIAN_DIALOG_LAYOUT_DIR` to retain JSON measurements and screenshots:
+
+```bash
+E2E_OBSIDIAN_DIALOG_LAYOUT_DIR=/tmp/fancy-kit-dialog-layout npm run test:e2e:obsidian:dialogs
+```
+
 The session-lifecycle scenario uses a dedicated fixture plug-in to prove that supplied local-storage values are written and `beforePluginStart` completes before the fixture's first `onload()`, that lifecycle callbacks retain their documented order, that the plug-in loads exactly once, and that its enabled state is persisted. Set `E2E_OBSIDIAN_SESSION_LIFECYCLE_SCREENSHOT` to capture the final isolated Vault for diagnostics.
 
 The profile-restart scenario writes a sentinel to the isolated renderer's local storage, stops Obsidian through the high-level session, and starts a second session with the same `TemporaryVault`. It requires the sentinel to remain available without reseeding it. The catalogue covers text and password prompts, typed selection, Markdown dialogs, keyed Notice updates, and progress Notice lifecycle behaviour. Contract scenarios verify owned-fixture Vault text and frontmatter behaviour, nested wake-lock leases, one-shot request consumption, guided wake-lock and post-release evidence, and Markdown report generation. The mobile scenario enables Obsidian's built-in mobile mode with `app.emulateMobile(true)`, waits for the mobile renderer and harness plug-in to reload, uses a 375 by 667 CSS-pixel viewport, and checks keyboard interaction, viewport containment, horizontal overflow, Close-control touch-target size, and safe-area containment.
