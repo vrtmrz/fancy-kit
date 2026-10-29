@@ -3,6 +3,7 @@ import { serialized, serializedByKeys, isLockAcquired } from "octagonal-wheels/c
 import { serializedByKeys as aliasLock } from "octagonal-wheels/concurrency/lock.js";
 import { wrapMemo } from "octagonal-wheels/function";
 import { wrapMemo as aliasMemo } from "octagonal-wheels/function.js";
+import { createCommandCheck } from "@vrtmrz/obsidian-plugin-kit/command";
 
 assert.equal(aliasLock, serializedByKeys);
 assert.equal(aliasMemo, wrapMemo);
@@ -41,6 +42,24 @@ assert.throws(() => retry("same"), error => error === failure);
 retry("same");
 retry("same");
 assert.equal(attempts, 2);
+
+let selected;
+const executions = [];
+const check = createCommandCheck(() => selected, value => { executions.push(value); });
+for (const value of [undefined, null, false, "", 0, NaN]) {
+  selected = value;
+  assert.equal(check(true), false);
+  assert.equal(check(false), false);
+}
+assert.equal(executions.length, 0);
+selected = { id: "first" };
+assert.equal(check(true), true);
+assert.equal(executions.length, 0);
+const second = { id: "second" };
+selected = second;
+assert.equal(check(false), true);
+assert.equal(executions[0], second);
+
 
 const { createContentApplier } = await import("octagonal-wheels/content");
 const { createContentApplier: aliasApplier } = await import("octagonal-wheels/content.js");

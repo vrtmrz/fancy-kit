@@ -9,7 +9,7 @@ Reusable, testable primitives for Obsidian plug-ins.
 npm install @vrtmrz/obsidian-plugin-kit
 ```
 
-The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. SecretStorage support is unreleased and depends on the unpublished `@vrtmrz/secret-store` and `@vrtmrz/value-store` cores. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the unpublished `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
+The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `command` entry is a platform-independent command callback helper and imports no Obsidian runtime API. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. SecretStorage support is unreleased and depends on the unpublished `@vrtmrz/secret-store` and `@vrtmrz/value-store` cores. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the unpublished `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
 
 Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, platform boundaries, and links to the tests that establish each documented contract. See [UI automation and scripted responses](docs/ui-automation.md) for the detailed driver rules.
 
@@ -18,6 +18,7 @@ The UI, Vault, and testing boundaries are also used in maintained plug-ins. See 
 ## Available modules
 
 - `@vrtmrz/obsidian-plugin-kit`: convenience export of the runtime features below.
+- `@vrtmrz/obsidian-plugin-kit/command`: a platform-independent helper for command availability and execution callbacks.
 - `@vrtmrz/obsidian-plugin-kit/dialog`: text and password prompts, typed selection, confirmation, and message dialogs.
 - `@vrtmrz/obsidian-plugin-kit/notice`: instance-scoped keyed Notice updates, the neutral `UiNotifications` adapter, and lifecycle ownership.
 - `@vrtmrz/obsidian-plugin-kit/progress`: embeddable progress fragments and progress Notices.
@@ -26,6 +27,28 @@ The UI, Vault, and testing boundaries are also used in maintained plug-ins. See 
 - `@vrtmrz/obsidian-plugin-kit/secrets`: injected named-secret reading and replacement writes through Obsidian SecretStorage.
 - `@vrtmrz/obsidian-plugin-kit/local-storage`: asynchronous string and JSON-object storage through the official App methods, with an optional serializer and construction-time legacy Web Storage selector.
 - `@vrtmrz/obsidian-plugin-kit/testing`: framework-neutral scripted UI drivers plus App-free UI, Vault text, and frontmatter harnesses.
+
+## Command availability
+
+The unreleased `command` entry provides `createCommandCheck` for an Obsidian command's `checkCallback`:
+
+```ts
+import { Notice } from "obsidian";
+import { createCommandCheck } from "@vrtmrz/obsidian-plugin-kit/command";
+
+this.addCommand({
+  id: "show-active-file-path",
+  name: "Show active file path",
+  checkCallback: createCommandCheck(
+    () => this.app.workspace.getActiveFile(),
+    (file) => {
+      new Notice(file.path);
+    },
+  ),
+});
+```
+
+The selector runs again on every callback invocation. A falsey selected value, including `false`, `0`, `''`, `null`, `undefined`, and `NaN`, reports the command as unavailable. A truthy selected value reports it as available; Obsidian's check-only invocation does not run the action, and an execution invocation passes that same selected value to the action. Synchronous action exceptions propagate. If the action returns a Promise, the helper neither awaits it nor handles rejection; the action owner is responsible for asynchronous failures.
 
 ## Secret storage
 

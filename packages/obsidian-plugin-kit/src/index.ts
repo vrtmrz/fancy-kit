@@ -1,9 +1,5 @@
-/**
- * Reusable, Obsidian-specific building blocks for plugin development.
- *
- * Public exports will be added one feature at a time after their contracts
- * and migration notes have been settled.
- */
+/** Reusable, Obsidian-specific building blocks for plug-in development. */
+export * from "./command.js";
 export * from "./dialog.js";
 export * from "./notice.js";
 export * from "./progress.js";

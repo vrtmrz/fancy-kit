@@ -16,6 +16,7 @@ const packageNames = [
   "@vrtmrz/obsidian-plugin-kit",
 ];
 const runtimeSafeEntries = [
+  "@vrtmrz/obsidian-plugin-kit/command",
   "@vrtmrz/secret-store-node/age",
   "@vrtmrz/value-store",
   "@vrtmrz/value-store/web-storage",
