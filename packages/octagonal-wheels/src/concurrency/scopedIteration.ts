@@ -27,6 +27,18 @@ interface InputIterator<I> {
     return?(): Awaitable<IteratorResult<I>>;
 }
 
+function getInputIterator<I>(items: Iterable<I> | AsyncIterable<I>): InputIterator<I> {
+    const asyncFactory = (items as Partial<AsyncIterable<I>>)[Symbol.asyncIterator];
+    return asyncFactory === undefined || asyncFactory === null
+        ? (items as Iterable<I>)[Symbol.iterator]()
+        : asyncFactory.call(items);
+}
+
+function throwIterationFailures(failures: readonly unknown[]): void {
+    if (failures.length === 1) throw failures[0];
+    if (failures.length > 1) throw new AggregateError(failures, "Multiple failures occurred during scoped iteration.");
+}
+
 async function iterate<S extends IterationScope, I, R>(
     parent: S,
     items: Iterable<I> | AsyncIterable<I>,
@@ -82,45 +94,47 @@ async function iterate<S extends IterationScope, I, R>(
         active.set(index, pending);
     };
 
-    try {
-        if (!observeCancellation()) {
-            const asyncFactory = (items as Partial<AsyncIterable<I>>)[Symbol.asyncIterator];
-            iterator =
-                asyncFactory === undefined || asyncFactory === null
-                    ? (items as Iterable<I>)[Symbol.iterator]()
-                    : asyncFactory.call(items);
-            const next = iterator.next.bind(iterator);
+    const consumeInput = async () => {
+        if (observeCancellation()) return;
+        iterator = getInputIterator(items);
+        const next = iterator.next.bind(iterator);
 
-            while (!stopAdmission) {
-                if (active.size >= concurrency) await Promise.race(active.values());
-                if (observeCancellation() || stopAdmission) break;
+        while (!stopAdmission) {
+            if (active.size >= concurrency) await Promise.race(active.values());
+            if (observeCancellation() || stopAdmission) break;
 
-                const entry = await next();
-                if (typeof entry !== "object" || entry === null) {
-                    throw new TypeError("An iterator result must be an object.");
-                }
-                if (entry.done) {
-                    exhausted = true;
-                    break;
-                }
-
-                const item = await entry.value;
-                if (observeCancellation() || stopAdmission) break;
-                startItem(item);
+            const entry = await next();
+            if (typeof entry !== "object" || entry === null) {
+                throw new TypeError("An iterator result must be an object.");
             }
+            if (entry.done) {
+                exhausted = true;
+                break;
+            }
+
+            const item = await entry.value;
+            if (observeCancellation() || stopAdmission) break;
+            startItem(item);
         }
+    };
+
+    const closeInput = async () => {
+        if (!iterator || exhausted) return;
+        try {
+            const close = iterator.return;
+            if (close) await close.call(iterator);
+        } catch (error) {
+            closeFailures.push(error);
+        }
+    };
+
+    try {
+        await consumeInput();
     } catch (error) {
         inputFailures.push(error);
         stopAdmission = true;
     } finally {
-        if (iterator && !exhausted) {
-            try {
-                const close = iterator.return;
-                if (close) await close.call(iterator);
-            } catch (error) {
-                closeFailures.push(error);
-            }
-        }
+        await closeInput();
         await Promise.all(active.values());
     }
 
@@ -129,13 +143,11 @@ async function iterate<S extends IterationScope, I, R>(
     } catch (error) {
         inputFailures.push(error);
     }
-    const failures = [
+    throwIterationFailures([
         ...inputFailures,
         ...[...itemFailures].sort(([left], [right]) => left - right).map(([, error]) => error),
         ...closeFailures,
-    ];
-    if (failures.length === 1) throw failures[0];
-    if (failures.length > 1) throw new AggregateError(failures, "Multiple failures occurred during scoped iteration.");
+    ]);
     return cancelled ? { status: "cancelled", started } : { status: "completed", started };
 }
 

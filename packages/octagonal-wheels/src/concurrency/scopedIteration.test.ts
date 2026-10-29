@@ -568,6 +568,76 @@ describe("scoped iteration", () => {
         expect(closeCalls).toBe(1);
     });
 
+    it("closes an acquired iterator when reading next fails and waits for that closure", async () => {
+        const failure = new Error("reading next failed");
+        const closeStarted = gate();
+        const finishClose = gate();
+        const operation = vi.fn();
+        let parentClosed = false;
+        const iterator: AsyncIterator<number> = {
+            get next(): AsyncIterator<number>["next"] {
+                throw failure;
+            },
+            async return() {
+                closeStarted.resolve();
+                await finishClose.promise;
+                return { done: true, value: undefined };
+            },
+        };
+        const items = { [Symbol.asyncIterator]: () => iterator };
+
+        const pending = withScope("shared", (parent) => {
+            parent.defer(() => {
+                parentClosed = true;
+            });
+            return forEachInScope(parent, items, {}, operation);
+        });
+
+        await closeStarted.promise;
+        expect(operation).not.toHaveBeenCalled();
+        expect(parentClosed).toBe(false);
+        finishClose.resolve();
+        await expect(pending).rejects.toBe(failure);
+        expect(parentClosed).toBe(true);
+    });
+
+    it("retains cancellation during final cleanup without closing an exhausted iterator", async () => {
+        const controller = new AbortController();
+        const inputExhausted = gate();
+        const cleanupStarted = gate();
+        const finishCleanup = gate();
+        const close = vi.fn(() => ({ done: true as const, value: undefined }));
+        let nextCalls = 0;
+        const items: Iterable<number> = {
+            [Symbol.iterator]: () => ({
+                next() {
+                    if (nextCalls++ === 0) return { done: false, value: 42 };
+                    inputExhausted.resolve();
+                    return { done: true, value: undefined };
+                },
+                return: close,
+            }),
+        };
+
+        const pending = withCancellation("shared", { signal: controller.signal }, (parent) =>
+            mapInScope(parent, items, { concurrency: 2 }, (item, child) => {
+                child.defer(async () => {
+                    cleanupStarted.resolve();
+                    await finishCleanup.promise;
+                });
+                return item;
+            })
+        );
+
+        await Promise.all([inputExhausted.promise, cleanupStarted.promise]);
+        controller.abort();
+        expect(close).not.toHaveBeenCalled();
+        finishCleanup.resolve();
+        await expect(pending).resolves.toEqual({ status: "cancelled", values: [42] });
+        expect(close).not.toHaveBeenCalled();
+        expect(nextCalls).toBe(2);
+    });
+
     it("preserves a single thrown undefined failure", async () => {
         const pending = withScope("shared", (parent) =>
             forEachInScope(parent, [0], {}, () => {
