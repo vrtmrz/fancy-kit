@@ -54,6 +54,7 @@ interface FakeComponent {
 }
 
 const mockState = vi.hoisted(() => ({
+  isMobile: false,
   modals: [] as unknown[],
   inputs: [] as unknown[],
   buttons: [] as unknown[],
@@ -240,6 +241,7 @@ vi.mock("obsidian", () => {
   }
 
   class Setting {
+    infoEl = new ElementMock();
     controlEl = new ElementMock();
 
     constructor(_container: FakeElement) {
@@ -290,7 +292,12 @@ vi.mock("obsidian", () => {
     },
   };
 
-  return { Component, FuzzySuggestModal, MarkdownRenderer, Modal, Setting };
+  const Platform = {
+    get isMobile() {
+      return mockState.isMobile;
+    },
+  };
+  return { Component, FuzzySuggestModal, MarkdownRenderer, Modal, Platform, Setting };
 });
 
 import {
@@ -311,6 +318,7 @@ function last<T>(items: unknown[]): T {
 
 afterEach(() => {
   vi.useRealTimers();
+  mockState.isMobile = false;
   mockState.modals.length = 0;
   mockState.inputs.length = 0;
   mockState.buttons.length = 0;
@@ -505,6 +513,21 @@ describe("confirmAction", () => {
     await expect(result).resolves.toBe("cancel");
   });
 
+  it.each(["auto", "vertical"] as const)(
+    "hides the empty setting description for %s actions",
+    (actionLayout) => {
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose the next step.",
+        actions: ["apply", "cancel"] as const,
+        actionLayout,
+      });
+
+      const setting = last<{ infoEl: FakeElement }>(mockState.settings);
+      expect(setting.infoEl.styles.display).toBe("none");
+    },
+  );
+
   it("stacks long actions vertically when requested", () => {
     void confirmAction(app, {
       title: "Compatibility review",
@@ -526,6 +549,25 @@ describe("confirmAction", () => {
       expect(button.buttonEl.styles.width).toBe("100%");
     }
   });
+
+  it.each([false, true])(
+    "reserves space for focus shadows without overflowing the modal (mobile: %s)",
+    (isMobile) => {
+      mockState.isMobile = isMobile;
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose the next step.",
+        actions: ["apply", "cancel"] as const,
+      });
+
+      const modal = last<FakeModal>(mockState.modals);
+      expect(modal.contentEl.styles).toMatchObject({
+        overflowY: "hidden",
+        padding: "4px",
+        margin: isMobile ? "0px" : "-4px",
+      });
+    },
+  );
 
   it("constrains long action dialogues to the device safe area", () => {
     void confirmAction(app, {

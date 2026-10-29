@@ -183,7 +183,7 @@ const action = await confirmAction(
 
 `confirmAction` and `showMessage` render their message as Markdown. Use `sourcePath` when relative Markdown links need an Obsidian source path.
 
-Set `actionLayout: "vertical"` when a dialogue presents several long or safety-sensitive actions. Every action then uses the available width, which keeps the labels readable and provides consistent touch targets on narrow screens. The default `auto` layout retains the ordinary wrapped row.
+Set `actionLayout: "vertical"` when a dialogue presents several long or safety-sensitive actions. Every action then uses the available width, which keeps the labels readable and provides consistent touch targets on narrow screens. The default `auto` layout retains the ordinary wrapped row. The message and action area remain aligned, with space around the content for keyboard focus indicators inside the outer clipping boundary.
 
 `confirmAction` also limits its outer dialogue to the inherited `--safe-area-inset-top` and `--safe-area-inset-bottom` values. Long Markdown scrolls independently while the action area remains available inside that boundary, so the title, close control, and actions do not require the modal itself to cross an iPhone-style unsafe edge. A desktop emulation test must still provide representative safe-area variables; this layout contract does not claim to reproduce native keyboards or operating-system overlays.
 

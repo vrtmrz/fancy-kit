@@ -537,6 +537,11 @@ class WakeLockHarnessView extends ItemView {
         "confirm-action-long",
       ],
       [
+        "Wrapping Markdown confirmation",
+        "Aligned action area and long horizontal labels that wrap on narrow screens.",
+        "confirm-action-wrapped",
+      ],
+      [
         "Message",
         "A one-action informational Markdown dialog.",
         "show-message",
@@ -1181,6 +1186,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
       "pick-one",
       "confirm-action",
       "confirm-action-long",
+      "confirm-action-wrapped",
       "show-message",
       "progress-start",
       "progress-step",
@@ -1422,11 +1428,15 @@ export default class FancyKitHarnessPlugin extends Plugin {
         );
         break;
       case "confirm-action-long":
+      case "confirm-action-wrapped":
         this.setResult(
           await confirmAction(
             this.app,
             {
-              title: "Compatibility review",
+              title:
+                story === "confirm-action-long"
+                  ? "Compatibility review"
+                  : "Wrapping action review",
               message:
                 "Review the release notes and update the other devices before resuming synchronisation.",
               actions: ["resume", "pause"] as const,
@@ -1435,7 +1445,8 @@ export default class FancyKitHarnessPlugin extends Plugin {
                   "I have reviewed this and updated my other devices — Resume synchronisation",
                 pause: "Keep synchronisation paused",
               },
-              actionLayout: "vertical",
+              actionLayout:
+                story === "confirm-action-long" ? "vertical" : "auto",
               defaultAction: "pause",
             },
             { signal: this.dialogueController.signal },

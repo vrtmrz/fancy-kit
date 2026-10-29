@@ -3,6 +3,7 @@ import {
   FuzzySuggestModal,
   MarkdownRenderer,
   Modal,
+  Platform,
   Setting,
   type App,
   type FuzzyMatch,
@@ -283,6 +284,10 @@ class ActionDialog<T extends string> extends Modal {
       flexDirection: "column",
       minHeight: "0",
       overflowY: "hidden",
+      // Reserve room for focus shadows inside the existing clip.
+      padding: "4px",
+      // Mobile modals have no outer padding to contain negative margins.
+      margin: Platform.isMobile ? "0px" : "-4px",
     });
 
     const messageEl = this.contentEl.createDiv({
@@ -306,6 +311,7 @@ class ActionDialog<T extends string> extends Modal {
     });
     actionsEl.setCssStyles({ flexShrink: "0" });
     const actions = new Setting(actionsEl);
+    actions.infoEl.setCssStyles({ display: "none" });
     const verticalActions = this.options.actionLayout === "vertical";
     actions.controlEl.addClass("vpk-action-dialog__actions");
     if (verticalActions) {
