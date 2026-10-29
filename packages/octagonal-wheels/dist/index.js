@@ -14,6 +14,8 @@ import * as memory_index from './memory/index.js';
 export { memory_index as memory };
 import * as messagepassing_index from './messagepassing/index.js';
 export { messagepassing_index as messagepassing };
+import * as content from './content.js';
+export { content };
 import * as collection from './collection.js';
 export { collection };
 import * as _function from './function.js';
@@ -48,6 +50,10 @@ import * as BackedQueue_index from './BackedQueue/index.js';
 export { BackedQueue_index as BackedQueue };
 import * as browser_index from './browser/index.js';
 export { browser_index as browser };
+import * as notation_index from './notation/index.js';
+export { notation_index as notation };
+import * as encoding_index from './encoding/index.js';
+export { encoding_index as encoding };
 
 /**
  * Returns the version of the library.

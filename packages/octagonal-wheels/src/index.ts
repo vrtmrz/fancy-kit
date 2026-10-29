@@ -18,6 +18,7 @@ export * as databases from "./databases/index.ts";
 export * as hash from "./hash/index.ts";
 export * as memory from "./memory/index.ts";
 export * as messagepassing from "./messagepassing/index.ts";
+export * as content from "./content.ts";
 export * as collection from "./collection.ts";
 export * as function from "./function.ts";
 export * as object from "./object.ts";
@@ -35,3 +36,6 @@ export * as conduit from "./conduit/index.ts";
 export * as channel from "./channel/index.ts";
 export * as BackedQueue from "./BackedQueue/index.ts";
 export * as browser from "./browser/index.ts";
+
+export * as notation from "./notation/index.ts";
+export * as encoding from "./encoding/index.ts";

@@ -165,6 +165,26 @@ function resolvePathWithinRoot(root, relativePath, options = {}) {
         return `${root}${joinedRelativePath}`;
     return joinedRelativePath;
 }
+/**
+ * Finds path components whose UTF-8 encoded length exceeds a byte limit.
+ *
+ * @param path - A path whose components are separated by forward slashes.
+ * @param maxBytes - The maximum permitted UTF-8 byte length for each component.
+ * @returns Oversized non-empty components in their original order, with their
+ * UTF-8 byte lengths.
+ * @remarks Leading, trailing, and repeated slashes produce empty components,
+ * which are omitted. The comparison is strictly greater than `maxBytes`.
+ * Components are measured independently; the complete path length is ignored.
+ * Calling this function requires the standard global TextEncoder constructor.
+ */
+function findPathComponentsExceedingUtf8Limit(path, maxBytes) {
+    const utf8Encoder = new TextEncoder();
+    return path
+        .split("/")
+        .filter((component) => component.length > 0)
+        .map((component) => ({ component, utf8Bytes: utf8Encoder.encode(component).byteLength }))
+        .filter(({ utf8Bytes }) => utf8Bytes > maxBytes);
+}
 
-export { UnsafePathError, isSafePathComponent, isSafeRelativePath, parseSafePathComponent, parseSafeRelativePath, resolvePathWithinRoot };
+export { UnsafePathError, findPathComponentsExceedingUtf8Limit, isSafePathComponent, isSafeRelativePath, parseSafePathComponent, parseSafeRelativePath, resolvePathWithinRoot };
 //# sourceMappingURL=path.js.map

@@ -348,6 +348,10 @@ async function main() {
     for (const filename of [
       "blob-usage.ts",
       "blob-runtime.mjs",
+      "runtime-tools-runtime.mjs",
+      "runtime-tools-neutral-usage.ts",
+      "upstream-primitives-runtime.mjs",
+      "upstream-primitives-neutral-usage.ts",
     ]) {
       await copyFile(
         join(repositoryRoot, "test", "packed-consumer", filename),
@@ -355,6 +359,22 @@ async function main() {
       );
     }
     run(process.execPath, ["blob-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["runtime-tools-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["upstream-primitives-runtime.mjs"], { cwd: temporaryRoot });
+    await writeFile(
+      join(temporaryRoot, "tsconfig.timeout.json"),
+      JSON.stringify({
+        compilerOptions: {
+          lib: ["ES2022"], module: "NodeNext", moduleResolution: "NodeNext",
+          noEmit: true, strict: true, target: "ES2022", types: [],
+        },
+        files: ["runtime-tools-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
+      }, null, 2),
+    );
+    run(process.execPath, [
+      join(temporaryRoot, "node_modules", "typescript", "bin", "tsc"),
+      "-p", "tsconfig.timeout.json",
+    ], { cwd: temporaryRoot });
     for (const filename of ["secret-store-node-usage.ts", "secret-store-node-runtime.mjs"]) {
       await copyFile(
         join(repositoryRoot, "test", "packed-consumer", filename),
@@ -504,6 +524,24 @@ for (const length of [65, 128]) {
         .join("\n")}\n`,
     );
     run(process.execPath, ["runtime-imports.mjs"], { cwd: temporaryRoot });
+
+    for (const [name, entry, modules] of [
+      ["formatDuration", "notation/duration", ["notation/duration"]],
+      ["cloneViaJSON", "encoding/json", ["encoding/json"]],
+      ["findPathComponentsExceedingUtf8Limit", "path", ["path"]],
+      ["splitDelimitedList", "string", ["string"]],
+      ["stepCyclicIndex", "collection", ["collection"]],
+    ]) {
+      await verifyTreeShakenBundle({
+        temporaryRoot,
+        entryName: `runtime-tool-${name}.ts`,
+        source: `export { ${name} } from "octagonal-wheels/${entry}";`,
+        requiredModules: modules.map(module => `node_modules/octagonal-wheels/dist/${module}.js`),
+        excludedModules: ["node_modules/octagonal-wheels/dist/common/logger.js", "node_modules/octagonal-wheels/dist/concurrency/task.js"],
+        externalImports: [],
+        allowedPackages: ["octagonal-wheels"],
+      });
+    }
 
     await verifyTreeShakenBundle({
       temporaryRoot,

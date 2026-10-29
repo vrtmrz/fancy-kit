@@ -129,6 +129,47 @@ checks also exercise the installed entry and its public declarations. The
 category entry `octagonal-wheels/binary` exposes the same functions alongside
 other binary utilities.
 
+## Apply content when it changes
+
+The unreleased `createContentApplier` factory in `octagonal-wheels/content`
+accepts a `ContentApplierAdapter<TTarget, TSource, TExisting, TContent>` and
+returns a `ContentApplier<TTarget, TSource>`. The adapter supplies `read`,
+`onReadError`, `decode`, `isSame`, and `write` callbacks. Each accepts synchronous
+or promise-like results; each stage finishes before the next begins.
+
+Only a `read` failure enters `onReadError`. A true comparison resolves to
+`unchanged` without writing. Otherwise the factory waits for `write` and resolves
+to `changed`, ignoring the write's resolved value. Recovery, decoding, comparison,
+and write failures reject unchanged. The adapter, target, and source retain their
+identities. Invocations are independent; locking, retry, rollback, storage
+atomicity, and follow-up state updates belong to the consumer.
+
+The focused entry has no host globals or DOM/Node declaration dependency.
+The `.js` alias and root `content` namespace expose the same implementation.
+
+## Suppress consecutive duplicate arguments
+
+`wrapMemo` from `function` owns one last-argument value per wrapper. It invokes
+the callback when the next argument is strictly unequal to that value:
+
+```ts
+import { wrapMemo } from "octagonal-wheels/function";
+
+declare function setLabel(value: string): void;
+const updateLabel = wrapMemo(setLabel);
+updateLabel("Ready");
+updateLabel("Ready"); // The callback is not repeated.
+updateLabel("Working");
+updateLabel("Ready"); // Returning to an earlier value invokes it again.
+```
+
+The remembered value starts as `undefined`, so an initial `undefined` is
+skipped. Comparison uses strict equality: `NaN` always invokes the callback,
+signed zeros compare equal, and objects compare by identity. A synchronous
+exception propagates and leaves the preceding value intact. Return values are
+discarded; promises are not awaited, and their failures remain caller-owned.
+This suppresses repeated arguments rather than caching function results.
+
 ## Ordered and completion-order concurrency
 
 `asyncMapWithConcurrency` limits the number of in-flight callbacks and yields results in input order:
@@ -224,3 +265,18 @@ Focused tests and maintained consumers establish representative contracts:
 The Chromium suite is broad, but support claims still belong to the selected entry point and its tests. Consumer code owns integration with its target browser, Electron version, persistence policy, and application workflow.
 
 For maintained application examples, see [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md). Self-hosted LiveSync exercises concurrency, reactive state, storage, binary, and browser-lifecycle modules at scale; DiffZip composes wake-lock, encryption, promise, and binary entries; and Screwdriver applies the path contract before restoring untrusted document paths. These are entry-point-specific examples rather than a package-wide platform guarantee.
+
+
+## Format and transform small values
+
+| Entry | Operation and contract |
+| --- | --- |
+| `notation/duration` | `formatDuration(milliseconds)` returns two decimal places with `s`, `m`, `h`, `d`, or `y`. Thresholds use 60 seconds, 60 minutes, 24 hours, and 365 days. Rounding does not promote the unit; negative and non-finite inputs follow number comparison and `toFixed` semantics. |
+| `encoding/json` | `cloneViaJSON(value)` uses native JSON serialisation and parsing. Its result is `unknown`: Dates become strings, non-finite numbers become null, and object properties containing undefined disappear. Native errors and `toJSON` hooks are preserved. |
+| `path` | `findPathComponentsExceedingUtf8Limit(path, maxBytes)` reports non-empty forward-slash components strictly exceeding the supplied limit, in order. Calling it requires `TextEncoder`; importing the module does not. Application-specific limits remain with the caller. |
+| `string` | `splitDelimitedList(source, delimiter)` drops empty parts without trimming or escaping. `joinDelimitedList(items, delimiter)` retains empty items. These helpers therefore do not form a lossless round trip. |
+| `collection` | `stepCyclicIndex(index, count, direction)` wraps an index for `prev` or `next`. An unselected index of -1 selects the last or first item respectively. An empty collection retains the input index. Callers supply a non-negative integer count and an index of -1 or a valid position. |
+
+The `notation` and `encoding` category entries expose the corresponding
+formatting and JSON helpers. Packed fixtures exercise focused entries, `.js`
+aliases, category declarations, Node execution, and focused browser bundles.

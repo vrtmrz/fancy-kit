@@ -499,6 +499,14 @@
             "import": "./dist/conduit/transporterAdapter.js",
             "types": "./dist/conduit/transporterAdapter.d.ts"
         },
+        "./content": {
+            "import": "./dist/content.js",
+            "types": "./dist/content.d.ts"
+        },
+        "./content.js": {
+            "import": "./dist/content.js",
+            "types": "./dist/content.d.ts"
+        },
         "./context": {
             "import": "./dist/context.js",
             "types": "./dist/context.d.ts"
@@ -627,6 +635,14 @@
             "import": "./dist/dataobject/Refiner.js",
             "types": "./dist/dataobject/Refiner.d.ts"
         },
+        "./encoding": {
+            "import": "./dist/encoding/index.js",
+            "types": "./dist/encoding/index.d.ts"
+        },
+        "./encoding.js": {
+            "import": "./dist/encoding/index.js",
+            "types": "./dist/encoding/index.d.ts"
+        },
         "./encoding/encodeobject": {
             "import": "./dist/encoding/encodeobject.js",
             "types": "./dist/encoding/encodeobject.d.ts"
@@ -634,6 +650,18 @@
         "./encoding/encodeobject.js": {
             "import": "./dist/encoding/encodeobject.js",
             "types": "./dist/encoding/encodeobject.d.ts"
+        },
+        "./encoding/index.js": {
+            "import": "./dist/encoding/index.js",
+            "types": "./dist/encoding/index.d.ts"
+        },
+        "./encoding/json": {
+            "import": "./dist/encoding/json.js",
+            "types": "./dist/encoding/json.d.ts"
+        },
+        "./encoding/json.js": {
+            "import": "./dist/encoding/json.js",
+            "types": "./dist/encoding/json.d.ts"
         },
         "./encryption": {
             "import": "./dist/encryption/index.js",
@@ -934,6 +962,26 @@
         "./messagepassing/signal.js": {
             "import": "./dist/messagepassing/signal.js",
             "types": "./dist/messagepassing/signal.d.ts"
+        },
+        "./notation": {
+            "import": "./dist/notation/index.js",
+            "types": "./dist/notation/index.d.ts"
+        },
+        "./notation.js": {
+            "import": "./dist/notation/index.js",
+            "types": "./dist/notation/index.d.ts"
+        },
+        "./notation/duration": {
+            "import": "./dist/notation/duration.js",
+            "types": "./dist/notation/duration.d.ts"
+        },
+        "./notation/duration.js": {
+            "import": "./dist/notation/duration.js",
+            "types": "./dist/notation/duration.d.ts"
+        },
+        "./notation/index.js": {
+            "import": "./dist/notation/index.js",
+            "types": "./dist/notation/index.d.ts"
         },
         "./number": {
             "import": "./dist/number.js",
@@ -1374,6 +1422,12 @@
             "conduit/transporterAdapter.js": [
                 "dist/conduit/transporterAdapter.d.ts"
             ],
+            "content": [
+                "dist/content.d.ts"
+            ],
+            "content.js": [
+                "dist/content.d.ts"
+            ],
             "context": [
                 "dist/context.d.ts"
             ],
@@ -1470,11 +1524,26 @@
             "dataobject/Refiner.js": [
                 "dist/dataobject/Refiner.d.ts"
             ],
+            "encoding": [
+                "dist/encoding/index.d.ts"
+            ],
+            "encoding.js": [
+                "dist/encoding/index.d.ts"
+            ],
             "encoding/encodeobject": [
                 "dist/encoding/encodeobject.d.ts"
             ],
             "encoding/encodeobject.js": [
                 "dist/encoding/encodeobject.d.ts"
+            ],
+            "encoding/index.js": [
+                "dist/encoding/index.d.ts"
+            ],
+            "encoding/json": [
+                "dist/encoding/json.d.ts"
+            ],
+            "encoding/json.js": [
+                "dist/encoding/json.d.ts"
             ],
             "encryption": [
                 "dist/encryption/index.d.ts"
@@ -1700,6 +1769,21 @@
             ],
             "messagepassing/signal.js": [
                 "dist/messagepassing/signal.d.ts"
+            ],
+            "notation": [
+                "dist/notation/index.d.ts"
+            ],
+            "notation.js": [
+                "dist/notation/index.d.ts"
+            ],
+            "notation/duration": [
+                "dist/notation/duration.d.ts"
+            ],
+            "notation/duration.js": [
+                "dist/notation/duration.d.ts"
+            ],
+            "notation/index.js": [
+                "dist/notation/index.d.ts"
             ],
             "number": [
                 "dist/number.d.ts"

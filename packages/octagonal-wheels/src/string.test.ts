@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { escapeStringToHTML, replaceAll, replaceAllPairs } from "./string.ts";
+import { escapeStringToHTML, joinDelimitedList, replaceAll, replaceAllPairs, splitDelimitedList } from "./string.ts";
 
 describe("replaceAll", () => {
     it("should replace all occurrences of a substring with another substring", () => {
@@ -85,5 +85,31 @@ describe("escapeStringToHTML", () => {
         const str = "This is a normal string without any special characters.";
         const result = escapeStringToHTML(str);
         expect(result).to.equal(str);
+    });
+});
+
+describe("splitDelimitedList", () => {
+    it("removes empty elements without trimming or unescaping the others", () => {
+        expect(splitDelimitedList(", alpha,, ,beta,", ",")).toEqual([" alpha", " ", "beta"]);
+        expect(splitDelimitedList("one||two||", "||")).toEqual(["one", "two"]);
+        expect(splitDelimitedList("one\\,two", ",")).toEqual(["one\\", "two"]);
+    });
+
+    it("uses JavaScript UTF-16 code-unit splitting for an empty delimiter", () => {
+        expect(splitDelimitedList("A😀B", "")).toEqual(["A", "\uD83D", "\uDE00", "B"]);
+        expect(splitDelimitedList("", "")).toEqual([]);
+    });
+});
+
+describe("joinDelimitedList", () => {
+    it("preserves empty elements and does not mutate the input", () => {
+        const items = ["", "middle", "", "end", ""];
+
+        expect(joinDelimitedList(items, "::")).toBe("::middle::::end::");
+        expect(items).toEqual(["", "middle", "", "end", ""]);
+    });
+
+    it("joins an empty list to an empty string", () => {
+        expect(joinDelimitedList([], ",")).toBe("");
     });
 });

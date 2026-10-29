@@ -7,6 +7,18 @@
 - Added the focused `binary/blob` entry with `createTextBlob`, `createBinaryBlob`, and `toBlob`. Creation preserves line endings and binary view ranges; normalisation preserves existing Blob identity. The entry can be imported without DOM or fetch globals; creation and normalisation use the standard Blob constructor when called.
 - Added `isBlobContentEqual` for sequential byte comparison in parts of at most 10,000 bytes, independently of MIME types. Its optional `ArrayBufferContentEquality` predicate supports synchronous or asynchronous host strategies.
 
+### Shared value utilities
+
+- Added `formatDuration`, `cloneViaJSON`, `findPathComponentsExceedingUtf8Limit`, `splitDelimitedList`, `joinDelimitedList`, and `stepCyclicIndex`, with focused imports and explicit conversion and boundary contracts.
+
+### Content application
+
+- Consumers can reuse a read, decode, compare, and conditional-write operation through `createContentApplier` from `content`. Synchronous and asynchronous adapters retain application storage, equality, and recovery policy. Only read failures enter the supplied fallback; later failures propagate, and `changed` is returned after writing completes.
+
+### Callback utilities
+
+- Consumers can suppress consecutive duplicate callback arguments with `wrapMemo` from `function`. Each wrapper retains its own last value, initially `undefined`, and uses strict equality. Synchronous failures leave the previous value intact; callback return values are discarded.
+
 ## 0.1.55
 
 ### Maintenance

@@ -61,6 +61,18 @@ bounded parts, with an optional synchronous or asynchronous equality predicate.
 See the [Blob guide](guides/imports-and-runtime.md#blob-creation-and-normalisation)
 for input types, line endings, binary view ranges, comparison, and runtime requirements.
 
+## Apply content when it changes
+
+Use `createContentApplier` from the unreleased `content` entry to compose reading,
+decoding, comparison, and conditional writing. Inject storage and recovery policy;
+only a read failure invokes the supplied fallback. The result distinguishes a
+completed write from an unchanged target. See the
+[content guide](guides/imports-and-runtime.md#apply-content-when-it-changes).
+
+## Repeated callback values
+
+Use `wrapMemo` from `function` to suppress consecutive strictly equal callback arguments. The [runtime guide](guides/imports-and-runtime.md#suppress-consecutive-duplicate-arguments) describes initial values and failure behaviour.
+
 ## Bounded asynchronous work
 
 `asyncMapWithConcurrency` retains input order while limiting concurrent callbacks. `withConcurrency` uses completion order instead:
