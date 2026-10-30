@@ -513,17 +513,17 @@ class WakeLockHarnessView extends ItemView {
     this.renderShowcaseSection(section, "Dialogs", [
       [
         "Text prompt",
-        "Initial value, selection, Enter, Escape, and empty-string semantics.",
+        "Initial value, selection, Enter, Escape, and actions above the software keyboard.",
         "prompt-text",
       ],
       [
         "Password prompt",
-        "Password input without retaining the value in the catalogue.",
+        "Masked input with actions above the software keyboard; the catalogue does not retain the value.",
         "prompt-password",
       ],
       [
         "Typed selection",
-        "Select an object while preserving its identity.",
+        "Search and select an object above the software keyboard while preserving its identity.",
         "pick-one",
       ],
       [

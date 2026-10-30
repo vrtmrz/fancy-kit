@@ -128,6 +128,8 @@ Dismissal resolves to `null`. An explicitly submitted empty string remains `""` 
 
 The direct dialogue helpers accept an optional `AbortSignal` lifecycle argument. Bind it to the owning plug-in when a dialogue may remain open across asynchronous work; aborting closes the dialogue and resolves it as dismissal. See the [usage guide](docs/usage-guide.md#dialogs) for an example.
 
+Mobile dialogues use the host-provided keyboard height and safe-area insets to keep their frame in the available screen area. Their content padding remains defined by Obsidian and the active theme.
+
 `confirmAction` constrains long Markdown content to the effective top and bottom safe-area insets, keeps its action area available, and lets the message scroll inside the dialogue. On mobile, action dialogues preserve the host-provided content padding. Use `actionLayout: "vertical"` for several long or safety-sensitive actions on narrow screens.
 
 ## Keyed notices

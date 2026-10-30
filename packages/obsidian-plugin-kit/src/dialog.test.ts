@@ -36,6 +36,7 @@ interface FakeButton {
 }
 
 interface FakeModal {
+  containerEl: FakeElement;
   modalEl: FakeElement;
   contentEl: FakeElement;
   close(): void;
@@ -100,6 +101,7 @@ vi.mock("obsidian", () => {
 
   class Modal {
     app: App;
+    containerEl = new ElementMock();
     titleEl = new ElementMock();
     modalEl = new ElementMock();
     contentEl = new ElementMock();
@@ -337,6 +339,42 @@ afterEach(() => {
   mockState.settings.length = 0;
   mockState.components.length = 0;
   mockState.markdownCalls.length = 0;
+});
+
+describe("owned dialogue frames", () => {
+  it.each([false, true])(
+    "keeps keyboard bounds on the mobile outer frame (mobile: %s)",
+    (isMobile) => {
+      mockState.isMobile = isMobile;
+      mockState.nativeContentPadding = "2rem";
+      void promptText(app, { title: "Name" });
+      void promptPassword(app, { title: "Passphrase" });
+      void pickOne(app, { items: ["one"], getText: (item) => item });
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose.",
+        actions: ["ok"],
+      });
+      void showMessage(app, { title: "Notice", message: "Read this." });
+      for (const modal of mockState.modals as FakeModal[]) {
+        if (isMobile) {
+          expect(modal.containerEl.styles.maxHeight).toContain(
+            "--keyboard-height",
+          );
+          expect(modal.containerEl.styles.paddingTop).toContain(
+            "--safe-area-inset-top",
+          );
+          expect(modal.containerEl.styles.paddingBottom).toContain(
+            "--safe-area-inset-bottom",
+          );
+          expect(modal.contentEl.styles.padding).toBe("2rem");
+        } else {
+          expect(modal.containerEl.styles).toEqual({});
+        }
+        modal.close();
+      }
+    },
+  );
 });
 
 describe("promptText", () => {
