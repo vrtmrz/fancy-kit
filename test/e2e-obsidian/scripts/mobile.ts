@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import type { JSHandle, Locator, Page } from "playwright";
 import {
   assertLocatorHasMinimumTouchTarget,
@@ -114,6 +115,181 @@ async function activeModal(page: Page, title: string): Promise<Locator> {
   return modal;
 }
 
+async function assertKeyboardBounds(
+  page: Page,
+  modal: Locator,
+  label: string,
+  keyboardRatio = 0.42,
+): Promise<void> {
+  const viewport = page.viewportSize();
+  if (viewport === null) throw new Error("The mobile viewport is unavailable.");
+  const original = await page.evaluate(() => ({
+    value: document.body.style.getPropertyValue("--keyboard-height"),
+    priority: document.body.style.getPropertyPriority("--keyboard-height"),
+    bottom: document.body.style.getPropertyValue("--safe-area-inset-bottom"),
+    bottomPriority: document.body.style.getPropertyPriority(
+      "--safe-area-inset-bottom",
+    ),
+  }));
+  const focusedHandle = await modal.evaluateHandle((element) =>
+    element.contains(document.activeElement) ? document.activeElement : null,
+  );
+  const focused = focusedHandle.asElement();
+  const keyboardHeight = Math.round(viewport.height * keyboardRatio);
+  let baseline:
+    { top: number; bottom: number; padding: string | undefined } | undefined;
+  let overlay: typeof baseline;
+  const screenshotDirectory = process.env.E2E_OBSIDIAN_KEYBOARD_SCREENSHOT_DIR;
+  if (screenshotDirectory)
+    await mkdir(screenshotDirectory, { recursive: true });
+  try {
+    for (const mode of [
+      "closed",
+      "overlay",
+      "resized",
+      "overlay-with-shared-inset",
+      "restored",
+    ] as const) {
+      const overlayHeight =
+        mode === "overlay" || mode === "overlay-with-shared-inset"
+          ? keyboardHeight
+          : 0;
+      await page.evaluate(
+        ({ height, bottom, bottomPriority, shared }) => {
+          document.body.style.setProperty("--keyboard-height", `${height}px`);
+          if (shared)
+            document.body.style.setProperty(
+              "--safe-area-inset-bottom",
+              `${height}px`,
+            );
+          else if (bottom === "")
+            document.body.style.removeProperty("--safe-area-inset-bottom");
+          else
+            document.body.style.setProperty(
+              "--safe-area-inset-bottom",
+              bottom,
+              bottomPriority,
+            );
+        },
+        {
+          height: overlayHeight,
+          bottom: original.bottom,
+          bottomPriority: original.bottomPriority,
+          shared: mode === "overlay-with-shared-inset",
+        },
+      );
+      await page.setViewportSize({
+        width: viewport.width,
+        height:
+          mode === "resized"
+            ? viewport.height - keyboardHeight
+            : viewport.height,
+      });
+      await page.waitForTimeout(350);
+      const bounds = await modal.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const content = element.querySelector(".modal-content");
+        const style = content === null ? null : getComputedStyle(content);
+        return {
+          top: rect.top,
+          bottom: rect.bottom,
+          padding: style?.padding,
+          controls: Array.from(element.querySelectorAll("button, input"))
+            .filter((control) => control.getClientRects().length > 0)
+            .map((control) => {
+              const box = control.getBoundingClientRect();
+              return { top: box.top, bottom: box.bottom };
+            }),
+        };
+      });
+      baseline ??= bounds;
+      if (mode === "overlay") overlay = bounds;
+      if (
+        mode === "overlay-with-shared-inset" &&
+        overlay !== undefined &&
+        (Math.abs(bounds.top - overlay.top) > 1 ||
+          Math.abs(bounds.bottom - overlay.bottom) > 1)
+      ) {
+        throw new Error(
+          `Expected ${label} to reserve the overlapping keyboard and safe area once: ${JSON.stringify({ overlay, bounds })}`,
+        );
+      }
+      if (
+        bounds.padding !== baseline.padding ||
+        (mode === "restored" &&
+          (Math.abs(bounds.top - baseline.top) > 1 ||
+            Math.abs(bounds.bottom - baseline.bottom) > 1))
+      ) {
+        throw new Error(
+          `Expected ${label} (${mode}) to preserve content padding and restore its frame: ${JSON.stringify({ baseline, bounds })}`,
+        );
+      }
+      const availableBottom =
+        viewport.height -
+        (mode === "overlay" ||
+        mode === "resized" ||
+        mode === "overlay-with-shared-inset"
+          ? keyboardHeight
+          : 0);
+      console.log(
+        JSON.stringify({
+          event: "mobile-keyboard-bounds",
+          label,
+          mode,
+          availableBottom,
+          bounds,
+        }),
+      );
+      if (screenshotDirectory)
+        await page.screenshot({
+          path: `${screenshotDirectory}/${label.replace(/[^a-z0-9]+/gi, "-")}-${mode}.png`,
+          animations: "disabled",
+        });
+      if (bounds.top < -1 || bounds.bottom > availableBottom + 1) {
+        throw new Error(
+          `Expected ${label} (${mode}) to fit above the keyboard: ${JSON.stringify({ availableBottom, bounds })}`,
+        );
+      }
+      for (const control of bounds.controls) {
+        if (
+          control.top < bounds.top - 1 ||
+          control.bottom > Math.min(bounds.bottom, availableBottom) + 1
+        ) {
+          throw new Error(
+            `Expected ${label} (${mode}) controls to remain above the keyboard: ${JSON.stringify(control)}`,
+          );
+        }
+      }
+      if (
+        focused &&
+        !(await focused.evaluate(
+          (element) => element === document.activeElement,
+        ))
+      ) {
+        throw new Error(
+          `Expected ${label} (${mode}) to retain keyboard focus.`,
+        );
+      }
+    }
+  } finally {
+    await page.setViewportSize(viewport);
+    await page.evaluate(({ value, priority, bottom, bottomPriority }) => {
+      if (bottom === "")
+        document.body.style.removeProperty("--safe-area-inset-bottom");
+      else
+        document.body.style.setProperty(
+          "--safe-area-inset-bottom",
+          bottom,
+          bottomPriority,
+        );
+      if (value === "") document.body.style.removeProperty("--keyboard-height");
+      else
+        document.body.style.setProperty("--keyboard-height", value, priority);
+    }, original);
+    await focusedHandle.dispose();
+  }
+}
+
 async function assertFitsViewport(
   page: Page,
   element: Locator,
@@ -224,6 +400,12 @@ async function main(): Promise<void> {
             });
           }
           await assertFitsMobileModal(page, textModal, "text prompt");
+          const nativeContentPadding = await textModal
+            .locator(".modal-content")
+            .evaluate((element) => {
+              const style = getComputedStyle(element);
+              return { left: style.paddingLeft, right: style.paddingRight };
+            });
           const textModalInspection = await assertLocatorWithinSafeArea(
             page,
             textModal,
@@ -242,6 +424,7 @@ async function main(): Promise<void> {
           }
           const textInput = textModal.locator('input[type="text"]');
           await textInput.fill("mobile-device");
+          await assertKeyboardBounds(page, textModal, "text prompt");
           await textInput.press("Enter");
           await waitForHarnessState(
             harnessPlugin,
@@ -259,12 +442,42 @@ async function main(): Promise<void> {
             "mobile prompt cancellation",
           );
 
+          await executeHarnessStory(harnessPlugin, "prompt-password");
+          const passwordModal = await activeModal(page, "Passphrase");
+          await passwordModal
+            .locator('input[type="password"]')
+            .fill("mobile-passphrase");
+          await assertKeyboardBounds(page, passwordModal, "password prompt");
+          try {
+            await page.evaluate(() =>
+              document.body.style.setProperty(
+                "--keyboard-height",
+                `${Math.round(innerHeight * 0.42)}px`,
+              ),
+            );
+            await passwordModal
+              .getByRole("button", { name: "OK", exact: true })
+              .click();
+          } finally {
+            await page.evaluate(() =>
+              document.body.style.removeProperty("--keyboard-height"),
+            );
+          }
+          await waitForHarnessState(
+            harnessPlugin,
+            (state) =>
+              state.lastStory === "prompt-password" &&
+              state.lastResult === "password-entered",
+            "mobile password submission",
+          );
+
           await executeHarnessStory(harnessPlugin, "pick-one");
           const prompt = page.locator(".prompt").last();
           await prompt.waitFor({ state: "visible", timeout: 10_000 });
           await assertFitsViewport(page, prompt, "typed selector");
           const promptInput = prompt.locator(".prompt-input");
           await promptInput.fill("be");
+          await assertKeyboardBounds(page, prompt, "typed selector");
           await prompt
             .locator(".suggestion-item")
             .filter({ hasText: "Beta" })
@@ -280,11 +493,36 @@ async function main(): Promise<void> {
 
           await executeHarnessStory(harnessPlugin, "confirm-action");
           const confirmation = await activeModal(page, "Restore confirmation");
+          const confirmationPadding = await confirmation
+            .locator(".modal-content")
+            .evaluate((element) => {
+              const style = getComputedStyle(element);
+              return { left: style.paddingLeft, right: style.paddingRight };
+            });
+          console.log(
+            JSON.stringify({
+              event: "mobile-content-padding",
+              nativeContentPadding,
+              confirmationPadding,
+            }),
+          );
+          if (
+            confirmationPadding.left !== nativeContentPadding.left ||
+            confirmationPadding.right !== nativeContentPadding.right
+          ) {
+            throw new Error(
+              `Expected confirmation content to retain the host padding: ${JSON.stringify({ nativeContentPadding, confirmationPadding })}`,
+            );
+          }
           await assertFitsMobileModal(
             page,
             confirmation,
             "confirmation dialog",
           );
+          await confirmation
+            .getByRole("button", { name: "Restore", exact: true })
+            .focus();
+          await assertKeyboardBounds(page, confirmation, "confirmation");
           await confirmation
             .getByRole("button", { name: "Restore", exact: true })
             .click();
@@ -303,6 +541,16 @@ async function main(): Promise<void> {
             page,
             longConfirmation,
             "long confirmation dialog",
+          );
+          await longConfirmation
+            .locator(".vpk-action-dialog__actions button")
+            .first()
+            .focus();
+          await assertKeyboardBounds(
+            page,
+            longConfirmation,
+            "long confirmation",
+            0.25,
           );
           const longActions = longConfirmation.locator(
             ".vpk-action-dialog__actions--vertical",
