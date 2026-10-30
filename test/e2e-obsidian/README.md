@@ -43,7 +43,7 @@ Set `E2E_OBSIDIAN_MOBILE_SCREENSHOT` to capture the mobile scenario while its te
 E2E_OBSIDIAN_MOBILE_SCREENSHOT=/tmp/fancy-kit-mobile.png npm run test:e2e:obsidian:mobile
 ```
 
-The screenshot is an optional local diagnostic and is not retained by the test suite.
+The screenshot is an optional local diagnostic and is not retained by the test suite. The mobile scenario compares confirmation content padding with a native text prompt in the same host, allowing the active Obsidian theme to define the expected inset.
 
 The dialogue scenario compares the left and right edges of the Markdown message and action area in both layouts at viewport widths of 1024 and 375 CSS pixels. It also checks wrapping of long labels, horizontal overflow, keyboard focus indicators, independent scrolling of long messages, action results, and Escape dismissal. Set `E2E_OBSIDIAN_DIALOG_LAYOUT_DIR` to retain JSON measurements and screenshots:
 

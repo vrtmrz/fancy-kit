@@ -224,6 +224,12 @@ async function main(): Promise<void> {
             });
           }
           await assertFitsMobileModal(page, textModal, "text prompt");
+          const nativeContentPadding = await textModal
+            .locator(".modal-content")
+            .evaluate((element) => {
+              const style = getComputedStyle(element);
+              return { left: style.paddingLeft, right: style.paddingRight };
+            });
           const textModalInspection = await assertLocatorWithinSafeArea(
             page,
             textModal,
@@ -280,6 +286,27 @@ async function main(): Promise<void> {
 
           await executeHarnessStory(harnessPlugin, "confirm-action");
           const confirmation = await activeModal(page, "Restore confirmation");
+          const confirmationPadding = await confirmation
+            .locator(".modal-content")
+            .evaluate((element) => {
+              const style = getComputedStyle(element);
+              return { left: style.paddingLeft, right: style.paddingRight };
+            });
+          console.log(
+            JSON.stringify({
+              event: "mobile-content-padding",
+              nativeContentPadding,
+              confirmationPadding,
+            }),
+          );
+          if (
+            confirmationPadding.left !== nativeContentPadding.left ||
+            confirmationPadding.right !== nativeContentPadding.right
+          ) {
+            throw new Error(
+              `Expected confirmation content to retain the host padding: ${JSON.stringify({ nativeContentPadding, confirmationPadding })}`,
+            );
+          }
           await assertFitsMobileModal(
             page,
             confirmation,

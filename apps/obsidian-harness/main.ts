@@ -533,7 +533,7 @@ class WakeLockHarnessView extends ItemView {
       ],
       [
         "Long Markdown confirmation",
-        "Vertically stacked action labels, mobile safe areas, and owner-bound dismissal.",
+        "Vertically stacked action labels with standard mobile content spacing and safe-area bounds.",
         "confirm-action-long",
       ],
       [

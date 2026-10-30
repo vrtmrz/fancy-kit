@@ -284,8 +284,8 @@ class ActionDialog<T extends string> extends Modal {
       flexDirection: "column",
       minHeight: "0",
       overflowY: "hidden",
-      // Reserve room for focus shadows inside the existing clip.
-      padding: "4px",
+      // Reserve desktop focus space while preserving native mobile padding.
+      ...(Platform.isMobile ? {} : { padding: "4px" }),
       // Mobile modals have no outer padding to contain negative margins.
       margin: Platform.isMobile ? "0px" : "-4px",
     });
