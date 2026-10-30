@@ -6,7 +6,7 @@ Reusable, testable primitives for Obsidian plug-ins.
 > This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
 ```bash
-npm install --save-exact @vrtmrz/obsidian-plugin-kit@0.1.5
+npm install --save-exact @vrtmrz/obsidian-plugin-kit@0.1.6
 ```
 
 The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. The `secrets` and `local-storage` entries are added in 0.1.5, which pins `@vrtmrz/secret-store@0.1.0` and `@vrtmrz/value-store@0.1.0`. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the shared `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
