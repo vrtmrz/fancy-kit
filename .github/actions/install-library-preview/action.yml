@@ -1,0 +1,56 @@
+name: Install library preview
+description: Verify fixed-repository package previews and prepare a temporary consumer lockfile
+inputs:
+  commonlib-sha:
+    description: Full Commonlib commit SHA; empty retains the normal dependency
+    required: false
+    default: ''
+  kit-sha:
+    description: Full Fancy Kit commit SHA; empty retains the normal dependencies
+    required: false
+    default: ''
+  github-token:
+    description: Read-only GitHub token for workflow and artefact access
+    required: false
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - name: Select successful producer runs
+      id: select
+      shell: bash
+      env:
+        PREVIEW_COMMONLIB_SHA: ${{ inputs.commonlib-sha }}
+        PREVIEW_KIT_SHA: ${{ inputs.kit-sha }}
+        PREVIEW_GITHUB_TOKEN: ${{ inputs.github-token }}
+        PREVIEW_ACTION_PATH: ${{ github.action_path }}
+      run: node "$PREVIEW_ACTION_PATH/select.mjs"
+
+    - name: Download Commonlib preview by immutable ID
+      if: ${{ inputs.commonlib-sha != '' }}
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+      with:
+        repository: vrtmrz/livesync-commonlib
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ steps.select.outputs.commonlib-run-id }}
+        artifact-ids: ${{ steps.select.outputs.commonlib-artifact-id }}
+        path: ${{ steps.select.outputs.commonlib-directory }}
+        merge-multiple: true
+
+    - name: Download Fancy Kit preview by immutable ID
+      if: ${{ inputs.kit-sha != '' }}
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+      with:
+        repository: vrtmrz/fancy-kit
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ steps.select.outputs.kit-run-id }}
+        artifact-ids: ${{ steps.select.outputs.kit-artifact-id }}
+        path: ${{ steps.select.outputs.kit-directory }}
+        merge-multiple: true
+
+    - name: Verify packages and prepare consumer dependencies
+      shell: bash
+      env:
+        PREVIEW_PLAN: ${{ steps.select.outputs.plan }}
+        PREVIEW_ACTION_PATH: ${{ github.action_path }}
+      run: node "$PREVIEW_ACTION_PATH/install.mjs"
