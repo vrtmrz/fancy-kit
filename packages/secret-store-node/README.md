@@ -52,9 +52,9 @@ This adapter requires POSIX ownership and no-follow filesystem operations. Windo
 
 Names, entry counts, approximate value sizes, and change timing are visible. age does not authenticate the writer, bind ciphertext to a name, prevent swapping entries, or prevent rollback. Directory write authority and trusted provisioning remain necessary. The factories cannot identify every unsupported mount automatically; select a qualified local filesystem explicitly.
 
-## Use the unpublished workspace packages
+## Use a local workspace build
 
-There is no registry release yet. After installing the workspace dependencies, build and pack all three packages from the Fancy Kit workspace:
+The Node adapter has no registry release yet. ValueStore and SecretStore 0.1.0 are published; to test source changes across the workspace packages, install the workspace dependencies, then build and pack all three packages from the Fancy Kit workspace:
 
 ```bash
 npm run build --workspace @vrtmrz/value-store
@@ -66,12 +66,12 @@ npm pack --workspace @vrtmrz/secret-store --pack-destination /tmp/fancy-kit-secr
 npm pack --workspace @vrtmrz/secret-store-node --pack-destination /tmp/fancy-kit-secret-store-tarballs
 ```
 
-From a consumer project, install all three local tarballs together so the adapter's unpublished dependencies resolve to the matching workspace packages:
+From a consumer project, install all three local tarballs together so the adapter resolves to the matching local core builds:
 
 ```bash
 npm install \
-  /tmp/fancy-kit-secret-store-tarballs/vrtmrz-value-store-0.0.0.tgz \
-  /tmp/fancy-kit-secret-store-tarballs/vrtmrz-secret-store-0.0.0.tgz \
+  /tmp/fancy-kit-secret-store-tarballs/vrtmrz-value-store-0.1.0.tgz \
+  /tmp/fancy-kit-secret-store-tarballs/vrtmrz-secret-store-0.1.0.tgz \
   /tmp/fancy-kit-secret-store-tarballs/vrtmrz-secret-store-node-0.0.0.tgz
 ```
 
