@@ -50,15 +50,15 @@ function openOwnedDialogue<T>(
 
     const dialogue = createDialogue(resolve);
     if (Platform.isMobile) {
-      // Keep keyboard and safe-area bounds on the frame, outside the host content.
+      // The bottom safe area can include the keyboard, so reserve their union once.
       dialogue.containerEl.setCssStyles({
         boxSizing: "border-box",
-        maxHeight: "calc(100vh - var(--keyboard-height, 0px))",
+        maxHeight:
+          "calc(100vh - max(var(--keyboard-height, 0px), var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))))",
         paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
         paddingRight:
           "var(--safe-area-inset-right, env(safe-area-inset-right, 0px))",
-        paddingBottom:
-          "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
+        paddingBottom: "0",
         paddingLeft:
           "var(--safe-area-inset-left, env(safe-area-inset-left, 0px))",
       });

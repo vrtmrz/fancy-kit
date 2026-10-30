@@ -126,6 +126,10 @@ async function assertKeyboardBounds(
   const original = await page.evaluate(() => ({
     value: document.body.style.getPropertyValue("--keyboard-height"),
     priority: document.body.style.getPropertyPriority("--keyboard-height"),
+    bottom: document.body.style.getPropertyValue("--safe-area-inset-bottom"),
+    bottomPriority: document.body.style.getPropertyPriority(
+      "--safe-area-inset-bottom",
+    ),
   }));
   const focusedHandle = await modal.evaluateHandle((element) =>
     element.contains(document.activeElement) ? document.activeElement : null,
@@ -134,16 +138,45 @@ async function assertKeyboardBounds(
   const keyboardHeight = Math.round(viewport.height * keyboardRatio);
   let baseline:
     { top: number; bottom: number; padding: string | undefined } | undefined;
+  let overlay: typeof baseline;
   const screenshotDirectory = process.env.E2E_OBSIDIAN_KEYBOARD_SCREENSHOT_DIR;
   if (screenshotDirectory)
     await mkdir(screenshotDirectory, { recursive: true });
   try {
-    for (const mode of ["closed", "overlay", "resized", "restored"] as const) {
-      const overlayHeight = mode === "overlay" ? keyboardHeight : 0;
+    for (const mode of [
+      "closed",
+      "overlay",
+      "resized",
+      "overlay-with-shared-inset",
+      "restored",
+    ] as const) {
+      const overlayHeight =
+        mode === "overlay" || mode === "overlay-with-shared-inset"
+          ? keyboardHeight
+          : 0;
       await page.evaluate(
-        (height) =>
-          document.body.style.setProperty("--keyboard-height", `${height}px`),
-        overlayHeight,
+        ({ height, bottom, bottomPriority, shared }) => {
+          document.body.style.setProperty("--keyboard-height", `${height}px`);
+          if (shared)
+            document.body.style.setProperty(
+              "--safe-area-inset-bottom",
+              `${height}px`,
+            );
+          else if (bottom === "")
+            document.body.style.removeProperty("--safe-area-inset-bottom");
+          else
+            document.body.style.setProperty(
+              "--safe-area-inset-bottom",
+              bottom,
+              bottomPriority,
+            );
+        },
+        {
+          height: overlayHeight,
+          bottom: original.bottom,
+          bottomPriority: original.bottomPriority,
+          shared: mode === "overlay-with-shared-inset",
+        },
       );
       await page.setViewportSize({
         width: viewport.width,
@@ -170,6 +203,17 @@ async function assertKeyboardBounds(
         };
       });
       baseline ??= bounds;
+      if (mode === "overlay") overlay = bounds;
+      if (
+        mode === "overlay-with-shared-inset" &&
+        overlay !== undefined &&
+        (Math.abs(bounds.top - overlay.top) > 1 ||
+          Math.abs(bounds.bottom - overlay.bottom) > 1)
+      ) {
+        throw new Error(
+          `Expected ${label} to reserve the overlapping keyboard and safe area once: ${JSON.stringify({ overlay, bounds })}`,
+        );
+      }
       if (
         bounds.padding !== baseline.padding ||
         (mode === "restored" &&
@@ -182,7 +226,11 @@ async function assertKeyboardBounds(
       }
       const availableBottom =
         viewport.height -
-        (mode === "overlay" || mode === "resized" ? keyboardHeight : 0);
+        (mode === "overlay" ||
+        mode === "resized" ||
+        mode === "overlay-with-shared-inset"
+          ? keyboardHeight
+          : 0);
       console.log(
         JSON.stringify({
           event: "mobile-keyboard-bounds",
@@ -205,7 +253,7 @@ async function assertKeyboardBounds(
       for (const control of bounds.controls) {
         if (
           control.top < bounds.top - 1 ||
-          control.bottom > availableBottom + 1
+          control.bottom > Math.min(bounds.bottom, availableBottom) + 1
         ) {
           throw new Error(
             `Expected ${label} (${mode}) controls to remain above the keyboard: ${JSON.stringify(control)}`,
@@ -225,7 +273,15 @@ async function assertKeyboardBounds(
     }
   } finally {
     await page.setViewportSize(viewport);
-    await page.evaluate(({ value, priority }) => {
+    await page.evaluate(({ value, priority, bottom, bottomPriority }) => {
+      if (bottom === "")
+        document.body.style.removeProperty("--safe-area-inset-bottom");
+      else
+        document.body.style.setProperty(
+          "--safe-area-inset-bottom",
+          bottom,
+          bottomPriority,
+        );
       if (value === "") document.body.style.removeProperty("--keyboard-height");
       else
         document.body.style.setProperty("--keyboard-height", value, priority);

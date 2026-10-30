@@ -364,9 +364,10 @@ describe("owned dialogue frames", () => {
           expect(modal.containerEl.styles.paddingTop).toContain(
             "--safe-area-inset-top",
           );
-          expect(modal.containerEl.styles.paddingBottom).toContain(
-            "--safe-area-inset-bottom",
+          expect(modal.containerEl.styles.maxHeight).toContain(
+            "max(var(--keyboard-height, 0px), var(--safe-area-inset-bottom,",
           );
+          expect(modal.containerEl.styles.paddingBottom).toBe("0");
           expect(modal.contentEl.styles.padding).toBe("2rem");
         } else {
           expect(modal.containerEl.styles).toEqual({});
