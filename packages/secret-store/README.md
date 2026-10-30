@@ -2,7 +2,13 @@
 
 Platform-neutral named-secret contracts and an explicitly chosen in-memory store. It depends only on the dependency-free [`@vrtmrz/value-store`](../value-store/README.md) package for common value operations, JSON conversion, and fixed errors. Neither package imports Node.js, DOM, or Obsidian APIs through its root entry.
 
-This package is an unpublished development version (`0.0.0`). It implements the common contracts and `MemorySecretStore`. An injected Obsidian adapter is implemented separately in `@vrtmrz/obsidian-plugin-kit/secrets`. The separate [`@vrtmrz/secret-store-node/age`](../secret-store-node) adapter provides encrypted file persistence. Native credential stores, a management CLI, and encrypted transfer packs are future work. Memory storage is ephemeral and provides no encryption or secure-erasure guarantee.
+This package implements the common contracts and `MemorySecretStore`. An injected Obsidian adapter is implemented separately in `@vrtmrz/obsidian-plugin-kit/secrets`. The separate [`@vrtmrz/secret-store-node/age`](../secret-store-node) adapter provides encrypted file persistence. Native credential stores, a management CLI, and encrypted transfer packs are future work. Memory storage is ephemeral and provides no encryption or secure-erasure guarantee.
+
+## Installation
+
+```bash
+npm install --save-exact @vrtmrz/secret-store@0.1.0
+```
 
 ## Usage
 
@@ -71,7 +77,7 @@ The constructor accepts only a recognised code and uses a fixed message. Unknown
 
 Backend errors must never become `null` or an empty string. Persistent adapters must document their own limits and acknowledgement semantics: a rejected write may already have taken effect, and the common contract promises no rollback, transaction, conditional write, or power-loss durability. Do not automatically retry a mutation or switch stores after a failure.
 
-## Trying the unpublished package
+## Local development builds
 
 From the Fancy Kit workspace, build and pack a local tarball:
 
@@ -82,4 +88,4 @@ npm pack --workspace @vrtmrz/value-store
 npm pack --workspace @vrtmrz/secret-store
 ```
 
-Install both local tarballs in one consumer command: `npm install <value-store-tarball> <secret-store-tarball>`. The unpublished dependency cannot be fetched from the registry. The package provides an ESM root export and TypeScript declarations, targeting ES2022. No browser global or platform module is needed to import it. A registry release requires a separately selected release version.
+When testing source changes across both packages, install their local tarballs together: `npm install <value-store-tarball> <secret-store-tarball>`. This keeps the consumer on the intended core implementations. The package provides an ESM root export and TypeScript declarations, targeting ES2022. No browser global or platform module is needed to import it. See the [release process](../../docs/releasing.md) for registry publication and exact-artefact validation.

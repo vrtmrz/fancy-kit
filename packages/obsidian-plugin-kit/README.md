@@ -6,10 +6,10 @@ Reusable, testable primitives for Obsidian plug-ins.
 > This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
 ```bash
-npm install @vrtmrz/obsidian-plugin-kit
+npm install --save-exact @vrtmrz/obsidian-plugin-kit@0.1.5
 ```
 
-The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. SecretStorage support is unreleased and depends on the unpublished `@vrtmrz/secret-store` and `@vrtmrz/value-store` cores. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the unpublished `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
+The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. The `secrets` and `local-storage` entries are added in 0.1.5, which pins `@vrtmrz/secret-store@0.1.0` and `@vrtmrz/value-store@0.1.0`. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the shared `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
 
 Start with the [usage guide](docs/usage-guide.md) for integration choices, complete examples, test harnesses, lifecycle guidance, platform boundaries, and links to the tests that establish each documented contract. See [UI automation and scripted responses](docs/ui-automation.md) for the detailed driver rules.
 
@@ -43,7 +43,7 @@ Construct the adapter once at the plug-in boundary and pass a `SecretReader` or 
 
 ## Local string and JSON-object storage
 
-The unreleased `local-storage` entry adapts Obsidian's synchronous local-storage API behind the shared asynchronous `ValueStore` operations and explicit `ValueDeleter` capability. Obsidian owns the Vault scope; the application supplies a literal prefix for its plug-in:
+The `local-storage` entry adapts Obsidian's synchronous local-storage API behind the shared asynchronous `ValueStore` operations and explicit `ValueDeleter` capability. Obsidian owns the Vault scope; the application supplies a literal prefix for its plug-in:
 
 ```ts
 import type { App } from "obsidian";

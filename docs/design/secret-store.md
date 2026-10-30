@@ -8,6 +8,10 @@ status: unreleased
 
 # SecretStore and platform adapters
 
+## Publication note
+
+The front matter records the reviewed development-version baseline from 2026-10-19. ValueStore 0.1.0 is published. The selected release versions are SecretStore 0.1.0 and Obsidian plug-in Kit 0.1.5; the Node adapter remains unreleased at 0.0.0. Registry availability is verified separately through the [release process](../releasing.md), with current versions listed on [npm for SecretStore](https://www.npmjs.com/package/@vrtmrz/secret-store) and [npm for the Kit](https://www.npmjs.com/package/@vrtmrz/obsidian-plugin-kit). These package releases do not establish adoption in a published consumer.
+
 ## Purpose and baseline
 
 `@vrtmrz/value-store` defines neutral asynchronous string and JSON value
@@ -16,12 +20,12 @@ those shared operations. Neither package selects persistence or encryption. An
 application constructs the adapter it needs at its composition root and passes
 the narrow reader or writer capability to each workflow.
 
-This document records the implemented package boundaries and contracts, then
-marks management tools and additional adapters as proposals. All three packages
-remain at unreleased version `0.0.0`. The current Commonlib and Self-hosted
-LiveSync integration uses ValueStore for device-local data; its use of
-SecretStore remains prospective. Fancy Kit has no maintained SecretStore
-consumer integration or registry release.
+This document records the implemented package boundaries and contracts reviewed
+at development version `0.0.0`, then marks management tools and additional
+adapters as proposals. Later release selections are recorded above. The current
+Commonlib and Self-hosted LiveSync integration uses ValueStore for device-local
+data; its use of SecretStore remains prospective. Fancy Kit has no maintained
+SecretStore consumer integration.
 
 The accepted boundaries are recorded in [ADR 0001](../adr/0001-secret-store-boundaries.md),
 [ADR 0002](../adr/0002-value-store-serialisation.md), and the superseding shared
