@@ -10,7 +10,7 @@ status: unreleased
 
 ## Publication note
 
-The front matter records the reviewed development-version baseline from 2026-10-19. ValueStore 0.1.0 is published. The selected release versions are SecretStore 0.1.0 and Obsidian plug-in Kit 0.1.5; the Node adapter remains unreleased at 0.0.0. Registry availability is verified separately through the [release process](../releasing.md), with current versions listed on [npm for SecretStore](https://www.npmjs.com/package/@vrtmrz/secret-store) and [npm for the Kit](https://www.npmjs.com/package/@vrtmrz/obsidian-plugin-kit). These package releases do not establish adoption in a published consumer.
+The front matter records the reviewed development-version baseline from 2026-10-19. ValueStore 0.1.0 is published. SecretStore 0.1.0 and Obsidian plug-in Kit 0.1.5 were published on 2026-10-30; the Node adapter remains unreleased at 0.0.0. Registry availability is verified separately through the [release process](../releasing.md), with current versions listed on [npm for SecretStore](https://www.npmjs.com/package/@vrtmrz/secret-store) and [npm for the Kit](https://www.npmjs.com/package/@vrtmrz/obsidian-plugin-kit). These package releases do not establish adoption in a published consumer.
 
 ## Purpose and baseline
 

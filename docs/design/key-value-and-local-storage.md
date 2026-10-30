@@ -9,7 +9,7 @@ status: unreleased
 
 ## Publication note
 
-The front matter records the reviewed development-version baseline from 2026-10-19. ValueStore 0.1.0 is published, and the local-storage adapter is included in the selected Kit 0.1.5 release. Registry availability is verified separately through the [release process](../releasing.md); see [npm for the Kit](https://www.npmjs.com/package/@vrtmrz/obsidian-plugin-kit) for current versions. The Commonlib and Self-hosted LiveSync integration evidence below remains evidence of an unreleased consumer integration.
+The front matter records the reviewed development-version baseline from 2026-10-19. ValueStore 0.1.0 is published, and the local-storage adapter was published in Kit 0.1.5 on 2026-10-30. Registry availability is verified separately through the [release process](../releasing.md); see [npm for the Kit](https://www.npmjs.com/package/@vrtmrz/obsidian-plugin-kit) for current versions. The Commonlib and Self-hosted LiveSync integration evidence below remains evidence of an unreleased consumer integration.
 
 ## Purpose and baseline
 
