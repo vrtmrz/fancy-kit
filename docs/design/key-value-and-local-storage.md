@@ -7,6 +7,10 @@ status: unreleased
 
 # ValueStore and storage adapters
 
+## Publication note
+
+The front matter records the reviewed development-version baseline from 2026-10-19. ValueStore 0.1.0 is published, and the local-storage adapter was published in Kit 0.1.5 on 2026-10-30. Registry availability is verified separately through the [release process](../releasing.md); see [npm for the Kit](https://www.npmjs.com/package/@vrtmrz/obsidian-plugin-kit) for current versions. The Commonlib and Self-hosted LiveSync integration evidence below remains evidence of an unreleased consumer integration.
+
 ## Purpose and baseline
 
 ValueStore gives applications one asynchronous boundary for string and JSON
@@ -15,8 +19,8 @@ the application. Consumers can inject the same capability into their workflows
 and test their own persistence decisions without recreating a browser or
 Obsidian environment.
 
-This records the unpublished `@vrtmrz/value-store` development version `0.0.0`
-and the unreleased Obsidian local-storage adapter after
+This records the `@vrtmrz/value-store` development version `0.0.0` and the
+then-unreleased Obsidian local-storage adapter reviewed after
 `@vrtmrz/obsidian-plugin-kit` `0.1.4`. The accepted rationale is in
 [ADR 0003](../adr/0003-value-store-capabilities.md), which supersedes the package
 split and implicit empty-string deletion rule in

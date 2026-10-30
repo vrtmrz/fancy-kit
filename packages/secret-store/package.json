@@ -1,6 +1,6 @@
 {
   "name": "@vrtmrz/secret-store",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Platform-neutral named-secret contracts and in-memory storage",
   "type": "module",
   "license": "MIT",

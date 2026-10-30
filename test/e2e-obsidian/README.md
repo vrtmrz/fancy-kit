@@ -43,7 +43,15 @@ Set `E2E_OBSIDIAN_MOBILE_SCREENSHOT` to capture the mobile scenario while its te
 E2E_OBSIDIAN_MOBILE_SCREENSHOT=/tmp/fancy-kit-mobile.png npm run test:e2e:obsidian:mobile
 ```
 
-The screenshot is an optional local diagnostic and is not retained by the test suite.
+The screenshot is an optional local diagnostic and is not retained by the test suite. The mobile scenario compares confirmation content padding with a native text prompt in the same host, allowing the active Obsidian theme to define the expected inset.
+
+The mobile scenario also models a keyboard overlay through the host's `--keyboard-height` variable, a bottom safe-area inset that already includes the same keyboard, and a resized viewport with no remaining overlay. Overlapping keyboard and safe-area insets must reserve the same space as the keyboard alone. It checks text and password prompts, typed selection, and action dialogues for containment, retained focus, unchanged content padding, and restored geometry. These fixtures do not open a physical on-screen keyboard. Set `E2E_OBSIDIAN_KEYBOARD_SCREENSHOT_DIR` to retain the corresponding screenshots.
+
+The dialogue scenario compares the left and right edges of the Markdown message and action area in both layouts at viewport widths of 1024 and 375 CSS pixels. It also checks wrapping of long labels, horizontal overflow, keyboard focus indicators, independent scrolling of long messages, action results, and Escape dismissal. Set `E2E_OBSIDIAN_DIALOG_LAYOUT_DIR` to retain JSON measurements and screenshots:
+
+```bash
+E2E_OBSIDIAN_DIALOG_LAYOUT_DIR=/tmp/fancy-kit-dialog-layout npm run test:e2e:obsidian:dialogs
+```
 
 The session-lifecycle scenario uses a dedicated fixture plug-in to prove that supplied local-storage values are written and `beforePluginStart` completes before the fixture's first `onload()`, that lifecycle callbacks retain their documented order, that the plug-in loads exactly once, and that its enabled state is persisted. Set `E2E_OBSIDIAN_SESSION_LIFECYCLE_SCREENSHOT` to capture the final isolated Vault for diagnostics.
 

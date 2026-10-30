@@ -513,17 +513,17 @@ class WakeLockHarnessView extends ItemView {
     this.renderShowcaseSection(section, "Dialogs", [
       [
         "Text prompt",
-        "Initial value, selection, Enter, Escape, and empty-string semantics.",
+        "Initial value, selection, Enter, Escape, and actions above the software keyboard.",
         "prompt-text",
       ],
       [
         "Password prompt",
-        "Password input without retaining the value in the catalogue.",
+        "Masked input with actions above the software keyboard; the catalogue does not retain the value.",
         "prompt-password",
       ],
       [
         "Typed selection",
-        "Select an object while preserving its identity.",
+        "Search and select an object above the software keyboard while preserving its identity.",
         "pick-one",
       ],
       [
@@ -533,8 +533,13 @@ class WakeLockHarnessView extends ItemView {
       ],
       [
         "Long Markdown confirmation",
-        "Vertically stacked action labels, mobile safe areas, and owner-bound dismissal.",
+        "Vertically stacked action labels with standard mobile content spacing and safe-area bounds.",
         "confirm-action-long",
+      ],
+      [
+        "Wrapping Markdown confirmation",
+        "Aligned action area and long horizontal labels that wrap on narrow screens.",
+        "confirm-action-wrapped",
       ],
       [
         "Message",
@@ -1181,6 +1186,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
       "pick-one",
       "confirm-action",
       "confirm-action-long",
+      "confirm-action-wrapped",
       "show-message",
       "progress-start",
       "progress-step",
@@ -1422,11 +1428,15 @@ export default class FancyKitHarnessPlugin extends Plugin {
         );
         break;
       case "confirm-action-long":
+      case "confirm-action-wrapped":
         this.setResult(
           await confirmAction(
             this.app,
             {
-              title: "Compatibility review",
+              title:
+                story === "confirm-action-long"
+                  ? "Compatibility review"
+                  : "Wrapping action review",
               message:
                 "Review the release notes and update the other devices before resuming synchronisation.",
               actions: ["resume", "pause"] as const,
@@ -1435,7 +1445,8 @@ export default class FancyKitHarnessPlugin extends Plugin {
                   "I have reviewed this and updated my other devices — Resume synchronisation",
                 pause: "Keep synchronisation paused",
               },
-              actionLayout: "vertical",
+              actionLayout:
+                story === "confirm-action-long" ? "vertical" : "auto",
               defaultAction: "pause",
             },
             { signal: this.dialogueController.signal },

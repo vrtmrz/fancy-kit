@@ -36,6 +36,7 @@ interface FakeButton {
 }
 
 interface FakeModal {
+  containerEl: FakeElement;
   modalEl: FakeElement;
   contentEl: FakeElement;
   close(): void;
@@ -54,6 +55,8 @@ interface FakeComponent {
 }
 
 const mockState = vi.hoisted(() => ({
+  isMobile: false,
+  nativeContentPadding: undefined as string | undefined,
   modals: [] as unknown[],
   inputs: [] as unknown[],
   buttons: [] as unknown[],
@@ -98,6 +101,7 @@ vi.mock("obsidian", () => {
 
   class Modal {
     app: App;
+    containerEl = new ElementMock();
     titleEl = new ElementMock();
     modalEl = new ElementMock();
     contentEl = new ElementMock();
@@ -105,6 +109,9 @@ vi.mock("obsidian", () => {
 
     constructor(app: App) {
       this.app = app;
+      if (mockState.nativeContentPadding !== undefined) {
+        this.contentEl.styles.padding = mockState.nativeContentPadding;
+      }
       mockState.modals.push(this);
     }
 
@@ -240,6 +247,7 @@ vi.mock("obsidian", () => {
   }
 
   class Setting {
+    infoEl = new ElementMock();
     controlEl = new ElementMock();
 
     constructor(_container: FakeElement) {
@@ -290,7 +298,19 @@ vi.mock("obsidian", () => {
     },
   };
 
-  return { Component, FuzzySuggestModal, MarkdownRenderer, Modal, Setting };
+  const Platform = {
+    get isMobile() {
+      return mockState.isMobile;
+    },
+  };
+  return {
+    Component,
+    FuzzySuggestModal,
+    MarkdownRenderer,
+    Modal,
+    Platform,
+    Setting,
+  };
 });
 
 import {
@@ -311,12 +331,51 @@ function last<T>(items: unknown[]): T {
 
 afterEach(() => {
   vi.useRealTimers();
+  mockState.isMobile = false;
+  mockState.nativeContentPadding = undefined;
   mockState.modals.length = 0;
   mockState.inputs.length = 0;
   mockState.buttons.length = 0;
   mockState.settings.length = 0;
   mockState.components.length = 0;
   mockState.markdownCalls.length = 0;
+});
+
+describe("owned dialogue frames", () => {
+  it.each([false, true])(
+    "keeps keyboard bounds on the mobile outer frame (mobile: %s)",
+    (isMobile) => {
+      mockState.isMobile = isMobile;
+      mockState.nativeContentPadding = "2rem";
+      void promptText(app, { title: "Name" });
+      void promptPassword(app, { title: "Passphrase" });
+      void pickOne(app, { items: ["one"], getText: (item) => item });
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose.",
+        actions: ["ok"],
+      });
+      void showMessage(app, { title: "Notice", message: "Read this." });
+      for (const modal of mockState.modals as FakeModal[]) {
+        if (isMobile) {
+          expect(modal.containerEl.styles.maxHeight).toContain(
+            "--keyboard-height",
+          );
+          expect(modal.containerEl.styles.paddingTop).toContain(
+            "--safe-area-inset-top",
+          );
+          expect(modal.containerEl.styles.maxHeight).toContain(
+            "max(var(--keyboard-height, 0px), var(--safe-area-inset-bottom,",
+          );
+          expect(modal.containerEl.styles.paddingBottom).toBe("0");
+          expect(modal.contentEl.styles.padding).toBe("2rem");
+        } else {
+          expect(modal.containerEl.styles).toEqual({});
+        }
+        modal.close();
+      }
+    },
+  );
 });
 
 describe("promptText", () => {
@@ -505,6 +564,21 @@ describe("confirmAction", () => {
     await expect(result).resolves.toBe("cancel");
   });
 
+  it.each(["auto", "vertical"] as const)(
+    "hides the empty setting description for %s actions",
+    (actionLayout) => {
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose the next step.",
+        actions: ["apply", "cancel"] as const,
+        actionLayout,
+      });
+
+      const setting = last<{ infoEl: FakeElement }>(mockState.settings);
+      expect(setting.infoEl.styles.display).toBe("none");
+    },
+  );
+
   it("stacks long actions vertically when requested", () => {
     void confirmAction(app, {
       title: "Compatibility review",
@@ -526,6 +600,46 @@ describe("confirmAction", () => {
       expect(button.buttonEl.styles.width).toBe("100%");
     }
   });
+
+  it.each(["2rem", "var(--example-dialog-padding)"])(
+    "preserves host-provided mobile padding (%s)",
+    (nativePadding) => {
+      mockState.isMobile = true;
+      mockState.nativeContentPadding = nativePadding;
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose the next step.",
+        actions: ["apply", "cancel"] as const,
+      });
+
+      const modal = last<FakeModal>(mockState.modals);
+      expect(modal.contentEl.styles.padding).toBe(nativePadding);
+      expect(modal.contentEl.styles.margin).toBe("0px");
+    },
+  );
+
+  it.each([false, true])(
+    "reserves space for focus shadows without overflowing the modal (mobile: %s)",
+    (isMobile) => {
+      mockState.isMobile = isMobile;
+      void confirmAction(app, {
+        title: "Confirm",
+        message: "Choose the next step.",
+        actions: ["apply", "cancel"] as const,
+      });
+
+      const modal = last<FakeModal>(mockState.modals);
+      expect(modal.contentEl.styles).toMatchObject({
+        overflowY: "hidden",
+        margin: isMobile ? "0px" : "-4px",
+      });
+      if (isMobile) {
+        expect(modal.contentEl.styles).not.toHaveProperty("padding");
+      } else {
+        expect(modal.contentEl.styles.padding).toBe("4px");
+      }
+    },
+  );
 
   it("constrains long action dialogues to the device safe area", () => {
     void confirmAction(app, {

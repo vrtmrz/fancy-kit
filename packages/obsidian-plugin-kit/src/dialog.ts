@@ -3,6 +3,7 @@ import {
   FuzzySuggestModal,
   MarkdownRenderer,
   Modal,
+  Platform,
   Setting,
   type App,
   type FuzzyMatch,
@@ -29,6 +30,8 @@ export interface DialogLifecycleOptions {
 }
 
 interface OwnedDialogue {
+  containerEl: HTMLElement;
+  modalEl: HTMLElement;
   open(): void;
   close(): void;
 }
@@ -46,6 +49,21 @@ function openOwnedDialogue<T>(
     }
 
     const dialogue = createDialogue(resolve);
+    if (Platform.isMobile) {
+      // The bottom safe area can include the keyboard, so reserve their union once.
+      dialogue.containerEl.setCssStyles({
+        boxSizing: "border-box",
+        maxHeight:
+          "calc(100vh - max(var(--keyboard-height, 0px), var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))))",
+        paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
+        paddingRight:
+          "var(--safe-area-inset-right, env(safe-area-inset-right, 0px))",
+        paddingBottom: "0",
+        paddingLeft:
+          "var(--safe-area-inset-left, env(safe-area-inset-left, 0px))",
+      });
+      dialogue.modalEl.setCssStyles({ maxHeight: "100%", minHeight: "0" });
+    }
     const abortDialogue = (): void => dialogue.close();
     signal?.addEventListener("abort", abortDialogue, { once: true });
     removeAbortHandler = () =>
@@ -201,6 +219,18 @@ class PickOneModal<T> extends FuzzySuggestModal<T> {
     this.setPlaceholder(options.placeholder ?? "Select an item");
   }
 
+  override onOpen(): void {
+    super.onOpen();
+    if (Platform.isMobile) {
+      // Native selectors are positioned below the inherited prompt offset.
+      this.modalEl.setCssStyles({
+        top: "var(--prompt-top, var(--safe-area-inset-top, 0px))",
+        maxHeight:
+          "calc(100% - var(--prompt-top, var(--safe-area-inset-top, 0px)))",
+      });
+    }
+  }
+
   getItems(): T[] {
     return [...this.items];
   }
@@ -274,8 +304,9 @@ class ActionDialog<T extends string> extends Modal {
     this.renderer.load();
     this.modalEl.addClass("vpk-action-dialog");
     this.modalEl.setCssStyles({
-      maxHeight:
-        "calc(100vh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 1rem)",
+      maxHeight: Platform.isMobile
+        ? "100%"
+        : "calc(100vh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px) - 1rem)",
       minHeight: "0",
     });
     this.contentEl.setCssStyles({
@@ -283,6 +314,10 @@ class ActionDialog<T extends string> extends Modal {
       flexDirection: "column",
       minHeight: "0",
       overflowY: "hidden",
+      // Reserve desktop focus space while preserving native mobile padding.
+      ...(Platform.isMobile ? {} : { padding: "4px" }),
+      // Mobile modals have no outer padding to contain negative margins.
+      margin: Platform.isMobile ? "0px" : "-4px",
     });
 
     const messageEl = this.contentEl.createDiv({
@@ -306,6 +341,7 @@ class ActionDialog<T extends string> extends Modal {
     });
     actionsEl.setCssStyles({ flexShrink: "0" });
     const actions = new Setting(actionsEl);
+    actions.infoEl.setCssStyles({ display: "none" });
     const verticalActions = this.options.actionLayout === "vertical";
     actions.controlEl.addClass("vpk-action-dialog__actions");
     if (verticalActions) {

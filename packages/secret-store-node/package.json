@@ -39,7 +39,7 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
-    "@vrtmrz/secret-store": "0.0.0",
+    "@vrtmrz/secret-store": "0.1.0",
     "age-encryption": "0.3.1",
     "@vrtmrz/value-store": "0.1.0"
   }

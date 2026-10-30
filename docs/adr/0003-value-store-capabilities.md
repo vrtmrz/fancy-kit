@@ -4,7 +4,7 @@ Status: Accepted; implemented and locally verified.
 
 Date: 2026-10-19
 
-This decision replaces the package split and local empty-string deletion rule in [ADR 0002](0002-value-store-serialisation.md). It preserves the explicit authority, key acquisition, and persistence boundaries in [ADR 0001](0001-secret-store-boundaries.md). The affected storage packages remain unpublished at `0.0.0`.
+This decision replaces the package split and local empty-string deletion rule in [ADR 0002](0002-value-store-serialisation.md). It preserves the explicit authority, key acquisition, and persistence boundaries in [ADR 0001](0001-secret-store-boundaries.md). At the time of this decision, the affected storage packages were unpublished at `0.0.0`. See the maintained [SecretStore publication note](../design/secret-store.md#publication-note) and [ValueStore publication note](../design/key-value-and-local-storage.md#publication-note) for later release selections.
 
 ## Problem
 
