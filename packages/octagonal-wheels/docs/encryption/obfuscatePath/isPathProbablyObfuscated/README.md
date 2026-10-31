@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [obfuscatePath](../README.md) / isPathProbablyObfuscated
 
@@ -10,13 +10,13 @@
 function isPathProbablyObfuscated(path: string): boolean;
 ```
 
-Defined in: [src/encryption/obfuscatePath.ts:33](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/obfuscatePath.ts#L33)
+Defined in: packages/octagonal-wheels/src/encryption/obfuscatePath.ts:33
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `path` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `path`    | `string` |
 
 ## Returns
 

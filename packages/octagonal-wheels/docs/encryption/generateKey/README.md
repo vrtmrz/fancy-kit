@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [encryption](../README.md) / generateKey
 
@@ -10,14 +10,14 @@
 function generateKey(passphrase: string): Promise<CryptoKey>;
 ```
 
-Defined in: [src/encryption/encryptionv3.ts:47](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryptionv3.ts#L47)
+Defined in: packages/octagonal-wheels/src/encryption/encryptionv3.ts:47
 
 Generates a key using the passphrase.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type     | Description                                 |
+| ------------ | -------- | ------------------------------------------- |
 | `passphrase` | `string` | The passphrase used for generating the key. |
 
 ## Returns

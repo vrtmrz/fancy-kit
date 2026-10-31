@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [messagepassing](../../README.md) / [signal](../README.md) / globalSlipBoard
 
@@ -10,4 +10,4 @@
 const globalSlipBoard: SlipBoard<LSSlips>;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:236](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L236)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:236

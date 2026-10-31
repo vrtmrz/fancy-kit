@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [lock](../README.md) / ConcurrentTaskController
 
 # Class: ConcurrentTaskController
 
-Defined in: [src/concurrency/lock\_v2.ts:200](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L200)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:156
 
 Concurrency controller to limit the number of concurrent tasks.
 Similar to a semaphore but with a simpler `run` method.
@@ -20,12 +20,12 @@ Petit semaphore for limiting concurrency.
 new ConcurrentTaskController(maxConcurrency: number): ConcurrentTaskController;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:203](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L203)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:159
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter        | Type     |
+| ---------------- | -------- |
 | `maxConcurrency` | `number` |
 
 #### Returns
@@ -34,9 +34,9 @@ Defined in: [src/concurrency/lock\_v2.ts:203](https://github.com/vrtmrz/octagona
 
 ## Properties
 
-| Property | Modifier | Type | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="maxconcurrency"></a> `maxConcurrency` | `public` | `number` | [src/concurrency/lock\_v2.ts:201](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L201) |
+| Property                                     | Modifier | Type     | Defined in                                                |
+| -------------------------------------------- | -------- | -------- | --------------------------------------------------------- |
+| <a id="maxconcurrency"></a> `maxConcurrency` | `public` | `number` | packages/octagonal-wheels/src/concurrency/lock\_v2.ts:157 |
 
 ## Accessors
 
@@ -48,13 +48,13 @@ Defined in: [src/concurrency/lock\_v2.ts:203](https://github.com/vrtmrz/octagona
 get currentConcurrency(): number;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:216](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L216)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:172
 
 ##### Returns
 
 `number`
 
-***
+---
 
 ### currentPressure
 
@@ -64,7 +64,7 @@ Defined in: [src/concurrency/lock\_v2.ts:216](https://github.com/vrtmrz/octagona
 get currentPressure(): number;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:213](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L213)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:169
 
 Current number of waiting and running tasks.
 
@@ -80,7 +80,7 @@ Current number of waiting and running tasks.
 __acquire(): Promise<() => void>;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:224](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L224)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:180
 
 Manually acquire a slot for running a task.
 
@@ -90,7 +90,7 @@ Manually acquire a slot for running a task.
 
 A releaser function to call when the task is done.
 
-***
+---
 
 ### run()
 
@@ -98,21 +98,21 @@ A releaser function to call when the task is done.
 run<T>(task: () => Promise<T>, reportProgress?: () => Promise<any>): Promise<T>;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:253](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L253)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:209
 
 Run a task with concurrency control.
 
 #### Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `task` | () => `Promise`\<`T`\> | task to run |
+| Parameter         | Type                     | Description                                            |
+| ----------------- | ------------------------ | ------------------------------------------------------ |
+| `task`            | () => `Promise`\<`T`\>   | task to run                                            |
 | `reportProgress?` | () => `Promise`\<`any`\> | optional function to report progress (e.g., update UI) |
 
 #### Returns
@@ -121,7 +121,7 @@ Run a task with concurrency control.
 
 result of the task
 
-***
+---
 
 ### waitForAllReleased()
 
@@ -129,7 +129,7 @@ result of the task
 waitForAllReleased(): Promise<void>;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:275](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L275)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:231
 
 Wait until all running tasks are released.
 Note: This does not prevent new tasks from being started after this method returns.

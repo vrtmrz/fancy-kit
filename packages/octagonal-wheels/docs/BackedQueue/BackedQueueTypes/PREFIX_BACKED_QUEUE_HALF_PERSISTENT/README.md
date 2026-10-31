@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [BackedQueue](../../README.md) / [BackedQueueTypes](../README.md) / PREFIX\_BACKED\_QUEUE\_HALF\_PERSISTENT
 
@@ -10,7 +10,7 @@
 const PREFIX_BACKED_QUEUE_HALF_PERSISTENT: "bq-h" = "bq-h";
 ```
 
-Defined in: [src/BackedQueue/BackedQueueTypes.ts:143](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueueTypes.ts#L143)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueueTypes.ts:143
 
 Prefix for half-persistent backed queue keys.
 Used in HalfPersistentIDBackedQueue.

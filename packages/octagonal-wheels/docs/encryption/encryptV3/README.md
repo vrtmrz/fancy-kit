@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [encryption](../README.md) / encryptV3
 
@@ -10,15 +10,15 @@
 function encryptV3(input: string, passphrase: string): Promise<string>;
 ```
 
-Defined in: [src/encryption/encryptionv3.ts:83](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryptionv3.ts#L83)
+Defined in: packages/octagonal-wheels/src/encryption/encryptionv3.ts:83
 
 Encrypts the input string using AES-GCM encryption algorithm with the provided passphrase.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` | The string to be encrypted. |
+| Parameter    | Type     | Description                         |
+| ------------ | -------- | ----------------------------------- |
+| `input`      | `string` | The string to be encrypted.         |
 | `passphrase` | `string` | The passphrase used for encryption. |
 
 ## Returns

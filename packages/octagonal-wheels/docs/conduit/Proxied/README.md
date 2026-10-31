@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / Proxied
 
@@ -10,11 +10,11 @@
 type Proxied<T, U> = Callee<T, U>;
 ```
 
-Defined in: [src/conduit/transporter.ts:7](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporter.ts#L7)
+Defined in: packages/octagonal-wheels/src/conduit/transporter.ts:7
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [semaphore](../README.md) / SemaphoreObject
 
@@ -14,13 +14,13 @@ type SemaphoreObject = {
 };
 ```
 
-Defined in: [src/concurrency/semaphore\_v2.ts:10](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/semaphore_v2.ts#L10)
+Defined in: packages/octagonal-wheels/src/concurrency/semaphore.internal.ts:10
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="waiting"></a> `waiting` | `number` | [src/concurrency/semaphore\_v2.ts:14](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/semaphore_v2.ts#L14) |
+| Property                       | Type     | Defined in                                                         |
+| ------------------------------ | -------- | ------------------------------------------------------------------ |
+| <a id="waiting"></a> `waiting` | `number` | packages/octagonal-wheels/src/concurrency/semaphore.internal.ts:14 |
 
 ## Methods
 
@@ -30,19 +30,19 @@ Defined in: [src/concurrency/semaphore\_v2.ts:10](https://github.com/vrtmrz/octa
 acquire(quantity?: number): Promise<SemaphoreReleaser>;
 ```
 
-Defined in: [src/concurrency/semaphore\_v2.ts:11](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/semaphore_v2.ts#L11)
+Defined in: packages/octagonal-wheels/src/concurrency/semaphore.internal.ts:11
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter   | Type     |
+| ----------- | -------- |
 | `quantity?` | `number` |
 
 #### Returns
 
 `Promise`\<[`SemaphoreReleaser`](../SemaphoreReleaser/README.md)\>
 
-***
+---
 
 ### tryAcquire()
 
@@ -50,14 +50,14 @@ Defined in: [src/concurrency/semaphore\_v2.ts:11](https://github.com/vrtmrz/octa
 tryAcquire(quantity?: number, timeout?: number): Promise<false | SemaphoreReleaser>;
 ```
 
-Defined in: [src/concurrency/semaphore\_v2.ts:12](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/semaphore_v2.ts#L12)
+Defined in: packages/octagonal-wheels/src/concurrency/semaphore.internal.ts:12
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter   | Type     |
+| ----------- | -------- |
 | `quantity?` | `number` |
-| `timeout?` | `number` |
+| `timeout?`  | `number` |
 
 #### Returns
 

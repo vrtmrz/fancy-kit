@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / transporterKey
 
@@ -10,4 +10,4 @@
 const transporterKey: "transporterAdapter.v1";
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L21)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:21

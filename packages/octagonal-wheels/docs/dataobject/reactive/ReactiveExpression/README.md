@@ -1,28 +1,28 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [dataobject](../../README.md) / [reactive](../README.md) / ReactiveExpression
 
-# Type Alias: ReactiveExpression()\<T\>
+# Type Alias: ReactiveExpression\<T\>
 
 ```ts
 type ReactiveExpression<T> = (prev?: T) => T;
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:10](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L10)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:10
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `prev?` | `T` |
+| --------- | ---- |
+| `prev?`   | `T`  |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / yieldAnimationFrame
 
@@ -10,7 +10,7 @@
 function yieldAnimationFrame(): Promise<number>;
 ```
 
-Defined in: [src/promises.ts:128](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L128)
+Defined in: packages/octagonal-wheels/src/promises.ts:128
 
 Yields the next animation frame.
 

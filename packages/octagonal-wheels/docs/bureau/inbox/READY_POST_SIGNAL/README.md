@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [inbox](../README.md) / READY\_POST\_SIGNAL
 
@@ -10,4 +10,4 @@
 type READY_POST_SIGNAL = typeof READY_POST_SIGNAL;
 ```
 
-Defined in: [src/bureau/Inbox.ts:8](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L8)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:8

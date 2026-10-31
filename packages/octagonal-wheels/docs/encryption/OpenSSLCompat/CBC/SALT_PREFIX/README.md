@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../../modules.md) / [encryption](../../../README.md) / [OpenSSLCompat](../../README.md) / [CBC](../README.md) / SALT\_PREFIX
 
@@ -10,4 +10,4 @@
 const SALT_PREFIX: Uint8Array<ArrayBuffer>;
 ```
 
-Defined in: [src/encryption/openSSLCompat/CBC.ts:25](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/openSSLCompat/CBC.ts#L25)
+Defined in: packages/octagonal-wheels/src/encryption/openSSLCompat/CBC.ts:25

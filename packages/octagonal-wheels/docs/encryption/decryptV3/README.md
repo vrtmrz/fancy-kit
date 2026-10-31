@@ -1,25 +1,28 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [encryption](../README.md) / decryptV3
 
 # ~~Function: decryptV3()~~
 
 ```ts
-function decryptV3(encryptedResult: string, passphrase: string): Promise<string>;
+function decryptV3(
+  encryptedResult: string,
+  passphrase: string,
+): Promise<string>;
 ```
 
-Defined in: [src/encryption/encryptionv3.ts:115](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryptionv3.ts#L115)
+Defined in: packages/octagonal-wheels/src/encryption/encryptionv3.ts:115
 
 Decrypts the encrypted result using the provided passphrase.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter         | Type     | Description                           |
+| ----------------- | -------- | ------------------------------------- |
 | `encryptedResult` | `string` | The encrypted result to be decrypted. |
-| `passphrase` | `string` | The passphrase used for decryption. |
+| `passphrase`      | `string` | The passphrase used for decryption.   |
 
 ## Returns
 

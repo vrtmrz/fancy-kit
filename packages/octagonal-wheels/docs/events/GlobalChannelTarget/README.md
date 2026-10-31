@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [events](../README.md) / GlobalChannelTarget
 
 # Class: GlobalChannelTarget
 
-Defined in: [src/events/CustomEventTargets.ts:59](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L59)
+Defined in: packages/octagonal-wheels/src/events/CustomEventTargets.ts:59
 
 LinkedEventTarget is an EventTarget that can link to upstream and downstream EventTargets.
 It will first try to dispatch the event upstream, and if that fails, it will dispatch it to itself.
@@ -27,7 +27,7 @@ If the event is not cancelable, it will always return true.
 new GlobalChannelTarget(): GlobalChannelTarget;
 ```
 
-Defined in: [src/events/CustomEventTargets.ts:60](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L60)
+Defined in: packages/octagonal-wheels/src/events/CustomEventTargets.ts:60
 
 #### Returns
 
@@ -39,10 +39,10 @@ Defined in: [src/events/CustomEventTargets.ts:60](https://github.com/vrtmrz/octa
 
 ## Properties
 
-| Property | Type | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="_onafterdispatch"></a> `_onAfterDispatch?` | (`event`: `Event`) => `boolean` | [`InterceptiveEventTarget`](../InterceptiveEventTarget/README.md).[`_onAfterDispatch`](../InterceptiveEventTarget/README.md#_onafterdispatch) | [src/events/CustomEventTargets.ts:11](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L11) |
-| <a id="_onbeforedispatch"></a> `_onBeforeDispatch?` | (`event`: `Event`) => `boolean` | [`InterceptiveEventTarget`](../InterceptiveEventTarget/README.md).[`_onBeforeDispatch`](../InterceptiveEventTarget/README.md#_onbeforedispatch) | [src/events/CustomEventTargets.ts:10](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L10) |
+| Property                                            | Type                            | Inherited from                                                                                                                                  | Defined in                                                    |
+| --------------------------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| <a id="_onafterdispatch"></a> `_onAfterDispatch?`   | (`event`: `Event`) => `boolean` | [`InterceptiveEventTarget`](../InterceptiveEventTarget/README.md).[`_onAfterDispatch`](../InterceptiveEventTarget/README.md#_onafterdispatch)   | packages/octagonal-wheels/src/events/CustomEventTargets.ts:11 |
+| <a id="_onbeforedispatch"></a> `_onBeforeDispatch?` | (`event`: `Event`) => `boolean` | [`InterceptiveEventTarget`](../InterceptiveEventTarget/README.md).[`_onBeforeDispatch`](../InterceptiveEventTarget/README.md#_onbeforedispatch) | packages/octagonal-wheels/src/events/CustomEventTargets.ts:10 |
 
 ## Methods
 
@@ -50,8 +50,8 @@ Defined in: [src/events/CustomEventTargets.ts:60](https://github.com/vrtmrz/octa
 
 ```ts
 addEventListener(
-   type: string, 
-   callback: null | EventListenerOrEventListenerObject, 
+   type: string,
+   callback: EventListenerOrEventListenerObject | null,
    options?: boolean | AddEventListenerOptions): void;
 ```
 
@@ -63,11 +63,11 @@ The **`addEventListener()`** method of the EventTarget interface sets up a funct
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `string` |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Parameter  | Type                                           |
+| ---------- | ---------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `EventListenerOrEventListenerObject` \| `null` |
+| `options?` | `boolean` \| `AddEventListenerOptions`         |
 
 #### Returns
 
@@ -77,7 +77,7 @@ The **`addEventListener()`** method of the EventTarget interface sets up a funct
 
 [`InterceptiveEventTarget`](../InterceptiveEventTarget/README.md).[`addEventListener`](../InterceptiveEventTarget/README.md#addeventlistener)
 
-***
+---
 
 ### dispatchEvent()
 
@@ -85,7 +85,7 @@ The **`addEventListener()`** method of the EventTarget interface sets up a funct
 dispatchEvent(event: Event): boolean;
 ```
 
-Defined in: [src/events/CustomEventTargets.ts:19](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L19)
+Defined in: packages/octagonal-wheels/src/events/CustomEventTargets.ts:19
 
 The **`dispatchEvent()`** method of the EventTarget sends an Event to the object, (synchronously) invoking the affected event listeners in the appropriate order.
 
@@ -93,9 +93,9 @@ The **`dispatchEvent()`** method of the EventTarget sends an Event to the object
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `event` | `Event` |
+| Parameter | Type    |
+| --------- | ------- |
+| `event`   | `Event` |
 
 #### Returns
 
@@ -105,14 +105,14 @@ The **`dispatchEvent()`** method of the EventTarget sends an Event to the object
 
 [`InterceptiveEventTarget`](../InterceptiveEventTarget/README.md).[`dispatchEvent`](../InterceptiveEventTarget/README.md#dispatchevent)
 
-***
+---
 
 ### removeEventListener()
 
 ```ts
 removeEventListener(
-   type: string, 
-   callback: null | EventListenerOrEventListenerObject, 
+   type: string,
+   callback: EventListenerOrEventListenerObject | null,
    options?: boolean | EventListenerOptions): void;
 ```
 
@@ -124,11 +124,11 @@ The **`removeEventListener()`** method of the EventTarget interface removes an e
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `string` |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `EventListenerOptions` |
+| Parameter  | Type                                           |
+| ---------- | ---------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `EventListenerOrEventListenerObject` \| `null` |
+| `options?` | `boolean` \| `EventListenerOptions`            |
 
 #### Returns
 

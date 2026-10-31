@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / TransporterPostMessageEventData
 
@@ -14,18 +14,18 @@ type TransporterPostMessageEventData<T> = {
 };
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:22](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L22)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:22
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="key"></a> `key` | *typeof* [`transporterKey`](../transporterKey/README.md) | [src/conduit/transporterAdapter.ts:24](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L24) |
-| <a id="payload"></a> `payload` | `T` | [src/conduit/transporterAdapter.ts:25](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L25) |
-| <a id="type"></a> `type` | `string` | [src/conduit/transporterAdapter.ts:23](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L23) |
+| Property                       | Type                                                     | Defined in                                                     |
+| ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------- |
+| <a id="key"></a> `key`         | _typeof_ [`transporterKey`](../transporterKey/README.md) | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:24 |
+| <a id="payload"></a> `payload` | `T`                                                      | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:25 |
+| <a id="type"></a> `type`       | `string`                                                 | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:23 |

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [clerk](../README.md) / ClerkOption
 
@@ -12,11 +12,11 @@ type ClerkOption<T> = ClerkOptionBase<T> & {
 };
 ```
 
-Defined in: [src/bureau/Clerk.ts:17](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L17)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:17
 
 ## Type Declaration
 
-### job()
+### job
 
 ```ts
 job: (item: T) => Promise<any> | any;
@@ -25,8 +25,8 @@ job: (item: T) => Promise<any> | any;
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `item` | `T` |
+| --------- | ---- |
+| `item`    | `T`  |
 
 #### Returns
 
@@ -35,5 +35,5 @@ job: (item: T) => Promise<any> | any;
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |

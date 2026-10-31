@@ -1,23 +1,26 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / generateSharedSecretKey
 
 # Function: generateSharedSecretKey()
 
 ```ts
-function generateSharedSecretKey(privateKey: CryptoKey, publicKey: CryptoKey): Promise<CryptoKey>;
+function generateSharedSecretKey(
+  privateKey: CryptoKey,
+  publicKey: CryptoKey,
+): Promise<CryptoKey>;
 ```
 
-Defined in: [src/encryption/asymmetric/keys.ts:122](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/keys.ts#L122)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/keys.ts:122
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter    | Type        |
+| ------------ | ----------- |
 | `privateKey` | `CryptoKey` |
-| `publicKey` | `CryptoKey` |
+| `publicKey`  | `CryptoKey` |
 
 ## Returns
 

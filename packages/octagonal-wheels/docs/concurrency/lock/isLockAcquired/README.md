@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [lock](../README.md) / isLockAcquired
 
@@ -10,18 +10,18 @@
 function isLockAcquired(key: string | symbol): boolean;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:190](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L190)
+Defined in: packages/octagonal-wheels/src/concurrency/lock.scoped.ts:75
 
-Checks if a serialised-processing-lock is acquired for the given key.
+Reports whether an operation is running or queued for a shared lock key.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` \| `symbol` | The key to check for lock acquisition. |
+| Parameter | Type                 | Description                                                      |
+| --------- | -------------------- | ---------------------------------------------------------------- |
+| `key`     | `string` \| `symbol` | Lock group shared by withLock, withLocks, and legacy serialized. |
 
 ## Returns
 
 `boolean`
 
-`true` if the lock is acquired, `false` otherwise.
+Whether the key currently has a running or queued operation.

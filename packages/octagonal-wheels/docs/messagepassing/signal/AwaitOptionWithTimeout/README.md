@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [messagepassing](../../README.md) / [signal](../README.md) / AwaitOptionWithTimeout
 
@@ -12,12 +12,12 @@ type AwaitOptionWithTimeout = AwaitOptionBase & {
 };
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:60](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L60)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:60
 
 ## Type Declaration
 
 ### timeout?
 
 ```ts
-optional timeout: number;
+optional timeout?: number;
 ```

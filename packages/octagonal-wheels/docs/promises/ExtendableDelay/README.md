@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / ExtendableDelay
 
@@ -14,23 +14,23 @@ type ExtendableDelay<T, U> = {
 };
 ```
 
-Defined in: [src/promises.ts:193](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L193)
+Defined in: packages/octagonal-wheels/src/promises.ts:193
 
 An extendable delay that can be cancelled or extended.
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` |
-| `U` *extends* `string` \| `symbol` \| `number` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `T`                                            |
+| `U` _extends_ `string` \| `symbol` \| `number` |
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="cancel"></a> `cancel` | (`reason`: `T` \| `U`) => `void` | [src/promises.ts:195](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L195) |
-| <a id="promise"></a> `promise` | `Promise`\<`T` \| `U`\> | [src/promises.ts:194](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L194) |
+| Property                       | Type                             | Defined in                                    |
+| ------------------------------ | -------------------------------- | --------------------------------------------- |
+| <a id="cancel"></a> `cancel`   | (`reason`: `T` \| `U`) => `void` | packages/octagonal-wheels/src/promises.ts:195 |
+| <a id="promise"></a> `promise` | `Promise`\<`T` \| `U`\>          | packages/octagonal-wheels/src/promises.ts:194 |
 
 ## Methods
 
@@ -40,12 +40,12 @@ An extendable delay that can be cancelled or extended.
 extend(newTimeout: number): void;
 ```
 
-Defined in: [src/promises.ts:196](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L196)
+Defined in: packages/octagonal-wheels/src/promises.ts:196
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter    | Type     |
+| ------------ | -------- |
 | `newTimeout` | `number` |
 
 #### Returns

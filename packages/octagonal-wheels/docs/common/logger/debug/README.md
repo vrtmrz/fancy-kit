@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [common](../../README.md) / [logger](../README.md) / debug
 
@@ -12,12 +12,12 @@
 function debug(message: any): void;
 ```
 
-Defined in: [src/common/logger.ts:107](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L107)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:107
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type  |
+| --------- | ----- |
 | `message` | `any` |
 
 ### Returns
@@ -30,14 +30,14 @@ Defined in: [src/common/logger.ts:107](https://github.com/vrtmrz/octagonal-wheel
 function debug(message: any, flags: LOG_KIND): void;
 ```
 
-Defined in: [src/common/logger.ts:108](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L108)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:108
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `message` | `any` |
-| `flags` | [`LOG_KIND`](../LOG_KIND/README.md) |
+| Parameter | Type                                |
+| --------- | ----------------------------------- |
+| `message` | `any`                               |
+| `flags`   | [`LOG_KIND`](../LOG_KIND/README.md) |
 
 ### Returns
 
@@ -49,14 +49,14 @@ Defined in: [src/common/logger.ts:108](https://github.com/vrtmrz/octagonal-wheel
 function debug(message: any, key: string): void;
 ```
 
-Defined in: [src/common/logger.ts:109](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L109)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:109
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `message` | `any` |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `message` | `any`    |
+| `key`     | `string` |
 
 ### Returns
 
@@ -65,21 +65,18 @@ Defined in: [src/common/logger.ts:109](https://github.com/vrtmrz/octagonal-wheel
 ## Call Signature
 
 ```ts
-function debug(
-   message: any, 
-   flags: LOG_KIND, 
-   key: string): void;
+function debug(message: any, flags: LOG_KIND, key: string): void;
 ```
 
-Defined in: [src/common/logger.ts:110](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L110)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:110
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `message` | `any` |
-| `flags` | [`LOG_KIND`](../LOG_KIND/README.md) |
-| `key` | `string` |
+| Parameter | Type                                |
+| --------- | ----------------------------------- |
+| `message` | `any`                               |
+| `flags`   | [`LOG_KIND`](../LOG_KIND/README.md) |
+| `key`     | `string`                            |
 
 ### Returns
 

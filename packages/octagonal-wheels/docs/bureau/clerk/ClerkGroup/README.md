@@ -1,19 +1,19 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [clerk](../README.md) / ClerkGroup
 
 # Class: ClerkGroup\<T, U\>
 
-Defined in: [src/bureau/Clerk.ts:170](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L170)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:170
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` |
-| `U` *extends* [`ClerkBase`](../ClerkBase/README.md)\<`T`\> |
+| Type Parameter                                             |
+| ---------------------------------------------------------- |
+| `T`                                                        |
+| `U` _extends_ [`ClerkBase`](../ClerkBase/README.md)\<`T`\> |
 
 ## Constructors
 
@@ -23,13 +23,13 @@ Defined in: [src/bureau/Clerk.ts:170](https://github.com/vrtmrz/octagonal-wheels
 new ClerkGroup<T, U>(params: ClerkGroupOption<T, U>): ClerkGroup<T, U>;
 ```
 
-Defined in: [src/bureau/Clerk.ts:178](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L178)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:178
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `params` | [`ClerkGroupOption`](../ClerkGroupOption/README.md)\<`T`, `U`\> |
+| Parameter | Type                                                            |
+| --------- | --------------------------------------------------------------- |
+| `params`  | [`ClerkGroupOption`](../ClerkGroupOption/README.md)\<`T`, `U`\> |
 
 #### Returns
 
@@ -37,14 +37,14 @@ Defined in: [src/bureau/Clerk.ts:178](https://github.com/vrtmrz/octagonal-wheels
 
 ## Properties
 
-| Property | Type | Default value | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="_assigned"></a> `_assigned` | [`Inbox`](../../inbox/Inbox/README.md)\<`T`\> | `undefined` | [src/bureau/Clerk.ts:173](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L173) |
-| <a id="_clerks"></a> `_clerks` | `U`[] | `undefined` | [src/bureau/Clerk.ts:171](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L171) |
-| <a id="_hiredcount"></a> `_hiredCount` | `number` | `0` | [src/bureau/Clerk.ts:174](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L174) |
-| <a id="_instantiate"></a> `_instantiate` | (`params`: [`ClerkOption`](../ClerkOption/README.md)\<`T`\>) => `U` | `undefined` | [src/bureau/Clerk.ts:176](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L176) |
-| <a id="_job"></a> `_job` | (`item`: `T`) => `Promise`\<`any`\> | `undefined` | [src/bureau/Clerk.ts:175](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L175) |
-| <a id="_namebase"></a> `_nameBase` | `string` | `undefined` | [src/bureau/Clerk.ts:172](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L172) |
+| Property                                 | Type                                                                | Default value | Defined in                                        |
+| ---------------------------------------- | ------------------------------------------------------------------- | ------------- | ------------------------------------------------- |
+| <a id="_assigned"></a> `_assigned`       | [`Inbox`](../../inbox/Inbox/README.md)\<`T`\>                       | `undefined`   | packages/octagonal-wheels/src/bureau/Clerk.ts:173 |
+| <a id="_clerks"></a> `_clerks`           | `U`[]                                                               | `undefined`   | packages/octagonal-wheels/src/bureau/Clerk.ts:171 |
+| <a id="_hiredcount"></a> `_hiredCount`   | `number`                                                            | `0`           | packages/octagonal-wheels/src/bureau/Clerk.ts:174 |
+| <a id="_instantiate"></a> `_instantiate` | (`params`: [`ClerkOption`](../ClerkOption/README.md)\<`T`\>) => `U` | `undefined`   | packages/octagonal-wheels/src/bureau/Clerk.ts:176 |
+| <a id="_job"></a> `_job`                 | (`item`: `T`) => `Promise`\<`any`\>                                 | `undefined`   | packages/octagonal-wheels/src/bureau/Clerk.ts:175 |
+| <a id="_namebase"></a> `_nameBase`       | `string`                                                            | `undefined`   | packages/octagonal-wheels/src/bureau/Clerk.ts:172 |
 
 ## Accessors
 
@@ -56,13 +56,13 @@ Defined in: [src/bureau/Clerk.ts:178](https://github.com/vrtmrz/octagonal-wheels
 get freeMembers(): number;
 ```
 
-Defined in: [src/bureau/Clerk.ts:231](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L231)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:231
 
 ##### Returns
 
 `number`
 
-***
+---
 
 ### stateDetail
 
@@ -72,7 +72,7 @@ Defined in: [src/bureau/Clerk.ts:231](https://github.com/vrtmrz/octagonal-wheels
 get stateDetail(): ClerkStateDetail;
 ```
 
-Defined in: [src/bureau/Clerk.ts:214](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L214)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:214
 
 ##### Returns
 
@@ -86,19 +86,19 @@ Defined in: [src/bureau/Clerk.ts:214](https://github.com/vrtmrz/octagonal-wheels
 adjustMemberCount(count: number): void;
 ```
 
-Defined in: [src/bureau/Clerk.ts:202](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L202)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:202
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `count` | `number` |
+| Parameter | Type     |
+| --------- | -------- |
+| `count`   | `number` |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### dispose()
 
@@ -106,13 +106,13 @@ Defined in: [src/bureau/Clerk.ts:202](https://github.com/vrtmrz/octagonal-wheels
 dispose(): void;
 ```
 
-Defined in: [src/bureau/Clerk.ts:235](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L235)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:235
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### fireMember()
 
@@ -120,13 +120,13 @@ Defined in: [src/bureau/Clerk.ts:235](https://github.com/vrtmrz/octagonal-wheels
 fireMember(): void;
 ```
 
-Defined in: [src/bureau/Clerk.ts:198](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L198)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:198
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### hireMember()
 
@@ -134,13 +134,13 @@ Defined in: [src/bureau/Clerk.ts:198](https://github.com/vrtmrz/octagonal-wheels
 hireMember(params: ClerkOption<T>): void;
 ```
 
-Defined in: [src/bureau/Clerk.ts:189](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L189)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:189
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `params` | [`ClerkOption`](../ClerkOption/README.md)\<`T`\> |
+| Parameter | Type                                             |
+| --------- | ------------------------------------------------ |
+| `params`  | [`ClerkOption`](../ClerkOption/README.md)\<`T`\> |
 
 #### Returns
 

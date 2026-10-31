@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / isWaitingForTimeout
 
@@ -10,13 +10,13 @@
 function isWaitingForTimeout(key: string): boolean;
 ```
 
-Defined in: [src/concurrency/task.ts:205](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L205)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:205
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
 
 ## Returns
 

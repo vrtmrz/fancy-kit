@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [databases](../../README.md) / [simplestorebase](../README.md) / SimpleStoreTransaction
 
@@ -13,7 +13,7 @@ type SimpleStoreTransaction<T> = SimpleStoreCRUD<T> & {
 };
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:40](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L40)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:40
 
 ## Type Declaration
 
@@ -44,5 +44,5 @@ Commits the transaction.
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |

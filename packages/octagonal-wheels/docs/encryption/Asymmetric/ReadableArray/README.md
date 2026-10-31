@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / ReadableArray
 
@@ -12,10 +12,10 @@ type ReadableArray = {
 };
 ```
 
-Defined in: [src/encryption/asymmetric/common.ts:41](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/common.ts#L41)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/common.ts:41
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="read"></a> `read` | (`length`: `number`) => `Uint8Array`\<`ArrayBuffer`\> | [src/encryption/asymmetric/common.ts:41](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/common.ts#L41) |
+| Property                 | Type                                                  | Defined in                                                       |
+| ------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------- |
+| <a id="read"></a> `read` | (`length`: `number`) => `Uint8Array`\<`ArrayBuffer`\> | packages/octagonal-wheels/src/encryption/asymmetric/common.ts:41 |

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [databases](../../README.md) / [dbcommon](../README.md) / SIMPLE\_STORE\_EVENT\_TYPES
 
@@ -15,7 +15,7 @@ const SIMPLE_STORE_EVENT_TYPES: {
 };
 ```
 
-Defined in: [src/databases/dbcommon.ts:33](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/dbcommon.ts#L33)
+Defined in: packages/octagonal-wheels/src/databases/dbcommon.ts:33
 
 ## Type Declaration
 

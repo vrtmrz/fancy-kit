@@ -1,34 +1,37 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / cancelableDelay
 
 # Function: cancelableDelay()
 
 ```ts
-function cancelableDelay<T>(timeout: number, cancel?: T): {
+function cancelableDelay<T>(
+  timeout: number,
+  cancel?: T,
+): {
   promise: Promise<T>;
   cancel: void;
 };
 ```
 
-Defined in: [src/promises.ts:172](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L172)
+Defined in: packages/octagonal-wheels/src/promises.ts:172
 
 Creates a delay that can be canceled.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description |
-| ------ | ------ | ------ |
-| `T` | *typeof* [`TIMED_OUT_SIGNAL`](../TIMED_OUT_SIGNAL-1/README.md) | The type of the cancel signal. |
+| Type Parameter | Default type                                                   | Description                    |
+| -------------- | -------------------------------------------------------------- | ------------------------------ |
+| `T`            | _typeof_ [`TIMED_OUT_SIGNAL`](../TIMED_OUT_SIGNAL-1/README.md) | The type of the cancel signal. |
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `timeout` | `number` | The delay duration in milliseconds. |
-| `cancel?` | `T` | The value to resolve the promise with if the delay is canceled. |
+| Parameter | Type     | Description                                                     |
+| --------- | -------- | --------------------------------------------------------------- |
+| `timeout` | `number` | The delay duration in milliseconds.                             |
+| `cancel?` | `T`      | The value to resolve the promise with if the delay is canceled. |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [encryption](../README.md) / decrypt
 
@@ -8,21 +8,22 @@
 
 ```ts
 function decrypt(
-   encryptedResult: string, 
-   passphrase: string, 
-autoCalculateIterations: boolean): Promise<string>;
+  encryptedResult: string,
+  passphrase: string,
+  autoCalculateIterations: boolean,
+): Promise<string>;
 ```
 
-Defined in: [src/encryption/encryption.ts:255](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryption.ts#L255)
+Defined in: packages/octagonal-wheels/src/encryption/encryption.ts:255
 
 Decrypts the encrypted result using the provided passphrase.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `encryptedResult` | `string` | The encrypted result to decrypt. |
-| `passphrase` | `string` | The passphrase used for decryption. |
+| Parameter                 | Type      | Description                                                             |
+| ------------------------- | --------- | ----------------------------------------------------------------------- |
+| `encryptedResult`         | `string`  | The encrypted result to decrypt.                                        |
+| `passphrase`              | `string`  | The passphrase used for decryption.                                     |
 | `autoCalculateIterations` | `boolean` | A boolean indicating whether to automatically calculate the iterations. |
 
 ## Returns

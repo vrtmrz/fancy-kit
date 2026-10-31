@@ -1,24 +1,27 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [databases](../../README.md) / [dbcommon](../README.md) / buildIDBRange
 
 # Function: buildIDBRange()
 
 ```ts
-function buildIDBRange(from: undefined | string, to: undefined | string): undefined | IDBKeyRange;
+function buildIDBRange(
+  from: string | undefined,
+  to: string | undefined,
+): IDBKeyRange | undefined;
 ```
 
-Defined in: [src/databases/dbcommon.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/dbcommon.ts#L21)
+Defined in: packages/octagonal-wheels/src/databases/dbcommon.ts:21
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `from` | `undefined` \| `string` |
-| `to` | `undefined` \| `string` |
+| Parameter | Type                    |
+| --------- | ----------------------- |
+| `from`    | `string` \| `undefined` |
+| `to`      | `string` \| `undefined` |
 
 ## Returns
 
-`undefined` \| `IDBKeyRange`
+`IDBKeyRange` \| `undefined`

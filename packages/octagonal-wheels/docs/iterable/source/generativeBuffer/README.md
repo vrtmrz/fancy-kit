@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [iterable](../../README.md) / [source](../README.md) / generativeBuffer
 
@@ -18,13 +18,13 @@ function generativeBuffer<T>(): {
 };
 ```
 
-Defined in: [src/iterable/source.ts:4](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/iterable/source.ts#L4)
+Defined in: packages/octagonal-wheels/src/iterable/source.ts:4
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Returns
 
@@ -91,8 +91,8 @@ enqueue(item: T): void;
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `item` | `T` |
+| --------- | ---- |
+| `item`    | `T`  |
 
 #### Returns
 

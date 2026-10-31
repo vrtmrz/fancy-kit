@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [databases](../../README.md) / [simplestorebase](../README.md) / SimpleStoreCRUDSupportTransaction
 
@@ -12,7 +12,7 @@ type SimpleStoreCRUDSupportTransaction<T> = SimpleStoreCRUD<T> & {
 };
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:30](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L30)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:30
 
 ## Type Declaration
 
@@ -26,8 +26,8 @@ Begins a transaction and provides a callback with the transaction object.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                                                                            | Description                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | `callback` | (`tx`: [`SimpleStoreTransaction`](../SimpleStoreTransaction/README.md)\<`T`\>) => `void` \| `Promise`\<`void`\> | The callback function that receives a transaction object. |
 
 #### Returns
@@ -40,5 +40,5 @@ Note: if you perform asynchronous operations inside the callback, some backends 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |

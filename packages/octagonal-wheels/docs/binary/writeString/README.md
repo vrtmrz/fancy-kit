@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [binary](../README.md) / writeString
 
@@ -10,13 +10,13 @@
 function writeString(string: string): Uint8Array<ArrayBuffer>;
 ```
 
-Defined in: [src/binary/base64.ts:207](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/binary/base64.ts#L207)
+Defined in: packages/octagonal-wheels/src/binary/base64.ts:228
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `string` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `string`  | `string` |
 
 ## Returns
 

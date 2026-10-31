@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / ECDH\_CURVE\_INDEX
 
@@ -14,7 +14,7 @@ const ECDH_CURVE_INDEX: {
 };
 ```
 
-Defined in: [src/encryption/asymmetric/common.ts:1](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/common.ts#L1)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/common.ts:1
 
 ## Type Declaration
 

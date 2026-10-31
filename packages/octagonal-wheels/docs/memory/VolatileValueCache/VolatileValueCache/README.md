@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [memory](../../README.md) / [VolatileValueCache](../README.md) / VolatileValueCache
 
 # Class: VolatileValueCache\<K, V\>
 
-Defined in: [src/memory/VolatileValueCache.ts:26](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L26)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:26
 
 A cache that holds its values weakly, allowing them to be garbage-collected
 if they are not referenced elsewhere. Keys are standard strings or numbers.
@@ -21,10 +21,10 @@ to allow garbage collection to occur.
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `K` *extends* `string` \| `number` |
-| `V` |
+| Type Parameter                     |
+| ---------------------------------- |
+| `K` _extends_ `string` \| `number` |
+| `V`                                |
 
 ## Constructors
 
@@ -34,7 +34,7 @@ to allow garbage collection to occur.
 new VolatileValueCache<K, V>(): VolatileValueCache<K, V>;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:47](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L47)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:47
 
 #### Returns
 
@@ -48,19 +48,19 @@ Defined in: [src/memory/VolatileValueCache.ts:47](https://github.com/vrtmrz/octa
 _delete(keyObject: object): void;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:117](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L117)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:117
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter   | Type     |
+| ----------- | -------- |
 | `keyObject` | `object` |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### \_getPin()
 
@@ -68,19 +68,19 @@ Defined in: [src/memory/VolatileValueCache.ts:117](https://github.com/vrtmrz/oct
 _getPin(valueObject: ValueWrapper<V>): Pin<V>;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:31](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L31)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:31
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter     | Type                                               |
+| ------------- | -------------------------------------------------- |
 | `valueObject` | [`ValueWrapper`](../ValueWrapper/README.md)\<`V`\> |
 
 #### Returns
 
 [`Pin`](../Pin/README.md)\<`V`\>
 
-***
+---
 
 ### delete()
 
@@ -88,59 +88,59 @@ Defined in: [src/memory/VolatileValueCache.ts:31](https://github.com/vrtmrz/octa
 delete(key: K): boolean;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:109](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L109)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:109
 
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `key` | `K` |
+| --------- | ---- |
+| `key`     | `K`  |
 
 #### Returns
 
 `boolean`
 
-***
+---
 
 ### get()
 
 ```ts
-get(key: K): undefined | V;
+get(key: K): V | undefined;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:90](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L90)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:90
 
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `key` | `K` |
+| --------- | ---- |
+| `key`     | `K`  |
 
 #### Returns
 
-`undefined` \| `V`
+`V` \| `undefined`
 
-***
+---
 
 ### getPin()
 
 ```ts
-getPin(key: K): undefined | Pin<V>;
+getPin(key: K): Pin<V> | undefined;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:76](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L76)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:76
 
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `key` | `K` |
+| --------- | ---- |
+| `key`     | `K`  |
 
 #### Returns
 
-`undefined` \| [`Pin`](../Pin/README.md)\<`V`\>
+[`Pin`](../Pin/README.md)\<`V`\> \| `undefined`
 
-***
+---
 
 ### has()
 
@@ -148,19 +148,19 @@ Defined in: [src/memory/VolatileValueCache.ts:76](https://github.com/vrtmrz/octa
 has(key: K): boolean;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:95](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L95)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:95
 
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `key` | `K` |
+| --------- | ---- |
+| `key`     | `K`  |
 
 #### Returns
 
 `boolean`
 
-***
+---
 
 ### set()
 
@@ -168,14 +168,14 @@ Defined in: [src/memory/VolatileValueCache.ts:95](https://github.com/vrtmrz/octa
 set(key: K, value: V): Pin<V>;
 ```
 
-Defined in: [src/memory/VolatileValueCache.ts:63](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L63)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:63
 
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `key` | `K` |
-| `value` | `V` |
+| --------- | ---- |
+| `key`     | `K`  |
+| `value`   | `V`  |
 
 #### Returns
 

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [common](../../README.md) / [types](../README.md) / TaggedType
 
@@ -12,9 +12,9 @@ type TaggedType<T, U> = T & {
 };
 ```
 
-Defined in: [src/common/types.ts:8](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/types.ts#L8)
+Defined in: packages/octagonal-wheels/src/common/types.ts:8
 
-Tagged Type: Wrapping type with a unique symbol to make types *INCOMPATIBLE* for the same type with different tags.
+Tagged Type: Wrapping type with a unique symbol to make types _INCOMPATIBLE_ for the same type with different tags.
 
 ## Type Declaration
 
@@ -26,17 +26,20 @@ Tagged Type: Wrapping type with a unique symbol to make types *INCOMPATIBLE* for
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` |
-| `U` *extends* `string` |
+| Type Parameter         |
+| ---------------------- |
+| `T`                    |
+| `U` _extends_ `string` |
 
 ## Examples
 
 ```ts
-var id = TaggedType<string, 'DocumentID'> = "AAA" ;// This makes error
+var id = (TaggedType<string, "DocumentID"> = "AAA"); // This makes error
 ```
 
 ```ts
-var id = TaggedType<string, 'DocumentID'> = "AAA" as TaggedType<string,"FileName"> ;// Also makes error
+var id = (TaggedType<string, "DocumentID"> = "AAA" as TaggedType<
+  string,
+  "FileName"
+>); // Also makes error
 ```

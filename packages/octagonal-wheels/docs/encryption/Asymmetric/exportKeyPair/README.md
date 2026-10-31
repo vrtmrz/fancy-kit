@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / exportKeyPair
 
@@ -13,21 +13,21 @@ function exportKeyPair(keyPair: CryptoKeyPair): Promise<{
 }>;
 ```
 
-Defined in: [src/encryption/asymmetric/keys.ts:205](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/keys.ts#L205)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/keys.ts:205
 
 Exports a key pair (public and private keys) in a format suitable for storage or transmission.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type            | Description             |
+| --------- | --------------- | ----------------------- |
 | `keyPair` | `CryptoKeyPair` | The key pair to export. |
 
 ## Returns
 
 `Promise`\<\{
-  `privateKey`: `string`;
-  `publicKey`: `string`;
+`privateKey`: `string`;
+`publicKey`: `string`;
 \}\>
 
 The exported public and private keys as Base64-encoded strings.

@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [channel](../../README.md) / [transport](../README.md) / DirectTransport
 
 # Class: DirectTransport
 
-Defined in: [src/channel/transport.ts:80](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L80)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:80
 
 Transport Implementation: Direct Function Call
 Used for communication within the same JavaScript process (e.g., main thread).
@@ -36,7 +36,7 @@ new DirectTransport(): DirectTransport;
 close(): void;
 ```
 
-Defined in: [src/channel/transport.ts:113](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L113)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:113
 
 Close the transport and clean up resources.
 
@@ -48,7 +48,7 @@ Close the transport and clean up resources.
 
 [`ITransport`](../ITransport/README.md).[`close`](../ITransport/README.md#close)
 
-***
+---
 
 ### publish()
 
@@ -56,16 +56,16 @@ Close the transport and clean up resources.
 publish(channelName: string, data: any): void;
 ```
 
-Defined in: [src/channel/transport.ts:98](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L98)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:98
 
 Publish a message to a specific channel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter     | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
 | `channelName` | `string` | The name of the channel to publish to. |
-| `data` | `any` | The data to send with the message. |
+| `data`        | `any`    | The data to send with the message.     |
 
 #### Returns
 
@@ -75,7 +75,7 @@ Publish a message to a specific channel.
 
 [`ITransport`](../ITransport/README.md).[`publish`](../ITransport/README.md#publish)
 
-***
+---
 
 ### subscribe()
 
@@ -83,28 +83,22 @@ Publish a message to a specific channel.
 subscribe(channelName: string, listener: (data: any) => void): () => void;
 ```
 
-Defined in: [src/channel/transport.ts:83](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L83)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:83
 
 Subscribe to messages on a specific channel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `channelName` | `string` | The name of the channel to subscribe to. |
-| `listener` | (`data`: `any`) => `void` | The callback function to invoke when a message is received on the channel. |
+| Parameter     | Type                      | Description                                                                |
+| ------------- | ------------------------- | -------------------------------------------------------------------------- |
+| `channelName` | `string`                  | The name of the channel to subscribe to.                                   |
+| `listener`    | (`data`: `any`) => `void` | The callback function to invoke when a message is received on the channel. |
 
 #### Returns
 
 A function to unsubscribe from the channel.
 
-```ts
-(): void;
-```
-
-##### Returns
-
-`void`
+() => `void`
 
 #### Implementation of
 

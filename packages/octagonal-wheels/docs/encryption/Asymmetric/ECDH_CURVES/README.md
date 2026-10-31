@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / ECDH\_CURVES
 
@@ -10,4 +10,4 @@
 type ECDH_CURVES = "P-256" | "P-384" | "P-521";
 ```
 
-Defined in: [src/encryption/asymmetric/common.ts:18](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/common.ts#L18)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/common.ts:18

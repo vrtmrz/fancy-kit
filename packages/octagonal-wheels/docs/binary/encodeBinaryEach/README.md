@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [binary](../README.md) / encodeBinaryEach
 
@@ -10,15 +10,15 @@
 function encodeBinaryEach(buffer: Uint8Array): Promise<string>;
 ```
 
-Defined in: [src/binary/encodedUTF16.ts:22](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/binary/encodedUTF16.ts#L22)
+Defined in: packages/octagonal-wheels/src/binary/encodedUTF16.deprecated.ts:13
 
 Encodes a binary buffer into a UTF-16 string.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `buffer` | `Uint8Array` | The binary buffer to encode. |
+| Parameter | Type         | Description                  |
+| --------- | ------------ | ---------------------------- |
+| `buffer`  | `Uint8Array` | The binary buffer to encode. |
 
 ## Returns
 

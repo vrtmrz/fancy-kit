@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [dataobject](../../README.md) / [reactive](../README.md) / ReactiveInstance
 
@@ -15,19 +15,19 @@ type ReactiveInstance<T> = {
 };
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:23](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L23)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:23
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Properties
 
-| Property | Modifier | Type | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="value"></a> `value` | `readonly` | `T` | [src/dataobject/reactive\_v2.ts:24](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L24) |
+| Property                   | Modifier   | Type | Defined in                                                  |
+| -------------------------- | ---------- | ---- | ----------------------------------------------------------- |
+| <a id="value"></a> `value` | `readonly` | `T`  | packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:24 |
 
 ## Methods
 
@@ -37,13 +37,13 @@ Defined in: [src/dataobject/reactive\_v2.ts:23](https://github.com/vrtmrz/octago
 markClean(): void;
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:26](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L26)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:26
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### markDirty()
 
@@ -51,13 +51,13 @@ Defined in: [src/dataobject/reactive\_v2.ts:26](https://github.com/vrtmrz/octago
 markDirty(): void;
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:25](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L25)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:25
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### rippleChanged()
 
@@ -65,7 +65,7 @@ Defined in: [src/dataobject/reactive\_v2.ts:25](https://github.com/vrtmrz/octago
 rippleChanged(): void;
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:27](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L27)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:27
 
 #### Returns
 

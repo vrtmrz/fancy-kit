@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / TaskResultWithKey
 
@@ -12,7 +12,7 @@ type TaskResultWithKey<T, U> = TaskResult<T, U> & {
 };
 ```
 
-Defined in: [src/concurrency/task.ts:10](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L10)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:10
 
 ## Type Declaration
 
@@ -24,7 +24,7 @@ key: number;
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` |
-| `U` *extends* `Error` |
+| Type Parameter        |
+| --------------------- |
+| `T`                   |
+| `U` _extends_ `Error` |

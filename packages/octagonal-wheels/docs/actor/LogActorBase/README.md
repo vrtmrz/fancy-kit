@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [actor](../README.md) / LogActorBase
 
 # Abstract Class: LogActorBase
 
-Defined in: [src/actor.ts:199](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L199)
+Defined in: packages/octagonal-wheels/src/actor.ts:198
 
 Represents an abstract class for an actor.
 
@@ -22,7 +22,7 @@ Represents an abstract class for an actor.
 new LogActorBase(): LogActorBase;
 ```
 
-Defined in: [src/actor.ts:200](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L200)
+Defined in: packages/octagonal-wheels/src/actor.ts:199
 
 #### Returns
 
@@ -34,13 +34,13 @@ Defined in: [src/actor.ts:200](https://github.com/vrtmrz/octagonal-wheels/blob/m
 
 ## Properties
 
-| Property | Modifier | Type | Default value | Description | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| <a id="__process"></a> `__process` | `public` | `undefined` \| `Promise`\<`void`\> | `undefined` | - | [`Actor`](../Actor/README.md).[`__process`](../Actor/README.md#__process) | [src/actor.ts:136](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L136) |
-| <a id="_busy"></a> `_busy` | `public` | `boolean` | `false` | - | [`Actor`](../Actor/README.md).[`_busy`](../Actor/README.md#_busy) | [src/actor.ts:121](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L121) |
-| <a id="multiinstance"></a> `multiInstance` | `readonly` | `boolean` | `undefined` | Indicates whether the actor is a multi-instance. | [`Actor`](../Actor/README.md).[`multiInstance`](../Actor/README.md#multiinstance) | [src/actor.ts:102](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L102) |
-| <a id="name"></a> `name` | `readonly` | `string` | `undefined` | The name of the actor. | [`Actor`](../Actor/README.md).[`name`](../Actor/README.md#name) | [src/actor.ts:98](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L98) |
-| <a id="hub"></a> `hub` | `static` | [`ActorHub`](../ActorHub/README.md)\<`any`\> | `undefined` | Represents the hub for actors. | [`Actor`](../Actor/README.md).[`hub`](../Actor/README.md#hub) | [src/actor.ts:107](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L107) |
+| Property                                   | Modifier   | Type                                         | Default value | Description                                      | Inherited from                                                                    | Defined in                                 |
+| ------------------------------------------ | ---------- | -------------------------------------------- | ------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------ |
+| <a id="__process"></a> `__process`         | `public`   | `Promise`\<`void`\> \| `undefined`           | `undefined`   | -                                                | [`Actor`](../Actor/README.md).[`__process`](../Actor/README.md#__process)         | packages/octagonal-wheels/src/actor.ts:136 |
+| <a id="_busy"></a> `_busy`                 | `public`   | `boolean`                                    | `false`       | -                                                | [`Actor`](../Actor/README.md).[`_busy`](../Actor/README.md#_busy)                 | packages/octagonal-wheels/src/actor.ts:121 |
+| <a id="multiinstance"></a> `multiInstance` | `readonly` | `boolean`                                    | `undefined`   | Indicates whether the actor is a multi-instance. | [`Actor`](../Actor/README.md).[`multiInstance`](../Actor/README.md#multiinstance) | packages/octagonal-wheels/src/actor.ts:102 |
+| <a id="name"></a> `name`                   | `readonly` | `string`                                     | `undefined`   | The name of the actor.                           | [`Actor`](../Actor/README.md).[`name`](../Actor/README.md#name)                   | packages/octagonal-wheels/src/actor.ts:98  |
+| <a id="hub"></a> `hub`                     | `static`   | [`ActorHub`](../ActorHub/README.md)\<`any`\> | `undefined`   | Represents the hub for actors.                   | [`Actor`](../Actor/README.md).[`hub`](../Actor/README.md#hub)                     | packages/octagonal-wheels/src/actor.ts:107 |
 
 ## Methods
 
@@ -50,12 +50,12 @@ Defined in: [src/actor.ts:200](https://github.com/vrtmrz/octagonal-wheels/blob/m
 _enqueue(message: ActorLogMessage): void;
 ```
 
-Defined in: [src/actor.ts:139](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L139)
+Defined in: packages/octagonal-wheels/src/actor.ts:139
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                              |
+| --------- | ------------------------------------------------- |
 | `message` | [`ActorLogMessage`](../ActorLogMessage/README.md) |
 
 #### Returns
@@ -66,7 +66,7 @@ Defined in: [src/actor.ts:139](https://github.com/vrtmrz/octagonal-wheels/blob/m
 
 [`Actor`](../Actor/README.md).[`_enqueue`](../Actor/README.md#_enqueue)
 
-***
+---
 
 ### \_process()
 
@@ -74,12 +74,12 @@ Defined in: [src/actor.ts:139](https://github.com/vrtmrz/octagonal-wheels/blob/m
 _process(message: ActorLogMessage): Promise<void>;
 ```
 
-Defined in: [src/actor.ts:122](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L122)
+Defined in: packages/octagonal-wheels/src/actor.ts:122
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                              |
+| --------- | ------------------------------------------------- |
 | `message` | [`ActorLogMessage`](../ActorLogMessage/README.md) |
 
 #### Returns
@@ -90,7 +90,7 @@ Defined in: [src/actor.ts:122](https://github.com/vrtmrz/octagonal-wheels/blob/m
 
 [`Actor`](../Actor/README.md).[`_process`](../Actor/README.md#_process)
 
-***
+---
 
 ### destroy()
 
@@ -98,7 +98,7 @@ Defined in: [src/actor.ts:122](https://github.com/vrtmrz/octagonal-wheels/blob/m
 destroy(): void;
 ```
 
-Defined in: [src/actor.ts:190](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L190)
+Defined in: packages/octagonal-wheels/src/actor.ts:189
 
 Destroys the actor instance.
 
@@ -110,7 +110,7 @@ Destroys the actor instance.
 
 [`Actor`](../Actor/README.md).[`destroy`](../Actor/README.md#destroy)
 
-***
+---
 
 ### dispatch()
 
@@ -125,7 +125,7 @@ dispatch<U, V>(actor: {
 }, message: U): void;
 ```
 
-Defined in: [src/actor.ts:183](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L183)
+Defined in: packages/octagonal-wheels/src/actor.ts:182
 
 Dispatches a message to the specified actor.
 Utility method to dispatch a message to the actor, which is the subsequent actor of the current actor.
@@ -133,19 +133,19 @@ Just for hiding the hub from the derived class.
 
 #### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `U` | The type of the message. |
-| `V` | The type of the actor. |
+| Type Parameter | Description              |
+| -------------- | ------------------------ |
+| `U`            | The type of the message. |
+| `V`            | The type of the actor.   |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `actor` | \{ (`params`: \{ `multiInstance?`: `boolean`; `name?`: `string`; \}): [`Actor`](../Actor/README.md)\<`V`\>; `hub`: [`ActorHub`](../ActorHub/README.md)\<`any`\>; `prototype`: [`Actor`](../Actor/README.md)\<`any`\>; \} | The actor to dispatch the message to. |
-| `actor.hub` | [`ActorHub`](../ActorHub/README.md)\<`any`\> | Represents the hub for actors. |
-| `actor.prototype` | [`Actor`](../Actor/README.md)\<`any`\> | - |
-| `message` | `U` | The message to be dispatched. |
+| Parameter         | Type                                                                                                                                                                                                                     | Description                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `actor`           | \{ (`params`: \{ `multiInstance?`: `boolean`; `name?`: `string`; \}): [`Actor`](../Actor/README.md)\<`V`\>; `hub`: [`ActorHub`](../ActorHub/README.md)\<`any`\>; `prototype`: [`Actor`](../Actor/README.md)\<`any`\>; \} | The actor to dispatch the message to. |
+| `actor.hub`       | [`ActorHub`](../ActorHub/README.md)\<`any`\>                                                                                                                                                                             | Represents the hub for actors.        |
+| `actor.prototype` | [`Actor`](../Actor/README.md)\<`any`\>                                                                                                                                                                                   | -                                     |
+| `message`         | `U`                                                                                                                                                                                                                      | The message to be dispatched.         |
 
 #### Returns
 
@@ -155,7 +155,7 @@ Just for hiding the hub from the derived class.
 
 [`Actor`](../Actor/README.md).[`dispatch`](../Actor/README.md#dispatch)
 
-***
+---
 
 ### post()
 
@@ -163,15 +163,15 @@ Just for hiding the hub from the derived class.
 post(message: ActorLogMessage): void;
 ```
 
-Defined in: [src/actor.ts:161](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L161)
+Defined in: packages/octagonal-wheels/src/actor.ts:160
 
 Dispatches a message to the actor.
 Note: Even if we posted messages to the specific actor, the message will be processed by some actor instances if the actor is a multi-instance.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                              | Description                   |
+| --------- | ------------------------------------------------- | ----------------------------- |
 | `message` | [`ActorLogMessage`](../ActorLogMessage/README.md) | The message to be dispatched. |
 
 #### Returns
@@ -182,7 +182,7 @@ Note: Even if we posted messages to the specific actor, the message will be proc
 
 [`Actor`](../Actor/README.md).[`post`](../Actor/README.md#post)
 
-***
+---
 
 ### postToThisInstance()
 
@@ -190,14 +190,14 @@ Note: Even if we posted messages to the specific actor, the message will be proc
 postToThisInstance(message: ActorLogMessage): void;
 ```
 
-Defined in: [src/actor.ts:170](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L170)
+Defined in: packages/octagonal-wheels/src/actor.ts:169
 
 Posts a message to this actor instance.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                              | Description               |
+| --------- | ------------------------------------------------- | ------------------------- |
 | `message` | [`ActorLogMessage`](../ActorLogMessage/README.md) | The message to be posted. |
 
 #### Returns
@@ -208,7 +208,7 @@ Posts a message to this actor instance.
 
 [`Actor`](../Actor/README.md).[`postToThisInstance`](../Actor/README.md#posttothisinstance)
 
-***
+---
 
 ### process()
 
@@ -216,14 +216,14 @@ Posts a message to this actor instance.
 abstract process(message: ActorLogMessage): void | Promise<void>;
 ```
 
-Defined in: [src/actor.ts:154](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L154)
+Defined in: packages/octagonal-wheels/src/actor.ts:153
 
 Processes a message. This method should be overridden in the derived class. Automatically called when a message is dispatched to the actor.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                              | Description                  |
+| --------- | ------------------------------------------------- | ---------------------------- |
 | `message` | [`ActorLogMessage`](../ActorLogMessage/README.md) | The message to be processed. |
 
 #### Returns

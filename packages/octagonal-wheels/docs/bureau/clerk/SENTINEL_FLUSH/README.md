@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [clerk](../README.md) / SENTINEL\_FLUSH
 
@@ -10,4 +10,4 @@
 const SENTINEL_FLUSH: typeof SENTINEL_FLUSH;
 ```
 
-Defined in: [src/bureau/Clerk.ts:28](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L28)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:28

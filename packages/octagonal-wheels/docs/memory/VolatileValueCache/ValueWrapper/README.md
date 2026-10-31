@@ -1,21 +1,21 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [memory](../../README.md) / [VolatileValueCache](../README.md) / ValueWrapper
 
 # Interface: ValueWrapper\<T\>
 
-Defined in: [src/memory/VolatileValueCache.ts:2](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L2)
+Defined in: packages/octagonal-wheels/src/memory/VolatileValueCache.ts:2
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="value"></a> `value` | `T` | [src/memory/VolatileValueCache.ts:3](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/VolatileValueCache.ts#L3) |
+| Property                   | Type | Defined in                                                   |
+| -------------------------- | ---- | ------------------------------------------------------------ |
+| <a id="value"></a> `value` | `T`  | packages/octagonal-wheels/src/memory/VolatileValueCache.ts:3 |

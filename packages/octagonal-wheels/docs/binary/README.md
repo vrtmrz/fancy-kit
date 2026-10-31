@@ -1,10 +1,15 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / binary
 
 # binary
+
+## Type Aliases
+
+- [ArrayBufferContentEquality](ArrayBufferContentEquality/README.md)
+- [TypedArrayReader](TypedArrayReader/README.md)
 
 ## Variables
 
@@ -30,13 +35,19 @@
 - [base64ToStringBrowser](base64ToStringBrowser/README.md)
 - [base64ToStringNative](base64ToStringNative/README.md)
 - [concatUInt8Array](concatUInt8Array/README.md)
+- [createBinaryBlob](createBinaryBlob/README.md)
+- [createTextBlob](createTextBlob/README.md)
+- [createTypedArrayReader](createTypedArrayReader/README.md)
 - [decodeBinary](decodeBinary/README.md)
 - [decodeToArrayBuffer](decodeToArrayBuffer/README.md)
 - [encodeBinary](encodeBinary/README.md)
 - [~~encodeBinaryEach~~](encodeBinaryEach/README.md)
 - [hexStringToUint8ArrayBrowser](hexStringToUint8ArrayBrowser/README.md)
 - [hexStringToUint8ArrayNative](hexStringToUint8ArrayNative/README.md)
+- [isBlobContentEqual](isBlobContentEqual/README.md)
 - [readString](readString/README.md)
+- [toArrayBuffer](toArrayBuffer/README.md)
+- [toBlob](toBlob/README.md)
 - [tryConvertBase64ToArrayBufferBrowser](tryConvertBase64ToArrayBufferBrowser/README.md)
 - [tryConvertBase64ToArrayBufferNative](tryConvertBase64ToArrayBufferNative/README.md)
 - [uint8ArrayToHexStringBrowser](uint8ArrayToHexStringBrowser/README.md)

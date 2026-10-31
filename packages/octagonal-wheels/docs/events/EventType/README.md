@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [events](../README.md) / EventType
 
@@ -10,10 +10,10 @@
 type EventType<K> = K extends string ? K : never;
 ```
 
-Defined in: [src/events/EventHub.ts:16](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L16)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:16
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `K` |
+| -------------- |
+| `K`            |

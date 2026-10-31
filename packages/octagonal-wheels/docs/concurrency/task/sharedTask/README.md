@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / sharedTask
 
@@ -10,20 +10,20 @@
 function sharedTask<T>(key: string, proc: () => Promise<T>): Promise<T>;
 ```
 
-Defined in: [src/concurrency/task.ts:218](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L218)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:218
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` |  |
-| `proc` | () => `Promise`\<`T`\> |  |
+| Parameter | Type                   | Description |
+| --------- | ---------------------- | ----------- |
+| `key`     | `string`               | -           |
+| `proc`    | () => `Promise`\<`T`\> | -           |
 
 ## Returns
 

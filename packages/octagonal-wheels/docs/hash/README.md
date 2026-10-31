@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / hash
 
@@ -8,6 +8,6 @@
 
 ## Namespaces
 
-- [crc32](crc32/README.md)
+- [~~crc32~~](crc32/README.md)
 - [purejs](purejs/README.md)
 - [xxhash](xxhash/README.md)

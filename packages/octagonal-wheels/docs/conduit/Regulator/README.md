@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / Regulator
 
@@ -12,11 +12,11 @@ const Regulator: {
 };
 ```
 
-Defined in: [src/conduit/regulator.ts:150](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/regulator.ts#L150)
+Defined in: packages/octagonal-wheels/src/conduit/regulator.ts:150
 
 ## Type Declaration
 
-### of()
+### of
 
 ```ts
 of: <T, U>(name: string) => RegulatorOf<T, U>;
@@ -26,16 +26,16 @@ Get a regulator
 
 #### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `name` | `string` |  |
+| Parameter | Type     | Description |
+| --------- | -------- | ----------- |
+| `name`    | `string` | -           |
 
 #### Returns
 
@@ -48,6 +48,8 @@ Get a regulator
 Get a regulator that allows you to regulate the number of concurrent processes.
 
 ## Param
+
+**name**
 
 ## Returns
 

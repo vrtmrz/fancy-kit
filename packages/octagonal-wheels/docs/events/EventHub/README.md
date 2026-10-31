@@ -1,20 +1,20 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [events](../README.md) / EventHub
 
 # Class: EventHub\<Events\>
 
-Defined in: [src/events/EventHub.ts:27](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L27)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:27
 
 A class that provides an event hub for managing custom events.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description |
-| ------ | ------ | ------ |
-| `Events` *extends* `AnyHubEvents` | `LSEvents` | The type of events that the EventHub will handle. This type should be an object with event names as keys and event data types as values. This make all events strongly typed. |
+| Type Parameter                    | Default type | Description                                                                                                                                                                   |
+| --------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Events` _extends_ `AnyHubEvents` | `LSEvents`   | The type of events that the EventHub will handle. This type should be an object with event names as keys and event data types as values. This make all events strongly typed. |
 
 ## Constructors
 
@@ -24,14 +24,14 @@ A class that provides an event hub for managing custom events.
 new EventHub<Events>(emitter?: EventTarget): EventHub<Events>;
 ```
 
-Defined in: [src/events/EventHub.ts:38](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L38)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:38
 
 Creates an instance of the EventHub.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type          | Description                                                                                                                                                                                                                                             |
+| ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `emitter?` | `EventTarget` | An optional EventTarget to use as the event emitter. If not provided, a dedicated new EventTarget will be created. i.e., it can share the same emitter with other EventHubs (e.g., for a global event bus, or separately built apps via window object). |
 
 #### Returns
@@ -48,22 +48,22 @@ Creates an instance of the EventHub.
 emitEvent<ET, K>(event: EventTypeWithoutData<ET, K>): void;
 ```
 
-Defined in: [src/events/EventHub.ts:80](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L80)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:113
 
 Emits an event without data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to emit. |
+| Parameter | Type                                                                     | Description        |
+| --------- | ------------------------------------------------------------------------ | ------------------ |
+| `event`   | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to emit. |
 
 ##### Returns
 
@@ -75,29 +75,29 @@ Emits an event without data.
 emitEvent<ET, K>(event: EventTypeWithData<ET, K>, data: ET[K]): void;
 ```
 
-Defined in: [src/events/EventHub.ts:89](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L89)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:122
 
 Emits an event with data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to emit. |
-| `data` | `ET`\[`K`\] | data to include with the event. |
+| Parameter | Type                                                               | Description                     |
+| --------- | ------------------------------------------------------------------ | ------------------------------- |
+| `event`   | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to emit.              |
+| `data`    | `ET`\[`K`\]                                                        | data to include with the event. |
 
 ##### Returns
 
 `void`
 
-***
+---
 
 ### off()
 
@@ -105,7 +105,7 @@ Emits an event with data.
 off<ET, K>(event: EventType<K>, callback?: CallableFunction): void;
 ```
 
-Defined in: [src/events/EventHub.ts:139](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L139)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:176
 
 Removes current event registrations in bulk.
 
@@ -113,23 +113,23 @@ Prefer the disposer returned by `on`, `onEvent`, `once`, or `onceEvent` when rem
 
 #### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `AnyHubEvents` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `AnyHubEvents`                  |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventType`](../EventType/README.md)\<`K`\> | The event whose registrations should be removed. |
-| `callback?` | `CallableFunction` | The callback whose registrations should be removed. Omit it to remove every registration for the event. |
+| Parameter   | Type                                         | Description                                                                                             |
+| ----------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `event`     | [`EventType`](../EventType/README.md)\<`K`\> | The event whose registrations should be removed.                                                        |
+| `callback?` | `CallableFunction`                           | The callback whose registrations should be removed. Omit it to remove every registration for the event. |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### offAll()
 
@@ -137,7 +137,7 @@ Prefer the disposer returned by `on`, `onEvent`, `once`, or `onceEvent` when rem
 offAll(): void;
 ```
 
-Defined in: [src/events/EventHub.ts:156](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L156)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:192
 
 Removes all event listeners.
 
@@ -145,7 +145,7 @@ Removes all event listeners.
 
 `void`
 
-***
+---
 
 ### on()
 
@@ -153,83 +153,71 @@ Removes all event listeners.
 
 ```ts
 on<ET, K>(
-   event: EventTypeWithoutData<ET, K>, 
-   callback: (e: Event) => void | Promise<void>, 
+   event: EventTypeWithoutData<ET, K>,
+   callback: (e: Event) => void | Promise<void>,
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:103](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L103)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:137
 
 Registers an event listener for a specific event.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | (`e`: `Event`) => `void` \| `Promise`\<`void`\> | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
+| Parameter  | Type                                                                     | Description                                                                                           |
+| ---------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for.                                                                              |
+| `callback` | (`e`: `Event`) => `void` \| `Promise`\<`void`\>                          | The callback to execute when the event is triggered.                                                  |
+| `options?` | `AddEventListenerOptions`                                                | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
-
-###### Returns
-
-`void`
+() => `void`
 
 #### Call Signature
 
 ```ts
 on<ET, K>(
-   event: EventTypeWithData<ET, K>, 
-   callback: (e: Event, data: ET[K]) => void | Promise<void>, 
+   event: EventTypeWithData<ET, K>,
+   callback: (e: Event, data: ET[K]) => void | Promise<void>,
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:117](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L117)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:152
 
 Registers an event listener for a specific event.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | (`e`: `Event`, `data`: `ET`\[`K`\]) => `void` \| `Promise`\<`void`\> | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
+| Parameter  | Type                                                                 | Description                                                                                           |
+| ---------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\>   | The event to listen for.                                                                              |
+| `callback` | (`e`: `Event`, `data`: `ET`\[`K`\]) => `void` \| `Promise`\<`void`\> | The callback to execute when the event is triggered.                                                  |
+| `options?` | `AddEventListenerOptions`                                            | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
+() => `void`
 
-###### Returns
-
-`void`
-
-***
+---
 
 ### once()
 
@@ -242,36 +230,30 @@ once<ET, K>(
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:210](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L210)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:249
 
 Registers a one-time event listener for a specific event.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | (`e`: `Event`) => `void` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
+| Parameter  | Type                                                                     | Description                                                                           |
+| ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for.                                                              |
+| `callback` | (`e`: `Event`) => `void`                                                 | The callback to execute when the event is triggered.                                  |
+| `options?` | `AddEventListenerOptions`                                                | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
-
-###### Returns
-
-`void`
+() => `void`
 
 #### Call Signature
 
@@ -282,38 +264,32 @@ once<ET, K>(
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:222](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L222)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:264
 
 Registers a one-time event listener for a specific event.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | (`e`: `Event`, `data`: `ET`\[`K`\]) => `void` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
+| Parameter  | Type                                                               | Description                                                                           |
+| ---------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for.                                                              |
+| `callback` | (`e`: `Event`, `data`: `ET`\[`K`\]) => `void`                      | The callback to execute when the event is triggered.                                  |
+| `options?` | `AddEventListenerOptions`                                          | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
+() => `void`
 
-###### Returns
-
-`void`
-
-***
+---
 
 ### onceEvent()
 
@@ -326,36 +302,30 @@ onceEvent<ET, K>(
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:241](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L241)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:287
 
 Registers a one-time event listener for a specific event, with a callback that only receives the event data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | () => `void` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
+| Parameter  | Type                                                                     | Description                                                                           |
+| ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for.                                                              |
+| `callback` | () => `void`                                                             | The callback to execute when the event is triggered.                                  |
+| `options?` | `AddEventListenerOptions`                                                | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
-
-###### Returns
-
-`void`
+() => `void`
 
 #### Call Signature
 
@@ -366,38 +336,32 @@ onceEvent<ET, K>(
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:253](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L253)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:302
 
 Registers a one-time event listener for a specific event, with a callback that only receives the event data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | (`data`: `ET`\[`K`\]) => `void` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
+| Parameter  | Type                                                               | Description                                                                           |
+| ---------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for.                                                              |
+| `callback` | (`data`: `ET`\[`K`\]) => `void`                                    | The callback to execute when the event is triggered.                                  |
+| `options?` | `AddEventListenerOptions`                                          | Native `EventTarget` listener options. The `once` option is always treated as `true`. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
+() => `void`
 
-###### Returns
-
-`void`
-
-***
+---
 
 ### onEvent()
 
@@ -405,83 +369,71 @@ An idempotent function that removes only this registration.
 
 ```ts
 onEvent<ET, K>(
-   event: EventTypeWithoutData<ET, K>, 
-   callback: () => any, 
+   event: EventTypeWithoutData<ET, K>,
+   callback: () => any,
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:171](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L171)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:208
 
 Registers an event listener for a specific event, with a callback that only receives the event data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | () => `any` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
+| Parameter  | Type                                                                     | Description                                                                                           |
+| ---------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to listen for.                                                                              |
+| `callback` | () => `any`                                                              | The callback to execute when the event is triggered.                                                  |
+| `options?` | `AddEventListenerOptions`                                                | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
-
-###### Returns
-
-`void`
+() => `void`
 
 #### Call Signature
 
 ```ts
 onEvent<ET, K>(
-   event: EventTypeWithData<ET, K>, 
-   callback: (data: ET[K]) => any, 
+   event: EventTypeWithData<ET, K>,
+   callback: (data: ET[K]) => any,
    options?: AddEventListenerOptions): () => void;
 ```
 
-Defined in: [src/events/EventHub.ts:185](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L185)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:223
 
 Registers an event listener for a specific event, with a callback that only receives the event data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for. |
-| `callback` | (`data`: `ET`\[`K`\]) => `any` | The callback to execute when the event is triggered. |
-| `options?` | `AddEventListenerOptions` | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
+| Parameter  | Type                                                               | Description                                                                                           |
+| ---------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `event`    | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to listen for.                                                                              |
+| `callback` | (`data`: `ET`\[`K`\]) => `any`                                     | The callback to execute when the event is triggered.                                                  |
+| `options?` | `AddEventListenerOptions`                                          | Native `EventTarget` listener options. A supplied signal removes only this registration when aborted. |
 
 ##### Returns
 
 An idempotent function that removes only this registration.
 
-```ts
-(): void;
-```
+() => `void`
 
-###### Returns
-
-`void`
-
-***
+---
 
 ### waitFor()
 
@@ -491,22 +443,22 @@ An idempotent function that removes only this registration.
 waitFor<ET, K>(event: EventTypeWithoutData<ET, K>): Promise<null>;
 ```
 
-Defined in: [src/events/EventHub.ts:272](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L272)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:323
 
 Waits for a specific event to be emitted.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to wait for. |
+| Parameter | Type                                                                     | Description            |
+| --------- | ------------------------------------------------------------------------ | ---------------------- |
+| `event`   | [`EventTypeWithoutData`](../EventTypeWithoutData/README.md)\<`ET`, `K`\> | The event to wait for. |
 
 ##### Returns
 
@@ -520,22 +472,22 @@ A Promise that resolves with null.
 waitFor<ET, K>(event: EventTypeWithData<ET, K>): Promise<ET[K]>;
 ```
 
-Defined in: [src/events/EventHub.ts:281](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/EventHub.ts#L281)
+Defined in: packages/octagonal-wheels/src/events/EventHub.ts:332
 
 Waits for a specific event to be emitted and returns a promise that resolves with the event data.
 
 ##### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `AnyHubEvents` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event. |
+| Type Parameter                                 | Description           |
+| ---------------------------------------------- | --------------------- |
+| `ET` _extends_ `AnyHubEvents`                  | The type of events.   |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event. |
 
 ##### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `event` | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to wait for. |
+| Parameter | Type                                                               | Description            |
+| --------- | ------------------------------------------------------------------ | ---------------------- |
+| `event`   | [`EventTypeWithData`](../EventTypeWithData/README.md)\<`ET`, `K`\> | The event to wait for. |
 
 ##### Returns
 

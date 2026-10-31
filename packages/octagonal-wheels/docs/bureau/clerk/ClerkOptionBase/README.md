@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [clerk](../README.md) / ClerkOptionBase
 
@@ -13,17 +13,17 @@ type ClerkOptionBase<T> = {
 };
 ```
 
-Defined in: [src/bureau/Clerk.ts:12](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L12)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:12
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="assigned"></a> `assigned` | [`Inbox`](../../inbox/Inbox/README.md)\<`T`\> | [src/bureau/Clerk.ts:14](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L14) |
-| <a id="name"></a> `name?` | `string` | [src/bureau/Clerk.ts:13](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L13) |
+| Property                         | Type                                          | Defined in                                       |
+| -------------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| <a id="assigned"></a> `assigned` | [`Inbox`](../../inbox/Inbox/README.md)\<`T`\> | packages/octagonal-wheels/src/bureau/Clerk.ts:14 |
+| <a id="name"></a> `name?`        | `string`                                      | packages/octagonal-wheels/src/bureau/Clerk.ts:13 |

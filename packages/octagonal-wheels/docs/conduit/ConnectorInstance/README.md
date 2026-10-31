@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / ConnectorInstance
 
@@ -10,15 +10,15 @@
 type ConnectorInstance<T> = T;
 ```
 
-Defined in: [src/conduit/connector.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L21)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:21
 
 ConnectorInstance
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | the type of the instance |
+| Type Parameter | Description              |
+| -------------- | ------------------------ |
+| `T`            | the type of the instance |
 
 ## Remarks
 

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [bulk](../README.md) / BatcherWithTimeoutOptions
 
@@ -13,7 +13,7 @@ type BatcherWithTimeoutOptions = BatcherOptions & {
 };
 ```
 
-Defined in: [src/concurrency/bulk.ts:305](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L305)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:305
 
 Options for BatcherWithTimeout.
 
@@ -22,7 +22,7 @@ Options for BatcherWithTimeout.
 ### timeoutFromLastAdd?
 
 ```ts
-optional timeoutFromLastAdd: number;
+optional timeoutFromLastAdd?: number;
 ```
 
 Timeout in milliseconds from the last add to force yielding the current batch.
@@ -30,7 +30,7 @@ Timeout in milliseconds from the last add to force yielding the current batch.
 ### timeoutFromLastYield?
 
 ```ts
-optional timeoutFromLastYield: number;
+optional timeoutFromLastYield?: number;
 ```
 
 Timeout in milliseconds from the last yield to force yielding the current batch.

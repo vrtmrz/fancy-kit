@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [binary](../README.md) / base64ToArrayBufferInternalBrowser
 
@@ -10,15 +10,15 @@
 function base64ToArrayBufferInternalBrowser(base64: string): ArrayBuffer;
 ```
 
-Defined in: [src/binary/base64.ts:73](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/binary/base64.ts#L73)
+Defined in: packages/octagonal-wheels/src/binary/base64.ts:73
 
 Converts a base64 string to an ArrayBuffer in a browser environment.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `base64` | `string` | The base64 string to convert. |
+| Parameter | Type     | Description                   |
+| --------- | -------- | ----------------------------- |
+| `base64`  | `string` | The base64 string to convert. |
 
 ## Returns
 

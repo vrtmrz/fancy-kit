@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [encryption](../README.md) / KeyBuffer
 
@@ -14,12 +14,12 @@ type KeyBuffer = {
 };
 ```
 
-Defined in: [src/encryption/encryption.ts:12](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryption.ts#L12)
+Defined in: packages/octagonal-wheels/src/encryption/encryption.ts:12
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="count"></a> `count` | `number` | [src/encryption/encryption.ts:15](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryption.ts#L15) |
-| <a id="key"></a> `key` | `CryptoKey` | [src/encryption/encryption.ts:13](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryption.ts#L13) |
-| <a id="salt"></a> `salt` | `Uint8Array`\<`ArrayBuffer`\> | [src/encryption/encryption.ts:14](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryption.ts#L14) |
+| Property                   | Type                          | Defined in                                                |
+| -------------------------- | ----------------------------- | --------------------------------------------------------- |
+| <a id="count"></a> `count` | `number`                      | packages/octagonal-wheels/src/encryption/encryption.ts:15 |
+| <a id="key"></a> `key`     | `CryptoKey`                   | packages/octagonal-wheels/src/encryption/encryption.ts:13 |
+| <a id="salt"></a> `salt`   | `Uint8Array`\<`ArrayBuffer`\> | packages/octagonal-wheels/src/encryption/encryption.ts:14 |

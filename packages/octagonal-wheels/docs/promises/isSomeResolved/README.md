@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / isSomeResolved
 
@@ -10,14 +10,14 @@
 function isSomeResolved(promises: Promise<unknown>[]): Promise<boolean>;
 ```
 
-Defined in: [src/promises.ts:30](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L30)
+Defined in: packages/octagonal-wheels/src/promises.ts:30
 
 Checking whether some promises have been resolved.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                     | Description       |
+| ---------- | ------------------------ | ----------------- |
 | `promises` | `Promise`\<`unknown`\>[] | checking promises |
 
 ## Returns

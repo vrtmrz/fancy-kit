@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / string
 
@@ -9,5 +9,7 @@
 ## Functions
 
 - [escapeStringToHTML](escapeStringToHTML/README.md)
+- [joinDelimitedList](joinDelimitedList/README.md)
 - [replaceAll](replaceAll/README.md)
 - [replaceAllPairs](replaceAllPairs/README.md)
+- [splitDelimitedList](splitDelimitedList/README.md)

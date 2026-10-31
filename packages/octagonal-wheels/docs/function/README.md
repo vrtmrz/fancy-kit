@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / function
 
@@ -12,4 +12,5 @@
 
 ## Functions
 
+- [onlyWhenChanged](onlyWhenChanged/README.md)
 - [throttle](throttle/README.md)

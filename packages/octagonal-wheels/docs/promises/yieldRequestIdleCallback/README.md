@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / yieldRequestIdleCallback
 
@@ -10,15 +10,15 @@
 function yieldRequestIdleCallback(options?: IdleRequestOptions): Promise<void>;
 ```
 
-Defined in: [src/promises.ts:118](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L118)
+Defined in: packages/octagonal-wheels/src/promises.ts:118
 
 A utility function that wraps the `requestIdleCallback` function and returns a promise.
 If `requestIdleCallback` is not available in the global scope (iOS, Safari), it falls back to `yieldMicrotask`.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                 | Description                                                     |
+| ---------- | -------------------- | --------------------------------------------------------------- |
 | `options?` | `IdleRequestOptions` | The options to be passed to the `requestIdleCallback` function. |
 
 ## Returns

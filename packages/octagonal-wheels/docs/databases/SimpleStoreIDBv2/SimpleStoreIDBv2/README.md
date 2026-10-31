@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [databases](../../README.md) / [SimpleStoreIDBv2](../README.md) / SimpleStoreIDBv2
 
 # Class: SimpleStoreIDBv2\<T\>
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:27](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L27)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:27
 
 Represents a simple store using IndexedDB.
 
@@ -20,9 +20,9 @@ Represents a simple store using IndexedDB.
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | The type of the values stored in the store. |
+| Type Parameter | Description                                 |
+| -------------- | ------------------------------------------- |
+| `T`            | The type of the values stored in the store. |
 
 ## Constructors
 
@@ -32,14 +32,14 @@ Represents a simple store using IndexedDB.
 new SimpleStoreIDBv2<T>(name: string, instanceName?: string): SimpleStoreIDBv2<T>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:216](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L216)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:216
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `name` | `string` | The name of the store. |
-| `instanceName?` | `string` | - |
+| Parameter       | Type     | Description            |
+| --------------- | -------- | ---------------------- |
+| `name`          | `string` | The name of the store. |
+| `instanceName?` | `string` | -                      |
 
 #### Returns
 
@@ -55,11 +55,11 @@ Use SimpleStoreIDBv2.open(name) instead
 
 ## Properties
 
-| Property | Modifier | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
-| <a id="_instancename"></a> `_instanceName` | `public` | `string` | - | [src/databases/SimpleStoreIDBv2.ts:99](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L99) |
-| <a id="_name"></a> `_name` | `public` | `string` | - | [src/databases/SimpleStoreIDBv2.ts:96](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L96) |
-| <a id="_activedbs"></a> `_activeDBs` | `static` | `Map`\<`string`, `FallbackWeakRef`\<`SimpleStoreIDBv2`\<`any`\>\>\> | Map of active database instances. | [src/databases/SimpleStoreIDBv2.ts:31](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L31) |
+| Property                                   | Modifier | Type                                                                | Description                       | Defined in                                                     |
+| ------------------------------------------ | -------- | ------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------- |
+| <a id="_instancename"></a> `_instanceName` | `public` | `string`                                                            | -                                 | packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:99 |
+| <a id="_name"></a> `_name`                 | `public` | `string`                                                            | -                                 | packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:96 |
+| <a id="_activedbs"></a> `_activeDBs`       | `static` | `Map`\<`string`, `FallbackWeakRef`\<`SimpleStoreIDBv2`\<`any`\>\>\> | Map of active database instances. | packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:31 |
 
 ## Accessors
 
@@ -68,16 +68,16 @@ Use SimpleStoreIDBv2.open(name) instead
 #### Get Signature
 
 ```ts
-get db(): undefined | Promise<IDBPDatabase<any>>;
+get db(): Promise<IDBPDatabase<any>> | undefined;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:110](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L110)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:110
 
 Gets the actual IDBDatabase connection.
 
 ##### Returns
 
-`undefined` \| `Promise`\<`IDBPDatabase`\<`any`\>\>
+`Promise`\<`IDBPDatabase`\<`any`\>\> \| `undefined`
 
 A promise that resolves to the IDBDatabase instance.
 
@@ -85,7 +85,7 @@ A promise that resolves to the IDBDatabase instance.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`db`](../../simplestorebase/ExtendedSimpleStore/README.md#db)
 
-***
+---
 
 ### name
 
@@ -95,7 +95,7 @@ A promise that resolves to the IDBDatabase instance.
 get name(): string;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:92](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L92)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:92
 
 Gets the name of the store.
 
@@ -111,13 +111,13 @@ Gets the name of the store.
 abort(): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:505](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L505)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:505
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### addEventListener()
 
@@ -125,20 +125,20 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:505](https://github.com/vrtmrz/oc
 
 ```ts
 addEventListener(
-   eventName: "initialised", 
-   listener: (ev: SimpleStoreInitialisedEvent) => void, 
+   eventName: "initialised",
+   listener: (ev: SimpleStoreInitialisedEvent) => void,
    options?: boolean | AddEventListenerOptions): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:138](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L138)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:138
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `eventName` | `"initialised"` |
-| `listener` | (`ev`: [`SimpleStoreInitialisedEvent`](../../dbcommon/SimpleStoreInitialisedEvent/README.md)) => `void` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Parameter   | Type                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| `eventName` | `"initialised"`                                                                                         |
+| `listener`  | (`ev`: [`SimpleStoreInitialisedEvent`](../../dbcommon/SimpleStoreInitialisedEvent/README.md)) => `void` |
+| `options?`  | `boolean` \| `AddEventListenerOptions`                                                                  |
 
 ##### Returns
 
@@ -148,20 +148,20 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:138](https://github.com/vrtmrz/oc
 
 ```ts
 addEventListener(
-   eventName: "closed", 
-   listener: (ev: SimpleStoreClosedEvent) => void, 
+   eventName: "closed",
+   listener: (ev: SimpleStoreClosedEvent) => void,
    options?: boolean | AddEventListenerOptions): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:143](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L143)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:143
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `eventName` | `"closed"` |
-| `listener` | (`ev`: [`SimpleStoreClosedEvent`](../../dbcommon/SimpleStoreClosedEvent/README.md)) => `void` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Parameter   | Type                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| `eventName` | `"closed"`                                                                                    |
+| `listener`  | (`ev`: [`SimpleStoreClosedEvent`](../../dbcommon/SimpleStoreClosedEvent/README.md)) => `void` |
+| `options?`  | `boolean` \| `AddEventListenerOptions`                                                        |
 
 ##### Returns
 
@@ -171,20 +171,20 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:143](https://github.com/vrtmrz/oc
 
 ```ts
 addEventListener(
-   eventName: "destroyed", 
-   listener: (ev: SimpleStoreDestroyedEvent) => void, 
+   eventName: "destroyed",
+   listener: (ev: SimpleStoreDestroyedEvent) => void,
    options?: boolean | AddEventListenerOptions): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:148](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L148)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:148
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `eventName` | `"destroyed"` |
-| `listener` | (`ev`: [`SimpleStoreDestroyedEvent`](../../dbcommon/SimpleStoreDestroyedEvent/README.md)) => `void` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Parameter   | Type                                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| `eventName` | `"destroyed"`                                                                                       |
+| `listener`  | (`ev`: [`SimpleStoreDestroyedEvent`](../../dbcommon/SimpleStoreDestroyedEvent/README.md)) => `void` |
+| `options?`  | `boolean` \| `AddEventListenerOptions`                                                              |
 
 ##### Returns
 
@@ -194,26 +194,26 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:148](https://github.com/vrtmrz/oc
 
 ```ts
 addEventListener(
-   eventName: "opened", 
-   listener: (ev: SimpleStoreOpenedEvent) => void, 
+   eventName: "opened",
+   listener: (ev: SimpleStoreOpenedEvent) => void,
    options?: boolean | AddEventListenerOptions): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:153](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L153)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:153
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `eventName` | `"opened"` |
-| `listener` | (`ev`: [`SimpleStoreOpenedEvent`](../../dbcommon/SimpleStoreOpenedEvent/README.md)) => `void` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Parameter   | Type                                                                                          |
+| ----------- | --------------------------------------------------------------------------------------------- |
+| `eventName` | `"opened"`                                                                                    |
+| `listener`  | (`ev`: [`SimpleStoreOpenedEvent`](../../dbcommon/SimpleStoreOpenedEvent/README.md)) => `void` |
+| `options?`  | `boolean` \| `AddEventListenerOptions`                                                        |
 
 ##### Returns
 
 `void`
 
-***
+---
 
 ### beginTransaction()
 
@@ -221,14 +221,14 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:153](https://github.com/vrtmrz/oc
 beginTransaction(callback: (tx: SimpleStoreTransaction<T>) => void | Promise<void>): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:424](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L424)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:424
 
 Begins a transaction and executes the provided callback within the transaction context.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                                                                                               | Description                                              |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | `callback` | (`tx`: [`SimpleStoreTransaction`](../../simplestorebase/SimpleStoreTransaction/README.md)\<`T`\>) => `void` \| `Promise`\<`void`\> | The callback function to execute within the transaction. |
 
 #### Returns
@@ -243,7 +243,7 @@ Transaction will be automatically committed unless aborted before the event loop
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`beginTransaction`](../../simplestorebase/ExtendedSimpleStore/README.md#begintransaction)
 
-***
+---
 
 ### clear()
 
@@ -251,7 +251,7 @@ Transaction will be automatically committed unless aborted before the event loop
 clear(): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:379](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L379)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:379
 
 Clears all key-value pairs in the store.
 
@@ -265,7 +265,7 @@ A promise that resolves when the store is cleared.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`clear`](../../simplestorebase/ExtendedSimpleStore/README.md#clear)
 
-***
+---
 
 ### close()
 
@@ -273,7 +273,7 @@ A promise that resolves when the store is cleared.
 close(): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:389](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L389)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:389
 
 Closes the database and removes it from active instances.
 
@@ -287,7 +287,7 @@ void.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`close`](../../simplestorebase/ExtendedSimpleStore/README.md#close)
 
-***
+---
 
 ### commit()
 
@@ -295,13 +295,13 @@ void.
 commit(): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:500](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L500)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:500
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### delete()
 
@@ -309,15 +309,15 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:500](https://github.com/vrtmrz/oc
 delete(key: string): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:347](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L347)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:347
 
 Deletes the value associated with the specified key.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | The key to delete from the store. |
+| Parameter | Type     | Description                       |
+| --------- | -------- | --------------------------------- |
+| `key`     | `string` | The key to delete from the store. |
 
 #### Returns
 
@@ -329,7 +329,7 @@ A promise that resolves when the operation is complete.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`delete`](../../simplestorebase/ExtendedSimpleStore/README.md#delete)
 
-***
+---
 
 ### destroy()
 
@@ -337,7 +337,7 @@ A promise that resolves when the operation is complete.
 destroy(): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:401](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L401)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:401
 
 Destroys the database and removes all data.
 Note: This also closes the database if it is open.
@@ -352,27 +352,27 @@ A promise that resolves when the database is destroyed.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`destroy`](../../simplestorebase/ExtendedSimpleStore/README.md#destroy)
 
-***
+---
 
 ### get()
 
 ```ts
-get(key: string): Promise<undefined | T>;
+get(key: string): Promise<T | undefined>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:328](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L328)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:328
 
 Retrieves the value associated with the specified key.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | The key to retrieve from the store. |
+| Parameter | Type     | Description                         |
+| --------- | -------- | ----------------------------------- |
+| `key`     | `string` | The key to retrieve from the store. |
 
 #### Returns
 
-`Promise`\<`undefined` \| `T`\>
+`Promise`\<`T` \| `undefined`\>
 
 A promise that resolves to the value associated with the key, or undefined if not found.
 
@@ -380,7 +380,7 @@ A promise that resolves to the value associated with the key, or undefined if no
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`get`](../../simplestorebase/ExtendedSimpleStore/README.md#get)
 
-***
+---
 
 ### isDestroyed()
 
@@ -388,7 +388,7 @@ A promise that resolves to the value associated with the key, or undefined if no
 isDestroyed(): boolean;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:245](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L245)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:245
 
 Checks if the database is destroyed.
 
@@ -398,7 +398,7 @@ Checks if the database is destroyed.
 
 True if the database is destroyed, false otherwise.
 
-***
+---
 
 ### isNotInitialised()
 
@@ -406,7 +406,7 @@ True if the database is destroyed, false otherwise.
 isNotInitialised(): boolean;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:237](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L237)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:237
 
 Checks if the database is not initialised.
 
@@ -416,7 +416,7 @@ Checks if the database is not initialised.
 
 True if the database is not initialised, false otherwise.
 
-***
+---
 
 ### isOpened()
 
@@ -424,7 +424,7 @@ True if the database is not initialised, false otherwise.
 isOpened(): boolean;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:253](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L253)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:253
 
 Checks if the database is opened.
 
@@ -434,28 +434,28 @@ Checks if the database is opened.
 
 True if the database is opened, false otherwise.
 
-***
+---
 
 ### keys()
 
 ```ts
 keys(
-   from?: string, 
-   to?: string, 
+   from?: string,
+   to?: string,
 count?: number): Promise<string[]>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:358](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L358)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:358
 
 Retrieves an array of keys within the specified range.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `from?` | `string` | The lower bound of the key range. |
-| `to?` | `string` | The upper bound of the key range. |
-| `count?` | `number` | The maximum number of keys to retrieve. |
+| Parameter | Type     | Description                             |
+| --------- | -------- | --------------------------------------- |
+| `from?`   | `string` | The lower bound of the key range.       |
+| `to?`     | `string` | The upper bound of the key range.       |
+| `count?`  | `number` | The maximum number of keys to retrieve. |
 
 #### Returns
 
@@ -467,7 +467,7 @@ A promise that resolves to an array of keys within the specified range.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`keys`](../../simplestorebase/ExtendedSimpleStore/README.md#keys)
 
-***
+---
 
 ### keysIDB()
 
@@ -475,16 +475,16 @@ A promise that resolves to an array of keys within the specified range.
 keysIDB(query?: IDBValidKey | IDBKeyRange, count?: number): Promise<IDBValidKey[]>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:369](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L369)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:369
 
 Retrieves an array of keys matching the specified query.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `query?` | `IDBValidKey` \| `IDBKeyRange` | The query to match the keys against. |
-| `count?` | `number` | The maximum number of keys to retrieve. |
+| Parameter | Type                           | Description                             |
+| --------- | ------------------------------ | --------------------------------------- |
+| `query?`  | `IDBValidKey` \| `IDBKeyRange` | The query to match the keys against.    |
+| `count?`  | `number`                       | The maximum number of keys to retrieve. |
 
 #### Returns
 
@@ -496,32 +496,32 @@ A promise that resolves to an array of keys matching the query.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`keysIDB`](../../simplestorebase/ExtendedSimpleStore/README.md#keysidb)
 
-***
+---
 
 ### removeEventListener()
 
 ```ts
 removeEventListener(
-   eventName: SimpleStoreEventTypes, 
-   listener: (ev: SimpleStoreEvent) => void, 
+   eventName: SimpleStoreEventTypes,
+   listener: (ev: SimpleStoreEvent) => void,
    options?: boolean | EventListenerOptions): void;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:167](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L167)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:167
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `eventName` | [`SimpleStoreEventTypes`](../../dbcommon/SimpleStoreEventTypes/README.md) |
-| `listener` | (`ev`: [`SimpleStoreEvent`](../../dbcommon/SimpleStoreEvent/README.md)) => `void` |
-| `options?` | `boolean` \| `EventListenerOptions` |
+| Parameter   | Type                                                                              |
+| ----------- | --------------------------------------------------------------------------------- |
+| `eventName` | [`SimpleStoreEventTypes`](../../dbcommon/SimpleStoreEventTypes/README.md)         |
+| `listener`  | (`ev`: [`SimpleStoreEvent`](../../dbcommon/SimpleStoreEvent/README.md)) => `void` |
+| `options?`  | `boolean` \| `EventListenerOptions`                                               |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### set()
 
@@ -529,16 +529,16 @@ Defined in: [src/databases/SimpleStoreIDBv2.ts:167](https://github.com/vrtmrz/oc
 set(key: string, value: T): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:338](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L338)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:338
 
 Stores a value with the specified key.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | The key to associate with the value. |
-| `value` | `T` | The value to store. |
+| Parameter | Type     | Description                          |
+| --------- | -------- | ------------------------------------ |
+| `key`     | `string` | The key to associate with the value. |
+| `value`   | `T`      | The value to store.                  |
 
 #### Returns
 
@@ -550,7 +550,7 @@ A promise that resolves when the operation is complete.
 
 [`ExtendedSimpleStore`](../../simplestorebase/ExtendedSimpleStore/README.md).[`set`](../../simplestorebase/ExtendedSimpleStore/README.md#set)
 
-***
+---
 
 ### deleteDatabase()
 
@@ -558,14 +558,14 @@ A promise that resolves when the operation is complete.
 static deleteDatabase(instanceName: string): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:77](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L77)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:77
 
 Deletes the database with the given instance name.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter      | Type     | Description               |
+| -------------- | -------- | ------------------------- |
 | `instanceName` | `string` | The name of the instance. |
 
 #### Returns
@@ -575,46 +575,46 @@ Deletes the database with the given instance name.
 #### Overrides
 
 ```ts
-ExtendedSimpleStore.deleteDatabase
+ExtendedSimpleStore.deleteDatabase;
 ```
 
-***
+---
 
 ### getActiveInstance()
 
 ```ts
-static getActiveInstance<T>(instanceName: string): undefined | SimpleStoreIDBv2<T>;
+static getActiveInstance<T>(instanceName: string): SimpleStoreIDBv2<T> | undefined;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:57](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L57)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:57
 
 Gets the active instance by name.
 
 #### Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter      | Type     | Description               |
+| -------------- | -------- | ------------------------- |
 | `instanceName` | `string` | The name of the instance. |
 
 #### Returns
 
-`undefined` \| `SimpleStoreIDBv2`\<`T`\>
+`SimpleStoreIDBv2`\<`T`\> \| `undefined`
 
 The active SimpleStoreIDB instance or undefined if not found.
 
 #### Overrides
 
 ```ts
-ExtendedSimpleStore.getActiveInstance
+ExtendedSimpleStore.getActiveInstance;
 ```
 
-***
+---
 
 ### hasActiveInstance()
 
@@ -622,14 +622,14 @@ ExtendedSimpleStore.getActiveInstance
 static hasActiveInstance(instanceName: string): boolean;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:68](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L68)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:68
 
 Checks if there is an active instance with the given name.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter      | Type     | Description               |
+| -------------- | -------- | ------------------------- |
 | `instanceName` | `string` | The name of the instance. |
 
 #### Returns
@@ -641,10 +641,10 @@ True if an active instance exists, false otherwise.
 #### Overrides
 
 ```ts
-ExtendedSimpleStore.hasActiveInstance
+ExtendedSimpleStore.hasActiveInstance;
 ```
 
-***
+---
 
 ### open()
 
@@ -652,22 +652,22 @@ ExtendedSimpleStore.hasActiveInstance
 static open<U>(name: string, instanceName?: string): SimpleStoreIDBv2<U>;
 ```
 
-Defined in: [src/databases/SimpleStoreIDBv2.ts:38](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreIDBv2.ts#L38)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreIDBv2.ts:38
 
 Open a SimpleStoreIDB instance.
 
 #### Type Parameters
 
 | Type Parameter |
-| ------ |
-| `U` |
+| -------------- |
+| `U`            |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `name` | `string` | The name of the store. |
-| `instanceName?` | `string` | - |
+| Parameter       | Type     | Description            |
+| --------------- | -------- | ---------------------- |
+| `name`          | `string` | The name of the store. |
+| `instanceName?` | `string` | -                      |
 
 #### Returns
 
@@ -678,5 +678,5 @@ SimpleStoreIDB<U>.
 #### Overrides
 
 ```ts
-ExtendedSimpleStore.open
+ExtendedSimpleStore.open;
 ```

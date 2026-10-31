@@ -1,31 +1,31 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [channel](../../README.md) / [channels](../README.md) / ChannelFunc
 
-# Type Alias: ChannelFunc()\<T, U\>
+# Type Alias: ChannelFunc\<T, U\>
 
 ```ts
 type ChannelFunc<T, U> = (...args: T) => Promise<Awaited<U>>;
 ```
 
-Defined in: [src/channel/channels.ts:23](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L23)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:23
 
 Function type for channel registration and invocation
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 ## Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| ...`args` | `T` |
+| --------- | ---- |
+| ...`args` | `T`  |
 
 ## Returns
 

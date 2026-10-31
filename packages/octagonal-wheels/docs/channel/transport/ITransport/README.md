@@ -1,20 +1,20 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [channel](../../README.md) / [transport](../README.md) / ITransport
 
 # Interface: ITransport\<T\>
 
-Defined in: [src/channel/transport.ts:8](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L8)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:8
 
 Transport Interface for Channel Communication
 
 ## Type Parameters
 
 | Type Parameter | Default type |
-| ------ | ------ |
-| `T` | `any` |
+| -------------- | ------------ |
+| `T`            | `any`        |
 
 ## Methods
 
@@ -24,7 +24,7 @@ Transport Interface for Channel Communication
 close(): void;
 ```
 
-Defined in: [src/channel/transport.ts:25](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L25)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:25
 
 Close the transport and clean up resources.
 
@@ -32,7 +32,7 @@ Close the transport and clean up resources.
 
 `void`
 
-***
+---
 
 ### publish()
 
@@ -40,22 +40,22 @@ Close the transport and clean up resources.
 publish(channelName: string, data: T): void;
 ```
 
-Defined in: [src/channel/transport.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L21)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:21
 
 Publish a message to a specific channel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter     | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
 | `channelName` | `string` | The name of the channel to publish to. |
-| `data` | `T` | The data to send with the message. |
+| `data`        | `T`      | The data to send with the message.     |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### subscribe()
 
@@ -63,25 +63,19 @@ Publish a message to a specific channel.
 subscribe(channelName: string, listener: (data: T) => void | Promise<void>): () => void;
 ```
 
-Defined in: [src/channel/transport.ts:15](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L15)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:15
 
 Subscribe to messages on a specific channel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `channelName` | `string` | The name of the channel to subscribe to. |
-| `listener` | (`data`: `T`) => `void` \| `Promise`\<`void`\> | The callback function to invoke when a message is received on the channel. |
+| Parameter     | Type                                           | Description                                                                |
+| ------------- | ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `channelName` | `string`                                       | The name of the channel to subscribe to.                                   |
+| `listener`    | (`data`: `T`) => `void` \| `Promise`\<`void`\> | The callback function to invoke when a message is received on the channel. |
 
 #### Returns
 
 A function to unsubscribe from the channel.
 
-```ts
-(): void;
-```
-
-##### Returns
-
-`void`
+() => `void`

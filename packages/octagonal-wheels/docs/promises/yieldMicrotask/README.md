@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / yieldMicrotask
 
@@ -10,7 +10,7 @@
 function yieldMicrotask(): Promise<void>;
 ```
 
-Defined in: [src/promises.ts:107](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L107)
+Defined in: packages/octagonal-wheels/src/promises.ts:107
 
 Yields a microtask.
 

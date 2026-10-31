@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / TaskProcessing
 
@@ -10,10 +10,10 @@
 type TaskProcessing<T> = Promise<T>;
 ```
 
-Defined in: [src/concurrency/task.ts:4](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L4)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:4
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |

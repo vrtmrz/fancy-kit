@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [streamInbox](../README.md) / StreamInbox
 
@@ -18,8 +18,8 @@ pending write promises.
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Constructors
 
@@ -33,8 +33,8 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:29
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                    |
+| --------- | ------------------------------------------------------- |
 | `options` | [`StreamInboxOptions`](../StreamInboxOptions/README.md) |
 
 #### Returns
@@ -43,8 +43,8 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:29
 
 ## Properties
 
-| Property | Modifier | Type | Defined in |
-| ------ | ------ | ------ | ------ |
+| Property                         | Modifier   | Type                    | Defined in                                             |
+| -------------------------------- | ---------- | ----------------------- | ------------------------------------------------------ |
 | <a id="readable"></a> `readable` | `readonly` | `ReadableStream`\<`T`\> | packages/octagonal-wheels/src/bureau/StreamInbox.ts:21 |
 
 ## Accessors
@@ -63,7 +63,7 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:60
 
 `number`
 
-***
+---
 
 ### isClosed
 
@@ -79,7 +79,7 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:68
 
 `boolean`
 
-***
+---
 
 ### isFull
 
@@ -95,7 +95,7 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:64
 
 `boolean`
 
-***
+---
 
 ### size
 
@@ -125,7 +125,7 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:85
 
 `void`
 
-***
+---
 
 ### error()
 
@@ -137,15 +137,15 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:94
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type      |
+| --------- | --------- |
 | `reason?` | `unknown` |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### post()
 
@@ -158,8 +158,8 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:72
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `item` | `T` |
+| --------- | ---- |
+| `item`    | `T`  |
 
 #### Returns
 
