@@ -44,11 +44,11 @@ type ProcessorParams<T> = {
      */
     batchSize?: number;
     /**
-     * Numbers of queued entities to ignore delay and run immediately
+     * Queue length above which processing starts without waiting for the delay
      */
     yieldThreshold?: number;
     /**
-     * Time(ms) to ignore yieldThreshold and run process
+     * Maximum batching delay in milliseconds before starting queued work below the yield threshold
      */
     delay?: number;
     interval?: number;
@@ -122,7 +122,7 @@ export class QueueProcessor<T, U> {
     yieldThreshold: number = 1;
 
     // If set, wait for set milliseconds after enqueued
-    // Note: If reached to the batchSize, run immediately
+    // Queue lengths above yieldThreshold start immediately.
     delay: number = 0;
     maintainDelay: boolean;
     interval: number = 0;
@@ -163,6 +163,7 @@ export class QueueProcessor<T, U> {
     resume(): this {
         this._isSuspended = false;
         this._hub.emitEvent("tickResumed");
+        this._onTick();
         return this;
     }
     resumePipeLine(): this {
@@ -212,7 +213,7 @@ export class QueueProcessor<T, U> {
             this._delayTimer = setTimeout(() => {
                 this._hub.emitEvent("tickDelayTimeout");
                 this._delayTimer = undefined;
-            });
+            }, this.delay);
         }
     }
     _clearTickDelay() {

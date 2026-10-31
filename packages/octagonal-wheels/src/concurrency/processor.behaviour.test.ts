@@ -295,6 +295,86 @@ describe("QueueProcessor behaviour", () => {
         expect(batches).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
     });
 
+    it("schedules delayed work when resuming after its suspended timer has expired", async () => {
+        const seen: number[] = [];
+        const processor = track(
+            new QueueProcessor<number, never>(
+                (items) => {
+                    seen.push(...items);
+                },
+                {
+                    suspended: false,
+                    batchSize: 1,
+                    yieldThreshold: 3,
+                    delay: 100,
+                }
+            )
+        );
+        processor.suspend();
+        await vi.advanceTimersByTimeAsync(0);
+        processor.enqueue(1);
+        await vi.advanceTimersByTimeAsync(100);
+        expect(seen).toEqual([]);
+
+        processor.resume();
+        await vi.advanceTimersByTimeAsync(99);
+        expect(seen).toEqual([]);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(seen).toEqual([1]);
+        expect(await processor.waitForAllProcessed()).toBe(true);
+    });
+
+    it("preserves an active delay when resume is called again", async () => {
+        const seen: number[] = [];
+        const processor = track(
+            new QueueProcessor<number, never>(
+                (items) => {
+                    seen.push(...items);
+                },
+                {
+                    suspended: false,
+                    batchSize: 1,
+                    yieldThreshold: 3,
+                    delay: 100,
+                }
+            )
+        );
+        processor.enqueue(1);
+        await vi.advanceTimersByTimeAsync(40);
+        processor.resume();
+        processor.enqueue(2);
+        await vi.advanceTimersByTimeAsync(59);
+        expect(seen).toEqual([]);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(seen).toEqual([1, 2]);
+        expect(await processor.waitForAllProcessed()).toBe(true);
+    });
+
+    it.each(["threshold", "flush"] as const)("can bypass a pending delay through %s", async (trigger) => {
+        const seen: number[] = [];
+        const processor = track(
+            new QueueProcessor<number, never>(
+                (items) => {
+                    seen.push(...items);
+                },
+                {
+                    suspended: false,
+                    batchSize: 1,
+                    yieldThreshold: 1,
+                    delay: 100,
+                }
+            )
+        );
+        processor.enqueue(1);
+        if (trigger === "threshold") processor.enqueue(2);
+        else processor.requestNextFlush();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(seen).toEqual(trigger === "threshold" ? [1, 2] : [1]);
+        expect(await processor.waitForAllProcessed()).toBe(true);
+        await vi.advanceTimersByTimeAsync(100);
+        expect(seen).toEqual(trigger === "threshold" ? [1, 2] : [1]);
+    });
+
     it("waits for the configured delay when the queue stays below its yield threshold", async () => {
         const batches: number[][] = [];
         const processor = track(

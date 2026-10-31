@@ -26,11 +26,11 @@ type ProcessorParams<T> = {
      */
     batchSize?: number;
     /**
-     * Numbers of queued entities to ignore delay and run immediately
+     * Queue length above which processing starts without waiting for the delay
      */
     yieldThreshold?: number;
     /**
-     * Time(ms) to ignore yieldThreshold and run process
+     * Maximum batching delay in milliseconds before starting queued work below the yield threshold
      */
     delay?: number;
     interval?: number;

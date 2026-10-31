@@ -58,6 +58,7 @@ class QueueProcessor {
     resume() {
         this._isSuspended = false;
         this._hub.emitEvent("tickResumed");
+        this._onTick();
         return this;
     }
     resumePipeLine() {
@@ -101,7 +102,7 @@ class QueueProcessor {
             this._delayTimer = setTimeout(() => {
                 this._hub.emitEvent("tickDelayTimeout");
                 this._delayTimer = undefined;
-            });
+            }, this.delay);
         }
     }
     _clearTickDelay() {
@@ -252,7 +253,7 @@ class QueueProcessor {
             value: 1
         });
         // If set, wait for set milliseconds after enqueued
-        // Note: If reached to the batchSize, run immediately
+        // Queue lengths above yieldThreshold start immediately.
         Object.defineProperty(this, "delay", {
             enumerable: true,
             configurable: true,

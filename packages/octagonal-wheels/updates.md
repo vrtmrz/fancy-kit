@@ -54,6 +54,9 @@
 
 ### Scheduling
 
+- Queued work resumes after an idle processor is suspended, its pending items are cleared, and new items are queued. Calling `resume()` schedules the pending work without requiring another enqueue or an explicit flush.
+- Sparse queues now honour the configured `delay` in milliseconds. The previous implementation started the timer without passing that value. Integrations which require immediate scheduling should use `delay: 0`; threshold-triggered and explicit immediate processing remain available.
+
 - We can reschedule, cancel, and dispose a delayed callback independently for each owner.
     - `concurrency/deferredAction` provides `createDeferredAction`, `DeferredAction`, and `TimeoutScheduler`, with an injectable scheduler and a focused entry which imports without timer or browser globals.
 
