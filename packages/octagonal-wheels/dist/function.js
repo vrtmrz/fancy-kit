@@ -25,6 +25,31 @@ const throttle = (func, timeout) => {
         }
     };
 };
+/**
+ * Invoke a callback only when its argument differs from the last remembered value.
+ *
+ * Each wrapper starts with `undefined` and uses strict equality (`===`). An
+ * initial `undefined` is skipped; `NaN` always invokes the callback, signed
+ * zeros compare equal, and objects are compared by identity. Only the last
+ * value is retained, so returning to an earlier value invokes the callback.
+ *
+ * The value is remembered after a synchronous return. A synchronous exception
+ * propagates without replacing the previous value. Callback results are
+ * discarded; returned promises are not awaited and their failures belong to
+ * the caller. State is private to each wrapper.
+ *
+ * @param func - Callback whose consecutive duplicate arguments are suppressed.
+ * @returns A function with an independent last-argument value.
+ */
+function onlyWhenChanged(func) {
+    let buf = undefined;
+    return (arg) => {
+        if (buf !== arg) {
+            func(arg);
+            buf = arg;
+        }
+    };
+}
 
-export { throttle };
+export { onlyWhenChanged, throttle };
 //# sourceMappingURL=function.js.map

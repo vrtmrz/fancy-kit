@@ -39,6 +39,8 @@ console.log(uint8ArrayToHexString(bytes)); // "00ff10"
 
 Public subpaths are declared by the package export map. Extensionless imports, such as `octagonal-wheels/iterable/map`, are the recommended form; `.js` aliases exist for compatibility. Do not import package `src` or `dist` files.
 
+The shared runtime utilities include `createOwnedResource`, `withOwnedResource`, `createDeferredAction`, `createCoalescingNotifier`, `withCounting`, compact duration formatting, JSON-based cloning, delimiter lists, UTF-8 component inspection, and cyclic indices. Their contracts and focused imports are described in the [runtime guide](guides/imports-and-runtime.md).
+
 ## Module areas
 
 | Area | Examples |
@@ -50,6 +52,47 @@ Public subpaths are declared by the package export map. Extensionless imports, s
 | Platform integration | `browser`, including the reference-counted screen wake-lock manager |
 
 The [generated API index](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/docs/modules.md) links to per-module and per-symbol TSDoc. The [import and runtime guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/guides/imports-and-runtime.md) explains entry-point selection, platform dependencies, testing boundaries, and maintained examples.
+
+## Blob conversion and comparison
+
+`binary/blob` provides `createTextBlob`, `createBinaryBlob`, and `toBlob` for
+standard Blob inputs. Creation returns a new Blob; `toBlob` preserves an
+existing Blob's identity and MIME type. `isBlobContentEqual` compares bytes in
+bounded parts, with an optional synchronous or asynchronous equality predicate.
+See the [Blob guide](guides/imports-and-runtime.md#blob-creation-and-normalisation)
+for input types, line endings, binary view ranges, comparison, and runtime requirements.
+
+## Handle source modifications
+
+Use `createModificationHandler` from the unreleased `modification` entry to compose reading,
+decoding, comparison, and conditional writing. Inject storage and recovery policy;
+only a read failure invokes the supplied fallback. The result distinguishes a
+completed write from an unchanged target. See the
+[content guide](guides/imports-and-runtime.md#apply-content-when-it-changes).
+
+## Deferred actions
+
+Use `createDeferredAction` from `concurrency/deferredAction` when one owner
+needs to reschedule, cancel, or dispose a delayed callback. Each action owns
+at most one pending timeout. An injected `TimeoutScheduler` selects the host
+operation; the default uses global timers only when needed. See the
+[deferred action guide](guides/imports-and-runtime.md#own-one-delayed-callback) for
+lifecycle and testing contracts.
+
+## Hold a semaphore permit
+
+Use `withSemaphore` from `concurrency/semaphore` to acquire a permit, run a
+callback, and release the permit when the callback settles. Pass an existing
+semaphore or an injected acquisition capability. See the
+[semaphore guide](guides/imports-and-runtime.md#hold-a-semaphore-permit) for
+result, failure, and ownership contracts.
+
+## Multi-key operations and repeated values
+
+Use `withLocks` from `concurrency/lock` to hold a caller-ordered set of
+unique keys for one asynchronous operation. Use `onlyWhenChanged` from `function` to
+suppress consecutive strictly equal callback arguments. The [runtime guide](guides/imports-and-runtime.md#serialise-an-operation-across-several-keys)
+describes lock ordering, initial values, and failure behaviour.
 
 ## Bounded asynchronous work
 

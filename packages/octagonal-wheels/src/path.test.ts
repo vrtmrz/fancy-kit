@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+    findPathComponentsExceedingUtf8Limit,
     isSafePathComponent,
     isSafeRelativePath,
     parseSafePathComponent,
@@ -132,5 +133,20 @@ describe("resolvePathWithinRoot", () => {
                 separator: ":" as "/",
             })
         ).toThrowError(RangeError);
+    });
+});
+
+describe("findPathComponentsExceedingUtf8Limit", () => {
+    it("counts UTF-8 bytes per non-empty component and uses a strict limit", () => {
+        expect(findPathComponentsExceedingUtf8Limit("//é/😀//a/", 2)).toEqual([{ component: "😀", utf8Bytes: 4 }]);
+    });
+
+    it("preserves oversized component order and reports exact byte lengths", () => {
+        expect(findPathComponentsExceedingUtf8Limit("😀/folder/日本語/😀", 3)).toEqual([
+            { component: "😀", utf8Bytes: 4 },
+            { component: "folder", utf8Bytes: 6 },
+            { component: "日本語", utf8Bytes: 9 },
+            { component: "😀", utf8Bytes: 4 },
+        ]);
     });
 });

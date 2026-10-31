@@ -143,6 +143,14 @@
             "import": "./dist/binary/base64.js",
             "types": "./dist/binary/base64.d.ts"
         },
+        "./binary/blob": {
+            "import": "./dist/binary/blob.js",
+            "types": "./dist/binary/blob.d.ts"
+        },
+        "./binary/blob.js": {
+            "import": "./dist/binary/blob.js",
+            "types": "./dist/binary/blob.d.ts"
+        },
         "./binary/encodedUTF16": {
             "import": "./dist/binary/encodedUTF16.js",
             "types": "./dist/binary/encodedUTF16.d.ts"
@@ -162,6 +170,14 @@
         "./binary/index.js": {
             "import": "./dist/binary/index.js",
             "types": "./dist/binary/index.d.ts"
+        },
+        "./binary/typedArray": {
+            "import": "./dist/binary/typedArray.js",
+            "types": "./dist/binary/typedArray.d.ts"
+        },
+        "./binary/typedArray.js": {
+            "import": "./dist/binary/typedArray.js",
+            "types": "./dist/binary/typedArray.d.ts"
         },
         "./browser": {
             "import": "./dist/browser/index.js",
@@ -275,6 +291,26 @@
             "import": "./dist/collection.js",
             "types": "./dist/collection.d.ts"
         },
+        "./collection.array": {
+            "import": "./dist/collection.array.js",
+            "types": "./dist/collection.array.d.ts"
+        },
+        "./collection.array.js": {
+            "import": "./dist/collection.array.js",
+            "types": "./dist/collection.array.d.ts"
+        },
+        "./collection.index": {
+            "import": "./dist/collection.index.js",
+            "types": "./dist/collection.index.d.ts"
+        },
+        "./collection.index.js": {
+            "import": "./dist/collection.index.js",
+            "types": "./dist/collection.index.d.ts"
+        },
+        "./collection.index/index.js": {
+            "import": "./dist/collection.index.js",
+            "types": "./dist/collection.index.d.ts"
+        },
         "./collection.js": {
             "import": "./dist/collection.js",
             "types": "./dist/collection.d.ts"
@@ -347,6 +383,38 @@
             "import": "./dist/concurrency/bulk.js",
             "types": "./dist/concurrency/bulk.d.ts"
         },
+        "./concurrency/cancellation": {
+            "import": "./dist/concurrency/cancellation.js",
+            "types": "./dist/concurrency/cancellation.d.ts"
+        },
+        "./concurrency/cancellation.js": {
+            "import": "./dist/concurrency/cancellation.js",
+            "types": "./dist/concurrency/cancellation.d.ts"
+        },
+        "./concurrency/coalescingNotifier": {
+            "import": "./dist/concurrency/coalescingNotifier.js",
+            "types": "./dist/concurrency/coalescingNotifier.d.ts"
+        },
+        "./concurrency/coalescingNotifier.js": {
+            "import": "./dist/concurrency/coalescingNotifier.js",
+            "types": "./dist/concurrency/coalescingNotifier.d.ts"
+        },
+        "./concurrency/counting": {
+            "import": "./dist/concurrency/counting.js",
+            "types": "./dist/concurrency/counting.d.ts"
+        },
+        "./concurrency/counting.js": {
+            "import": "./dist/concurrency/counting.js",
+            "types": "./dist/concurrency/counting.d.ts"
+        },
+        "./concurrency/deferredAction": {
+            "import": "./dist/concurrency/deferredAction.js",
+            "types": "./dist/concurrency/deferredAction.d.ts"
+        },
+        "./concurrency/deferredAction.js": {
+            "import": "./dist/concurrency/deferredAction.js",
+            "types": "./dist/concurrency/deferredAction.d.ts"
+        },
         "./concurrency/index.js": {
             "import": "./dist/concurrency/index.js",
             "types": "./dist/concurrency/index.d.ts"
@@ -375,6 +443,22 @@
             "import": "./dist/concurrency/lock.js",
             "types": "./dist/concurrency/lock.d.ts"
         },
+        "./concurrency/lock.scoped": {
+            "import": "./dist/concurrency/lock.scoped.js",
+            "types": "./dist/concurrency/lock.scoped.d.ts"
+        },
+        "./concurrency/lock.scoped.js": {
+            "import": "./dist/concurrency/lock.scoped.js",
+            "types": "./dist/concurrency/lock.scoped.d.ts"
+        },
+        "./concurrency/notifier": {
+            "import": "./dist/concurrency/notifier.js",
+            "types": "./dist/concurrency/notifier.d.ts"
+        },
+        "./concurrency/notifier.js": {
+            "import": "./dist/concurrency/notifier.js",
+            "types": "./dist/concurrency/notifier.d.ts"
+        },
         "./concurrency/processor": {
             "import": "./dist/concurrency/processor.js",
             "types": "./dist/concurrency/processor.d.ts"
@@ -399,6 +483,22 @@
             "import": "./dist/concurrency/processor.js",
             "types": "./dist/concurrency/processor.d.ts"
         },
+        "./concurrency/scoped.iteration": {
+            "import": "./dist/concurrency/scoped.iteration.js",
+            "types": "./dist/concurrency/scoped.iteration.d.ts"
+        },
+        "./concurrency/scoped.iteration.js": {
+            "import": "./dist/concurrency/scoped.iteration.js",
+            "types": "./dist/concurrency/scoped.iteration.d.ts"
+        },
+        "./concurrency/scopedIteration": {
+            "import": "./dist/concurrency/scopedIteration.js",
+            "types": "./dist/concurrency/scopedIteration.d.ts"
+        },
+        "./concurrency/scopedIteration.js": {
+            "import": "./dist/concurrency/scopedIteration.js",
+            "types": "./dist/concurrency/scopedIteration.d.ts"
+        },
         "./concurrency/semaphore": {
             "import": "./dist/concurrency/semaphore.js",
             "types": "./dist/concurrency/semaphore.d.ts"
@@ -419,9 +519,25 @@
             "import": "./dist/concurrency/semaphore_v2.js",
             "types": "./dist/concurrency/semaphore_v2.d.ts"
         },
+        "./concurrency/semaphore.core": {
+            "import": "./dist/concurrency/semaphore.core.js",
+            "types": "./dist/concurrency/semaphore.core.d.ts"
+        },
+        "./concurrency/semaphore.core.js": {
+            "import": "./dist/concurrency/semaphore.core.js",
+            "types": "./dist/concurrency/semaphore.core.d.ts"
+        },
         "./concurrency/semaphore.js": {
             "import": "./dist/concurrency/semaphore.js",
             "types": "./dist/concurrency/semaphore.d.ts"
+        },
+        "./concurrency/semaphore.scoped": {
+            "import": "./dist/concurrency/semaphore.scoped.js",
+            "types": "./dist/concurrency/semaphore.scoped.d.ts"
+        },
+        "./concurrency/semaphore.scoped.js": {
+            "import": "./dist/concurrency/semaphore.scoped.js",
+            "types": "./dist/concurrency/semaphore.scoped.d.ts"
         },
         "./concurrency/task": {
             "import": "./dist/concurrency/task.js",
@@ -619,6 +735,14 @@
             "import": "./dist/dataobject/Refiner.js",
             "types": "./dist/dataobject/Refiner.d.ts"
         },
+        "./encoding": {
+            "import": "./dist/encoding/index.js",
+            "types": "./dist/encoding/index.d.ts"
+        },
+        "./encoding.js": {
+            "import": "./dist/encoding/index.js",
+            "types": "./dist/encoding/index.d.ts"
+        },
         "./encoding/encodeobject": {
             "import": "./dist/encoding/encodeobject.js",
             "types": "./dist/encoding/encodeobject.d.ts"
@@ -626,6 +750,18 @@
         "./encoding/encodeobject.js": {
             "import": "./dist/encoding/encodeobject.js",
             "types": "./dist/encoding/encodeobject.d.ts"
+        },
+        "./encoding/index.js": {
+            "import": "./dist/encoding/index.js",
+            "types": "./dist/encoding/index.d.ts"
+        },
+        "./encoding/json": {
+            "import": "./dist/encoding/json.js",
+            "types": "./dist/encoding/json.d.ts"
+        },
+        "./encoding/json.js": {
+            "import": "./dist/encoding/json.js",
+            "types": "./dist/encoding/json.d.ts"
         },
         "./encryption": {
             "import": "./dist/encryption/index.js",
@@ -927,6 +1063,34 @@
             "import": "./dist/messagepassing/signal.js",
             "types": "./dist/messagepassing/signal.d.ts"
         },
+        "./modification": {
+            "import": "./dist/modification.js",
+            "types": "./dist/modification.d.ts"
+        },
+        "./modification.js": {
+            "import": "./dist/modification.js",
+            "types": "./dist/modification.d.ts"
+        },
+        "./notation": {
+            "import": "./dist/notation/index.js",
+            "types": "./dist/notation/index.d.ts"
+        },
+        "./notation.js": {
+            "import": "./dist/notation/index.js",
+            "types": "./dist/notation/index.d.ts"
+        },
+        "./notation/duration": {
+            "import": "./dist/notation/duration.js",
+            "types": "./dist/notation/duration.d.ts"
+        },
+        "./notation/duration.js": {
+            "import": "./dist/notation/duration.js",
+            "types": "./dist/notation/duration.d.ts"
+        },
+        "./notation/index.js": {
+            "import": "./dist/notation/index.js",
+            "types": "./dist/notation/index.d.ts"
+        },
         "./number": {
             "import": "./dist/number.js",
             "types": "./dist/number.d.ts"
@@ -958,6 +1122,22 @@
         "./promises.js": {
             "import": "./dist/promises.js",
             "types": "./dist/promises.d.ts"
+        },
+        "./resource": {
+            "import": "./dist/resource.js",
+            "types": "./dist/resource.d.ts"
+        },
+        "./resource.js": {
+            "import": "./dist/resource.js",
+            "types": "./dist/resource.d.ts"
+        },
+        "./resource/scope": {
+            "import": "./dist/resource/scope.js",
+            "types": "./dist/resource/scope.d.ts"
+        },
+        "./resource/scope.js": {
+            "import": "./dist/resource/scope.js",
+            "types": "./dist/resource/scope.d.ts"
         },
         "./string": {
             "import": "./dist/string.js",
@@ -1099,6 +1279,12 @@
             "binary/base64.js": [
                 "dist/binary/base64.d.ts"
             ],
+            "binary/blob": [
+                "dist/binary/blob.d.ts"
+            ],
+            "binary/blob.js": [
+                "dist/binary/blob.d.ts"
+            ],
             "binary/encodedUTF16": [
                 "dist/binary/encodedUTF16.d.ts"
             ],
@@ -1113,6 +1299,12 @@
             ],
             "binary/index.js": [
                 "dist/binary/index.d.ts"
+            ],
+            "binary/typedArray": [
+                "dist/binary/typedArray.d.ts"
+            ],
+            "binary/typedArray.js": [
+                "dist/binary/typedArray.d.ts"
             ],
             "browser": [
                 "dist/browser/index.d.ts"
@@ -1198,6 +1390,21 @@
             "collection": [
                 "dist/collection.d.ts"
             ],
+            "collection.array": [
+                "dist/collection.array.d.ts"
+            ],
+            "collection.array.js": [
+                "dist/collection.array.d.ts"
+            ],
+            "collection.index": [
+                "dist/collection.index.d.ts"
+            ],
+            "collection.index.js": [
+                "dist/collection.index.d.ts"
+            ],
+            "collection.index/index.js": [
+                "dist/collection.index.d.ts"
+            ],
             "collection.js": [
                 "dist/collection.d.ts"
             ],
@@ -1252,6 +1459,30 @@
             "concurrency/bulk.js": [
                 "dist/concurrency/bulk.d.ts"
             ],
+            "concurrency/cancellation": [
+                "dist/concurrency/cancellation.d.ts"
+            ],
+            "concurrency/cancellation.js": [
+                "dist/concurrency/cancellation.d.ts"
+            ],
+            "concurrency/coalescingNotifier": [
+                "dist/concurrency/coalescingNotifier.d.ts"
+            ],
+            "concurrency/coalescingNotifier.js": [
+                "dist/concurrency/coalescingNotifier.d.ts"
+            ],
+            "concurrency/counting": [
+                "dist/concurrency/counting.d.ts"
+            ],
+            "concurrency/counting.js": [
+                "dist/concurrency/counting.d.ts"
+            ],
+            "concurrency/deferredAction": [
+                "dist/concurrency/deferredAction.d.ts"
+            ],
+            "concurrency/deferredAction.js": [
+                "dist/concurrency/deferredAction.d.ts"
+            ],
             "concurrency/index.js": [
                 "dist/concurrency/index.d.ts"
             ],
@@ -1273,6 +1504,18 @@
             "concurrency/lock.js": [
                 "dist/concurrency/lock.d.ts"
             ],
+            "concurrency/lock.scoped": [
+                "dist/concurrency/lock.scoped.d.ts"
+            ],
+            "concurrency/lock.scoped.js": [
+                "dist/concurrency/lock.scoped.d.ts"
+            ],
+            "concurrency/notifier": [
+                "dist/concurrency/notifier.d.ts"
+            ],
+            "concurrency/notifier.js": [
+                "dist/concurrency/notifier.d.ts"
+            ],
             "concurrency/processor": [
                 "dist/concurrency/processor.d.ts"
             ],
@@ -1291,6 +1534,18 @@
             "concurrency/processor.js": [
                 "dist/concurrency/processor.d.ts"
             ],
+            "concurrency/scoped.iteration": [
+                "dist/concurrency/scoped.iteration.d.ts"
+            ],
+            "concurrency/scoped.iteration.js": [
+                "dist/concurrency/scoped.iteration.d.ts"
+            ],
+            "concurrency/scopedIteration": [
+                "dist/concurrency/scopedIteration.d.ts"
+            ],
+            "concurrency/scopedIteration.js": [
+                "dist/concurrency/scopedIteration.d.ts"
+            ],
             "concurrency/semaphore": [
                 "dist/concurrency/semaphore.d.ts"
             ],
@@ -1306,8 +1561,20 @@
             "concurrency/semaphore_v2.js": [
                 "dist/concurrency/semaphore_v2.d.ts"
             ],
+            "concurrency/semaphore.core": [
+                "dist/concurrency/semaphore.core.d.ts"
+            ],
+            "concurrency/semaphore.core.js": [
+                "dist/concurrency/semaphore.core.d.ts"
+            ],
             "concurrency/semaphore.js": [
                 "dist/concurrency/semaphore.d.ts"
+            ],
+            "concurrency/semaphore.scoped": [
+                "dist/concurrency/semaphore.scoped.d.ts"
+            ],
+            "concurrency/semaphore.scoped.js": [
+                "dist/concurrency/semaphore.scoped.d.ts"
             ],
             "concurrency/task": [
                 "dist/concurrency/task.d.ts"
@@ -1456,11 +1723,26 @@
             "dataobject/Refiner.js": [
                 "dist/dataobject/Refiner.d.ts"
             ],
+            "encoding": [
+                "dist/encoding/index.d.ts"
+            ],
+            "encoding.js": [
+                "dist/encoding/index.d.ts"
+            ],
             "encoding/encodeobject": [
                 "dist/encoding/encodeobject.d.ts"
             ],
             "encoding/encodeobject.js": [
                 "dist/encoding/encodeobject.d.ts"
+            ],
+            "encoding/index.js": [
+                "dist/encoding/index.d.ts"
+            ],
+            "encoding/json": [
+                "dist/encoding/json.d.ts"
+            ],
+            "encoding/json.js": [
+                "dist/encoding/json.d.ts"
             ],
             "encryption": [
                 "dist/encryption/index.d.ts"
@@ -1687,6 +1969,27 @@
             "messagepassing/signal.js": [
                 "dist/messagepassing/signal.d.ts"
             ],
+            "modification": [
+                "dist/modification.d.ts"
+            ],
+            "modification.js": [
+                "dist/modification.d.ts"
+            ],
+            "notation": [
+                "dist/notation/index.d.ts"
+            ],
+            "notation.js": [
+                "dist/notation/index.d.ts"
+            ],
+            "notation/duration": [
+                "dist/notation/duration.d.ts"
+            ],
+            "notation/duration.js": [
+                "dist/notation/duration.d.ts"
+            ],
+            "notation/index.js": [
+                "dist/notation/index.d.ts"
+            ],
             "number": [
                 "dist/number.d.ts"
             ],
@@ -1710,6 +2013,18 @@
             ],
             "promises.js": [
                 "dist/promises.d.ts"
+            ],
+            "resource": [
+                "dist/resource.d.ts"
+            ],
+            "resource.js": [
+                "dist/resource.d.ts"
+            ],
+            "resource/scope": [
+                "dist/resource/scope.d.ts"
+            ],
+            "resource/scope.js": [
+                "dist/resource/scope.d.ts"
             ],
             "string": [
                 "dist/string.d.ts"

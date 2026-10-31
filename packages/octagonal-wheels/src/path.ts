@@ -30,6 +30,14 @@ export interface ResolvePathWithinRootOptions extends SafeRelativePathOptions {
     separator?: "/" | "\\";
 }
 
+/** A non-empty path component that exceeds a caller-supplied UTF-8 byte limit. */
+export interface OversizedPathComponent {
+    /** The original component text. */
+    component: string;
+    /** The component's UTF-8 encoded length in bytes. */
+    utf8Bytes: number;
+}
+
 /** An error raised when an untrusted path fails the OW path-safety contract. */
 export class UnsafePathError extends Error {
     /** The complete untrusted input that was rejected. */
@@ -184,4 +192,25 @@ export function resolvePathWithinRoot(
     }
     if (root.length > 0) return `${root}${joinedRelativePath}`;
     return joinedRelativePath;
+}
+
+/**
+ * Finds path components whose UTF-8 encoded length exceeds a byte limit.
+ *
+ * @param path - A path whose components are separated by forward slashes.
+ * @param maxBytes - The maximum permitted UTF-8 byte length for each component.
+ * @returns Oversized non-empty components in their original order, with their
+ * UTF-8 byte lengths.
+ * @remarks Leading, trailing, and repeated slashes produce empty components,
+ * which are omitted. The comparison is strictly greater than `maxBytes`.
+ * Components are measured independently; the complete path length is ignored.
+ * Calling this function requires the standard global TextEncoder constructor.
+ */
+export function findPathComponentsExceedingUtf8Limit(path: string, maxBytes: number): OversizedPathComponent[] {
+    const utf8Encoder = new TextEncoder();
+    return path
+        .split("/")
+        .filter((component) => component.length > 0)
+        .map((component) => ({ component, utf8Bytes: utf8Encoder.encode(component).byteLength }))
+        .filter(({ utf8Bytes }) => utf8Bytes > maxBytes);
 }

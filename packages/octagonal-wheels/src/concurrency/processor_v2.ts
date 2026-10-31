@@ -2,7 +2,6 @@ import { Logger, LOG_LEVEL_VERBOSE } from "../common/logger.ts";
 import type { ReactiveSource } from "../dataobject/reactive.ts";
 import { RESULT_TIMED_OUT } from "../common/const.ts";
 import {
-    noop,
     delay,
     fireAndForget,
     promiseWithResolvers,
@@ -10,6 +9,7 @@ import {
     type TIMED_OUT_SIGNAL,
     cancelableDelay,
 } from "../promises.ts";
+import { createNotifierPromise, notifyNotifierState, waitForNotifierState } from "./notifier.internal.ts";
 import { EventHub } from "../events.ts";
 import { PaceMaker } from "../bureau/PaceMaker.ts";
 import { Clerk, ClerkGroup } from "../bureau/Clerk.ts";
@@ -19,20 +19,13 @@ import { Inbox } from "../bureau/Inbox.ts";
  * @deprecated Use EventHub and waitFor instead.
  */
 export class Notifier {
-    _p: PromiseWithResolvers<void> = promiseWithResolvers<void>();
+    _p: PromiseWithResolvers<void> = createNotifierPromise();
     isUsed = false;
     notify() {
-        if (!this.isUsed) {
-            return;
-        }
-        this.isUsed = false;
-        void this._p.promise.finally(noop);
-        this._p.resolve();
-        this._p = promiseWithResolvers();
+        notifyNotifierState(this);
     }
     get nextNotify(): Promise<void> {
-        this.isUsed = true;
-        return this._p.promise;
+        return waitForNotifierState(this);
     }
 }
 

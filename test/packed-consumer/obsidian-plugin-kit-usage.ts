@@ -4,7 +4,9 @@
  * This file is copied into a temporary project that installs the packed
  * workspace tarballs. It must use public package entry points only.
  */
-import { Plugin, type App, type TFile } from "obsidian";
+import { Plugin, type App, type TFile, type Command } from "obsidian";
+import { createCommandCheck } from "@vrtmrz/obsidian-plugin-kit/command";
+import { createCommandCheck as rootCommandCheck } from "@vrtmrz/obsidian-plugin-kit";
 import {
   confirmAction,
   pickOne,
@@ -204,3 +206,13 @@ import { createObsidianSecretStore } from "@vrtmrz/obsidian-plugin-kit/secrets";
 export function createSecretServices(app: App) {
   return createObsidianSecretStore(app.secretStorage);
 }
+
+const commandCallback: NonNullable<Command["checkCallback"]> = createCommandCheck(
+  (): TFile | null => null,
+  file => { const path: string = file.path; void path; },
+);
+const rootCallback: NonNullable<Command["checkCallback"]> = rootCommandCheck(
+  () => "available",
+  value => { const text: string = value; void text; },
+);
+void [commandCallback, rootCallback];

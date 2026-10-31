@@ -1,4 +1,7 @@
-import { concatUInt8Array } from '../../binary/index.js';
+import '../../binary/base64.js';
+import '../../binary/encodedUTF16.tables.internal.js';
+import '../../binary/hex.js';
+import { concatUInt8Array } from '../../binary/typedArray.js';
 import { bigEndianBytesToLength, importECDHPublicKey, generateSharedSecretKey, generateAESSessionKey, lengthToBigEndianBytes, generateAgreementKeyPair, generateIV, exportECDHPublicKey, uint8ArrayReader } from './keys.js';
 import { DEFAULT_ECDH_CURVE, HEAD_RSA, IV_LENGTH, LENGTH_FIELD_SIZE, AsymmetricDecryptionError, HEAD_ECDH, AsymmetricEncryptionArgumentError, ECDH_CURVE_NAMES, AsymmetricEncryptionError, ECDH_CURVE_INDEX, webCrypto } from './common.js';
 

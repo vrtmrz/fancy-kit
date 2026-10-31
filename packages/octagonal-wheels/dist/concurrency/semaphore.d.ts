@@ -1,1 +1,2 @@
-export * from "./semaphore_v2.ts";
+export * from "./semaphore.core.ts";
+export * from "./semaphore.scoped.ts";

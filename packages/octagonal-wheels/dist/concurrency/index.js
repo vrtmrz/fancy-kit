@@ -8,4 +8,16 @@ import * as concurrency_task from './task.js';
 export { concurrency_task as task };
 import * as concurrency_bulk from './bulk.js';
 export { concurrency_bulk as bulk };
+import * as concurrency_deferredAction from './deferredAction.js';
+export { concurrency_deferredAction as deferredAction };
+import * as concurrency_counting from './counting.js';
+export { concurrency_counting as counting };
+import * as concurrency_coalescingNotifier from './coalescingNotifier.js';
+export { concurrency_coalescingNotifier as coalescingNotifier };
+import * as concurrency_cancellation from './cancellation.js';
+export { concurrency_cancellation as cancellation };
+import * as concurrency_scoped_iteration from './scoped.iteration.js';
+export { concurrency_scoped_iteration as scopedIteration };
+import * as concurrency_notifier from './notifier.js';
+export { concurrency_notifier as notifier };
 //# sourceMappingURL=index.js.map

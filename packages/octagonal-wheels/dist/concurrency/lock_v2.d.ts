@@ -1,9 +1,13 @@
-export type Task<T> = () => Promise<T> | T;
+import { type Task } from "./lock.scoped.ts";
+export { withLock, withLocks, isLockAcquired } from "./lock.scoped.ts";
+export type { Task } from "./lock.scoped.ts";
 /**
- * Run tasks one by one in their group.
- * @param key key of the group
- * @param proc process to run
- * @returns result of the process
+ * Runs tasks one at a time in their keyed group.
+ *
+ * @param key - Shared lock group.
+ * @param proc - Operation to execute while holding the lock.
+ * @returns The operation result, using the same locks as withLock and withLocks.
+ * @deprecated Use withLock for new code.
  */
 export declare function serialized<T>(key: string | symbol, proc: Task<T>): Promise<T>;
 export declare const SYMBOL_SKIPPED: unique symbol;
@@ -33,12 +37,6 @@ export declare function skipIfDuplicated<T>(key: string | symbol, proc: Task<T>)
  * @returns A Promise that resolves once the process has been scheduled.
  */
 export declare function scheduleOnceIfDuplicated<T>(key: string, proc: () => Promise<T>): Promise<T | null | undefined>;
-/**
- * Checks if a serialised-processing-lock is acquired for the given key.
- * @param key - The key to check for lock acquisition.
- * @returns `true` if the lock is acquired, `false` otherwise.
- */
-export declare function isLockAcquired(key: string | symbol): boolean;
 /**
  * Concurrency controller to limit the number of concurrent tasks.
  * Similar to a semaphore but with a simpler `run` method.

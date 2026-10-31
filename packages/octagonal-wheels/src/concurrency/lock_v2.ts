@@ -1,20 +1,9 @@
 // --- asynchronous execution / locking utilities
 import { fireAndForget, promiseWithResolvers, type PromiseWithResolvers } from "../promises.ts";
 
-export type Task<T> = () => Promise<T> | T;
-
-/**
- * Run tasks one by one in their group.
- */
-const serializedMap = new Map<string | symbol, Promise<void>>();
-/**
- * How many tasks waiting for the same key (on serialized processing)
- */
-const queueCount = new Map<string | symbol, number>();
-
-/**
- * Tasks that are waiting for the same key (on serialized processing)
- */
+import { withLock, isLockAcquired, type Task } from "./lock.scoped.ts";
+export { withLock, withLocks, isLockAcquired } from "./lock.scoped.ts";
+export type { Task } from "./lock.scoped.ts";
 
 const waitingProcessMap = new Map<string | symbol, Task<any>>();
 
@@ -29,38 +18,15 @@ const shareSerializedMap = new Map<string | symbol, Promise<any>>();
 const skipDuplicatedMap = new Map<string | symbol, Promise<any>>();
 
 /**
- * Run tasks one by one in their group.
- * @param key key of the group
- * @param proc process to run
- * @returns result of the process
+ * Runs tasks one at a time in their keyed group.
+ *
+ * @param key - Shared lock group.
+ * @param proc - Operation to execute while holding the lock.
+ * @returns The operation result, using the same locks as withLock and withLocks.
+ * @deprecated Use withLock for new code.
  */
-
 export function serialized<T>(key: string | symbol, proc: Task<T>): Promise<T> {
-    const prev = serializedMap.get(key);
-    const p = promiseWithResolvers<T>();
-    queueCount.set(key, (queueCount.get(key) ?? 0) + 1);
-    const nextTask = async () => {
-        try {
-            p.resolve(await proc());
-        } catch (ex) {
-            p.reject(ex);
-        } finally {
-            const count = queueCount.get(key)! - 1;
-            if (count === 0) {
-                serializedMap.delete(key);
-                queueCount.delete(key);
-            } else {
-                queueCount.set(key, count);
-            }
-        }
-    };
-    if (prev) {
-        const newP = prev.then(() => nextTask());
-        serializedMap.set(key, newP);
-    } else {
-        serializedMap.set(key, nextTask());
-    }
-    return p.promise;
+    return withLock(key, proc);
 }
 
 const latestProcessMap = new Map<string | symbol, Promise<any>>();
@@ -180,16 +146,6 @@ export async function scheduleOnceIfDuplicated<T>(key: string, proc: () => Promi
             }
         });
     }
-}
-
-/**
- * Checks if a serialised-processing-lock is acquired for the given key.
- * @param key - The key to check for lock acquisition.
- * @returns `true` if the lock is acquired, `false` otherwise.
- */
-export function isLockAcquired(key: string | symbol): boolean {
-    const count = queueCount.get(key) ?? 0;
-    return count > 0;
 }
 
 /**

@@ -43,6 +43,51 @@ describe("Semaphore", () => {
         };
     });
 
+    it("immediately reserves an available permit through tryAcquire and holds queued work until release", async () => {
+        const single = Semaphore(1);
+        const release = await single.tryAcquire(1, 0);
+        expect(release).not.toBe(false);
+        if (release === false) throw new Error("Expected an available permit.");
+
+        let acquired = false;
+        const queued = single.acquire().then((releaseQueued) => {
+            acquired = true;
+            return releaseQueued;
+        });
+        await Promise.resolve();
+        expect(single.waiting).toBe(1);
+        expect(acquired).toBe(false);
+
+        release();
+        const releaseQueued = await queued;
+        expect(acquired).toBe(true);
+        expect(single.waiting).toBe(0);
+        releaseQueued();
+    });
+
+    it("ignores an extra release while idle without creating an additional permit", async () => {
+        const single = Semaphore(1);
+        const release = await single.acquire();
+        release();
+        release();
+
+        const releaseNext = await single.acquire();
+        let acquired = false;
+        const queued = single.acquire().then((releaseQueued) => {
+            acquired = true;
+            return releaseQueued;
+        });
+        await Promise.resolve();
+        expect(acquired).toBe(false);
+        expect(single.waiting).toBe(1);
+
+        releaseNext();
+        const releaseQueued = await queued;
+        expect(acquired).toBe(true);
+        expect(single.waiting).toBe(0);
+        releaseQueued();
+    });
+
     it("should acquire and release semaphore", async () => {
         const releaser = await semaphore.acquire();
         expect(releaser).to.be.a("function");

@@ -74,6 +74,214 @@ if (uint8ArrayToHexString(bytes) !== encoded.toLowerCase()) {
 
 The category import `octagonal-wheels/binary` exposes the same helpers alongside the other binary APIs.
 
+## Blob creation and normalisation
+
+Use `octagonal-wheels/binary/blob` to prepare text or bytes for an API which
+accepts a Blob:
+
+```ts
+import { createBinaryBlob, createTextBlob, toBlob } from "octagonal-wheels/binary/blob";
+
+const text = createTextBlob(["first\r", "\nsecond"]);
+const bytes = new Uint8Array([255, 1, 2, 255]);
+const binary = createBinaryBlob(bytes.subarray(1, 3));
+const sameBlob = toBlob(text); // sameBlob === text
+```
+
+`createTextBlob` always creates a new `text/plain` Blob. String parts are
+concatenated without separators, with transparent line endings and the native
+Blob constructor's conversion of each string part. `createBinaryBlob` always
+creates a new `application/octet-stream` Blob from an ArrayBuffer or an
+ArrayBuffer-backed Uint8Array. It snapshots only the view's visible bytes, so
+later input changes do not alter the Blob.
+
+`toBlob` accepts either input family or an existing Blob. It returns an existing
+Blob unchanged, including its identity and MIME type; it creates a text or
+binary Blob for other supported inputs. This is normalisation, which explains
+the `to` prefix. It does not decode bytes, inspect file extensions, or interpret
+application document metadata. Instance checks use the current realm's global
+constructors.
+
+To compare content independently of MIME types, pass two Blobs to
+`isBlobContentEqual`:
+
+```ts
+import { isBlobContentEqual, toBlob } from "octagonal-wheels/binary/blob";
+
+const equal = await isBlobContentEqual(toBlob("same"), new Blob(["same"], { type: "application/custom" }));
+```
+
+Different sizes return false without reading content; empty Blobs return true.
+Equal-sized inputs are read sequentially in pairs of parts containing at most
+10,000 bytes each. The default predicate uses native `Uint8Array.toBase64` when available and compares bytes directly otherwise. An
+optional `ArrayBufferContentEquality` predicate receives the left and right
+ArrayBuffers and returns a boolean or `PromiseLike<boolean>`. Each predicate
+finishes before the next pair is read, and false stops further reads. Read and
+predicate failures propagate unchanged. Host-specific comparison selection
+remains with the caller; this function does not select IndexedDB.
+
+The focused entry imports without DOM, fetch, IndexedDB, FileReader, or Blob
+globals. Creation and normalisation require the standard global Blob
+constructor. Comparison uses the supplied Blobs. Its byte-comparison fallback
+requires no encoder and allocates no encoded strings.
+Browser contract tests and Node tests cover this boundary; packed-consumer
+checks also exercise the installed entry and its public declarations. The
+category entry `octagonal-wheels/binary` exposes the same functions alongside
+other binary utilities.
+
+## Read legacy binary formats
+
+`decodeBinary` still recognises percent-prefixed UTF-16 data and decodes it to
+its original bytes. The focused `binary/encodedUTF16` entry retains both decoder
+exports and the previous deprecated encoder names. Retired encoder code lives in
+an implementation-only module; consumers keep the existing public import path.
+Fixed-byte fixtures cover decoding independently of the retired encoder.
+
+The CRC-derived helpers in `hash/crc32` and the `hash.crc32` namespace are
+deprecated and retained to reproduce existing hash values. Their public imports
+and outputs remain available; another hash algorithm does not produce
+interchangeable identifiers.
+
+## Apply content when it changes
+
+The unreleased `createModificationHandler` factory in `octagonal-wheels/modification`
+accepts a `ModificationHandlerAdapter<TTarget, TSource, TExisting, TContent>` and
+returns a `ModificationHandler<TTarget, TSource>`. The adapter supplies `read`,
+`onReadError`, `decode`, `isSame`, and `write` callbacks. Each accepts synchronous
+or promise-like results; each stage finishes before the next begins.
+
+Only a `read` failure enters `onReadError`. A true comparison resolves to
+`unchanged` without writing. Otherwise the factory waits for `write` and resolves
+to `changed`, ignoring the write's resolved value. Recovery, decoding, comparison,
+and write failures reject unchanged. The adapter, target, and source retain their
+identities. Invocations are independent; locking, retry, rollback, storage
+atomicity, and follow-up state updates belong to the consumer.
+
+The focused entry has no host globals or DOM/Node declaration dependency.
+The `.js` alias and root `modification` namespace expose the same implementation.
+See [the composition example](../../../docs/runtime-composition.md#keep-content-policy-in-the-adapter)
+for a complete adapter and the distinction between missing and unreadable content.
+
+## Own one delayed callback
+
+`createDeferredAction` gives each owner an independent pending callback:
+
+```ts
+import { createDeferredAction } from "octagonal-wheels/concurrency/deferredAction";
+
+declare function refreshPreview(): void;
+
+const refresh = createDeferredAction(refreshPreview);
+refresh.schedule(250);
+refresh.schedule(500); // cancels and replaces the pending registration
+refresh.cancel(); // a later schedule is still allowed
+refresh.dispose(); // ends this action's lifetime
+```
+
+The action starts idle. `schedule(delayMs)` cancels the pending
+registration before creating another and passes the delay unchanged to its
+scheduler. `cancel()` is idempotent while idle. `dispose()` is idempotent,
+cancels pending work, and makes later scheduling a no-op. Expiry releases the
+registration before invoking the callback, allowing the callback to schedule
+again. It does not interrupt work which the callback has already started.
+
+Inject a `TimeoutScheduler` as the second argument to select a host or drive
+the callback in a unit test. It receives a callback and delay and returns a
+cancellation function for that registration. The scheduler must invoke the
+callback asynchronously. Wrap host methods to retain their receiver. Stale
+callbacks are suppressed after cancellation, replacement, or disposal;
+scheduling, cancellation, and callback errors propagate.
+
+The focused entry imports and creates actions without accessing timer,
+DOM, or fetch globals. Its public types need neither DOM nor Node declarations.
+The default resolves global timer methods when scheduling or cancelling.
+Source and packed-consumer tests cover the injected and native Node boundary.
+This action owns callbacks; the existing `cancelableDelay` and
+`extendableDelay` Promise contracts retain their existing behaviour.
+
+## Hold a semaphore permit
+
+`withSemaphore` owns the acquisition and release around one callback:
+
+```ts
+import { Semaphore, withSemaphore } from "octagonal-wheels/concurrency/semaphore";
+
+const semaphore = Semaphore(3);
+declare function saveRecord(): Promise<string>;
+
+const result: string = await withSemaphore(semaphore, () => saveRecord());
+```
+
+The helper calls `acquire()` on the supplied object with its original receiver
+and default quantity. It starts the callback only after acquisition succeeds,
+awaits its value or thenable, and calls the acquired release function exactly
+once in `finally`. The semaphore retains its existing queue and concurrency
+policy. Pass a callback so work starts while the permit is held.
+
+An acquisition failure rejects without starting the callback. When release
+succeeds, callback failures propagate unchanged. A throwing release function
+replaces the callback's result or error, following ordinary `finally` semantics.
+Keep application logging and decisions to continue inside the callback when
+they apply only to processing failures. This retains a separate boundary for
+acquisition failures.
+
+Tests can inject an object with only `acquire(): Promise<() => void>` to control
+acquisition and inspect release. Browser contracts also use the real semaphore
+to verify bounded queued work after successful and failed operations. Node and
+packed-consumer fixtures cover the focused entry without timer, DOM, or fetch
+globals; its public declarations need neither DOM nor Node types. The `.js`
+alias exports the same helper, and the concurrency category exposes it as
+`semaphore.withSemaphore`.
+
+## Serialise an operation across several keys
+
+Use `withLocks` from `concurrency/lock` when an operation must hold
+every supplied lock before its callback starts. It shares lock groups with
+`serialized`, retains the callback result or failure, and releases all acquired
+locks when the callback settles. An empty list invokes the callback immediately.
+
+```ts
+import { withLocks } from "octagonal-wheels/concurrency/lock";
+
+declare const sourceId: string;
+declare const destinationId: string;
+declare function moveEntry(): Promise<void>;
+
+const keys = [...new Set([sourceId, destinationId])].sort();
+await withLocks(keys, moveEntry);
+```
+
+Callers supply unique keys in the same acquisition order across overlapping
+operations. The helper neither sorts nor deduplicates the input. Duplicate
+keys, inconsistent ordering, or reacquiring a held key from the callback can
+deadlock. Keep application namespaces and any work which must run after
+unlocking in the consumer. The input list is not modified. The existing
+`concurrency/lock` entry includes APIs whose declarations require
+`AbortController` types.
+
+## Suppress consecutive duplicate arguments
+
+`onlyWhenChanged` from `function` owns one last-argument value per wrapper. It invokes
+the callback when the next argument is strictly unequal to that value:
+
+```ts
+import { onlyWhenChanged } from "octagonal-wheels/function";
+
+declare function setLabel(value: string): void;
+const updateLabel = onlyWhenChanged(setLabel);
+updateLabel("Ready");
+updateLabel("Ready"); // The callback is not repeated.
+updateLabel("Working");
+updateLabel("Ready"); // Returning to an earlier value invokes it again.
+```
+
+The remembered value starts as `undefined`, so an initial `undefined` is
+skipped. Comparison uses strict equality: `NaN` always invokes the callback,
+signed zeros compare equal, and objects compare by identity. A synchronous
+exception propagates and leaves the preceding value intact. Return values are
+discarded; promises are not awaited, and their failures remain caller-owned.
+This suppresses repeated arguments rather than caching function results.
+
 ## Ordered and completion-order concurrency
 
 `asyncMapWithConcurrency` limits the number of in-flight callbacks and yields results in input order:
@@ -143,6 +351,63 @@ export async function exportArchive(
 
 `ScreenWakeLockManager` satisfies this structural type in a browser. A focused application test can supply a small fake without emulating `navigator`, visibility events, or power policy. Apply the same technique around IndexedDB or Web Crypto when the consumer is testing orchestration rather than the platform implementation.
 
+## Own a value and its cleanup
+
+`DisposableResource` from `octagonal-wheels/resource` describes an explicit
+`dispose(): void | Promise<void>` operation. The owner ends the lifetime;
+borrowers receive the capabilities they use. `OwnedResource<T>` adds a readonly
+`value` without requiring `T` to implement disposal.
+
+```ts
+import { createOwnedResource, withOwnedResource } from "octagonal-wheels/resource";
+
+const listener = () => console.log("Changed");
+const events = new EventTarget();
+events.addEventListener("change", listener);
+const registration = createOwnedResource(listener, value => {
+  events.removeEventListener("change", value);
+});
+
+await withOwnedResource(registration, async owned => {
+  events.dispatchEvent(new Event("change"));
+  // Borrowers can use owned.value without receiving the cleanup capability.
+  owned.value();
+});
+```
+
+`createOwnedResource(value, release)` wraps an already acquired value, preserves
+its identity, and calls `release(value)` only on the first disposal. Synchronous
+cleanup runs immediately. Later calls retain the first completion promise or
+synchronous failure, including rejected cleanup, without retrying. The wrapper
+does not modify the value or prevent its use after disposal. The value's own
+contract determines what further use means.
+
+`withOwnedResource(resource, operation)` passes the original resource to the
+operation and awaits its result before awaiting `dispose()` in `finally`.
+It accepts ownership wrappers and existing objects with a disposal method.
+A cleanup failure takes precedence when both the operation and cleanup fail.
+Acquire asynchronous resources before entering the scope, and give each
+lifetime one owner. For a host-owned lifetime, keep the wrapper with the host
+and register disposal with that host's termination mechanism.
+
+`DeferredAction` and `CoalescingNotifier` satisfy `DisposableResource` while
+retaining their synchronous disposal contracts. Notifier disposal discards
+pending updates; request `flush()` explicitly when the last update should be
+delivered. A plain log or notification function can be borrowed directly when
+there is no owned registration or other cleanup.
+
+These APIs use ordinary methods and promises. They do not require disposal
+symbols, `using`, a host global, or a polyfill.
+
+## Execute with deferred cleanup
+
+Use `withScope` for an operation which registers cleanup during execution.
+`scoped().pipe()` composes typed steps with the same cleanup owner;
+`pipeScoped()` closes a child before the next step. Cancellation and bounded
+iteration use that same context shape. See the
+[execution scope guide](execution-scopes.md) for ownership, failure aggregation,
+partial results, and the distinction from existing `finally`-based helpers.
+
 ## Lifecycle and side effects
 
 Review object ownership for stateful APIs. Caches, queues, event hubs, reactive objects, locks, and browser managers can retain mutable state or listeners. Keep instances scoped to an explicit owner and call their documented release, close, or disposal operation when one exists.
@@ -162,6 +427,7 @@ Focused tests and maintained consumers establish representative contracts:
 | Promise delays, cancellation sentinels, and scheduling helpers | [`src/promises.test.ts`](../src/promises.test.ts) |
 | Semaphore, lock, task, processor, and bulk coordination | Tests under [`src/concurrency`](../src/concurrency) |
 | IndexedDB and memory-backed storage contracts | Tests under [`src/databases`](../src/databases) and [`src/BackedQueue`](../src/BackedQueue) |
+| Ownership wrappers, cleanup completion, failure propagation, and disposal scopes | [`src/resource.test.ts`](../src/resource.test.ts) |
 | Screen wake-lock leases, visibility, failure handling, injection, and disposal | [`src/browser/wakeLock.test.ts`](../src/browser/wakeLock.test.ts) |
 | Screen wake-lock import and best-effort use without DOM globals | [`test-node/wakeLock.test.ts`](../test-node/wakeLock.test.ts) |
 | Real Obsidian/Electron wake-lock composition | [`apps/obsidian-harness/main.ts`](../../../apps/obsidian-harness/main.ts) and [`test/e2e-obsidian/scripts/mobile.ts`](../../../test/e2e-obsidian/scripts/mobile.ts) |
@@ -169,3 +435,96 @@ Focused tests and maintained consumers establish representative contracts:
 The Chromium suite is broad, but support claims still belong to the selected entry point and its tests. Consumer code owns integration with its target browser, Electron version, persistence policy, and application workflow.
 
 For maintained application examples, see [Proven in maintained consumers](https://github.com/vrtmrz/fancy-kit/blob/main/docs/proven-in-use.md). Self-hosted LiveSync exercises concurrency, reactive state, storage, binary, and browser-lifecycle modules at scale; DiffZip composes wake-lock, encryption, promise, and binary entries; and Screwdriver applies the path contract before restoring untrusted document paths. These are entry-point-specific examples rather than a package-wide platform guarantee.
+
+
+## Count operations and coalesce notifications
+
+`withCounting` in `concurrency/counting` increments a mutable numeric `value`
+before calling an operation, awaits the result, and decrements in `finally`.
+It supports plain objects and reactive sources without importing a reactive
+implementation. Overlapping operations share the count while their lifetimes
+remain independent. An increment failure prevents the operation; a decrement
+failure takes precedence over the result or error, as with ordinary `finally`.
+
+`createCoalescingNotifier<T>` in `concurrency/coalescingNotifier` returns a
+`CoalescingNotifier<T>` with `update`, `flush`, and `dispose`:
+
+```ts
+import { createCoalescingNotifier } from "octagonal-wheels/concurrency/coalescingNotifier";
+
+declare function showProgress(value: { count: number; bytes: number }): void;
+const progress = createCoalescingNotifier({
+  onNotify: showProgress,
+  everyCount: 100,
+  maxWaitMs: 2000,
+  getCount: value => value.count,
+  leading: true,
+});
+progress.update({ count: 1, bytes: 512 });
+progress.update({ count: 2, bytes: 1024 });
+progress.flush();
+progress.dispose();
+```
+
+Supply a positive integer `everyCount`, a finite non-negative `maxWaitMs`, or
+both. Without `getCount`, each update counts once; with it, the caller supplies
+a cumulative, non-decreasing count. Each notification establishes the next
+count baseline. `leading` defaults to false; enabling it preserves schedules
+such as the first, 101st, and 201st updates for a count interval of 100.
+
+The first pending update starts the maximum wait. Later updates replace its
+value without extending the deadline. A count-triggered notification cancels
+that timer. No timer runs when nothing is pending. Values are retained by
+reference: pass fresh snapshots when later mutation would be misleading.
+`flush` delivers only the pending latest value; `dispose` discards it and
+permanently ignores further updates. Flush before disposal when a final
+notification is required.
+
+Callbacks are synchronous observers; returned values are ignored. Pending
+state is cleared before invoking a callback, allowing reentrant updates.
+Callback and scheduler errors propagate without retries. A callback invoked
+by a timer throws through the scheduler, so it cannot reject an earlier
+`update` call. Consumers retain responsibility for their error boundary.
+The optional `scheduleTimeout` uses the same contract as `DeferredAction`.
+Both focused entries import without timer or DOM globals and their declarations
+require neither DOM nor Node types. Timed use resolves the selected scheduler
+only when pending work needs a timer.
+
+## Format and transform small values
+
+| Entry | Operation and contract |
+| --- | --- |
+| `notation/duration` | `formatDuration(milliseconds)` returns two decimal places with `s`, `m`, `h`, `d`, or `y`. Thresholds use 60 seconds, 60 minutes, 24 hours, and 365 days. Rounding does not promote the unit; positive infinity is displayed as `∞y`; other negative and non-finite inputs follow number comparison and `toFixed` semantics. |
+| `encoding/json` | `cloneViaJSON(value)` uses native JSON serialisation and parsing. Its input is constrained recursively to JSON-compatible types, including ordinary interfaces and readonly arrays; Dates and functions are rejected in typed calls. The output defaults to the input type, or an explicit caller-selected type. This is not runtime validation: non-finite numbers become null, and native errors and runtime `toJSON` hooks are preserved. |
+| `path` | `findPathComponentsExceedingUtf8Limit(path, maxBytes)` reports non-empty forward-slash components strictly exceeding the supplied limit, in order. Calling it requires `TextEncoder`; importing the module does not. Application-specific limits remain with the caller. |
+| `string` | `splitDelimitedList(source, delimiter)` drops empty parts without trimming or escaping. `joinDelimitedList(items, delimiter)` retains empty items. These helpers therefore do not form a lossless round trip. |
+| `collection` | `stepCyclicIndex(index, count, direction)` wraps an index for `prev` or `next`. An unselected index of -1 selects the last or first item respectively. An empty collection retains the input index. Callers supply a non-negative integer count and an index of -1 or a valid position. |
+
+The `notation` and `encoding` category entries expose the corresponding
+formatting and JSON helpers. Packed fixtures exercise focused entries, `.js`
+aliases, category declarations, Node execution, and focused browser bundles.
+
+
+## Wait for an independent notification
+
+Use `createNotifier` from `concurrency/notifier` to wake the current group of
+waiters without introducing a processing queue or an event hub:
+
+```ts
+import { createNotifier } from "octagonal-wheels/concurrency/notifier";
+
+const notifier = createNotifier();
+const next = notifier.wait();
+notifier.notify();
+await next;
+```
+
+Calls to `wait()` before notification share one promise. Notification resolves
+that group; later waits belong to a new group. An idle notification is discarded.
+Register a wait before starting work which may notify synchronously. Returned
+methods retain their instance when passed as callbacks. `CoalescingNotifier`
+can call `notifier.notify` through its injected `onNotify`; it continues to own
+its count, timer, and pending-value policy independently.
+
+Existing `Notifier` imports from the processing modules retain their `nextNotify`
+getter and shared-wait behaviour. New code can use the focused notifier entry.
