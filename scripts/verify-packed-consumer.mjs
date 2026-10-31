@@ -576,7 +576,7 @@ for (const length of [65, 128]) {
       requiredModules: ["node_modules/octagonal-wheels/dist/concurrency/semaphore.scoped.js"],
       excludedModules: [
         "node_modules/octagonal-wheels/dist/concurrency/semaphore_v2.js",
-        "node_modules/octagonal-wheels/dist/concurrency/semaphore.core.js",
+        "node_modules/octagonal-wheels/dist/concurrency/semaphore.internal.js",
         "node_modules/octagonal-wheels/dist/concurrency/task.js",
       ],
       externalImports: [],

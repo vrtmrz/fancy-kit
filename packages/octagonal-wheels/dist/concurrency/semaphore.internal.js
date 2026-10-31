@@ -55,4 +55,4 @@ function Semaphore(limit) {
 }
 
 export { Semaphore };
-//# sourceMappingURL=semaphore.core.js.map
+//# sourceMappingURL=semaphore.internal.js.map

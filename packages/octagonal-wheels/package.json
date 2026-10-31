@@ -307,10 +307,6 @@
             "import": "./dist/collection.index.js",
             "types": "./dist/collection.index.d.ts"
         },
-        "./collection.index/index.js": {
-            "import": "./dist/collection.index.js",
-            "types": "./dist/collection.index.d.ts"
-        },
         "./collection.js": {
             "import": "./dist/collection.js",
             "types": "./dist/collection.d.ts"
@@ -518,14 +514,6 @@
         "./concurrency/semaphore_v2.js": {
             "import": "./dist/concurrency/semaphore_v2.js",
             "types": "./dist/concurrency/semaphore_v2.d.ts"
-        },
-        "./concurrency/semaphore.core": {
-            "import": "./dist/concurrency/semaphore.core.js",
-            "types": "./dist/concurrency/semaphore.core.d.ts"
-        },
-        "./concurrency/semaphore.core.js": {
-            "import": "./dist/concurrency/semaphore.core.js",
-            "types": "./dist/concurrency/semaphore.core.d.ts"
         },
         "./concurrency/semaphore.js": {
             "import": "./dist/concurrency/semaphore.js",
@@ -1410,9 +1398,6 @@
             "collection.index.js": [
                 "dist/collection.index.d.ts"
             ],
-            "collection.index/index.js": [
-                "dist/collection.index.d.ts"
-            ],
             "collection.js": [
                 "dist/collection.d.ts"
             ],
@@ -1568,12 +1553,6 @@
             ],
             "concurrency/semaphore_v2.js": [
                 "dist/concurrency/semaphore_v2.d.ts"
-            ],
-            "concurrency/semaphore.core": [
-                "dist/concurrency/semaphore.core.d.ts"
-            ],
-            "concurrency/semaphore.core.js": [
-                "dist/concurrency/semaphore.core.d.ts"
             ],
             "concurrency/semaphore.js": [
                 "dist/concurrency/semaphore.d.ts"

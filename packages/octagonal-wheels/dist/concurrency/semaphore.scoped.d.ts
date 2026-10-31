@@ -1,4 +1,4 @@
-import type { SemaphoreObject } from "./semaphore.core.ts";
+import type { SemaphoreObject } from "./semaphore.internal.ts";
 import type { Scope } from "../resource/scope.ts";
 /**
  * Runs an operation while holding one semaphore permit, releasing it afterwards.

@@ -7,6 +7,15 @@ import { createCommandCheck } from "@vrtmrz/obsidian-plugin-kit/command";
 
 assert.equal(aliasLock, withLocks);
 assert.equal(aliasMemo, onlyWhenChanged);
+const { Semaphore } = await import("octagonal-wheels/concurrency/semaphore");
+const { Semaphore: compatibilitySemaphore } = await import("octagonal-wheels/concurrency/semaphore_v2");
+assert.equal(compatibilitySemaphore, Semaphore);
+for (const entry of ["semaphore.core", "semaphore.core.js", "semaphore.internal", "semaphore.internal.js"]) {
+    await assert.rejects(
+        import(`octagonal-wheels/concurrency/${entry}`),
+        { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" }
+    );
+}
 const keys = Object.freeze(["packed:primitives:a", "packed:primitives:b"]);
 let release;
 const gate = new Promise(resolve => { release = resolve; });

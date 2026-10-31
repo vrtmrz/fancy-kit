@@ -33,7 +33,7 @@ const map = files.flatMap((file) => {
     if (fs.existsSync(join(distDir, typePath)) === false) {
         console.warn(`Type definition file not found: ${typePath}`);
     }
-    if (exportPath.endsWith("index")) {
+    if (exportPath.endsWith("/index")) {
         exportPath = exportPath.replace(/\/index$/, "");
 
         return [

@@ -248,7 +248,7 @@ describe("withCancellation", () => {
     it("lets child scopes observe the borrowed signal without aborting it when they close", async () => {
         const childCleanupStates: boolean[] = [];
         let childSignal: AbortSignal | undefined;
-        const childProgram = scoped<number, Cancellation>()
+        const childPipeline = scoped<number, Cancellation>()
             .pipeScoped((ctx) => {
                 childSignal = ctx.signal;
                 ctx.defer(() => {
@@ -262,7 +262,7 @@ describe("withCancellation", () => {
                 return ctx.value;
             });
 
-        const result = await withCancellation(4, {}, childProgram);
+        const result = await withCancellation(4, {}, childPipeline);
 
         expect(result).toBe("child result");
         expect(childCleanupStates).toEqual([false]);
