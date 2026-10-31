@@ -1,3 +1,5 @@
+import { createAsyncQueue, type AsyncQueue } from "octagonal-wheels/iterable/asyncQueue";
+import { withOwnedResource } from "octagonal-wheels/resource";
 import { scoped, withScope } from "octagonal-wheels/resource/scope";
 import { mapInScope } from "octagonal-wheels/concurrency/scoped.iteration";
 import {
@@ -27,3 +29,10 @@ export const mapped = withScope({ suffix: "x" }, (ctx) =>
 // @ts-expect-error The neutral declaration graph does not supply DOM types.
 type NoImplicitDOM = AbortSignal;
 export type { NoImplicitDOM };
+
+export const queue: AsyncQueue<number> = createAsyncQueue<number>();
+queue.enqueue(1);
+queue.finish();
+export const queuedResult: Promise<IteratorResult<number>> = withOwnedResource(queue, input =>
+  input[Symbol.asyncIterator]().next(),
+);

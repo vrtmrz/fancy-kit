@@ -50,6 +50,26 @@ assert.equal(
   mapInScope,
 );
 
+const { createAsyncQueue } = await import("octagonal-wheels/iterable/asyncQueue");
+const { withOwnedResource } = await import("octagonal-wheels/resource");
+assert.equal((await import("octagonal-wheels/iterable/asyncQueue.js")).createAsyncQueue, createAsyncQueue);
+const queued = createAsyncQueue();
+queued.enqueue(undefined);
+queued.enqueue(2);
+queued.finish();
+const queuedValues = await withOwnedResource(queued, async input => {
+  const values = [];
+  for await (const value of input) values.push(value);
+  return values;
+});
+assert.deepEqual(queuedValues, [undefined, 2]);
+assert.equal(queued.size, 0);
+assert.throws(() => queued.enqueue(3));
+const waitingQueue = createAsyncQueue();
+const waiting = waitingQueue[Symbol.asyncIterator]().next();
+waitingQueue.dispose();
+assert.deepEqual(await waiting, { done: true, value: undefined });
+
 const events = [];
 const semaphore = Semaphore(1);
 const pipeline = scoped()

@@ -43,6 +43,24 @@ Its compatibility-review workflow also uses the Obsidian `confirmAction` adapter
 
 LiveSync's WebApp and WebPeer create `@vrtmrz/browser-ui-kit` interaction and notification adapters at their browser composition roots. Consumer tests own Root selection, persistence, P2P settings, and runtime composition, while the browser kit owns typed choice mapping, native DOM lifecycle, safe plain-text defaults, and keyed notification expiry. A Compose-backed Playwright scenario then verifies the LiveSync-specific WebApp-to-WebPeer-to-CLI transfer without treating the browser adapter as a Harness or Obsidian substitute.
 
+## Disposable asynchronous input
+
+The unreleased `octagonal-wheels/iterable/asyncQueue` entry provides a FIFO input
+with one iterator, draining completion, and explicit disposal. Its
+[browser contracts](../packages/octagonal-wheels/src/iterable/asyncQueue.test.ts)
+cover item identity, terminal admission, waiting reads, and ownership through
+`withOwnedResource`. Installed-tarball type and runtime fixtures exercise the
+focused import without DOM declarations or import-time host access.
+
+A Self-hosted LiveSync candidate uses this queue with scoped iteration for its
+hidden-file conflict pipeline. Consumer tests cover five concurrent analyses,
+one manual resolution at a time, start delays, duplicate suppression,
+self-requeues, and disposal through the feature's unload handler. Disposal
+prevents further dispatch and does not wait for an already open dialogue or
+cancel an admitted write. Application merge decisions and dialogue lifecycle
+remain consumer-owned. This is candidate unit-test evidence, not adoption in a
+published LiveSync release or new real-Obsidian UI qualification.
+
 ## Blob utilities: construction, normalisation, and comparison
 
 The unreleased `octagonal-wheels/binary/blob` entry extracts text and binary

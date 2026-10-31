@@ -143,9 +143,55 @@ Use `acquirePermit` when the item must also participate in an existing shared
 semaphore. Register it before other resources so its release runs last. The
 iteration's local concurrency limit alone needs no additional semaphore.
 
+## Own an asynchronous input queue
+
+Use `createAsyncQueue` from `iterable/asyncQueue` when a producer supplies values
+over time and one consumer owns their lifetime. `enqueue` is synchronous and has
+no fixed capacity. `finish()` closes admission and drains buffered values;
+`dispose()` closes admission, drops unread values, and wakes an empty pending
+read as done. Both terminal operations are idempotent, and enqueue after either
+throws. A completed iterator result has already claimed its value, even if the
+consumer has not resumed yet; disposal cannot withdraw it.
+
+The queue has one iterator for its lifetime. A second iterator acquisition or
+overlapping empty reads fail explicitly. Iterator `return()` disposes the queue.
+Values retain their identity, including `undefined` and promises: awaiting
+`iterator.next()` does not await a promise stored inside its result. Scoped
+iteration separately awaits each yielded value before invoking its callback.
+
+```ts
+import { createAsyncQueue } from "octagonal-wheels/iterable/asyncQueue";
+import { withOwnedResource } from "octagonal-wheels/resource";
+
+const queue = createAsyncQueue<Change>();
+// The producer enqueues changes and calls finish() when it has no more input.
+const processing = withOwnedResource(queue, input =>
+  withCancellation(undefined, { signal }, parent => {
+    const stopInput = () => input.dispose();
+    parent.signal.addEventListener("abort", stopInput, { once: true });
+    parent.defer(() => parent.signal.removeEventListener("abort", stopInput));
+    if (parent.isCancelled()) stopInput();
+    return forEachInScope(parent, input, { concurrency: 4 }, processChange);
+  }),
+);
+```
+
+Here `Change`, `signal`, and `processChange` belong to the application. The owner
+must stop the producer on cancellation and await `processing` when it needs to
+join started callbacks. Immediate disposal on abort releases an empty input
+wait; final cleanup alone cannot do that while the operation is still waiting.
+Disposal is not a request to finish every queued item. The runner owns callback
+concurrency and joins started work; the queue does not cancel writes, close
+dialogues, retry failures, or retain recovery state. Promise-valued items which
+the runner is already awaiting remain subject to that promise's own lifetime.
+
+The existing `generativeBuffer` and `GeneratorSource` entries keep their previous
+contracts. This queue does not change their promise assimilation or iterator
+behaviour.
+
 ## Imports and validation
 
-Base scopes, iteration, and semaphore preparation have declaration graphs without
+Base scopes, iteration, input queues, and semaphore preparation have declaration graphs without
 DOM or Node types. Cancellation uses standard `AbortSignal` and `AbortController`,
 and creates the controller at invocation. Multiple-failure reporting requires
 standard `AggregateError`. These focused contracts do not change the package-wide

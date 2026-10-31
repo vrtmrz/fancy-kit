@@ -955,6 +955,14 @@
             "import": "./dist/iterable/index.js",
             "types": "./dist/iterable/index.d.ts"
         },
+        "./iterable/asyncQueue": {
+            "import": "./dist/iterable/asyncQueue.js",
+            "types": "./dist/iterable/asyncQueue.d.ts"
+        },
+        "./iterable/asyncQueue.js": {
+            "import": "./dist/iterable/asyncQueue.js",
+            "types": "./dist/iterable/asyncQueue.d.ts"
+        },
         "./iterable/chunks": {
             "import": "./dist/iterable/chunks.js",
             "types": "./dist/iterable/chunks.d.ts"
@@ -1887,6 +1895,12 @@
             ],
             "iterable.js": [
                 "dist/iterable/index.d.ts"
+            ],
+            "iterable/asyncQueue": [
+                "dist/iterable/asyncQueue.d.ts"
+            ],
+            "iterable/asyncQueue.js": [
+                "dist/iterable/asyncQueue.d.ts"
             ],
             "iterable/chunks": [
                 "dist/iterable/chunks.d.ts"
