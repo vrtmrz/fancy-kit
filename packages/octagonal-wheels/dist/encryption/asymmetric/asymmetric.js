@@ -1,5 +1,5 @@
 import '../../binary/base64.js';
-import '../../binary/encodedUTF16.js';
+import '../../binary/encodedUTF16.tables.internal.js';
 import '../../binary/hex.js';
 import { concatUInt8Array } from '../../binary/typedArray.js';
 import { bigEndianBytesToLength, importECDHPublicKey, generateSharedSecretKey, generateAESSessionKey, lengthToBigEndianBytes, generateAgreementKeyPair, generateIV, exportECDHPublicKey, uint8ArrayReader } from './keys.js';

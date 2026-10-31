@@ -31,3 +31,11 @@ const result: Promise<"changed" | "unchanged"> = apply("key", { value: 1 });
 // @ts-expect-error The source must retain the adapter's shape.
 applyAlias("key", "value");
 void result;
+
+import { _decodeToArrayBuffer, decodeToArrayBuffer, encodeBinaryEach, _encodeBinary } from "octagonal-wheels/binary/encodedUTF16";
+import { _decodeToArrayBuffer as aliasDecoder } from "octagonal-wheels/binary/encodedUTF16.js";
+const legacyDecoded: ArrayBuffer = _decodeToArrayBuffer("A");
+const legacyParts: ArrayBuffer = decodeToArrayBuffer(["A"]);
+const legacyEncoder: (bytes: Uint8Array) => Promise<string> = encodeBinaryEach;
+const legacyPartsEncoder: (bytes: Uint8Array) => Promise<string[]> = _encodeBinary;
+void [legacyDecoded, legacyParts, legacyEncoder, legacyPartsEncoder, aliasDecoder];

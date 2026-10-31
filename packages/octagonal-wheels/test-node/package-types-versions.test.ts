@@ -14,7 +14,7 @@ test("generated subpath declarations resolve with Node10 module resolution", asy
     const mappings = manifest.typesVersions?.["*"];
     assert.ok(mappings, "The generated manifest must include legacy TypeScript declaration mappings.");
     assert.ok(
-        Object.keys(manifest.exports).every((subpath) => !subpath.includes(".internal")),
+        Object.keys(manifest.exports).every((subpath) => !subpath.includes(".internal") && !subpath.includes(".deprecated")),
         "Implementation-only modules must not become public package entry points."
     );
     const exportedSubpaths = Object.keys(manifest.exports)

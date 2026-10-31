@@ -129,6 +129,19 @@ checks also exercise the installed entry and its public declarations. The
 category entry `octagonal-wheels/binary` exposes the same functions alongside
 other binary utilities.
 
+## Read legacy binary formats
+
+`decodeBinary` still recognises percent-prefixed UTF-16 data and decodes it to
+its original bytes. The focused `binary/encodedUTF16` entry retains both decoder
+exports and the previous deprecated encoder names. Retired encoder code lives in
+an implementation-only module; consumers keep the existing public import path.
+Fixed-byte fixtures cover decoding independently of the retired encoder.
+
+The CRC-derived helpers in `hash/crc32` and the `hash.crc32` namespace are
+deprecated and retained to reproduce existing hash values. Their public imports
+and outputs remain available; another hash algorithm does not produce
+interchangeable identifiers.
+
 ## Apply content when it changes
 
 The unreleased `createModificationHandler` factory in `octagonal-wheels/modification`

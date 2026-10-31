@@ -7,6 +7,15 @@
 - Added the focused `binary/blob` entry with `createTextBlob`, `createBinaryBlob`, and `toBlob`. Creation preserves line endings and binary view ranges; normalisation preserves existing Blob identity. The entry can be imported without DOM or fetch globals; creation and normalisation use the standard Blob constructor when called.
 - Added `isBlobContentEqual` for sequential byte comparison in parts of at most 10,000 bytes, independently of MIME types. Its default comparison uses native `Uint8Array.toBase64` where available and direct byte comparison otherwise, avoiding encoded-string allocation in the fallback. Its optional `ArrayBufferContentEquality` predicate supports synchronous or asynchronous host strategies.
 
+### Legacy compatibility
+
+- Old percent-prefixed UTF-16 data remains readable through the existing binary entry. Decoder fixtures now check fixed expected bytes; retired encoder code is separated behind the existing deprecated exports.
+- Existing CRC-derived string hash values remain reproducible through `crc32CHash`, `crc32CKHash`, and the CRC namespace. These entries are now marked deprecated and retained for compatibility.
+
+### Cache behaviour
+
+- Accessing a cached falsy value or a falsy key through reverse lookup now refreshes its LRU position. Cache membership checks preserve empty strings, zero, false, null, and undefined as stored data, so a recently accessed entry is not evicted as the oldest entry.
+
 ### Encryption diagnostics
 
 - The `testCrypt` entry no longer carries a deprecation annotation, so consumers can retain its combined diagnostics for legacy encryption formats and HKDF without a deprecation warning.

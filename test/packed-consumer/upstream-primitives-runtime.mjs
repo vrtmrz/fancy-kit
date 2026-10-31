@@ -78,3 +78,19 @@ assert.equal(writes, 0);
 assert.equal(await applyContent(target, "new"), "changed");
 assert.equal(target.value, "new");
 assert.equal(writes, 1);
+
+const legacyUtf16 = await import("octagonal-wheels/binary/encodedUTF16");
+const legacyUtf16Js = await import("octagonal-wheels/binary/encodedUTF16.js");
+assert.equal(legacyUtf16Js.encodeBinaryEach, legacyUtf16.encodeBinaryEach);
+assert.equal(legacyUtf16Js._encodeBinary, legacyUtf16._encodeBinary);
+const legacyEncoded = "\u00c0\u00e5&\u00faA~\u013f\u0140\u01be\u01bf";
+const legacyBytes = new Uint8Array([0, 0x25, 0x26, 0x3a, 0x41, 0x7e, 0x7f, 0x80, 0xfe, 0xff]);
+assert.deepEqual(new Uint8Array(legacyUtf16._decodeToArrayBuffer(legacyEncoded)), legacyBytes);
+assert.deepEqual(new Uint8Array(legacyUtf16.decodeToArrayBuffer([legacyEncoded])), legacyBytes);
+for (const suffix of ["", ".js"]) {
+  await assert.rejects(import("octagonal-wheels/binary/encodedUTF16.deprecated" + suffix), error => error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+  await assert.rejects(import("octagonal-wheels/binary/encodedUTF16.tables.internal" + suffix), error => error.code === "ERR_PACKAGE_PATH_NOT_EXPORTED");
+}
+const legacyHash = await import("octagonal-wheels/hash/crc32");
+assert.equal(legacyHash.crc32CHash(""), "-i93f7");
+assert.equal(legacyHash.crc32CKHash("日本語😀"), "-dqsqid--3kp69c");

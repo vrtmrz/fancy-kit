@@ -22,6 +22,8 @@ export default defineConfig({
                 'src/concurrency/semaphore_v1.ts',
                 'src/dataobject/reactive_v1.ts',
                 'src/messagepassing/signal_v1.ts',
+                'src/binary/encodedUTF16.deprecated.ts',
+                'src/hash/crc32.ts',
                 'src/**/*.bench.ts',
             ],
             provider: 'istanbul',
