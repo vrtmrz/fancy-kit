@@ -8,6 +8,8 @@ Use sentence case for headings. Keep comments focused on intent, constraints, an
 
 Every exported API and option field requires useful TSDoc. Document contracts that types alone cannot express, such as defaults, cancellation sentinels, object identity, callback timing, terminal states, side effects, and lifecycle ownership.
 
+Generate Octagonal Wheels API references with `npm run doc --workspace octagonal-wheels`. The configured entries cover the root namespaces and the focused resource API while preserving existing reference URLs. The workspace release-tool checks run the generator, verify those references, and type-check the maintained notifier and semaphore examples directly from their TSDoc.
+
 ## Tests
 
 Add focused unit tests for every functional change.

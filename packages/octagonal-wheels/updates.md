@@ -22,6 +22,8 @@
 
 ### Resource ownership
 
+- Generated API references now include the focused resource and execution-scope APIs. Existing reference URLs are preserved, and adapter references show each callback's return type directly.
+
 - We can finish or discard asynchronous input through `createAsyncQueue` from `iterable/asyncQueue`. The single-consumer FIFO drains buffered values on `finish()`, drops unread values and wakes waiting reads on `dispose()`, and disposes itself when iteration ends early. Its capacity is unbounded; owners retain cancellation, callback concurrency, retries, and persistence policy.
 
 - Added the focused `resource` entry with `DisposableResource`, `OwnedResource<T>`, `createOwnedResource`, and `withOwnedResource`. Owners can pair any value with synchronous or asynchronous cleanup, retain one disposal outcome, and await cleanup after a scoped operation. `DeferredAction` and `CoalescingNotifier` share the disposal interface while preserving their existing behaviour.

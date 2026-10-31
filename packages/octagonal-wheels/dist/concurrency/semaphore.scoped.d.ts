@@ -20,8 +20,15 @@ import type { Scope } from "../resource/scope.ts";
  * @returns A promise for the operation result, settled after release.
  * @example
  * ```ts
+ * import {
+ *   Semaphore,
+ *   withSemaphore,
+ * } from "octagonal-wheels/concurrency/semaphore";
+ *
+ * declare function fetchRecord(): Promise<{ id: string }>;
+ *
  * const semaphore = Semaphore(3);
- * const result = await withSemaphore(semaphore, async () => fetchRecord());
+ * const record = await withSemaphore(semaphore, () => fetchRecord());
  * ```
  */
 export declare function withSemaphore<T>(semaphore: Pick<SemaphoreObject, "acquire">, operation: () => T | PromiseLike<T>): Promise<T>;

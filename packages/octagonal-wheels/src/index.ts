@@ -1,4 +1,10 @@
 /* istanbul ignore file -- @preserve */
+/**
+ * Root namespaces for the package API reference.
+ *
+ * @packageDocumentation
+ * @mergeModuleWith <project>
+ */
 declare const LIB_VERSION: string | undefined;
 /**
  * Returns the version of the library.

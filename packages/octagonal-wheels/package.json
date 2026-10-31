@@ -11,7 +11,7 @@
         "postbuild": "npm run generateexport",
         "build:docs": "npm run build && npm run doc",
         "generateexport": "node globDist.mjs",
-        "doc": "npx typedoc  --plugin typedoc-plugin-markdown  --out ./docs ./src",
+        "doc": "npx typedoc --out ./docs",
         "dev": "rollup -c -w",
         "test": "vitest run",
         "test:node": "tsx --test test-node/*.test.ts",

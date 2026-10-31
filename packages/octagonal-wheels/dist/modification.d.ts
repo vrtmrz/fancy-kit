@@ -1,18 +1,17 @@
-type MaybePromise<T> = T | PromiseLike<T>;
 /** Resolves to `changed` after a successful write, or `unchanged` when existing content matches. */
 export type ModificationHandler<TTarget, TSource> = (target: TTarget, source: TSource) => Promise<"changed" | "unchanged">;
 /** Injected operations and application policy for handling one modification. */
 export type ModificationHandlerAdapter<TTarget, TSource, TExisting, TContent> = Readonly<{
     /** Reads the existing target. Only this callback has a recovery boundary. */
-    read: (target: TTarget, source: TSource) => MaybePromise<TExisting>;
+    read: (target: TTarget, source: TSource) => TExisting | PromiseLike<TExisting>;
     /** Supplies existing content after a read failure, or throws to stop the operation. */
-    onReadError: (error: unknown, target: TTarget, source: TSource) => MaybePromise<TExisting>;
+    onReadError: (error: unknown, target: TTarget, source: TSource) => TExisting | PromiseLike<TExisting>;
     /** Converts the source to writable content after the read or its recovery completes. */
-    decode: (source: TSource) => MaybePromise<TContent>;
+    decode: (source: TSource) => TContent | PromiseLike<TContent>;
     /** Returns true to leave the target unchanged and skip the write. */
-    isSame: (existing: TExisting, content: TContent, target: TTarget, source: TSource) => MaybePromise<boolean>;
+    isSame: (existing: TExisting, content: TContent, target: TTarget, source: TSource) => boolean | PromiseLike<boolean>;
     /** Writes different content. Its resolved value is ignored; completion means success. */
-    write: (target: TTarget, content: TContent, source: TSource) => MaybePromise<unknown>;
+    write: (target: TTarget, content: TContent, source: TSource) => unknown | PromiseLike<unknown>;
 }>;
 /**
  * Creates a handler which reads the current target and processes one source modification.
@@ -28,4 +27,3 @@ export type ModificationHandlerAdapter<TTarget, TSource, TExisting, TContent> = 
  * @returns An asynchronous function which applies one source to one target.
  */
 export declare function createModificationHandler<TTarget, TSource, TExisting, TContent>(adapter: ModificationHandlerAdapter<TTarget, TSource, TExisting, TContent>): ModificationHandler<TTarget, TSource>;
-export {};

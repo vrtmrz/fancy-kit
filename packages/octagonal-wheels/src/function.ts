@@ -35,10 +35,12 @@ export const throttle = <T extends (...args: any[]) => any>(func: T, timeout: nu
  * zeros compare equal, and objects are compared by identity. Only the last
  * value is retained, so returning to an earlier value invokes the callback.
  *
- * The value is remembered after a synchronous return. A synchronous exception
- * propagates without replacing the previous value. Callback results are
- * discarded; returned promises are not awaited and their failures belong to
- * the caller. State is private to each wrapper.
+ * The value is remembered immediately after the callback returns synchronously.
+ * A synchronous exception propagates without replacing the previous value.
+ * Callback results are discarded, so the wrapper does not return a callback's
+ * promise. Promises are not awaited or rejection-handled; if one rejects later,
+ * the remembered value remains. Handle promise rejections inside the callback.
+ * State is private to each wrapper.
  *
  * @param func - Callback whose consecutive duplicate arguments are suppressed.
  * @returns A function with an independent last-argument value.

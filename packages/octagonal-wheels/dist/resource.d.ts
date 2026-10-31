@@ -1,3 +1,8 @@
+/**
+ * Resource ownership APIs from the focused `octagonal-wheels/resource` entry.
+ *
+ * @packageDocumentation
+ */
 export * as scope from "./resource/scope.ts";
 /**
  * An explicit cleanup capability, independent of standard disposal symbols.

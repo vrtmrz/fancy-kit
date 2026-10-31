@@ -2,6 +2,11 @@ import * as resource_scope from './resource/scope.js';
 export { resource_scope as scope };
 
 /**
+ * Resource ownership APIs from the focused `octagonal-wheels/resource` entry.
+ *
+ * @packageDocumentation
+ */
+/**
  * Pairs an existing value with cleanup that runs at most once.
  *
  * @param value - The value whose lifetime the caller owns; its identity is preserved.
