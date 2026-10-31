@@ -10,6 +10,18 @@ describe("replaceAll", () => {
         expect(result).to.equal("Hellx, Wxrld!");
     });
 
+    it("replaces repeated substrings without the native replaceAll method", () => {
+        const descriptor = Object.getOwnPropertyDescriptor(String.prototype, "replaceAll")!;
+        try {
+            expect(Reflect.deleteProperty(String.prototype, "replaceAll")).toBe(true);
+            expect(replaceAll("left-middle-left", "left", "right")).toBe("right-middle-right");
+            expect(replaceAll("unchanged", "absent", "replacement")).toBe("unchanged");
+            expect(replaceAllPairs("a-b-a", ["a", "c"], ["c", "d"])).toBe("d-b-d");
+        } finally {
+            Object.defineProperty(String.prototype, "replaceAll", descriptor);
+        }
+    });
+
     it("should replace all occurrences of a substring with another substring (case-sensitive)", () => {
         const str = "Hello, World!";
         const search = "o";

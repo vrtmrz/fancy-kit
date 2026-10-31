@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { withCancellation } from "./cancellation.ts";
 import { forEachInScope, mapInScope } from "./scoped.iteration.ts";
 import * as compatibilityIteration from "./scopedIteration.ts";
-import { withScope } from "../resource/scope.ts";
+import { withScope, type Scope } from "../resource/scope.ts";
 
 function gate<T = void>() {
     let resolve!: (value: T | PromiseLike<T>) => void;
@@ -572,6 +572,48 @@ describe("scoped iteration", () => {
         expect(bodyFailureOrder).toEqual([1, 0]);
         expect(nextCalls).toBe(3);
         expect(closeCalls).toBe(1);
+    });
+
+    it.each([null, 7])("rejects a malformed iterator result %s, closes input, and drains admitted work", async (invalid) => {
+        const started = gate();
+        const inputClosed = gate();
+        const finishItem = gate();
+        const trace: string[] = [];
+        let nextCalls = 0;
+        const iterator = {
+            next: vi.fn(() => nextCalls++ === 0 ? { done: false, value: 1 } : invalid),
+            return: vi.fn(() => {
+                trace.push("input:close");
+                inputClosed.resolve();
+                return { done: true, value: undefined };
+            }),
+        };
+        const items = { [Symbol.iterator]: () => iterator } as unknown as Iterable<number>;
+        const operation = vi.fn(async (item: number, ctx: Scope<string>) => {
+            expect(item).toBe(1);
+            ctx.defer(() => {
+                trace.push("item:cleanup");
+            });
+            started.resolve();
+            await finishItem.promise;
+        });
+        let settled = false;
+        const pending = withScope("shared", (parent) => forEachInScope(parent, items, { concurrency: 2 }, operation));
+        const observed = pending.catch((error: unknown) => error).then((error) => {
+            settled = true;
+            return error;
+        });
+
+        await Promise.all([started.promise, inputClosed.promise]);
+        expect(operation).toHaveBeenCalledOnce();
+        expect(trace).toEqual(["input:close"]);
+        expect(settled).toBe(false);
+
+        finishItem.resolve();
+        expect(await observed).toBeInstanceOf(TypeError);
+        expect(iterator.next).toHaveBeenCalledTimes(2);
+        expect(iterator.return).toHaveBeenCalledOnce();
+        expect(trace).toEqual(["input:close", "item:cleanup"]);
     });
 
     it("closes an acquired iterator when reading next fails and waits for that closure", async () => {

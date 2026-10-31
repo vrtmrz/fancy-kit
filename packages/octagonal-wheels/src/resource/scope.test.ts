@@ -27,6 +27,22 @@ describe("withScope", () => {
         expectTypeOf(returned).toEqualTypeOf<typeof output>();
     });
 
+    it("rejects a non-function cleanup at registration and still releases earlier resources", async () => {
+        const release = vi.fn();
+        const afterRegistration = vi.fn();
+        const invalidCleanup = null as unknown as Parameters<Scope<undefined>["defer"]>[0];
+
+        const failure = await withScope(undefined, (ctx) => {
+            ctx.defer(release);
+            ctx.defer(invalidCleanup);
+            afterRegistration();
+        }).catch((error: unknown) => error);
+
+        expect(failure).toBeInstanceOf(TypeError);
+        expect(afterRegistration).not.toHaveBeenCalled();
+        expect(release).toHaveBeenCalledOnce();
+    });
+
     it("cleans up after an early return without requiring a pipeline", async () => {
         const close = vi.fn();
         await expect(

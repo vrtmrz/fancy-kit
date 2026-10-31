@@ -28,6 +28,34 @@ describe("withCancellation", () => {
         expect(parent.signal.aborted).toBe(true);
     });
 
+    it("observes an abort which occurs before a signal implementation attaches the listener", async () => {
+        const parent = new AbortController();
+        const reason = { source: "listener registration" };
+        const addListener = parent.signal.addEventListener.bind(parent.signal);
+        const removeListener = vi.spyOn(parent.signal, "removeEventListener");
+        const registration = vi.spyOn(parent.signal, "addEventListener").mockImplementation((type, listener, options) => {
+            parent.abort(reason);
+            addListener(type, listener, options);
+        });
+
+        try {
+            const result = await withCancellation("input", { signal: parent.signal }, (ctx) => ({
+                value: ctx.value,
+                cancelled: ctx.isCancelled(),
+                reason: ctx.signal.reason as unknown,
+            }));
+
+            expect(result.value).toBe("input");
+            expect(result.cancelled).toBe(true);
+            expect(result.reason).toBe(reason);
+            expect(registration).toHaveBeenCalledOnce();
+            expect(removeListener).toHaveBeenCalledExactlyOnceWith("abort", registration.mock.calls[0]![1]);
+        } finally {
+            registration.mockRestore();
+            removeListener.mockRestore();
+        }
+    });
+
     it("forwards cancellation during work and waits for the late operation result", async () => {
         const parent = new AbortController();
         const reason = new Error("parent cancelled");
