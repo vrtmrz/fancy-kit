@@ -11,14 +11,15 @@ installing the last published versions does not provide them all.
 | Need | Public entry and API | What the application still decides |
 | --- | --- | --- |
 | Prepare or compare text and bytes | `octagonal-wheels/binary/blob`: `createTextBlob`, `createBinaryBlob`, `toBlob`, `isBlobContentEqual` | Document formats, host comparison strategy, and whether equal bytes mean no application change. |
-| Apply content only when it differs | `octagonal-wheels/content`: `createContentApplier` | Storage operations, decoding, equality, read-error recovery, and follow-up state updates. |
+| Handle a source modification | `octagonal-wheels/modification`: `createModificationHandler` | Storage operations, decoding, equality, read-error recovery, and follow-up state updates. |
 | Keep one value with its cleanup | `octagonal-wheels/resource`: `createOwnedResource`, `withOwnedResource` | Acquisition, lifetime, and which callers borrow the value. |
 | Register cleanup during an operation | `octagonal-wheels/resource/scope`: `withScope`, `scoped` | Resources acquired by that operation and where child lifetimes end. |
-| Observe cancellation and iterate with cleanup | `octagonal-wheels/concurrency/cancellation`, `concurrency/scopedIteration` | Cancellation responses, item failure policy, and retained partial results. |
-| Share a concurrency limit or lock groups | `concurrency/semaphore`: `withSemaphore`, `acquirePermit`; `concurrency/lock`: `serializedByKeys` | Shared semaphore ownership, unique ordered keys, and work which must run after unlocking. |
+| Observe cancellation and iterate with cleanup | `octagonal-wheels/concurrency/cancellation`, `concurrency/scoped.iteration` | Cancellation responses, item failure policy, and retained partial results. |
+| Share a concurrency limit or lock groups | `concurrency/semaphore`: `withSemaphore`, `acquirePermit`; `concurrency/lock`: `withLocks` | Shared semaphore ownership, unique ordered keys, and work which must run after unlocking. |
+| Wait for a notification | `octagonal-wheels/concurrency/notifier`: `createNotifier` | Which work sends notifications and when waiting starts. Idle notifications are discarded. |
 | Replace one delayed callback | `concurrency/deferredAction`: `createDeferredAction` | Delay, host scheduler, and lifetime termination. |
 | Count active operations or reduce progress callbacks | `concurrency/counting`: `withCounting`; `concurrency/coalescingNotifier`: `createCoalescingNotifier` | Which events advance progress and whether the last partial update is flushed. |
-| Suppress repeated callback values | `octagonal-wheels/function`: `wrapMemo` | The value to compare and callback failure handling. This is consecutive-value suppression, not result caching. |
+| Suppress repeated callback values | `octagonal-wheels/function`: `onlyWhenChanged` | The value to compare and callback failure handling. This is consecutive-value suppression, not result caching. |
 | Expose an Obsidian command conditionally | `@vrtmrz/obsidian-plugin-kit/command`: `createCommandCheck` | Current selection and the action, including asynchronous error reporting. |
 | Reuse value transformations | `notation/duration`, `encoding/json`, `path`, `string`, and `collection` under `octagonal-wheels` | Formats, limits, application-specific defaults, and UI navigation state. |
 
@@ -36,10 +37,10 @@ reject the operation. Storage success means that `write` returned or resolved;
 its resolved value is ignored.
 
 ```ts
-import { createContentApplier } from "octagonal-wheels/content";
+import { createModificationHandler } from "octagonal-wheels/modification";
 
 const values = new Map<string, string>();
-const applyText = createContentApplier<string, string, string | undefined, string>({
+const applyText = createModificationHandler<string, string, string | undefined, string>({
   read: key => values.get(key),
   onReadError: error => { throw error; },
   decode: source => source,

@@ -20,6 +20,8 @@ const map = files.flatMap((file) => {
     if (file == "index.js") {
         return [];
     }
+    // Internal implementation modules remain loadable by relative imports only.
+    if (file.endsWith(".internal.js")) return [];
     if (file.endsWith("xxhash-wasm.js")) {
         // Skip xxhash-wasm.js as it is not a module
         return [];

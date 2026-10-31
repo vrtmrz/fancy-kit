@@ -1,5 +1,5 @@
 import { scoped, withScope } from "octagonal-wheels/resource/scope";
-import { mapInScope } from "octagonal-wheels/concurrency/scopedIteration";
+import { mapInScope } from "octagonal-wheels/concurrency/scoped.iteration";
 import {
   acquirePermit,
   type SemaphoreAcquisition,

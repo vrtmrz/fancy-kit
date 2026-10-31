@@ -11,6 +11,14 @@ import { createDeferredAction } from './deferredAction.js';
  * Callback and scheduler errors propagate and are not retried. A timer-triggered
  * callback error propagates through the scheduler, not an earlier update call.
  * Dispose discards pending work; call flush first when a final update is wanted.
+ *
+ * @example Connect coalesced updates to the value-less notifier:
+ * import { createNotifier } from "octagonal-wheels/concurrency/notifier";
+ * const signal = createNotifier();
+ * const progress = createCoalescingNotifier({ everyCount: 10, onNotify: signal.notify });
+ *
+ * @param options - Count, timing, and callback options for this notifier.
+ * @returns An independently owned notifier for coalescing update callbacks.
  */
 function createCoalescingNotifier(options) {
     const { everyCount, maxWaitMs, getCount, onNotify, leading = false } = options;

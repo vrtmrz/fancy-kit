@@ -36,7 +36,6 @@ const joined: string = joinDelimitedList(items, "|");
 const index: number = stepCyclicIndex(-1, 3, "prev");
 void [counted, countedAlias, text, categoryText, cloned, categoryCloned, oversized, joined, index];
 
-// @ts-expect-error JSON conversion does not preserve the input's type.
 const originalType: { x: number } = cloneViaJSON({ x: 1 });
 // @ts-expect-error A notification must match its payload type.
 notifier.update(1);

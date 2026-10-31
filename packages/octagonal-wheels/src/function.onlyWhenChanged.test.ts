@@ -1,17 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-import { wrapMemo } from "./function.ts";
+import { onlyWhenChanged } from "./function.ts";
 
-describe("wrapMemo", () => {
+describe("onlyWhenChanged", () => {
     it("suppresses consecutive equal values and retains only the last value", () => {
         const callback = vi.fn();
-        const invoke = wrapMemo<string>(callback);
+        const invoke = onlyWhenChanged<string>(callback);
         for (const value of ["a", "a", "b", "b", "a"]) invoke(value);
         expect(callback.mock.calls).toEqual([["a"], ["b"], ["a"]]);
     });
 
     it("starts with undefined and invokes it after another value", () => {
         const callback = vi.fn();
-        const invoke = wrapMemo<string | undefined>(callback);
+        const invoke = onlyWhenChanged<string | undefined>(callback);
         invoke(undefined);
         expect(callback).not.toHaveBeenCalled();
         invoke("value");
@@ -22,7 +22,7 @@ describe("wrapMemo", () => {
 
     it("uses strict equality for NaN and signed zero", () => {
         const callback = vi.fn();
-        const invoke = wrapMemo<number>(callback);
+        const invoke = onlyWhenChanged<number>(callback);
         invoke(0);
         invoke(-0);
         invoke(NaN);
@@ -32,7 +32,7 @@ describe("wrapMemo", () => {
 
     it("compares objects by identity", () => {
         const callback = vi.fn();
-        const invoke = wrapMemo<object>(callback);
+        const invoke = onlyWhenChanged<object>(callback);
         const first = { value: 1 };
         const second = { value: 1 };
         invoke(first);
@@ -46,8 +46,8 @@ describe("wrapMemo", () => {
 
     it("keeps each wrapper independent", () => {
         const callback = vi.fn();
-        const first = wrapMemo<boolean>(callback);
-        const second = wrapMemo<boolean>(callback);
+        const first = onlyWhenChanged<boolean>(callback);
+        const second = onlyWhenChanged<boolean>(callback);
         first(false);
         second(false);
         first(false);
@@ -61,7 +61,7 @@ describe("wrapMemo", () => {
         const callback = vi.fn((value: string) => {
             if (fail && value === "next") throw error;
         });
-        const invoke = wrapMemo(callback);
+        const invoke = onlyWhenChanged(callback);
         invoke("initial");
         expect(() => invoke("next")).toThrow(error);
         invoke("initial");
@@ -77,7 +77,7 @@ describe("wrapMemo", () => {
             resolve = done;
         });
         const callback = vi.fn(() => pending);
-        const invoke = wrapMemo<string>(callback);
+        const invoke = onlyWhenChanged<string>(callback);
         expect(invoke("value")).toBeUndefined();
         invoke("value");
         expect(callback).toHaveBeenCalledOnce();

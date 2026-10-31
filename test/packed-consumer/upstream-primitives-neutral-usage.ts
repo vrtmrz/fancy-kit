@@ -1,8 +1,8 @@
-import { wrapMemo } from "octagonal-wheels/function";
-import { wrapMemo as aliasMemo } from "octagonal-wheels/function.js";
+import { onlyWhenChanged } from "octagonal-wheels/function";
+import { onlyWhenChanged as aliasMemo } from "octagonal-wheels/function.js";
 import { createCommandCheck } from "@vrtmrz/obsidian-plugin-kit/command";
 
-const memo: (value: string) => void = wrapMemo((value: string) => { void value; });
+const memo: (value: string) => void = onlyWhenChanged((value: string) => { void value; });
 const aliasedMemo: (value: boolean) => void = aliasMemo((value: boolean) => { void value; });
 type Selected = { id: string };
 const check: (checking: boolean) => boolean = createCommandCheck<Selected | null | undefined>(
@@ -16,16 +16,16 @@ createCommandCheck<Selected | undefined>(() => 1, () => {});
 void [memo, aliasedMemo, check];
 
 
-import { createContentApplier, type ContentApplier, type ContentApplierAdapter } from "octagonal-wheels/content";
-import { createContentApplier as aliasApplier } from "octagonal-wheels/content.js";
-const adapter: ContentApplierAdapter<string, { value: number }, number, number> = {
+import { createModificationHandler, type ModificationHandler, type ModificationHandlerAdapter } from "octagonal-wheels/modification";
+import { createModificationHandler as aliasApplier } from "octagonal-wheels/modification.js";
+const adapter: ModificationHandlerAdapter<string, { value: number }, number, number> = {
   read: () => 0,
   onReadError: () => 0,
   decode: source => source.value,
   isSame: (old, next) => Promise.resolve(old === next),
   write: () => undefined,
 };
-const apply: ContentApplier<string, { value: number }> = createContentApplier(adapter);
+const apply: ModificationHandler<string, { value: number }> = createModificationHandler(adapter);
 const applyAlias = aliasApplier(adapter);
 const result: Promise<"changed" | "unchanged"> = apply("key", { value: 1 });
 // @ts-expect-error The source must retain the adapter's shape.

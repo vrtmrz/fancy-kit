@@ -273,3 +273,35 @@ describe("Blob content equality", () => {
         expect(right.slice).toHaveBeenCalledTimes(side === "left" ? 0 : 1);
     });
 });
+
+
+describe("default Blob comparison strategy", () => {
+    it.each([true, false])("compares bytes with native encoding available=%s", async (nativeAvailable) => {
+        const prototype = Uint8Array.prototype;
+        const descriptor = Object.getOwnPropertyDescriptor(prototype, "toBase64");
+        const encode = vi.fn(function (this: Uint8Array) {
+            return Array.from(this).join(",");
+        });
+        Object.defineProperty(prototype, "toBase64", {
+            configurable: true,
+            writable: true,
+            value: nativeAvailable ? encode : undefined,
+        });
+        const browserEncode = vi.spyOn(globalThis, "btoa").mockImplementation(() => {
+            throw new Error("The comparison fallback must not encode strings.");
+        });
+        try {
+            const left = new Blob([new Uint8Array([0, 1, 255, 4, 5])]);
+            const same = new Blob([new Uint8Array([0, 1, 255, 4, 5])]);
+            const different = new Blob([new Uint8Array([0, 1, 255, 4, 6])]);
+            expect(await isBlobContentEqual(left, same)).toBe(true);
+            expect(await isBlobContentEqual(left, different)).toBe(false);
+            expect(encode).toHaveBeenCalledTimes(nativeAvailable ? 4 : 0);
+            expect(browserEncode).not.toHaveBeenCalled();
+        } finally {
+            browserEncode.mockRestore();
+            if (descriptor) Object.defineProperty(prototype, "toBase64", descriptor);
+            else Reflect.deleteProperty(prototype, "toBase64");
+        }
+    });
+});

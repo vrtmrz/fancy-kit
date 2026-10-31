@@ -2,32 +2,24 @@ import { Logger, LOG_LEVEL_VERBOSE } from "../common/logger.ts";
 import type { ReactiveSource } from "../dataobject/reactive.ts";
 import { RESULT_TIMED_OUT } from "../common/const.ts";
 import {
-    noop,
     delay,
     fireAndForget,
-    promiseWithResolvers,
     type PromiseWithResolvers,
     yieldNextMicrotask,
 } from "../promises.ts";
+import { createNotifierPromise, notifyNotifierState, waitForNotifierState } from "./notifier.internal.ts";
 /**
  * @deprecated This module is deprecated and will be removed in the future.
  * use processor_v2.ts instead.
  */
 export class Notifier {
-    _p: PromiseWithResolvers<void> = promiseWithResolvers<void>();
+    _p: PromiseWithResolvers<void> = createNotifierPromise();
     isUsed = false;
     notify() {
-        if (!this.isUsed) {
-            return;
-        }
-        this.isUsed = false;
-        void this._p.promise.finally(noop);
-        this._p.resolve();
-        this._p = promiseWithResolvers();
+        notifyNotifierState(this);
     }
     get nextNotify(): Promise<void> {
-        this.isUsed = true;
-        return this._p.promise;
+        return waitForNotifierState(this);
     }
 }
 let processNo = 0;

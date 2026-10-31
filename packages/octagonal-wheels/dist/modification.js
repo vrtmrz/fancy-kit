@@ -1,5 +1,5 @@
 /**
- * Creates a read, decode, compare, and write sequence for applying content.
+ * Creates a handler which reads the current target and processes one source modification.
  * Read failures alone invoke `adapter.onReadError`; fallback, decode, comparison, and write failures reject.
  * Each callback may return a value or a promise-like result and completes before the next starts.
  * A true comparison skips writing; otherwise the returned promise resolves to `changed` only
@@ -11,7 +11,7 @@
  * @param adapter - Operations retained by reference for every invocation.
  * @returns An asynchronous function which applies one source to one target.
  */
-function createContentApplier(adapter) {
+function createModificationHandler(adapter) {
     return async (target, source) => {
         let existing;
         try {
@@ -29,5 +29,5 @@ function createContentApplier(adapter) {
     };
 }
 
-export { createContentApplier };
-//# sourceMappingURL=content.js.map
+export { createModificationHandler };
+//# sourceMappingURL=modification.js.map

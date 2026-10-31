@@ -113,7 +113,7 @@ const equal = await isBlobContentEqual(toBlob("same"), new Blob(["same"], { type
 
 Different sizes return false without reading content; empty Blobs return true.
 Equal-sized inputs are read sequentially in pairs of parts containing at most
-10,000 bytes each. The default predicate compares their Base64 encodings. An
+10,000 bytes each. The default predicate uses native `Uint8Array.toBase64` when available and compares bytes directly otherwise. An
 optional `ArrayBufferContentEquality` predicate receives the left and right
 ArrayBuffers and returns a boolean or `PromiseLike<boolean>`. Each predicate
 finishes before the next pair is read, and false stops further reads. Read and
@@ -122,8 +122,8 @@ remains with the caller; this function does not select IndexedDB.
 
 The focused entry imports without DOM, fetch, IndexedDB, FileReader, or Blob
 globals. Creation and normalisation require the standard global Blob
-constructor. Comparison uses the supplied Blobs; its default predicate uses
-the existing Base64 encoder, including its native Uint8Array or `btoa` path.
+constructor. Comparison uses the supplied Blobs. Its byte-comparison fallback
+requires no encoder and allocates no encoded strings.
 Browser contract tests and Node tests cover this boundary; packed-consumer
 checks also exercise the installed entry and its public declarations. The
 category entry `octagonal-wheels/binary` exposes the same functions alongside
@@ -131,9 +131,9 @@ other binary utilities.
 
 ## Apply content when it changes
 
-The unreleased `createContentApplier` factory in `octagonal-wheels/content`
-accepts a `ContentApplierAdapter<TTarget, TSource, TExisting, TContent>` and
-returns a `ContentApplier<TTarget, TSource>`. The adapter supplies `read`,
+The unreleased `createModificationHandler` factory in `octagonal-wheels/modification`
+accepts a `ModificationHandlerAdapter<TTarget, TSource, TExisting, TContent>` and
+returns a `ModificationHandler<TTarget, TSource>`. The adapter supplies `read`,
 `onReadError`, `decode`, `isSame`, and `write` callbacks. Each accepts synchronous
 or promise-like results; each stage finishes before the next begins.
 
@@ -145,7 +145,7 @@ identities. Invocations are independent; locking, retry, rollback, storage
 atomicity, and follow-up state updates belong to the consumer.
 
 The focused entry has no host globals or DOM/Node declaration dependency.
-The `.js` alias and root `content` namespace expose the same implementation.
+The `.js` alias and root `modification` namespace expose the same implementation.
 See [the composition example](../../../docs/runtime-composition.md#keep-content-policy-in-the-adapter)
 for a complete adapter and the distinction between missing and unreadable content.
 
@@ -222,20 +222,20 @@ alias exports the same helper, and the concurrency category exposes it as
 
 ## Serialise an operation across several keys
 
-Use `serializedByKeys` from `concurrency/lock` when an operation must hold
+Use `withLocks` from `concurrency/lock` when an operation must hold
 every supplied lock before its callback starts. It shares lock groups with
 `serialized`, retains the callback result or failure, and releases all acquired
 locks when the callback settles. An empty list invokes the callback immediately.
 
 ```ts
-import { serializedByKeys } from "octagonal-wheels/concurrency/lock";
+import { withLocks } from "octagonal-wheels/concurrency/lock";
 
 declare const sourceId: string;
 declare const destinationId: string;
 declare function moveEntry(): Promise<void>;
 
 const keys = [...new Set([sourceId, destinationId])].sort();
-await serializedByKeys(keys, moveEntry);
+await withLocks(keys, moveEntry);
 ```
 
 Callers supply unique keys in the same acquisition order across overlapping
@@ -248,14 +248,14 @@ unlocking in the consumer. The input list is not modified. The existing
 
 ## Suppress consecutive duplicate arguments
 
-`wrapMemo` from `function` owns one last-argument value per wrapper. It invokes
+`onlyWhenChanged` from `function` owns one last-argument value per wrapper. It invokes
 the callback when the next argument is strictly unequal to that value:
 
 ```ts
-import { wrapMemo } from "octagonal-wheels/function";
+import { onlyWhenChanged } from "octagonal-wheels/function";
 
 declare function setLabel(value: string): void;
-const updateLabel = wrapMemo(setLabel);
+const updateLabel = onlyWhenChanged(setLabel);
 updateLabel("Ready");
 updateLabel("Ready"); // The callback is not repeated.
 updateLabel("Working");
@@ -481,8 +481,8 @@ only when pending work needs a timer.
 
 | Entry | Operation and contract |
 | --- | --- |
-| `notation/duration` | `formatDuration(milliseconds)` returns two decimal places with `s`, `m`, `h`, `d`, or `y`. Thresholds use 60 seconds, 60 minutes, 24 hours, and 365 days. Rounding does not promote the unit; negative and non-finite inputs follow number comparison and `toFixed` semantics. |
-| `encoding/json` | `cloneViaJSON(value)` uses native JSON serialisation and parsing. Its result is `unknown`: Dates become strings, non-finite numbers become null, and object properties containing undefined disappear. Native errors and `toJSON` hooks are preserved. |
+| `notation/duration` | `formatDuration(milliseconds)` returns two decimal places with `s`, `m`, `h`, `d`, or `y`. Thresholds use 60 seconds, 60 minutes, 24 hours, and 365 days. Rounding does not promote the unit; positive infinity is displayed as `∞y`; other negative and non-finite inputs follow number comparison and `toFixed` semantics. |
+| `encoding/json` | `cloneViaJSON(value)` uses native JSON serialisation and parsing. Its input is constrained recursively to JSON-compatible types, including ordinary interfaces and readonly arrays; Dates and functions are rejected in typed calls. The output defaults to the input type, or an explicit caller-selected type. This is not runtime validation: non-finite numbers become null, and native errors and runtime `toJSON` hooks are preserved. |
 | `path` | `findPathComponentsExceedingUtf8Limit(path, maxBytes)` reports non-empty forward-slash components strictly exceeding the supplied limit, in order. Calling it requires `TextEncoder`; importing the module does not. Application-specific limits remain with the caller. |
 | `string` | `splitDelimitedList(source, delimiter)` drops empty parts without trimming or escaping. `joinDelimitedList(items, delimiter)` retains empty items. These helpers therefore do not form a lossless round trip. |
 | `collection` | `stepCyclicIndex(index, count, direction)` wraps an index for `prev` or `next`. An unselected index of -1 selects the last or first item respectively. An empty collection retains the input index. Callers supply a non-negative integer count and an index of -1 or a valid position. |
@@ -490,3 +490,28 @@ only when pending work needs a timer.
 The `notation` and `encoding` category entries expose the corresponding
 formatting and JSON helpers. Packed fixtures exercise focused entries, `.js`
 aliases, category declarations, Node execution, and focused browser bundles.
+
+
+## Wait for an independent notification
+
+Use `createNotifier` from `concurrency/notifier` to wake the current group of
+waiters without introducing a processing queue or an event hub:
+
+```ts
+import { createNotifier } from "octagonal-wheels/concurrency/notifier";
+
+const notifier = createNotifier();
+const next = notifier.wait();
+notifier.notify();
+await next;
+```
+
+Calls to `wait()` before notification share one promise. Notification resolves
+that group; later waits belong to a new group. An idle notification is discarded.
+Register a wait before starting work which may notify synchronously. Returned
+methods retain their instance when passed as callbacks. `CoalescingNotifier`
+can call `notifier.notify` through its injected `onNotify`; it continues to own
+its count, timer, and pending-value policy independently.
+
+Existing `Notifier` imports from the processing modules retain their `nextNotify`
+getter and shared-wait behaviour. New code can use the focused notifier entry.

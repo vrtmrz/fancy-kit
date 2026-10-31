@@ -60,11 +60,30 @@ async function runScope(parent, value, operation) {
  * Returning an owned resource does not transfer ownership: its registered cleanup still runs.
  * Callers must await or return the work they start; detached promises are not discovered.
  * The scope reads no host globals and has no implicit cancellation behaviour.
+ *
+ * @example
+ * ```ts
+ * interface Reader {
+ *     read(): Promise<string>;
+ *     close(): Promise<void>;
+ * }
+ * declare function openReader(path: string): Promise<Reader>;
+ *
+ * async function readFile(path: string): Promise<string> {
+ *     return await withScope(path, async (ctx) => {
+ *         const reader = await openReader(ctx.value);
+ *         ctx.defer(() => reader.close());
+ *         return await reader.read();
+ *     });
+ * }
+ * ```
+ *
+ * The returned value is available only after the reader has closed.
  */
 function withScope(value, operation) {
     return runScope({}, value, operation);
 }
-function programWithSteps(steps) {
+function pipelineWithSteps(steps) {
     const execute = async (context) => {
         let value = context.value;
         for (const step of steps) {
@@ -74,7 +93,7 @@ function programWithSteps(steps) {
         }
         return value;
     };
-    const append = (step, child) => programWithSteps([
+    const append = (step, child) => pipelineWithSteps([
         ...steps,
         // The public pipe signature checks this boundary before values are erased for execution.
         { child, operation: step },
@@ -85,11 +104,11 @@ function programWithSteps(steps) {
     });
 }
 /**
- * Declares an identity program which can be extended with typed steps.
+ * Declares an identity pipeline which can be extended with typed steps.
  *
- * @typeParam I - The value supplied when the program is executed.
+ * @typeParam I - The value supplied when the pipeline is executed.
  * @typeParam E - Capabilities required from the execution context; declaration does not create them.
- * @returns A callable program with immutable pipe and pipeScoped composition methods.
+ * @returns A callable pipeline with immutable pipe and pipeScoped composition methods.
  * @remarks
  * pipe shares the current cleanup owner. pipeScoped owns cleanup for its step and
  * awaits that cleanup before the next step. Every step receives a stable value view;
@@ -97,9 +116,37 @@ function programWithSteps(steps) {
  * data, and cancellation observation does not automatically skip steps. Rejected
  * steps skip later steps, leaving the runner to perform the current scope's cleanup.
  * Declaration and composition acquire no resources and start no asynchronous work.
+ *
+ * @example
+ * ```ts
+ * interface Reader {
+ *     read(): Promise<string>;
+ *     close(): Promise<void>;
+ * }
+ * declare function acquirePermit(): () => void;
+ * declare function openReader(path: string): Promise<Reader>;
+ * declare function analyse(contents: string): { words: number };
+ * declare const path: string;
+ *
+ * const inspect = scoped<string>()
+ *     .pipe((ctx) => {
+ *         ctx.defer(acquirePermit());
+ *         return ctx.value;
+ *     })
+ *     .pipeScoped(async (ctx) => {
+ *         const reader = await openReader(ctx.value);
+ *         ctx.defer(() => reader.close());
+ *         return await reader.read();
+ *     })
+ *     .pipe((ctx) => analyse(ctx.value));
+ * const report = withScope(path, inspect);
+ * ```
+ *
+ * The permit remains held through analysis; the reader closes before analysis
+ * starts. The returned pipeline can be reused by another `withScope` call.
  */
 function scoped() {
-    return programWithSteps([]);
+    return pipelineWithSteps([]);
 }
 
 export { scoped, withScope };

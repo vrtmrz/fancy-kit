@@ -1,24 +1,24 @@
 import assert from "node:assert/strict";
-import { serialized, serializedByKeys, isLockAcquired } from "octagonal-wheels/concurrency/lock";
-import { serializedByKeys as aliasLock } from "octagonal-wheels/concurrency/lock.js";
-import { wrapMemo } from "octagonal-wheels/function";
-import { wrapMemo as aliasMemo } from "octagonal-wheels/function.js";
+import { serialized, withLocks, isLockAcquired } from "octagonal-wheels/concurrency/lock";
+import { withLocks as aliasLock } from "octagonal-wheels/concurrency/lock.js";
+import { onlyWhenChanged } from "octagonal-wheels/function";
+import { onlyWhenChanged as aliasMemo } from "octagonal-wheels/function.js";
 import { createCommandCheck } from "@vrtmrz/obsidian-plugin-kit/command";
 
-assert.equal(aliasLock, serializedByKeys);
-assert.equal(aliasMemo, wrapMemo);
+assert.equal(aliasLock, withLocks);
+assert.equal(aliasMemo, onlyWhenChanged);
 const keys = Object.freeze(["packed:primitives:a", "packed:primitives:b"]);
 let release;
 const gate = new Promise(resolve => { release = resolve; });
 let singleRan = false;
-const locked = serializedByKeys(keys, async () => {
+const locked = withLocks(keys, async () => {
   assert.ok(keys.every(isLockAcquired));
   await gate;
   return "complete";
 });
 const single = serialized(keys[1], () => { singleRan = true; });
 try {
-  await serializedByKeys(["packed:primitives:c"], async () => {});
+  await withLocks(["packed:primitives:c"], async () => {});
   assert.equal(singleRan, false);
 } finally {
   release();
@@ -28,16 +28,16 @@ try {
 assert.equal(singleRan, true);
 assert.equal(keys.some(isLockAcquired), false);
 const failure = new Error("callback failure");
-await assert.rejects(serializedByKeys(keys, async () => { throw failure; }), error => error === failure);
-assert.equal(await serializedByKeys(keys, async () => 42), 42);
-assert.equal(await serializedByKeys([], async () => 7), 7);
+await assert.rejects(withLocks(keys, async () => { throw failure; }), error => error === failure);
+assert.equal(await withLocks(keys, async () => 42), 42);
+assert.equal(await withLocks([], async () => 7), 7);
 
 const values = [];
-const remember = wrapMemo(value => { values.push(value); });
+const remember = onlyWhenChanged(value => { values.push(value); });
 for (const value of [undefined, "one", "one", undefined, undefined, NaN, NaN, 0, -0]) remember(value);
 assert.deepEqual(values, ["one", undefined, NaN, NaN, 0]);
 let attempts = 0;
-const retry = wrapMemo(() => { if (++attempts === 1) throw failure; });
+const retry = onlyWhenChanged(() => { if (++attempts === 1) throw failure; });
 assert.throws(() => retry("same"), error => error === failure);
 retry("same");
 retry("same");
@@ -61,12 +61,12 @@ assert.equal(check(false), true);
 assert.equal(executions[0], second);
 
 
-const { createContentApplier } = await import("octagonal-wheels/content");
-const { createContentApplier: aliasApplier } = await import("octagonal-wheels/content.js");
-assert.equal(createContentApplier, aliasApplier);
+const { createModificationHandler } = await import("octagonal-wheels/modification");
+const { createModificationHandler: aliasApplier } = await import("octagonal-wheels/modification.js");
+assert.equal(createModificationHandler, aliasApplier);
 const target = { value: "old" };
 let writes = 0;
-const applyContent = createContentApplier({
+const applyContent = createModificationHandler({
   read: item => item.value,
   onReadError: error => { throw error; },
   decode: source => source,

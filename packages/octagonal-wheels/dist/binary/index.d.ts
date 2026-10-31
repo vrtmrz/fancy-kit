@@ -1,11 +1,4 @@
 /**
- * Concatenates multiple Uint8Array arrays into a single Uint8Array.
- *
- * @param arrays - An array of Uint8Array arrays to be concatenated.
- * @returns A new Uint8Array containing the concatenated values.
- */
-export declare function concatUInt8Array(arrays: Uint8Array[]): Uint8Array<ArrayBuffer>;
-/**
  * Decodes a binary string or an array of binary strings into an ArrayBuffer.
  * If the input is an empty string or array, it returns an empty ArrayBuffer.
  * If the input starts with '%', it decodes the string(s) using `_decodeToArrayBuffer` function.
@@ -28,3 +21,4 @@ export * from "./arrayBuffer.ts";
 export * from "./encodedUTF16.ts";
 export * from "./hex.ts";
 export * from "./blob.ts";
+export * from "./typedArray.ts";

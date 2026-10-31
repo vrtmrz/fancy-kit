@@ -224,9 +224,9 @@ per-item failure logging and completion policy. The same notifier also replaces
 count-only callbacks in offline reconciliation and rebuilding, retaining attempted
 counts and the absence of a final partial notification.
 
-The unreleased `content` entry now owns `createContentApplier`. ConfigSync's text
+The unreleased `modification` entry now owns `createModificationHandler`. ConfigSync's text
 and binary adapters retain read fallback, content equality, write ordering, and
-the decision to update stored state. The [content contracts](../packages/octagonal-wheels/src/content.test.ts)
+the decision to update stored state. The [content contracts](../packages/octagonal-wheels/src/modification.test.ts)
 exercise synchronous and asynchronous callbacks, unchanged content, completion
 before returning `changed`, and failure propagation. Installed-tarball type and
 runtime fixtures cover its focused and `.js` imports. Consumer tests continue to
@@ -266,21 +266,21 @@ or real-Obsidian and mobile workflow validation.
 
 ## Multi-key locks and callback utilities: candidate integration
 
-The unreleased `serializedByKeys` export from `octagonal-wheels/concurrency/lock`
+The unreleased `withLocks` export from `octagonal-wheels/concurrency/lock`
 shares the existing single-key lock groups. Commonlib's offline Metadata repair
 and file-event processing now import it directly. Those consumers still own
 key namespaces, deduplication, sorting, and conflict hooks deferred until every
 lock has been released. The existing cross-consumer tests cover overlapping
 rename and Metadata-repair operations, independent keys, and release on failure.
 
-LiveSync imports `wrapMemo` from `octagonal-wheels/function` for settings-control
+LiveSync imports `onlyWhenChanged` from `octagonal-wheels/function` for settings-control
 updates. The callback retains the existing strict-equality and initial
 `undefined` behaviour. Its command features import `createCommandCheck` from
 `@vrtmrz/obsidian-plugin-kit/command`, retaining fresh selection, falsey-value
 rejection, synchronous checking, and consumer-owned asynchronous failures.
 
-The package-owned [lock contracts](../packages/octagonal-wheels/src/concurrency/serializedByKeys.test.ts),
-[value callback contracts](../packages/octagonal-wheels/src/function.wrapMemo.test.ts),
+The package-owned [lock contracts](../packages/octagonal-wheels/src/concurrency/lock.scoped.test.ts),
+[value callback contracts](../packages/octagonal-wheels/src/function.onlyWhenChanged.test.ts),
 and [command contracts](../packages/obsidian-plugin-kit/src/command.test.ts)
 exercise the promoted implementations. Packed [runtime](../test/packed-consumer/upstream-primitives-runtime.mjs)
 and [type](../test/packed-consumer/upstream-primitives-usage.ts)

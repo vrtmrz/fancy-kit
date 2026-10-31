@@ -360,6 +360,10 @@ async function main() {
       "scope-usage.ts",
       "scope-neutral-usage.ts",
       "scope-runtime.mjs",
+      "notifier-neutral-usage.ts",
+      "notifier-usage.ts",
+      "notifier-runtime.mjs",
+      "json-usage.ts",
       "upstream-primitives-runtime.mjs",
       "upstream-primitives-usage.ts",
       "upstream-primitives-neutral-usage.ts",
@@ -374,6 +378,7 @@ async function main() {
     run(process.execPath, ["semaphore-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["runtime-tools-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["scope-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["notifier-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["upstream-primitives-runtime.mjs"], { cwd: temporaryRoot });
     await writeFile(
       join(temporaryRoot, "tsconfig.timeout.json"),
@@ -382,7 +387,7 @@ async function main() {
           lib: ["ES2022"], module: "NodeNext", moduleResolution: "NodeNext",
           noEmit: true, strict: true, target: "ES2022", types: [],
         },
-        files: ["timeout-neutral-usage.ts", "semaphore-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "scope-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
+        files: ["notifier-neutral-usage.ts", "json-usage.ts", "timeout-neutral-usage.ts", "semaphore-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "scope-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
       }, null, 2),
     );
     run(process.execPath, [
@@ -514,6 +519,7 @@ for (const length of [65, 128]) {
           },
           files: [
             "public-exports.ts",
+            "notifier-usage.ts",
             "blob-usage.ts",
             "timeout-usage.ts",
             "semaphore-usage.ts",
@@ -550,7 +556,7 @@ for (const length of [65, 128]) {
       ["cloneViaJSON", "encoding/json", ["encoding/json"]],
       ["findPathComponentsExceedingUtf8Limit", "path", ["path"]],
       ["splitDelimitedList", "string", ["string"]],
-      ["stepCyclicIndex", "collection", ["collection"]],
+      ["stepCyclicIndex", "collection", ["collection.index"]],
     ]) {
       await verifyTreeShakenBundle({
         temporaryRoot,
@@ -567,9 +573,10 @@ for (const length of [65, 128]) {
       temporaryRoot,
       entryName: "semaphore-scope.ts",
       source: 'export { withSemaphore } from "octagonal-wheels/concurrency/semaphore";',
-      requiredModules: ["node_modules/octagonal-wheels/dist/concurrency/semaphore.js"],
+      requiredModules: ["node_modules/octagonal-wheels/dist/concurrency/semaphore.scoped.js"],
       excludedModules: [
         "node_modules/octagonal-wheels/dist/concurrency/semaphore_v2.js",
+        "node_modules/octagonal-wheels/dist/concurrency/semaphore.core.js",
         "node_modules/octagonal-wheels/dist/concurrency/task.js",
       ],
       externalImports: [],

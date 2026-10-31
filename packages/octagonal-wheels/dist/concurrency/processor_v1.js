@@ -1,6 +1,7 @@
 import { Logger, LOG_LEVEL_VERBOSE } from '../common/logger.js';
 import { RESULT_TIMED_OUT } from '../common/const.js';
-import { promiseWithResolvers, noop, delay, yieldNextMicrotask, fireAndForget } from '../promises.js';
+import { delay, yieldNextMicrotask, fireAndForget } from '../promises.js';
+import { createNotifierPromise, notifyNotifierState, waitForNotifierState } from './notifier.internal.js';
 
 /**
  * @deprecated This module is deprecated and will be removed in the future.
@@ -12,7 +13,7 @@ class Notifier {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: promiseWithResolvers()
+            value: createNotifierPromise()
         });
         Object.defineProperty(this, "isUsed", {
             enumerable: true,
@@ -22,17 +23,10 @@ class Notifier {
         });
     }
     notify() {
-        if (!this.isUsed) {
-            return;
-        }
-        this.isUsed = false;
-        void this._p.promise.finally(noop);
-        this._p.resolve();
-        this._p = promiseWithResolvers();
+        notifyNotifierState(this);
     }
     get nextNotify() {
-        this.isUsed = true;
-        return this._p.promise;
+        return waitForNotifierState(this);
     }
 }
 let processNo = 0;

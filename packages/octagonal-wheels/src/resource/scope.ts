@@ -17,14 +17,39 @@ export interface Scope<T> {
 /** An operation which consumes I, produces O, and borrows the supplied capabilities E. */
 export type ScopedStep<I, O, E extends object = object> = (ctx: Scope<I> & E) => Awaitable<O>;
 
-/** A reusable operation declaration. Composition itself starts no work. */
-export interface ScopedProgram<I, O, E extends object = object> {
+/** A reusable pipeline declaration. Composition itself starts no work. */
+export interface ScopedPipeline<I, O, E extends object = object> {
     /** Runs the declared steps in the supplied scope, without closing that borrowed scope. */
     (ctx: Scope<I> & E): Awaitable<O>;
-    /** Returns a new program whose next step shares this execution's cleanup owner. */
-    pipe<N>(step: ScopedStep<O, N, E>): ScopedProgram<I, N, E>;
-    /** Returns a new program which closes a child scope before passing its result onward. */
-    pipeScoped<N>(step: ScopedStep<O, N, E>): ScopedProgram<I, N, E>;
+    /** Returns a new pipeline whose next step shares this execution's cleanup owner. */
+    pipe<N>(step: ScopedStep<O, N, E>): ScopedPipeline<I, N, E>;
+    /**
+     * Returns a new pipeline which closes a child scope before passing its result onward.
+     *
+     * @example
+     * ```ts
+     * interface Reader {
+     *     read(): Promise<string>;
+     *     close(): Promise<void>;
+     * }
+     * declare function openReader(path: string): Promise<Reader>;
+     * declare function analyse(contents: string): { words: number };
+     * declare const path: string;
+     *
+     * const inspect = scoped<string>()
+     *     .pipeScoped(async (ctx) => {
+     *         const reader = await openReader(ctx.value);
+     *         ctx.defer(() => reader.close());
+     *         return await reader.read();
+     *     })
+     *     .pipe((ctx) => analyse(ctx.value));
+     * const report = withScope(path, inspect);
+     * ```
+     *
+     * The reader closes before analysis starts; cleanup registered by ordinary
+     * steps remains owned by the enclosing scope until the whole pipeline ends.
+     */
+    pipeScoped<N>(step: ScopedStep<O, N, E>): ScopedPipeline<I, N, E>;
 }
 
 function valueView<T, E extends object>(parent: E, value: T, defer?: Scope<T>["defer"]): Scope<T> & E {
@@ -86,17 +111,36 @@ async function runScope<I, O, E extends object>(parent: E, value: I, operation: 
  * Returning an owned resource does not transfer ownership: its registered cleanup still runs.
  * Callers must await or return the work they start; detached promises are not discovered.
  * The scope reads no host globals and has no implicit cancellation behaviour.
+ *
+ * @example
+ * ```ts
+ * interface Reader {
+ *     read(): Promise<string>;
+ *     close(): Promise<void>;
+ * }
+ * declare function openReader(path: string): Promise<Reader>;
+ *
+ * async function readFile(path: string): Promise<string> {
+ *     return await withScope(path, async (ctx) => {
+ *         const reader = await openReader(ctx.value);
+ *         ctx.defer(() => reader.close());
+ *         return await reader.read();
+ *     });
+ * }
+ * ```
+ *
+ * The returned value is available only after the reader has closed.
  */
 export function withScope<I, O>(value: I, operation: ScopedStep<I, O>): Promise<O> {
     return runScope({}, value, operation);
 }
 
-interface ProgramStep {
+interface PipelineStep {
     readonly child: boolean;
     readonly operation: ScopedStep<unknown, unknown>;
 }
 
-function programWithSteps<I, O, E extends object>(steps: readonly ProgramStep[]): ScopedProgram<I, O, E> {
+function pipelineWithSteps<I, O, E extends object>(steps: readonly PipelineStep[]): ScopedPipeline<I, O, E> {
     const execute = async (context: Scope<I> & E): Promise<O> => {
         let value: unknown = context.value;
         for (const step of steps) {
@@ -106,8 +150,8 @@ function programWithSteps<I, O, E extends object>(steps: readonly ProgramStep[])
         }
         return value as O;
     };
-    const append = <N>(step: ScopedStep<O, N, E>, child: boolean): ScopedProgram<I, N, E> =>
-        programWithSteps<I, N, E>([
+    const append = <N>(step: ScopedStep<O, N, E>, child: boolean): ScopedPipeline<I, N, E> =>
+        pipelineWithSteps<I, N, E>([
             ...steps,
             // The public pipe signature checks this boundary before values are erased for execution.
             { child, operation: step as unknown as ScopedStep<unknown, unknown> },
@@ -119,11 +163,11 @@ function programWithSteps<I, O, E extends object>(steps: readonly ProgramStep[])
 }
 
 /**
- * Declares an identity program which can be extended with typed steps.
+ * Declares an identity pipeline which can be extended with typed steps.
  *
- * @typeParam I - The value supplied when the program is executed.
+ * @typeParam I - The value supplied when the pipeline is executed.
  * @typeParam E - Capabilities required from the execution context; declaration does not create them.
- * @returns A callable program with immutable pipe and pipeScoped composition methods.
+ * @returns A callable pipeline with immutable pipe and pipeScoped composition methods.
  * @remarks
  * pipe shares the current cleanup owner. pipeScoped owns cleanup for its step and
  * awaits that cleanup before the next step. Every step receives a stable value view;
@@ -131,7 +175,35 @@ function programWithSteps<I, O, E extends object>(steps: readonly ProgramStep[])
  * data, and cancellation observation does not automatically skip steps. Rejected
  * steps skip later steps, leaving the runner to perform the current scope's cleanup.
  * Declaration and composition acquire no resources and start no asynchronous work.
+ *
+ * @example
+ * ```ts
+ * interface Reader {
+ *     read(): Promise<string>;
+ *     close(): Promise<void>;
+ * }
+ * declare function acquirePermit(): () => void;
+ * declare function openReader(path: string): Promise<Reader>;
+ * declare function analyse(contents: string): { words: number };
+ * declare const path: string;
+ *
+ * const inspect = scoped<string>()
+ *     .pipe((ctx) => {
+ *         ctx.defer(acquirePermit());
+ *         return ctx.value;
+ *     })
+ *     .pipeScoped(async (ctx) => {
+ *         const reader = await openReader(ctx.value);
+ *         ctx.defer(() => reader.close());
+ *         return await reader.read();
+ *     })
+ *     .pipe((ctx) => analyse(ctx.value));
+ * const report = withScope(path, inspect);
+ * ```
+ *
+ * The permit remains held through analysis; the reader closes before analysis
+ * starts. The returned pipeline can be reused by another `withScope` call.
  */
-export function scoped<I, E extends object = object>(): ScopedProgram<I, I, E> {
-    return programWithSteps<I, I, E>([]);
+export function scoped<I, E extends object = object>(): ScopedPipeline<I, I, E> {
+    return pipelineWithSteps<I, I, E>([]);
 }

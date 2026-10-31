@@ -13,6 +13,10 @@ test("generated subpath declarations resolve with Node10 module resolution", asy
     const manifest = JSON.parse(await readFile(resolve(packageRoot, "package.json"), "utf8"));
     const mappings = manifest.typesVersions?.["*"];
     assert.ok(mappings, "The generated manifest must include legacy TypeScript declaration mappings.");
+    assert.ok(
+        Object.keys(manifest.exports).every((subpath) => !subpath.includes(".internal")),
+        "Implementation-only modules must not become public package entry points."
+    );
     const exportedSubpaths = Object.keys(manifest.exports)
         .filter((subpath) => subpath !== "." && subpath !== "./package.json")
         .map((subpath) => subpath.slice(2))

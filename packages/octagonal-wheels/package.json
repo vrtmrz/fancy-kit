@@ -171,6 +171,14 @@
             "import": "./dist/binary/index.js",
             "types": "./dist/binary/index.d.ts"
         },
+        "./binary/typedArray": {
+            "import": "./dist/binary/typedArray.js",
+            "types": "./dist/binary/typedArray.d.ts"
+        },
+        "./binary/typedArray.js": {
+            "import": "./dist/binary/typedArray.js",
+            "types": "./dist/binary/typedArray.d.ts"
+        },
         "./browser": {
             "import": "./dist/browser/index.js",
             "types": "./dist/browser/index.d.ts"
@@ -282,6 +290,26 @@
         "./collection": {
             "import": "./dist/collection.js",
             "types": "./dist/collection.d.ts"
+        },
+        "./collection.array": {
+            "import": "./dist/collection.array.js",
+            "types": "./dist/collection.array.d.ts"
+        },
+        "./collection.array.js": {
+            "import": "./dist/collection.array.js",
+            "types": "./dist/collection.array.d.ts"
+        },
+        "./collection.index": {
+            "import": "./dist/collection.index.js",
+            "types": "./dist/collection.index.d.ts"
+        },
+        "./collection.index.js": {
+            "import": "./dist/collection.index.js",
+            "types": "./dist/collection.index.d.ts"
+        },
+        "./collection.index/index.js": {
+            "import": "./dist/collection.index.js",
+            "types": "./dist/collection.index.d.ts"
         },
         "./collection.js": {
             "import": "./dist/collection.js",
@@ -415,6 +443,22 @@
             "import": "./dist/concurrency/lock.js",
             "types": "./dist/concurrency/lock.d.ts"
         },
+        "./concurrency/lock.scoped": {
+            "import": "./dist/concurrency/lock.scoped.js",
+            "types": "./dist/concurrency/lock.scoped.d.ts"
+        },
+        "./concurrency/lock.scoped.js": {
+            "import": "./dist/concurrency/lock.scoped.js",
+            "types": "./dist/concurrency/lock.scoped.d.ts"
+        },
+        "./concurrency/notifier": {
+            "import": "./dist/concurrency/notifier.js",
+            "types": "./dist/concurrency/notifier.d.ts"
+        },
+        "./concurrency/notifier.js": {
+            "import": "./dist/concurrency/notifier.js",
+            "types": "./dist/concurrency/notifier.d.ts"
+        },
         "./concurrency/processor": {
             "import": "./dist/concurrency/processor.js",
             "types": "./dist/concurrency/processor.d.ts"
@@ -438,6 +482,14 @@
         "./concurrency/processor.js": {
             "import": "./dist/concurrency/processor.js",
             "types": "./dist/concurrency/processor.d.ts"
+        },
+        "./concurrency/scoped.iteration": {
+            "import": "./dist/concurrency/scoped.iteration.js",
+            "types": "./dist/concurrency/scoped.iteration.d.ts"
+        },
+        "./concurrency/scoped.iteration.js": {
+            "import": "./dist/concurrency/scoped.iteration.js",
+            "types": "./dist/concurrency/scoped.iteration.d.ts"
         },
         "./concurrency/scopedIteration": {
             "import": "./dist/concurrency/scopedIteration.js",
@@ -467,9 +519,25 @@
             "import": "./dist/concurrency/semaphore_v2.js",
             "types": "./dist/concurrency/semaphore_v2.d.ts"
         },
+        "./concurrency/semaphore.core": {
+            "import": "./dist/concurrency/semaphore.core.js",
+            "types": "./dist/concurrency/semaphore.core.d.ts"
+        },
+        "./concurrency/semaphore.core.js": {
+            "import": "./dist/concurrency/semaphore.core.js",
+            "types": "./dist/concurrency/semaphore.core.d.ts"
+        },
         "./concurrency/semaphore.js": {
             "import": "./dist/concurrency/semaphore.js",
             "types": "./dist/concurrency/semaphore.d.ts"
+        },
+        "./concurrency/semaphore.scoped": {
+            "import": "./dist/concurrency/semaphore.scoped.js",
+            "types": "./dist/concurrency/semaphore.scoped.d.ts"
+        },
+        "./concurrency/semaphore.scoped.js": {
+            "import": "./dist/concurrency/semaphore.scoped.js",
+            "types": "./dist/concurrency/semaphore.scoped.d.ts"
         },
         "./concurrency/task": {
             "import": "./dist/concurrency/task.js",
@@ -538,14 +606,6 @@
         "./conduit/transporterAdapter.js": {
             "import": "./dist/conduit/transporterAdapter.js",
             "types": "./dist/conduit/transporterAdapter.d.ts"
-        },
-        "./content": {
-            "import": "./dist/content.js",
-            "types": "./dist/content.d.ts"
-        },
-        "./content.js": {
-            "import": "./dist/content.js",
-            "types": "./dist/content.d.ts"
         },
         "./context": {
             "import": "./dist/context.js",
@@ -1003,6 +1063,14 @@
             "import": "./dist/messagepassing/signal.js",
             "types": "./dist/messagepassing/signal.d.ts"
         },
+        "./modification": {
+            "import": "./dist/modification.js",
+            "types": "./dist/modification.d.ts"
+        },
+        "./modification.js": {
+            "import": "./dist/modification.js",
+            "types": "./dist/modification.d.ts"
+        },
         "./notation": {
             "import": "./dist/notation/index.js",
             "types": "./dist/notation/index.d.ts"
@@ -1232,6 +1300,12 @@
             "binary/index.js": [
                 "dist/binary/index.d.ts"
             ],
+            "binary/typedArray": [
+                "dist/binary/typedArray.d.ts"
+            ],
+            "binary/typedArray.js": [
+                "dist/binary/typedArray.d.ts"
+            ],
             "browser": [
                 "dist/browser/index.d.ts"
             ],
@@ -1315,6 +1389,21 @@
             ],
             "collection": [
                 "dist/collection.d.ts"
+            ],
+            "collection.array": [
+                "dist/collection.array.d.ts"
+            ],
+            "collection.array.js": [
+                "dist/collection.array.d.ts"
+            ],
+            "collection.index": [
+                "dist/collection.index.d.ts"
+            ],
+            "collection.index.js": [
+                "dist/collection.index.d.ts"
+            ],
+            "collection.index/index.js": [
+                "dist/collection.index.d.ts"
             ],
             "collection.js": [
                 "dist/collection.d.ts"
@@ -1415,6 +1504,18 @@
             "concurrency/lock.js": [
                 "dist/concurrency/lock.d.ts"
             ],
+            "concurrency/lock.scoped": [
+                "dist/concurrency/lock.scoped.d.ts"
+            ],
+            "concurrency/lock.scoped.js": [
+                "dist/concurrency/lock.scoped.d.ts"
+            ],
+            "concurrency/notifier": [
+                "dist/concurrency/notifier.d.ts"
+            ],
+            "concurrency/notifier.js": [
+                "dist/concurrency/notifier.d.ts"
+            ],
             "concurrency/processor": [
                 "dist/concurrency/processor.d.ts"
             ],
@@ -1432,6 +1533,12 @@
             ],
             "concurrency/processor.js": [
                 "dist/concurrency/processor.d.ts"
+            ],
+            "concurrency/scoped.iteration": [
+                "dist/concurrency/scoped.iteration.d.ts"
+            ],
+            "concurrency/scoped.iteration.js": [
+                "dist/concurrency/scoped.iteration.d.ts"
             ],
             "concurrency/scopedIteration": [
                 "dist/concurrency/scopedIteration.d.ts"
@@ -1454,8 +1561,20 @@
             "concurrency/semaphore_v2.js": [
                 "dist/concurrency/semaphore_v2.d.ts"
             ],
+            "concurrency/semaphore.core": [
+                "dist/concurrency/semaphore.core.d.ts"
+            ],
+            "concurrency/semaphore.core.js": [
+                "dist/concurrency/semaphore.core.d.ts"
+            ],
             "concurrency/semaphore.js": [
                 "dist/concurrency/semaphore.d.ts"
+            ],
+            "concurrency/semaphore.scoped": [
+                "dist/concurrency/semaphore.scoped.d.ts"
+            ],
+            "concurrency/semaphore.scoped.js": [
+                "dist/concurrency/semaphore.scoped.d.ts"
             ],
             "concurrency/task": [
                 "dist/concurrency/task.d.ts"
@@ -1507,12 +1626,6 @@
             ],
             "conduit/transporterAdapter.js": [
                 "dist/conduit/transporterAdapter.d.ts"
-            ],
-            "content": [
-                "dist/content.d.ts"
-            ],
-            "content.js": [
-                "dist/content.d.ts"
             ],
             "context": [
                 "dist/context.d.ts"
@@ -1855,6 +1968,12 @@
             ],
             "messagepassing/signal.js": [
                 "dist/messagepassing/signal.d.ts"
+            ],
+            "modification": [
+                "dist/modification.d.ts"
+            ],
+            "modification.js": [
+                "dist/modification.d.ts"
             ],
             "notation": [
                 "dist/notation/index.d.ts"

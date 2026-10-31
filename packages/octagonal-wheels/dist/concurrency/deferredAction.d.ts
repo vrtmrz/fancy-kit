@@ -51,5 +51,19 @@ export interface DeferredAction extends DisposableResource {
  * created. The injected scheduler determines timing; this deferred action does not
  * track elapsed time or change Promise cancellation semantics.
  * Cancellation during registration also releases the returned registration.
+ * @example
+ * ```ts
+ * declare function refreshPreview(): void;
+ * const refresh = createDeferredAction(refreshPreview);
+ *
+ * function onInput() {
+ *     refresh.schedule(250);
+ * }
+ * function onViewClosed() {
+ *     refresh.dispose();
+ * }
+ * ```
+ * Repeated input replaces the pending timeout, so the preview runs after the
+ * last quiet interval. Closing the view cancels pending work and ends its owner.
  */
 export declare function createDeferredAction(callback: () => void, scheduleTimeout?: TimeoutScheduler): DeferredAction;

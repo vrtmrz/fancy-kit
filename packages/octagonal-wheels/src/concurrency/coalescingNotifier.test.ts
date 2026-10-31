@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createNotifier } from "./notifier.ts";
 import { createCoalescingNotifier, type CoalescingNotifier } from "./coalescingNotifier.ts";
 import type { TimeoutScheduler } from "./deferredAction.ts";
 
@@ -120,6 +121,27 @@ describe("createCoalescingNotifier", () => {
         expect(firstNotify).not.toHaveBeenCalled();
         expect(secondNotify).toHaveBeenCalledExactlyOnceWith(2);
         expect(clock.registrations[0].cancel).toHaveBeenCalledOnce();
+    });
+
+    it("can wake a wait group from a coalesced callback", async () => {
+        const signal = createNotifier();
+        const progress = createCoalescingNotifier({ everyCount: 2, onNotify: signal.notify });
+        let resolved = false;
+        const waiting = signal.wait().then(() => {
+            resolved = true;
+        });
+
+        progress.update(1);
+        await Promise.resolve();
+        expect(resolved).toBe(false);
+        progress.update(2);
+        await waiting;
+        expect(resolved).toBe(true);
+
+        const nextWaiting = signal.wait();
+        progress.update(3);
+        progress.update(4);
+        await nextWaiting;
     });
 
     it("preserves a reentrant update for the next notification", () => {

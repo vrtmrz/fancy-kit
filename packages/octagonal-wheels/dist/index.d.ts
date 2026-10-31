@@ -13,7 +13,7 @@ export * as databases from "./databases/index.ts";
 export * as hash from "./hash/index.ts";
 export * as memory from "./memory/index.ts";
 export * as messagepassing from "./messagepassing/index.ts";
-export * as content from "./content.ts";
+export * as modification from "./modification.ts";
 export * as collection from "./collection.ts";
 export * as function from "./function.ts";
 export * as object from "./object.ts";

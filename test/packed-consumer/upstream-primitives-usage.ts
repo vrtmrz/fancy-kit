@@ -1,11 +1,11 @@
-import { serializedByKeys } from "octagonal-wheels/concurrency/lock";
-import { serializedByKeys as aliasLock } from "octagonal-wheels/concurrency/lock.js";
+import { withLocks } from "octagonal-wheels/concurrency/lock";
+import { withLocks as aliasLock } from "octagonal-wheels/concurrency/lock.js";
 
 const keys: readonly string[] = ["a", "b"];
-const locked: Promise<number> = serializedByKeys(keys, async () => 42);
+const locked: Promise<number> = withLocks(keys, async () => 42);
 const aliased: Promise<string> = aliasLock([], async () => "done");
 // @ts-expect-error Lock keys use strings in a caller-defined common order.
-serializedByKeys([Symbol()], async () => {});
+withLocks([Symbol()], async () => {});
 // @ts-expect-error The callback result is retained in the returned promise.
-const wrongResult: Promise<string> = serializedByKeys(keys, async () => 42);
+const wrongResult: Promise<string> = withLocks(keys, async () => 42);
 void [locked, aliased, wrongResult];

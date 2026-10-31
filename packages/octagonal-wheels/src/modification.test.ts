@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createContentApplier } from "./content.ts";
+import { createModificationHandler } from "./modification.ts";
 
 type Target = { path: string };
 type Source = { data: string };
@@ -7,13 +7,13 @@ type Source = { data: string };
 const TARGET: Target = { path: "example/data.json" };
 const SOURCE: Source = { data: "replacement" };
 
-describe("createContentApplier", () => {
+describe("createModificationHandler", () => {
     it("supports synchronous callbacks and returns unchanged without writing", async () => {
         const events: string[] = [];
         const write = vi.fn(() => {
             events.push("write");
         });
-        const apply = createContentApplier<Target, Source, string, string>({
+        const apply = createModificationHandler<Target, Source, string, string>({
             read: (target, source) => {
                 events.push(`read:${target.path}:${source.data}`);
                 return "same";
@@ -42,7 +42,7 @@ describe("createContentApplier", () => {
     it("uses the read-error fallback and awaits asynchronous callbacks in order", async () => {
         const events: string[] = [];
         const readError = new Error("read failed");
-        const apply = createContentApplier<Target, Source, string, string>({
+        const apply = createModificationHandler<Target, Source, string, string>({
             read: async () => {
                 events.push("read");
                 throw readError;
@@ -77,7 +77,7 @@ describe("createContentApplier", () => {
     it.each(["decode", "isSame", "write"] as const)("propagates %s failures", async (failureStage) => {
         const error = new Error(`${failureStage} failed`);
         const onReadError = vi.fn(() => "fallback");
-        const apply = createContentApplier<Target, Source, string, string>({
+        const apply = createModificationHandler<Target, Source, string, string>({
             read: () => "existing",
             onReadError,
             decode: () => {
@@ -101,7 +101,7 @@ describe("createContentApplier", () => {
         const readError = new Error("read failed");
         const fallbackError = new Error("fallback failed");
         const decode = vi.fn(() => "replacement");
-        const apply = createContentApplier<Target, Source, string, string>({
+        const apply = createModificationHandler<Target, Source, string, string>({
             read: () => {
                 throw readError;
             },
@@ -125,7 +125,7 @@ describe("content application completion", () => {
             finish = resolve;
         });
         const write = vi.fn(() => written);
-        const apply = createContentApplier({
+        const apply = createModificationHandler({
             read: (_target: string, _source: Uint8Array) => new Uint8Array([0]),
             onReadError: () => new Uint8Array(),
             decode: (source: Uint8Array) => source,
@@ -153,7 +153,7 @@ describe("content application completion", () => {
                 events.push(name);
                 if (name === stage) throw failure;
             };
-            const apply = createContentApplier({
+            const apply = createModificationHandler({
                 read: (_target: string, _source: string) => {
                     throw new Error("read");
                 },

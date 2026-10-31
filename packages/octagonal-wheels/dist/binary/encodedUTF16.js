@@ -1,4 +1,4 @@
-import { range } from '../collection.js';
+import { range } from '../collection.array.js';
 
 const BINARY_CHUNK_MAX = 1024 * 1024 * 30;
 // Table for converting encoding binary

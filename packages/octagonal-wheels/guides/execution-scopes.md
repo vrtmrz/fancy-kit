@@ -1,7 +1,9 @@
 # Execution scopes
 
 Use an execution scope when one asynchronous operation acquires resources and
-must finish their cleanup before returning. The APIs in this guide are unreleased.
+must finish their cleanup before returning. The APIs in this guide are
+unreleased. The previous `octagonal-wheels/concurrency/scopedIteration` import
+remains available as a compatibility re-export.
 Select `withScope` for one operation, add typed steps with `scoped().pipe()`, and
 use `pipeScoped()` when one step must close its resources before the next starts.
 
@@ -24,7 +26,7 @@ const report = await withScope({ path: "notes.md" }, inspect);
 Here `semaphore`, `openReader`, and `analyseContents` are application dependencies.
 The reader closes before analysis starts; the permit remains held until the whole
 operation finishes. To release a permit at the reader boundary, place its
-`acquirePermit` step inside the child program instead.
+`acquirePermit` step inside the child pipeline instead.
 
 ## Values and ownership
 
@@ -54,9 +56,9 @@ inside its deferred callback and add them to that report.
 ## Declare and compose steps
 
 A step is an ordinary closure of type `ScopedStep<Input, Output, Capabilities>`.
-`scoped<Input>()` declares an identity program. Each `.pipe(step)` returns a new
-program, passing the preceding return value as the next `ctx.value`. Earlier
-programs remain reusable, and declaring a program starts no work.
+`scoped<Input>()` declares an identity pipeline. Each `.pipe(step)` returns a new
+pipeline, passing the preceding return value as the next `ctx.value`. Earlier
+pipelines remain reusable, and declaring a pipeline starts no work.
 
 Steps share the execution's cleanup owner. Their value views remain stable, so
 deferred closures keep the resources they captured. Pass earlier fields onward
@@ -66,7 +68,7 @@ explicitly when a later step needs them; values are not implicitly merged.
 and cleanup, and then passes the result onward. Parent registrations remain
 pending. There is no operation to clear all pending cleanup mid-pipeline.
 
-Programs are callable with an existing scope and can themselves be steps. Such
+Pipelines are callable with an existing scope and can themselves be steps. Such
 a call borrows the supplied scope; the runner remains responsible for closing it.
 An exception stops later steps. An ordinary return, including `undefined`, passes
 data onward and does not end the pipeline early.
@@ -103,7 +105,7 @@ Await or return every child operation which must finish before scope closure.
 ## Iterate with an item lifetime
 
 ```ts
-import { forEachInScope, mapInScope } from "octagonal-wheels/concurrency/scopedIteration";
+import { forEachInScope, mapInScope } from "octagonal-wheels/concurrency/scoped.iteration";
 
 const result = await withCancellation(shared, { signal }, async parent => {
   return await mapInScope(parent, files, { concurrency: 4 }, async (file, child, index) => {

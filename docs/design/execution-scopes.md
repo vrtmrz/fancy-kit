@@ -16,6 +16,9 @@ resources. Preparation is ordinary code. The operation registers cleanup with
 pipelines and bounded iteration use the same callback shape.
 
 The detailed contracts were accepted for implementation on 29 October 2026.
+The review on 31 October 2026 refined the public type name to `ScopedPipeline`
+and separated the iteration entry from its internal runner without changing
+the lifecycle contracts below.
 The runtime APIs and consumer pilots are implemented as unpublished candidates.
 The [usage guide](../../packages/octagonal-wheels/guides/execution-scopes.md)
 describes the current APIs. The original declaration sketches alongside this
@@ -32,15 +35,16 @@ Existing `withSemaphore`, `withOwnedResource`, `DeferredAction`, and Commonlib's
 
 | Entry                                          | API                                                           | Responsibility                                                                           |
 | ---------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `octagonal-wheels/resource/scope`              | `Scope`, `ScopedStep`, `ScopedProgram`, `withScope`, `scoped` | Execute one scope, compose ordinary steps, and create child scopes through `pipeScoped`. |
+| `octagonal-wheels/resource/scope`              | `Scope`, `ScopedStep`, `ScopedPipeline`, `withScope`, `scoped` | Execute one scope, compose ordinary steps, and create child scopes through `pipeScoped`. |
 | `octagonal-wheels/concurrency/cancellation`    | `Cancellation`, `CancellationScope`, `withCancellation`       | Connect an external cancellation signal to one owned operation.                          |
-| `octagonal-wheels/concurrency/scopedIteration` | `forEachInScope`, `mapInScope`                                | Admit items with a concurrency bound and finish their child scopes.                      |
+| `octagonal-wheels/concurrency/scoped.iteration` | `forEachInScope`, `mapInScope`                                | Admit items with a concurrency bound and finish their child scopes.                      |
 | `octagonal-wheels/concurrency/semaphore`       | `acquirePermit`                                               | Prepare an existing semaphore permit and defer its release.                              |
 
-These are additions to existing focused modules and families. They do not
-require a new package, a service registry, ambient context, persistent state,
-or a separate setup/teardown object. The exact exports must be checked with
-packed consumers before publication.
+The previous `octagonal-wheels/concurrency/scopedIteration` entry remains a
+compatibility re-export. These are additions to existing focused modules and
+families. They do not require a new package, a service registry, ambient
+context, persistent state, or a separate setup/teardown object. The exact
+exports must be checked with packed consumers before publication.
 
 Base scopes, iteration, and the semaphore adapter require no DOM or Node types.
 The cancellation entry uses standard `AbortSignal` and `AbortController`, and
@@ -140,13 +144,13 @@ const inspect = scoped<Settings>()
 const report = await withScope(settings, inspect);
 ```
 
-`scoped<I>()` declares an identity program. Each `pipe` returns a new program
+`scoped<I>()` declares an identity pipeline. Each `pipe` returns a new pipeline
 without changing the earlier declaration. Declaration does not acquire a
 resource, create a cancellation controller, or start asynchronous work. The
-same program can be executed repeatedly; captured dependencies remain shared
+same pipeline can be executed repeatedly; captured dependencies remain shared
 only where the caller has deliberately captured them.
 
-The program is callable with a scope, so a named closure or another program
+The pipeline is callable with a scope, so a named closure or another pipeline
 can be used as a step. Calling it with an existing scope borrows that scope;
 `withScope` is the owner that eventually performs cleanup.
 
@@ -162,8 +166,8 @@ cleanup. The builder has no `then` method and is not a promise.
 
 `E` records capabilities supplied by a runner. The first extension is
 `Cancellation`; declaring that requirement does not create its implementation.
-A cancellation-dependent program cannot be executed by a plain `withScope`.
-Ordinary steps remain reusable inside a cancellation-aware program. This is
+A cancellation-dependent pipeline cannot be executed by a plain `withScope`.
+Ordinary steps remain reusable inside a cancellation-aware pipeline. This is
 type-level composition, not a runtime capability registration system.
 
 ## Finish a child scope before continuing
@@ -377,8 +381,8 @@ The implementation and verification follow these contract groups:
    failure, reverse order, awaited cleanup, all cleanup after failure, failure
    identity, aggregates, thrown `undefined`, duplicate registrations, and late
    registration rejection. Check isolated and overlapping invocations.
-2. Program composition and child scopes: lazy reusable declarations, stable
-   earlier programs, value views, shared versus separate cleanup, nested
+2. Pipeline composition and child scopes: lazy reusable declarations, stable
+   earlier pipelines, value views, shared versus separate cleanup, nested
    failures, resources closed before the next step, and no import-time globals.
 3. Cancellation: pre-aborted parent, reason propagation, independent controllers,
    returned partial results, unchanged callback errors, listener removal,

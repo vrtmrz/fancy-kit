@@ -20,7 +20,7 @@ describe("formatDuration", () => {
     it("preserves negative and non-finite number behaviour", () => {
         expect(formatDuration(-1_234)).toBe("-1.23s");
         expect(formatDuration(-60_000)).toBe("-60.00s");
-        expect(formatDuration(Number.POSITIVE_INFINITY)).toBe("Infinityy");
+        expect(formatDuration(Number.POSITIVE_INFINITY)).toBe("∞y");
         expect(formatDuration(Number.NEGATIVE_INFINITY)).toBe("-Infinitys");
         expect(formatDuration(Number.NaN)).toBe("NaNy");
     });

@@ -1,29 +1,15 @@
-export type Task<T> = () => Promise<T> | T;
+import { type Task } from "./lock.scoped.ts";
+export { withLock, withLocks, isLockAcquired } from "./lock.scoped.ts";
+export type { Task } from "./lock.scoped.ts";
 /**
- * Run tasks one by one in their group.
- * @param key key of the group
- * @param proc process to run
- * @returns result of the process
+ * Runs tasks one at a time in their keyed group.
+ *
+ * @param key - Shared lock group.
+ * @param proc - Operation to execute while holding the lock.
+ * @returns The operation result, using the same locks as withLock and withLocks.
+ * @deprecated Use withLock for new code.
  */
 export declare function serialized<T>(key: string | symbol, proc: Task<T>): Promise<T>;
-/**
- * Acquire each supplied key in order, then run and await the callback.
- *
- * Uses the same lock groups as {@link serialized}. The caller must provide
- * unique keys in a consistent order across all overlapping operations, such
- * as lexicographically sorted strings. Keys are not sorted or deduplicated
- * here. Repeated keys, inconsistent acquisition orders, or reacquiring a key
- * already held by the callback can deadlock.
- *
- * An empty list invokes the callback immediately. Its result or failure is
- * preserved, and every acquired lock is released after the callback settles.
- * The input list is not modified.
- *
- * @param keys - Unique lock keys in the caller's shared acquisition order.
- * @param callback - Operation to run after every key has been acquired.
- * @returns The callback's result after releasing the acquired locks.
- */
-export declare function serializedByKeys<T>(keys: readonly string[], callback: () => Promise<T>): Promise<T>;
 export declare const SYMBOL_SKIPPED: unique symbol;
 export declare function onlyLatest<T>(key: string | symbol, proc: Task<T>): Promise<T | typeof SYMBOL_SKIPPED>;
 /**
@@ -51,12 +37,6 @@ export declare function skipIfDuplicated<T>(key: string | symbol, proc: Task<T>)
  * @returns A Promise that resolves once the process has been scheduled.
  */
 export declare function scheduleOnceIfDuplicated<T>(key: string, proc: () => Promise<T>): Promise<T | null | undefined>;
-/**
- * Checks if a serialised-processing-lock is acquired for the given key.
- * @param key - The key to check for lock acquisition.
- * @returns `true` if the lock is acquired, `false` otherwise.
- */
-export declare function isLockAcquired(key: string | symbol): boolean;
 /**
  * Concurrency controller to limit the number of concurrent tasks.
  * Similar to a semaphore but with a simpler `run` method.

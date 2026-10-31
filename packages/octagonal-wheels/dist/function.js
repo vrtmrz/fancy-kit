@@ -41,7 +41,7 @@ const throttle = (func, timeout) => {
  * @param func - Callback whose consecutive duplicate arguments are suppressed.
  * @returns A function with an independent last-argument value.
  */
-function wrapMemo(func) {
+function onlyWhenChanged(func) {
     let buf = undefined;
     return (arg) => {
         if (buf !== arg) {
@@ -51,5 +51,5 @@ function wrapMemo(func) {
     };
 }
 
-export { throttle, wrapMemo };
+export { onlyWhenChanged, throttle };
 //# sourceMappingURL=function.js.map

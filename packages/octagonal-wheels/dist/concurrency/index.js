@@ -16,6 +16,8 @@ import * as concurrency_coalescingNotifier from './coalescingNotifier.js';
 export { concurrency_coalescingNotifier as coalescingNotifier };
 import * as concurrency_cancellation from './cancellation.js';
 export { concurrency_cancellation as cancellation };
-import * as concurrency_scopedIteration from './scopedIteration.js';
-export { concurrency_scopedIteration as scopedIteration };
+import * as concurrency_scoped_iteration from './scoped.iteration.js';
+export { concurrency_scoped_iteration as scopedIteration };
+import * as concurrency_notifier from './notifier.js';
+export { concurrency_notifier as notifier };
 //# sourceMappingURL=index.js.map

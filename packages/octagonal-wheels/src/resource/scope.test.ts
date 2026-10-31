@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
-import { scoped, withScope, type Scope, type ScopedStep } from "./scope.ts";
+import { scoped, withScope, type Scope, type ScopedPipeline, type ScopedStep } from "./scope.ts";
 
 function gate<T = void>() {
     let resolve!: (value: T | PromiseLike<T>) => void;
@@ -231,11 +231,14 @@ describe("withScope", () => {
 });
 
 describe("scoped", () => {
-    it("declares lazy reusable programs without changing earlier declarations", async () => {
+    it("declares lazy reusable pipelines without changing earlier declarations", async () => {
         const step = vi.fn((ctx: Scope<number>) => ctx.value + 1);
         const identity = scoped<number>();
         const increment = identity.pipe(step);
         const doubled = increment.pipe((ctx) => ctx.value * 2);
+        expectTypeOf(identity).toEqualTypeOf<ScopedPipeline<number, number>>();
+        expectTypeOf(increment).toEqualTypeOf<ScopedPipeline<number, number>>();
+        expectTypeOf(doubled).toEqualTypeOf<ScopedPipeline<number, number>>();
         expect(step).not.toHaveBeenCalled();
         expect("then" in increment).toBe(false);
         expect(await withScope(3, identity)).toBe(3);
@@ -245,7 +248,7 @@ describe("scoped", () => {
         expect(step).toHaveBeenCalledTimes(3);
     });
 
-    it("keeps earlier value views stable and defers shared cleanup until the entire program ends", async () => {
+    it("keeps earlier value views stable and defers shared cleanup until the entire pipeline ends", async () => {
         const trace: string[] = [];
         const operation = scoped<string>()
             .pipe((ctx) => {
@@ -283,7 +286,7 @@ describe("scoped", () => {
         expect(await withScope({ old: "original" }, operation)).toEqual({ next: 1 });
     });
 
-    it("can borrow a scope and compose a named program without closing the owner", async () => {
+    it("can borrow a scope and compose a named pipeline without closing the owner", async () => {
         const cleanup = vi.fn();
         const named: ScopedStep<number, string> = (ctx) => {
             ctx.defer(cleanup);

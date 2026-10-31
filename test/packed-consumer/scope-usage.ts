@@ -2,6 +2,7 @@ import {
   scoped,
   withScope,
   type Scope,
+  type ScopedPipeline,
   type ScopedStep,
 } from "octagonal-wheels/resource/scope";
 import {
@@ -13,7 +14,7 @@ import {
   mapInScope,
   type IterationMapResult,
   type IterationResult,
-} from "octagonal-wheels/concurrency/scopedIteration";
+} from "octagonal-wheels/concurrency/scoped.iteration";
 import {
   acquirePermit,
   type SemaphoreAcquisition,
@@ -56,6 +57,7 @@ const inspect = scoped<Settings>()
   .pipe(async (ctx) => report(await ctx.value.reader.read()));
 const inspected = withScope(settings, inspect);
 type FinalResult = Assert<Equal<typeof inspected, Promise<Report>>>;
+type PipelineResult = Assert<Equal<typeof inspect, ScopedPipeline<Settings, Report>>>;
 
 const separatelyClosed = scoped<Settings>()
   .pipeScoped(async (ctx) => {
@@ -160,7 +162,7 @@ type AsyncMappingResult = Assert<
 const requiresNumber: ScopedStep<number, string> = (ctx) => String(ctx.value);
 // @ts-expect-error Report cannot be passed to a number-only step.
 inspect.pipe(requiresNumber);
-// @ts-expect-error The program still requires Settings at its outer boundary.
+// @ts-expect-error The pipeline still requires Settings at its outer boundary.
 withScope(1, inspect);
 // @ts-expect-error A base scope does not supply cancellation capabilities.
 withScope(settings, cancelAware);
@@ -184,7 +186,7 @@ scoped<Settings>()
 scoped<Settings>()
   .pipe(() => undefined)
   .pipe((ctx) => {
-    // @ts-expect-error Returning undefined does not magically stop the program.
+    // @ts-expect-error Returning undefined does not magically stop the pipeline.
     return ctx.value.path;
   });
 
@@ -204,6 +206,7 @@ type SharedValueIdentity = Assert<Equal<typeof shared, Promise<number>>>;
 
 export type {
   FinalResult,
+  PipelineResult,
   ChildScopeResult,
   NoPipeResult,
   VoidResult,

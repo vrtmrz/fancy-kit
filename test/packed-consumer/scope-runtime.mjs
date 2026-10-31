@@ -26,6 +26,8 @@ const { scoped, withScope } = await import("octagonal-wheels/resource/scope");
 const { withCancellation } =
   await import("octagonal-wheels/concurrency/cancellation");
 const { mapInScope } =
+  await import("octagonal-wheels/concurrency/scoped.iteration");
+const compatibilityIteration =
   await import("octagonal-wheels/concurrency/scopedIteration");
 const { acquirePermit, Semaphore } =
   await import("octagonal-wheels/concurrency/semaphore");
@@ -39,13 +41,18 @@ assert.equal(
   withCancellation,
 );
 assert.equal(
+  (await import("octagonal-wheels/concurrency/scoped.iteration.js")).mapInScope,
+  mapInScope,
+);
+assert.equal(compatibilityIteration.mapInScope, mapInScope);
+assert.equal(
   (await import("octagonal-wheels/concurrency/scopedIteration.js")).mapInScope,
   mapInScope,
 );
 
 const events = [];
 const semaphore = Semaphore(1);
-const program = scoped()
+const pipeline = scoped()
   .pipe(acquirePermit(semaphore))
   .pipe((ctx) => {
     ctx.defer(() => {
@@ -63,7 +70,7 @@ const program = scoped()
     assert.deepEqual(events, ["child"]);
     return ctx.value.length;
   });
-assert.equal(await withScope("source", program), 11);
+assert.equal(await withScope("source", pipeline), 11);
 assert.deepEqual(events, ["child", "parent"]);
 const release = await semaphore.tryAcquire();
 assert.equal(typeof release, "function");

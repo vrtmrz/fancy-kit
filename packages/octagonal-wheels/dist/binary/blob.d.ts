@@ -47,7 +47,8 @@ export type ArrayBufferContentEquality = (left: ArrayBuffer, right: ArrayBuffer)
  * @param left - The first Blob. Use {@link toBlob} to normalise other inputs.
  * @param right - The second Blob.
  * @param isArrayBufferEqual - Equality predicate for each pair of parts. Defaults
- * to comparing their Base64 encodings through `arrayBufferToBase64Single`.
+ * to native Uint8Array.toBase64 comparison when available, with direct byte
+ * comparison otherwise. The fallback creates no encoded strings.
  * @returns Whether the sizes and all corresponding parts are equal.
  * @remarks
  * Different sizes return false without reading content or calling the

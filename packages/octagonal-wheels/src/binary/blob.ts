@@ -1,5 +1,3 @@
-import { arrayBufferToBase64Single } from "./base64.ts";
-
 /**
  * Creates a new plain-text Blob from a string or ordered string parts.
  *
@@ -56,8 +54,18 @@ export function toBlob(data: string | string[] | Uint8Array<ArrayBuffer> | Array
  */
 export type ArrayBufferContentEquality = (left: ArrayBuffer, right: ArrayBuffer) => boolean | PromiseLike<boolean>;
 
-async function isArrayBufferContentEqual(left: ArrayBuffer, right: ArrayBuffer): Promise<boolean> {
-    return (await arrayBufferToBase64Single(left)) === (await arrayBufferToBase64Single(right));
+function isArrayBufferContentEqual(left: ArrayBuffer, right: ArrayBuffer): boolean {
+    if (left.byteLength !== right.byteLength) return false;
+    const leftBytes = new Uint8Array(left);
+    const rightBytes = new Uint8Array(right);
+    const nativeToBase64 = (Uint8Array.prototype as Uint8Array & { toBase64?: () => string }).toBase64;
+    if (typeof nativeToBase64 === "function") {
+        return nativeToBase64.call(leftBytes) === nativeToBase64.call(rightBytes);
+    }
+    for (let index = 0; index < leftBytes.length; index++) {
+        if (leftBytes[index] !== rightBytes[index]) return false;
+    }
+    return true;
 }
 
 /**
@@ -66,7 +74,8 @@ async function isArrayBufferContentEqual(left: ArrayBuffer, right: ArrayBuffer):
  * @param left - The first Blob. Use {@link toBlob} to normalise other inputs.
  * @param right - The second Blob.
  * @param isArrayBufferEqual - Equality predicate for each pair of parts. Defaults
- * to comparing their Base64 encodings through `arrayBufferToBase64Single`.
+ * to native Uint8Array.toBase64 comparison when available, with direct byte
+ * comparison otherwise. The fallback creates no encoded strings.
  * @returns Whether the sizes and all corresponding parts are equal.
  * @remarks
  * Different sizes return false without reading content or calling the

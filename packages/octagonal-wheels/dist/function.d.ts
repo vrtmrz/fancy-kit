@@ -25,4 +25,4 @@ export declare const throttle: <T extends (...args: any[]) => any>(func: T, time
  * @param func - Callback whose consecutive duplicate arguments are suppressed.
  * @returns A function with an independent last-argument value.
  */
-export declare function wrapMemo<T>(func: (arg: T) => void): (arg: T) => void;
+export declare function onlyWhenChanged<T>(func: (arg: T) => void): (arg: T) => void;

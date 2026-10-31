@@ -109,7 +109,7 @@ type AsyncMappingResult = Assert<Equal<typeof asyncMapping, Promise<IterationMap
 const requiresNumber: ScopedStep<number, string> = (ctx) => String(ctx.value);
 // @ts-expect-error Report cannot be passed to a number-only step.
 inspect.pipe(requiresNumber);
-// @ts-expect-error The program still requires Settings at its outer boundary.
+// @ts-expect-error The pipeline still requires Settings at its outer boundary.
 withScope(1, inspect);
 // @ts-expect-error A base scope does not supply cancellation capabilities.
 withScope(settings, cancelAware);
@@ -133,7 +133,7 @@ scoped<Settings>()
 scoped<Settings>()
     .pipe(() => undefined)
     .pipe((ctx) => {
-        // @ts-expect-error Returning undefined does not magically stop the program.
+        // @ts-expect-error Returning undefined does not magically stop the pipeline.
         return ctx.value.path;
     });
 

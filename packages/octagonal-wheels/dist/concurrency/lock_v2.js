@@ -1,17 +1,8 @@
 import { promiseWithResolvers, fireAndForget } from '../promises.js';
+import { isLockAcquired, withLock } from './lock.scoped.js';
+export { withLocks } from './lock.scoped.js';
 
 // --- asynchronous execution / locking utilities
-/**
- * Run tasks one by one in their group.
- */
-const serializedMap = new Map();
-/**
- * How many tasks waiting for the same key (on serialized processing)
- */
-const queueCount = new Map();
-/**
- * Tasks that are waiting for the same key (on serialized processing)
- */
 const waitingProcessMap = new Map();
 /**
  * Tasks that are waiting for the same key (on sharing result)
@@ -22,64 +13,15 @@ const shareSerializedMap = new Map();
  */
 const skipDuplicatedMap = new Map();
 /**
- * Run tasks one by one in their group.
- * @param key key of the group
- * @param proc process to run
- * @returns result of the process
+ * Runs tasks one at a time in their keyed group.
+ *
+ * @param key - Shared lock group.
+ * @param proc - Operation to execute while holding the lock.
+ * @returns The operation result, using the same locks as withLock and withLocks.
+ * @deprecated Use withLock for new code.
  */
 function serialized(key, proc) {
-    const prev = serializedMap.get(key);
-    const p = promiseWithResolvers();
-    queueCount.set(key, (queueCount.get(key) ?? 0) + 1);
-    const nextTask = async () => {
-        try {
-            p.resolve(await proc());
-        }
-        catch (ex) {
-            p.reject(ex);
-        }
-        finally {
-            const count = queueCount.get(key) - 1;
-            if (count === 0) {
-                serializedMap.delete(key);
-                queueCount.delete(key);
-            }
-            else {
-                queueCount.set(key, count);
-            }
-        }
-    };
-    if (prev) {
-        const newP = prev.then(() => nextTask());
-        serializedMap.set(key, newP);
-    }
-    else {
-        serializedMap.set(key, nextTask());
-    }
-    return p.promise;
-}
-/**
- * Acquire each supplied key in order, then run and await the callback.
- *
- * Uses the same lock groups as {@link serialized}. The caller must provide
- * unique keys in a consistent order across all overlapping operations, such
- * as lexicographically sorted strings. Keys are not sorted or deduplicated
- * here. Repeated keys, inconsistent acquisition orders, or reacquiring a key
- * already held by the callback can deadlock.
- *
- * An empty list invokes the callback immediately. Its result or failure is
- * preserved, and every acquired lock is released after the callback settles.
- * The input list is not modified.
- *
- * @param keys - Unique lock keys in the caller's shared acquisition order.
- * @param callback - Operation to run after every key has been acquired.
- * @returns The callback's result after releasing the acquired locks.
- */
-async function serializedByKeys(keys, callback) {
-    const [key, ...remainingKeys] = keys;
-    if (key === undefined)
-        return await callback();
-    return await serialized(key, () => serializedByKeys(remainingKeys, callback));
+    return withLock(key, proc);
 }
 const latestProcessMap = new Map();
 const SYMBOL_SKIPPED = Symbol("SKIPPED");
@@ -200,15 +142,6 @@ async function scheduleOnceIfDuplicated(key, proc) {
             }
         });
     }
-}
-/**
- * Checks if a serialised-processing-lock is acquired for the given key.
- * @param key - The key to check for lock acquisition.
- * @returns `true` if the lock is acquired, `false` otherwise.
- */
-function isLockAcquired(key) {
-    const count = queueCount.get(key) ?? 0;
-    return count > 0;
 }
 /**
  * Concurrency controller to limit the number of concurrent tasks.
@@ -369,5 +302,5 @@ function scheduleAndRunOnlyLatest(group, key, proc) {
     return task();
 }
 
-export { ConcurrentTaskController, SCHEDULE_SKIPPED, SYMBOL_SKIPPED, isLockAcquired, onlyLatest, scheduleAndRunOnlyLatest, scheduleOnceIfDuplicated, serialized, serializedByKeys, shareRunningResult, skipIfDuplicated };
+export { ConcurrentTaskController, SCHEDULE_SKIPPED, SYMBOL_SKIPPED, isLockAcquired, onlyLatest, scheduleAndRunOnlyLatest, scheduleOnceIfDuplicated, serialized, shareRunningResult, skipIfDuplicated, withLock };
 //# sourceMappingURL=lock_v2.js.map

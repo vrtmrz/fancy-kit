@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { withCancellation } from "./cancellation.ts";
-import { forEachInScope, mapInScope } from "./scopedIteration.ts";
+import { forEachInScope, mapInScope } from "./scoped.iteration.ts";
+import * as compatibilityIteration from "./scopedIteration.ts";
 import { withScope } from "../resource/scope.ts";
 
 function gate<T = void>() {
@@ -33,6 +34,11 @@ function iterableWithClose<T>(values: readonly T[], onClose: () => void): Iterab
 }
 
 describe("scoped iteration", () => {
+    it("keeps the previous module path as a public re-export", () => {
+        expect(compatibilityIteration.forEachInScope).toBe(forEachInScope);
+        expect(compatibilityIteration.mapInScope).toBe(mapInScope);
+    });
+
     it("defaults to sequential dispatch and holds its slot until cleanup settles", async () => {
         const bodyStarted = gate();
         const finishBody = gate();

@@ -62,9 +62,9 @@ bounded parts, with an optional synchronous or asynchronous equality predicate.
 See the [Blob guide](guides/imports-and-runtime.md#blob-creation-and-normalisation)
 for input types, line endings, binary view ranges, comparison, and runtime requirements.
 
-## Apply content when it changes
+## Handle source modifications
 
-Use `createContentApplier` from the unreleased `content` entry to compose reading,
+Use `createModificationHandler` from the unreleased `modification` entry to compose reading,
 decoding, comparison, and conditional writing. Inject storage and recovery policy;
 only a read failure invokes the supplied fallback. The result distinguishes a
 completed write from an unchanged target. See the
@@ -98,8 +98,8 @@ result, failure, and ownership contracts.
 
 ## Multi-key operations and repeated values
 
-Use `serializedByKeys` from `concurrency/lock` to hold a caller-ordered set of
-unique keys for one asynchronous operation. Use `wrapMemo` from `function` to
+Use `withLocks` from `concurrency/lock` to hold a caller-ordered set of
+unique keys for one asynchronous operation. Use `onlyWhenChanged` from `function` to
 suppress consecutive strictly equal callback arguments. The [runtime guide](guides/imports-and-runtime.md#serialise-an-operation-across-several-keys)
 describes lock ordering, initial values, and failure behaviour.
 

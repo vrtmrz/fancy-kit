@@ -5,7 +5,7 @@
 ### New features
 
 - Added the focused `binary/blob` entry with `createTextBlob`, `createBinaryBlob`, and `toBlob`. Creation preserves line endings and binary view ranges; normalisation preserves existing Blob identity. The entry can be imported without DOM or fetch globals; creation and normalisation use the standard Blob constructor when called.
-- Added `isBlobContentEqual` for sequential byte comparison in parts of at most 10,000 bytes, independently of MIME types. Its optional `ArrayBufferContentEquality` predicate supports synchronous or asynchronous host strategies.
+- Added `isBlobContentEqual` for sequential byte comparison in parts of at most 10,000 bytes, independently of MIME types. Its default comparison uses native `Uint8Array.toBase64` where available and direct byte comparison otherwise, avoiding encoded-string allocation in the fallback. Its optional `ArrayBufferContentEquality` predicate supports synchronous or asynchronous host strategies.
 
 ### Resource ownership
 
@@ -13,19 +13,26 @@
 
 ### Shared value utilities
 
+- Typed JSON cloning accepts recursively checked JSON-compatible types, including ordinary interfaces and readonly arrays. Date, functions, and other non-data values are rejected in typed calls; the output defaults to the input type. Explicit output types remain caller assertions, and runtime JSON behaviour is unchanged.
+- Positive infinite durations display as `∞y`.
+
 - Added `formatDuration`, `cloneViaJSON`, `findPathComponentsExceedingUtf8Limit`, `splitDelimitedList`, `joinDelimitedList`, and `stepCyclicIndex`, with focused imports and explicit conversion and boundary contracts.
 
-### Content application
+### Modification handling
 
-- Consumers can reuse a read, decode, compare, and conditional-write operation through `createContentApplier` from `content`. Synchronous and asynchronous adapters retain application storage, equality, and recovery policy. Only read failures enter the supplied fallback; later failures propagate, and `changed` is returned after writing completes.
+- Consumers can reuse a read, decode, compare, and conditional-write operation through `createModificationHandler` from `modification`. Synchronous and asynchronous adapters retain application storage, equality, and recovery policy. Only read failures enter the supplied fallback; later failures propagate, and `changed` is returned after writing completes.
 
 ### Callback utilities
 
-- Consumers can suppress consecutive duplicate callback arguments with `wrapMemo` from `function`. Each wrapper retains its own last value, initially `undefined`, and uses strict equality. Synchronous failures leave the previous value intact; callback return values are discarded.
+- Consumers can suppress consecutive duplicate callback arguments with `onlyWhenChanged` from `function`. Each wrapper retains its own last value, initially `undefined`, and uses strict equality. Synchronous failures leave the previous value intact; callback return values are discarded.
 
 ### Concurrency
 
-- Operations can acquire several shared lock groups with `serializedByKeys` from `concurrency/lock`. The helper awaits the callback and releases every acquired lock on success or failure. Callers provide unique keys in a consistent order and retain responsibility for avoiding nested acquisition of held keys.
+- Applications can wait for notifications independently of processing queues through `createNotifier` from `concurrency/notifier`. Current waiters share a promise, idle notifications are discarded, and the legacy `Notifier` classes retain their entry points through the same state operations.
+- Single-key operations can use `withLock` alongside `withLocks`; legacy `serialized` shares their lock registry.
+- Scoped pipelines use the `ScopedPipeline` type and the focused `concurrency/scoped.iteration` entry. The previous iteration entry remains a compatibility re-export.
+
+- Operations can acquire several shared lock groups with `withLocks` from `concurrency/lock`. The helper awaits the callback and releases every acquired lock on success or failure. Callers provide unique keys in a consistent order and retain responsibility for avoiding nested acquisition of held keys.
 
 - Added `withCounting` for an operation-scoped mutable count and `createCoalescingNotifier` for the latest pending update after a count increase or maximum wait. The notifier supports explicit flush and disposal, an optional progress-count selector, and an injected scheduler.
 
