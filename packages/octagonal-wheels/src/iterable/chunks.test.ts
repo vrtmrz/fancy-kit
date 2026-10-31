@@ -1,6 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { asChunk, asFlat } from "./chunks";
 import { GeneratorSource } from "./source";
+import { isResolved, promiseWithResolvers } from "../promises.ts";
+
+afterEach(() => vi.useRealTimers());
 describe("asChunk", () => {
     it("should yield chunks of the specified unit size", async () => {
         const source = [1, 2, 3, 4, 5, 6];
@@ -24,6 +27,21 @@ describe("asChunk", () => {
             result.push([...chunk]);
         }
         expect(result).toEqual([[1, 2], [3, 4], [5]]);
+    });
+
+    it("should flush the final partial batch when an async source completes", async () => {
+        async function* source() {
+            yield 1;
+            yield 2;
+            yield 3;
+        }
+
+        const result: number[][] = [];
+        for await (const chunk of asChunk(source(), { unit: 2 })) {
+            result.push([...chunk]);
+        }
+
+        expect(result).toEqual([[1, 2], [3]]);
     });
 
     it("should yield chunks based to unit if timeout is not specified", async () => {
@@ -123,6 +141,136 @@ describe("asChunk", () => {
             }
         });
     });
+    it("should wait for a full batch while a slow source remains open", async () => {
+        const sourcePaused = promiseWithResolvers<void>();
+        const releaseSource = promiseWithResolvers<void>();
+        const sourceClosed = promiseWithResolvers<void>();
+        let isSourceClosed = false;
+        async function* source() {
+            try {
+                yield 1;
+                sourcePaused.resolve();
+                await releaseSource.promise;
+                yield 2;
+            } finally {
+                isSourceClosed = true;
+                sourceClosed.resolve();
+            }
+        }
+
+        const iterator = asChunk(source(), { unit: 2 })[Symbol.asyncIterator]();
+        const firstChunk = iterator.next();
+        let completed = false;
+        try {
+            await sourcePaused.promise;
+            expect(isSourceClosed).toBe(false);
+            expect(await isResolved(firstChunk)).toBe(false);
+
+            releaseSource.resolve();
+            expect(await firstChunk).toEqual({ value: [1, 2], done: false });
+            expect(await iterator.next()).toEqual({ value: undefined, done: true });
+            completed = true;
+        } finally {
+            releaseSource.resolve();
+            if (!completed) {
+                await iterator.return?.();
+            }
+            await sourceClosed.promise;
+        }
+    });
+
+    it("should flush a partial chunk after the timeout while the source remains open", async () => {
+        vi.useFakeTimers();
+        const timeout = 100;
+        const sourcePaused = promiseWithResolvers<void>();
+        const releaseSource = promiseWithResolvers<void>();
+        const sourceClosed = promiseWithResolvers<void>();
+        let isSourceClosed = false;
+        async function* source() {
+            try {
+                yield "first";
+                sourcePaused.resolve();
+                await releaseSource.promise;
+                yield "second";
+            } finally {
+                isSourceClosed = true;
+                sourceClosed.resolve();
+            }
+        }
+
+        const iterator = asChunk(source(), { unit: 3, timeout })[Symbol.asyncIterator]();
+        const firstChunk = iterator.next();
+        let completed = false;
+        try {
+            await sourcePaused.promise;
+            await vi.advanceTimersByTimeAsync(0);
+            await vi.advanceTimersByTimeAsync(timeout - 1);
+            expect(await isResolved(firstChunk)).toBe(false);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(await firstChunk).toEqual({ value: ["first"], done: false });
+            expect(isSourceClosed).toBe(false);
+
+            releaseSource.resolve();
+            expect(await iterator.next()).toEqual({ value: ["second"], done: false });
+            expect(await iterator.next()).toEqual({ value: undefined, done: true });
+            completed = true;
+        } finally {
+            vi.useRealTimers();
+            releaseSource.resolve();
+            if (!completed) {
+                try {
+                    const first = await firstChunk;
+                    if (!first.done) {
+                        let result = await iterator.next();
+                        while (!result.done) {
+                            result = await iterator.next();
+                        }
+                    }
+                } catch {
+                    // Keep cleanup from masking the assertion which failed above.
+                }
+                await iterator.return?.();
+            }
+            await sourceClosed.promise;
+        }
+    });
+
+    it("should gate chunks by the configured interval", async () => {
+        vi.useFakeTimers();
+        const interval = 100;
+        const iterator = asChunk([1, 2, 3, 4], { unit: 2, interval })[Symbol.asyncIterator]();
+        let secondChunk: Promise<IteratorResult<number[]>> | undefined;
+        let completed = false;
+        try {
+            expect(await iterator.next()).toEqual({ value: [1, 2], done: false });
+            secondChunk = iterator.next();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(await isResolved(secondChunk)).toBe(false);
+            await vi.advanceTimersByTimeAsync(interval - 1);
+            expect(await isResolved(secondChunk)).toBe(false);
+            await vi.runOnlyPendingTimersAsync();
+            expect(await secondChunk).toEqual({ value: [3, 4], done: false });
+            expect(await iterator.next()).toEqual({ value: undefined, done: true });
+            completed = true;
+        } finally {
+            if (!completed) {
+                await vi.runOnlyPendingTimersAsync();
+                if (secondChunk) {
+                    try {
+                        const second = await secondChunk;
+                        if (!second.done) {
+                            await iterator.next();
+                        }
+                    } catch {
+                        // Keep cleanup from masking the assertion which failed above.
+                    }
+                }
+                await iterator.return?.();
+            }
+            vi.useRealTimers();
+        }
+    });
+
     it("should handle empty source", async () => {
         const source: number[] = [];
         const unit = 2;
