@@ -58,8 +58,18 @@ one manual resolution at a time, start delays, duplicate suppression,
 self-requeues, and disposal through the feature's unload handler. Disposal
 prevents further dispatch and does not wait for an already open dialogue or
 cancel an admitted write. Application merge decisions and dialogue lifecycle
-remain consumer-owned. This is candidate unit-test evidence, not adoption in a
-published LiveSync release or new real-Obsidian UI qualification.
+remain consumer-owned. The candidate also uses this FIFO for ConfigSync
+catalogue scans, with consumer tests for clearing pending input while preserving
+started scans.
+
+Consumer-owned real-Obsidian scenarios exercise hidden-file enablement through
+the settings UI with Merge, Fetch, and Overwrite, automatic and manual conflict
+resolution through both queues, exact file and database contents, restart, and
+second-device convergence. Existing selector, customisation, and catalogue
+reload scenarios also passed. These checks establish behaviour for
+unpublished integration candidates; package contracts and application E2E
+evidence have separate owners. They do not establish adoption in a released
+LiveSync version or physical-device behaviour.
 
 ## Blob utilities: construction, normalisation, and comparison
 
