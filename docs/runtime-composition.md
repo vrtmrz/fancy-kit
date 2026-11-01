@@ -83,12 +83,12 @@ successful acquisition, and await work which uses the resource before returning.
 A returned resource still closes if its cleanup was registered. For pipelines,
 `.pipe()` shares the current cleanup owner; `.pipeScoped()` waits for a child's
 cleanup before the following step. See the
-[execution scope guide](../packages/octagonal-wheels/guides/execution-scopes.md)
+[operation scope guide](../packages/octagonal-wheels/guides/execution-scopes.md)
 for typed pipelines, cancellation, bounded iteration, and error ordering.
 
 Choose the failure contract deliberately. `withOwnedResource` and
 `withSemaphore` retain ordinary `finally` precedence: a cleanup failure replaces
-an earlier body failure. Execution scopes preserve a single failure and aggregate
+an earlier body failure. Operation scopes preserve a single failure and aggregate
 multiple body and cleanup failures. This distinction matters when migrating an
 existing error-reporting workflow.
 

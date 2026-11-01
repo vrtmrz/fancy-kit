@@ -38,7 +38,7 @@ The operation's result after cleanup finishes.
 
 The original failure when only the operation or one cleanup fails. Multiple
 failures produce an AggregateError, with the operation failure first and cleanup
-failures following in execution order. Failure values, including undefined, are preserved.
+failures following in the order they occurred. Failure values, including undefined, are preserved.
 
 ## Remarks
 

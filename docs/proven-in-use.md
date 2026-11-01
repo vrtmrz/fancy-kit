@@ -217,7 +217,9 @@ database and extra-file batches. The current unpublished candidate uses
 contracts above. Its acquisition and release failure fixtures remain package
 tests rather than assertions about ConfigSync's current implementation.
 
-## Execution scopes: candidate integration
+<a id="execution-scopes-candidate-integration"></a>
+
+## Operation scopes: candidate integration
 
 The unpublished scope APIs combine a borrowed value, registered cleanup, typed
 pipelines, child scopes, cancellation observation, and bounded iteration.

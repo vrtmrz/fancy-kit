@@ -6,7 +6,9 @@ livesync-version: "1.0.42"
 status: implemented-unreleased
 ---
 
-# Execution scopes, pipelines, and iteration
+<a id="execution-scopes-pipelines-and-iteration"></a>
+
+# Operation scopes, pipelines, and iteration
 
 ## Purpose and status
 
@@ -118,8 +120,8 @@ transfer in this API. A child scope expresses an earlier cleanup boundary.
 | Callback and cleanup, or multiple cleanups | Throw `AggregateError`, preserving all original failure values. |
 
 Within an aggregate, a callback failure comes first, followed by cleanup
-failures in cleanup execution order. Detect failure separately from its value:
-`throw undefined` and `throw null` are still failures. Nested failures retain
+failures in the order cleanup callbacks ran. Detect failure separately from its
+value: `throw undefined` and `throw null` are still failures. Nested failures retain
 their grouping rather than being silently flattened.
 
 This differs from the existing `finally` precedence of `withSemaphore` and
@@ -336,7 +338,7 @@ not change as part of this addition.
 
 | Consumer                                    | First useful application                                                                          | Contract to retain                                                                                                                                                                                                                     |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ConfigSync `scanAllConfigFiles`             | Replace task-array assembly and per-item lifetime plumbing with iteration.                        | Finish database enumeration before dispatch; finish the database-item batch before extra files; retain per-item logging and continuation. Do not silently turn the existing enumeration into streaming execution.                      |
+| ConfigSync `scanAllConfigFiles`             | Replace task-array assembly and per-item lifetime plumbing with iteration.                        | Finish database enumeration before dispatch; finish the database-item batch before extra files; retain per-item logging and continuation. Do not silently turn the existing enumeration into streaming processing.                      |
 | Commonlib database diagnostics              | Express source ownership and preparation with scopes, and cancellation at the operation boundary. | Preserve collected evidence, cancellation checks around I/O, native late-response rejection, and close errors recorded in the diagnostic result. Final report construction must remain after cleanup where it includes cleanup errors. |
 | A temporary reader within a larger pipeline | Use `pipeScoped` to close the reader before analysis of independent content.                      | Return data rather than a resource which its child scope closes.                                                                                                                                                                       |
 | Existing remote-resource or logger users    | Reuse an owned resource's disposal where an explicit scope improves composition.                  | Borrowed resources stay borrowed; preserve the established disposal and exception contract unless separately agreed.                                                                                                                   |
@@ -388,7 +390,7 @@ The implementation and verification follow these contract groups:
    returned partial results, unchanged callback errors, listener removal,
    normal close, inherited observation in child scopes, and cancellation during
    cleanup. Keep native late-response consumer tests.
-4. Iteration: sequential and bounded execution, cleanup occupying slots, input
+4. Iteration: sequential and bounded processing, cleanup occupying slots, input
    ordering, async sources, awaited yielded values, cancellation at each await,
    iterator closure, uncaught failures, started-work drainage, retained errors,
    map result order, and callbacks which deliberately handle their own errors.

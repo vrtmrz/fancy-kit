@@ -1,6 +1,6 @@
 /** A synchronous value or an awaitable result. */
 export type Awaitable<T> = T | PromiseLike<T>;
-/** A borrowed value and cleanup registrations owned by one execution. */
+/** A borrowed value and cleanup registrations owned by one operation. */
 export interface Scope<T> {
     /** The supplied value. Object identity and any deliberate sharing are preserved. */
     readonly value: T;
@@ -8,7 +8,7 @@ export interface Scope<T> {
      * Registers cleanup to run once, in reverse registration order, after the operation settles.
      *
      * Each result is awaited and failures do not skip remaining registrations. Register only
-     * resources owned by this execution. Registration after closing has started throws.
+     * resources owned by this operation. Registration after closing has started throws.
      */
     defer(cleanup: () => Awaitable<void>): void;
 }
@@ -18,7 +18,7 @@ export type ScopedStep<I, O, E extends object = object> = (ctx: Scope<I> & E) =>
 export interface ScopedPipeline<I, O, E extends object = object> {
     /** Runs the declared steps in the supplied scope, without closing that borrowed scope. */
     (ctx: Scope<I> & E): Awaitable<O>;
-    /** Returns a new pipeline whose next step shares this execution's cleanup owner. */
+    /** Returns a new pipeline whose next step shares this operation's cleanup owner. */
     pipe<N>(step: ScopedStep<O, N, E>): ScopedPipeline<I, N, E>;
     /**
      * Returns a new pipeline which closes a child scope before passing its result onward.
@@ -56,7 +56,7 @@ export interface ScopedPipeline<I, O, E extends object = object> {
  * @returns The operation's result after cleanup finishes.
  * @throws The original failure when only the operation or one cleanup fails. Multiple
  * failures produce an AggregateError, with the operation failure first and cleanup
- * failures following in execution order. Failure values, including undefined, are preserved.
+ * failures following in the order they occurred. Failure values, including undefined, are preserved.
  * @remarks
  * Cleanup runs in reverse registration order on success, early return, and failure.
  * Returning an owned resource does not transfer ownership: its registered cleanup still runs.
@@ -87,7 +87,7 @@ export declare function withScope<I, O>(value: I, operation: ScopedStep<I, O>): 
  * Declares an identity pipeline which can be extended with typed steps.
  *
  * @typeParam I - The value supplied when the pipeline is executed.
- * @typeParam E - Capabilities required from the execution context; declaration does not create them.
+ * @typeParam E - Capabilities required from the operation context; declaration does not create them.
  * @returns A callable pipeline with immutable pipe and pipeScoped composition methods.
  * @remarks
  * pipe shares the current cleanup owner. pipeScoped owns cleanup for its step and

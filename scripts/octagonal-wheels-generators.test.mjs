@@ -93,7 +93,7 @@ test("generates directory index aliases without treating dotted basenames as dir
   }
 });
 
-test("README generation retains the execution-scope and asyncQueue guidance", async () => {
+test("README generation retains the operation scope and asyncQueue guidance", async () => {
   const root = await mkdtemp(join(tmpdir(), "fancy-kit-octagonal-readme-"));
   try {
     await mkdir(join(root, "coverage"), { recursive: true });
@@ -115,7 +115,7 @@ test("README generation retains the execution-scope and asyncQueue guidance", as
     await runGeneratorInFixture(root, "updateReadme.js");
     const readme = await readFile(join(root, "README.md"), "utf8");
 
-    assert.match(readme, /^## Execution scopes$/m);
+    assert.match(readme, /^## Operation scopes$/m);
     assert.equal(
       readme,
       await readFile(join(packageDirectory, "README.md"), "utf8"),

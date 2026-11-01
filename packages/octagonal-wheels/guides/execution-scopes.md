@@ -1,6 +1,8 @@
-# Execution scopes
+<a id="execution-scopes"></a>
 
-Use an execution scope when one asynchronous operation acquires resources and
+# Operation scopes
+
+Use an operation scope when one asynchronous operation acquires resources and
 must finish their cleanup before returning. The APIs in this guide are
 unreleased. The previous `octagonal-wheels/concurrency/scopedIteration` import
 remains available as a compatibility re-export.
@@ -35,7 +37,7 @@ operation finishes. To release a permit at the reader boundary, place its
 returns normally, returns early, or throws. A pipeline is optional.
 
 Values are borrowed by reference. The scope does not clone, freeze, merge, or
-automatically dispose them. Register only resources acquired for this execution,
+automatically dispose them. Register only resources acquired for this operation,
 immediately after acquisition succeeds. Returning a resource does not transfer
 ownership: registered cleanup still runs. Return independent data from a child
 scope when its resources must close before the next step.
@@ -47,8 +49,8 @@ two registrations. Registration after closing starts throws, including from
 inside a cleanup callback. Use a separate scope for temporary cleanup resources.
 
 A single failure is rethrown unchanged. Multiple failures produce `AggregateError`
-with the body failure first, then cleanup failures in execution order. Thrown
-`undefined` and nested aggregates are retained. This differs from
+with the body failure first, then cleanup failures in the order they occurred.
+Thrown `undefined` and nested aggregates are retained. This differs from
 `withOwnedResource` and `withSemaphore`, whose existing `finally` precedence is
 unchanged. A consumer with a domain-specific cleanup report can catch failures
 inside its deferred callback and add them to that report.
@@ -60,7 +62,7 @@ A step is an ordinary closure of type `ScopedStep<Input, Output, Capabilities>`.
 pipeline, passing the preceding return value as the next `ctx.value`. Earlier
 pipelines remain reusable, and declaring a pipeline starts no work.
 
-Steps share the execution's cleanup owner. Their value views remain stable, so
+Steps share the operation's cleanup owner. Their value views remain stable, so
 deferred closures keep the resources they captured. Pass earlier fields onward
 explicitly when a later step needs them; values are not implicitly merged.
 
@@ -96,7 +98,7 @@ Cancellation is notified promptly, but cleanup waits for the body. User cleanup
 runs before the parent listener is removed and the owned signal is aborted.
 Child scopes borrow the signal and cancellation observation; closing a child
 does not abort the parent's controller. Contexts are valid only during their
-own execution.
+own operation.
 
 Cancellation remains cooperative. It cannot interrupt an API which ignores the
 signal, withdraw an existing semaphore acquisition, or discover detached promises.

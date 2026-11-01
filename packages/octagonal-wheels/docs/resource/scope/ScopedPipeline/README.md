@@ -46,7 +46,7 @@ pipe<N>(step: ScopedStep<O, N, E>): ScopedPipeline<I, N, E>;
 
 Defined in: packages/octagonal-wheels/src/resource/scope.ts:25
 
-Returns a new pipeline whose next step shares this execution's cleanup owner.
+Returns a new pipeline whose next step shares this operation's cleanup owner.
 
 #### Type Parameters
 

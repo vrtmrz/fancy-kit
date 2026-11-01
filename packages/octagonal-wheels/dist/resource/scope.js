@@ -13,7 +13,7 @@ async function runScope(parent, value, operation) {
     let result;
     const context = valueView(parent, value, (callback) => {
         if (state !== "running")
-            throw new Error("The execution scope is already closing or closed.");
+            throw new Error("The operation scope is already closing or closed.");
         if (typeof callback !== "function")
             throw new TypeError("Scope cleanup must be a function.");
         cleanup.push(callback);
@@ -43,7 +43,7 @@ async function runScope(parent, value, operation) {
     if (failures.length === 1)
         throw failures[0];
     if (failures.length > 1)
-        throw new AggregateError(failures, "Multiple failures occurred in the execution scope.");
+        throw new AggregateError(failures, "Multiple failures occurred in the operation scope.");
     return result;
 }
 /**
@@ -54,7 +54,7 @@ async function runScope(parent, value, operation) {
  * @returns The operation's result after cleanup finishes.
  * @throws The original failure when only the operation or one cleanup fails. Multiple
  * failures produce an AggregateError, with the operation failure first and cleanup
- * failures following in execution order. Failure values, including undefined, are preserved.
+ * failures following in the order they occurred. Failure values, including undefined, are preserved.
  * @remarks
  * Cleanup runs in reverse registration order on success, early return, and failure.
  * Returning an owned resource does not transfer ownership: its registered cleanup still runs.
@@ -95,7 +95,7 @@ function pipelineWithSteps(steps) {
     };
     const append = (step, child) => pipelineWithSteps([
         ...steps,
-        // The public pipe signature checks this boundary before values are erased for execution.
+        // The public pipe signature checks this boundary before values are erased at runtime.
         { child, operation: step },
     ]);
     return Object.assign(execute, {
@@ -107,7 +107,7 @@ function pipelineWithSteps(steps) {
  * Declares an identity pipeline which can be extended with typed steps.
  *
  * @typeParam I - The value supplied when the pipeline is executed.
- * @typeParam E - Capabilities required from the execution context; declaration does not create them.
+ * @typeParam E - Capabilities required from the operation context; declaration does not create them.
  * @returns A callable pipeline with immutable pipe and pipeScoped composition methods.
  * @remarks
  * pipe shares the current cleanup owner. pipeScoped owns cleanup for its step and

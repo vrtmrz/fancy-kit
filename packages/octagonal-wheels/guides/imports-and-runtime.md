@@ -401,11 +401,11 @@ symbols, `using`, a host global, or a polyfill.
 
 ## Execute with deferred cleanup
 
-Use `withScope` for an operation which registers cleanup during execution.
+Use `withScope` for an operation which registers cleanup while it runs.
 `scoped().pipe()` composes typed steps with the same cleanup owner;
 `pipeScoped()` closes a child before the next step. Cancellation and bounded
 iteration use that same context shape. See the
-[execution scope guide](execution-scopes.md) for ownership, failure aggregation,
+[operation scope guide](execution-scopes.md) for ownership, failure aggregation,
 partial results, and the distinction from existing `finally`-based helpers.
 
 ## Lifecycle and side effects

@@ -19,7 +19,7 @@ Declares an identity pipeline which can be extended with typed steps.
 | Type Parameter         | Default type | Description                                                                         |
 | ---------------------- | ------------ | ----------------------------------------------------------------------------------- |
 | `I`                    | -            | The value supplied when the pipeline is executed.                                   |
-| `E` _extends_ `object` | `object`     | Capabilities required from the execution context; declaration does not create them. |
+| `E` _extends_ `object` | `object`     | Capabilities required from the operation context; declaration does not create them. |
 
 ## Returns
 

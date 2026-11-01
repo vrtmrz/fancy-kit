@@ -79,13 +79,15 @@ operation; the default uses global timers only when needed. See the
 [deferred action guide](guides/imports-and-runtime.md#own-one-delayed-callback) for
 lifecycle and testing contracts.
 
-## Execution scopes
+<a id="execution-scopes"></a>
 
-The unreleased execution-scope APIs keep resource acquisition, typed pipelines,
+## Operation scopes
+
+The unreleased operation scope APIs keep resource acquisition, typed pipelines,
 and deferred cleanup within one operation. Use `withScope` and `scoped` from
 `resource/scope`, `withCancellation` from `concurrency/cancellation`, and
 `forEachInScope` or `mapInScope` from `concurrency/scoped.iteration`.
-The [execution scope guide](guides/execution-scopes.md) explains child lifetimes,
+The [operation scope guide](guides/execution-scopes.md) explains child lifetimes,
 partial results, error aggregation, semaphore preparation, and disposable input
 queues from `iterable/asyncQueue`.
 

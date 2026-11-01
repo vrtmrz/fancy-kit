@@ -803,7 +803,7 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length + 1} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, the Blob, DeferredAction, semaphore, execution scope, callback utility, and runtime utility type and runtime fixtures, and 18 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length + 1} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, the Blob, DeferredAction, semaphore, operation scope, callback utility, and runtime utility type and runtime fixtures, and 18 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

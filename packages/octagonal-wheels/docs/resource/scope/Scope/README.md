@@ -8,7 +8,7 @@
 
 Defined in: packages/octagonal-wheels/src/resource/scope.ts:5
 
-A borrowed value and cleanup registrations owned by one execution.
+A borrowed value and cleanup registrations owned by one operation.
 
 ## Type Parameters
 
@@ -35,7 +35,7 @@ Defined in: packages/octagonal-wheels/src/resource/scope.ts:14
 Registers cleanup to run once, in reverse registration order, after the operation settles.
 
 Each result is awaited and failures do not skip remaining registrations. Register only
-resources owned by this execution. Registration after closing has started throws.
+resources owned by this operation. Registration after closing has started throws.
 
 #### Parameters
 
