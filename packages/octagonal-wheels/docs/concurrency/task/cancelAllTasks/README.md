@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / cancelAllTasks
 
@@ -10,7 +10,7 @@
 function cancelAllTasks(): void;
 ```
 
-Defined in: [src/concurrency/task.ts:161](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L161)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:161
 
 ## Returns
 

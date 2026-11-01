@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [pacemaker](../README.md) / PaceMaker
 
 # Class: PaceMaker
 
-Defined in: [src/bureau/PaceMaker.ts:1](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L1)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:1
 
 ## Constructors
 
@@ -16,12 +16,12 @@ Defined in: [src/bureau/PaceMaker.ts:1](https://github.com/vrtmrz/octagonal-whee
 new PaceMaker(interval: number): PaceMaker;
 ```
 
-Defined in: [src/bureau/PaceMaker.ts:5](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L5)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:5
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter  | Type     |
+| ---------- | -------- |
 | `interval` | `number` |
 
 #### Returns
@@ -30,10 +30,10 @@ Defined in: [src/bureau/PaceMaker.ts:5](https://github.com/vrtmrz/octagonal-whee
 
 ## Properties
 
-| Property | Modifier | Type | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="_interval"></a> `_interval` | `public` | `number` | [src/bureau/PaceMaker.ts:2](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L2) |
-| <a id="_minimumnext"></a> `_minimumNext` | `public` | `undefined` \| `number` | [src/bureau/PaceMaker.ts:3](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L3) |
+| Property                                 | Modifier | Type                    | Defined in                                          |
+| ---------------------------------------- | -------- | ----------------------- | --------------------------------------------------- |
+| <a id="_interval"></a> `_interval`       | `public` | `number`                | packages/octagonal-wheels/src/bureau/PaceMaker.ts:2 |
+| <a id="_minimumnext"></a> `_minimumNext` | `public` | `number` \| `undefined` | packages/octagonal-wheels/src/bureau/PaceMaker.ts:3 |
 
 ## Accessors
 
@@ -45,7 +45,7 @@ Defined in: [src/bureau/PaceMaker.ts:5](https://github.com/vrtmrz/octagonal-whee
 get paced(): Promise<void>;
 ```
 
-Defined in: [src/bureau/PaceMaker.ts:53](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L53)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:53
 
 The promise for waiting paced
 
@@ -53,7 +53,7 @@ The promise for waiting paced
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### pacedSinceMark
 
@@ -63,7 +63,7 @@ The promise for waiting paced
 get pacedSinceMark(): Promise<void>;
 ```
 
-Defined in: [src/bureau/PaceMaker.ts:59](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L59)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:59
 
 The promise for waiting paced since the last mark
 
@@ -79,19 +79,19 @@ The promise for waiting paced since the last mark
 _getPaced(doMark: boolean): Promise<void>;
 ```
 
-Defined in: [src/bureau/PaceMaker.ts:33](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L33)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:33
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `doMark` | `boolean` |
+| Parameter | Type      |
+| --------- | --------- |
+| `doMark`  | `boolean` |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### changeInterval()
 
@@ -99,38 +99,38 @@ Defined in: [src/bureau/PaceMaker.ts:33](https://github.com/vrtmrz/octagonal-whe
 changeInterval(interval: number): void;
 ```
 
-Defined in: [src/bureau/PaceMaker.ts:14](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L14)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:14
 
 Change the interval of the pacing.
 This will reset the minimum next pacing time.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `interval` | `number` |  |
+| Parameter  | Type     | Description |
+| ---------- | -------- | ----------- |
+| `interval` | `number` | -           |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### mark()
 
 ```ts
-mark(now: number): void;
+mark(now?: number): void;
 ```
 
-Defined in: [src/bureau/PaceMaker.ts:25](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/PaceMaker.ts#L25)
+Defined in: packages/octagonal-wheels/src/bureau/PaceMaker.ts:25
 
 Mark the current time as the basis for the next pacing.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `now` | `number` |  |
+| Parameter | Type     | Description |
+| --------- | -------- | ----------- |
+| `now`     | `number` | -           |
 
 #### Returns
 

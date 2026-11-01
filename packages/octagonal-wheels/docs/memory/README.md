@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / memory
 

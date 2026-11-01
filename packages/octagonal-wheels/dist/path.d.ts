@@ -20,6 +20,13 @@ export interface ResolvePathWithinRootOptions extends SafeRelativePathOptions {
     /** The separator used in the returned path. Defaults to `/`. */
     separator?: "/" | "\\";
 }
+/** A non-empty path component that exceeds a caller-supplied UTF-8 byte limit. */
+export interface OversizedPathComponent {
+    /** The original component text. */
+    component: string;
+    /** The component's UTF-8 encoded length in bytes. */
+    utf8Bytes: number;
+}
 /** An error raised when an untrusted path fails the OW path-safety contract. */
 export declare class UnsafePathError extends Error {
     /** The complete untrusted input that was rejected. */
@@ -96,4 +103,17 @@ export declare function isSafeRelativePath(path: string, options?: SafeRelativeP
  * component before joining. An empty root is useful for vault-relative paths.
  */
 export declare function resolvePathWithinRoot(root: string, relativePath: string, options?: ResolvePathWithinRootOptions): string;
+/**
+ * Finds path components whose UTF-8 encoded length exceeds a byte limit.
+ *
+ * @param path - A path whose components are separated by forward slashes.
+ * @param maxBytes - The maximum permitted UTF-8 byte length for each component.
+ * @returns Oversized non-empty components in their original order, with their
+ * UTF-8 byte lengths.
+ * @remarks Leading, trailing, and repeated slashes produce empty components,
+ * which are omitted. The comparison is strictly greater than `maxBytes`.
+ * Components are measured independently; the complete path length is ignored.
+ * Calling this function requires the standard global TextEncoder constructor.
+ */
+export declare function findPathComponentsExceedingUtf8Limit(path: string, maxBytes: number): OversizedPathComponent[];
 export {};

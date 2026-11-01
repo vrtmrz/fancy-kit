@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [concurrency](../README.md) / lock
 
@@ -25,6 +25,8 @@
 - [onlyLatest](onlyLatest/README.md)
 - [scheduleAndRunOnlyLatest](scheduleAndRunOnlyLatest/README.md)
 - [scheduleOnceIfDuplicated](scheduleOnceIfDuplicated/README.md)
-- [serialized](serialized/README.md)
+- [~~serialized~~](serialized/README.md)
 - [shareRunningResult](shareRunningResult/README.md)
 - [skipIfDuplicated](skipIfDuplicated/README.md)
+- [withLock](withLock/README.md)
+- [withLocks](withLocks/README.md)

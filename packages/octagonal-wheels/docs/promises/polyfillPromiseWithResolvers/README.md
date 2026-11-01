@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / polyfillPromiseWithResolvers
 
@@ -10,15 +10,15 @@
 function polyfillPromiseWithResolvers<T>(): PromiseWithResolvers<T>;
 ```
 
-Defined in: [src/promises.ts:49](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L49)
+Defined in: packages/octagonal-wheels/src/promises.ts:49
 
 Creates a promise and returns it along with the resolve and reject functions.
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | The type of the promise value. |
+| Type Parameter | Description                    |
+| -------------- | ------------------------------ |
+| `T`            | The type of the promise value. |
 
 ## Returns
 

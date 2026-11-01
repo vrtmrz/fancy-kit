@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / databases
 
@@ -21,7 +21,7 @@
 
 Renames and re-exports [simplestorebase](simplestorebase/README.md)
 
-***
+---
 
 ### SimpleStoreIDB
 

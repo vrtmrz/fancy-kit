@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [common](../../README.md) / [logger](../README.md) / LoggerFunction
 
@@ -10,4 +10,4 @@
 type LoggerFunction = typeof defaultLogger;
 ```
 
-Defined in: [src/common/logger.ts:33](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L33)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:33

@@ -45,6 +45,49 @@ describe("Clerk", () => {
         expect(clerk.state).toBe(ClerkState.DISPOSED);
     });
 
+    it("should let a started job settle without starting another after disposal", async () => {
+        const inbox = new Inbox<string>(2);
+        await inbox.post("first");
+        await inbox.post("second");
+
+        const started = promiseWithResolvers<void>();
+        const release = promiseWithResolvers<void>();
+        const settled = promiseWithResolvers<void>();
+        const loopFinished = promiseWithResolvers<void>();
+        const calls: string[] = [];
+        const clerk = new Clerk<string>({
+            assigned: inbox,
+            job: async (item) => {
+                calls.push(item);
+                if (item === "first") {
+                    started.resolve();
+                    await release.promise;
+                    settled.resolve();
+                }
+            },
+        });
+        clerk.setOnProgress((state) => {
+            if (state.state === ClerkState.DISPOSED) {
+                loopFinished.resolve();
+            }
+        });
+
+        try {
+            await started.promise;
+            clerk.dispose();
+            release.resolve();
+            await settled.promise;
+            await loopFinished.promise;
+
+            expect(calls).toEqual(["first"]);
+        } finally {
+            release.resolve();
+            inbox.dispose();
+            await loopFinished.promise;
+            await Promise.all([inbox.onDisposed, clerk.onDisposed]);
+        }
+    });
+
     it("should processable multiple clerks", async () => {
         const result: string[] = [];
         const completed = promiseWithResolvers<void>();

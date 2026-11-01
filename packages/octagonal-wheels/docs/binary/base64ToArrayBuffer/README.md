@@ -1,16 +1,16 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [binary](../README.md) / base64ToArrayBuffer
 
-# Variable: base64ToArrayBuffer()
+# Variable: base64ToArrayBuffer
 
 ```ts
 const base64ToArrayBuffer: (base64: string | string[]) => ArrayBuffer;
 ```
 
-Defined in: [src/binary/base64.ts:63](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/binary/base64.ts#L63)
+Defined in: packages/octagonal-wheels/src/binary/base64.ts:63
 
 Converts a base64 string or an array of base64 strings to an ArrayBuffer.
 
@@ -18,9 +18,9 @@ Converts a base64 string or an array of base64 strings to an ArrayBuffer using n
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `base64` | `string` \| `string`[] | The base64 string or an array of base64 strings to convert. |
+| Parameter | Type                   | Description                                                 |
+| --------- | ---------------------- | ----------------------------------------------------------- |
+| `base64`  | `string` \| `string`[] | The base64 string or an array of base64 strings to convert. |
 
 ## Returns
 
@@ -29,6 +29,8 @@ Converts a base64 string or an array of base64 strings to an ArrayBuffer using n
 The converted ArrayBuffer.
 
 ## Param
+
+**base64**
 
 The base64 string or an array of base64 strings to convert.
 

@@ -20,6 +20,8 @@ const map = files.flatMap((file) => {
     if (file == "index.js") {
         return [];
     }
+    // Implementation and retired helper modules remain loadable by relative imports only.
+    if (file.endsWith(".internal.js") || file.endsWith(".deprecated.js")) return [];
     if (file.endsWith("xxhash-wasm.js")) {
         // Skip xxhash-wasm.js as it is not a module
         return [];
@@ -31,7 +33,7 @@ const map = files.flatMap((file) => {
     if (fs.existsSync(join(distDir, typePath)) === false) {
         console.warn(`Type definition file not found: ${typePath}`);
     }
-    if (exportPath.endsWith("index")) {
+    if (exportPath.endsWith("/index")) {
         exportPath = exportPath.replace(/\/index$/, "");
 
         return [

@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [channel](../../README.md) / [channels](../README.md) / Survey
 
 # Class: Survey\<T, U\>
 
-Defined in: [src/channel/channels.ts:425](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L425)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:425
 
 Survey: Connect many to many and expect all to respond, collecting all results.
 The invocation returns an array of promises, each resolving to the result of a handler.
@@ -18,10 +18,10 @@ Be aware that the results may arrive in any order, depending on the response tim
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 ## Constructors
 
@@ -31,16 +31,16 @@ Be aware that the results may arrive in any order, depending on the response tim
 new Survey<T, U>(channelName: string, transport: ITransport): Survey<T, U>;
 ```
 
-Defined in: [src/channel/channels.ts:431](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L431)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:431
 
 Constructor for Survey channel
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `channelName` | `string` | unique name of the channel |
-| `transport` | [`ITransport`](../../transport/ITransport/README.md) | The transport layer for communication |
+| Parameter     | Type                                                 | Description                           |
+| ------------- | ---------------------------------------------------- | ------------------------------------- |
+| `channelName` | `string`                                             | unique name of the channel            |
+| `transport`   | [`ITransport`](../../transport/ITransport/README.md) | The transport layer for communication |
 
 #### Returns
 
@@ -52,15 +52,15 @@ Constructor for Survey channel
 
 ## Properties
 
-| Property | Modifier | Type | Default value | Description | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| <a id="anyadvertisementknown"></a> `anyAdvertisementKnown?` | `protected` | [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`void`\> | `undefined` | - | [`MultiCastChannel`](../MultiCastChannel/README.md).[`anyAdvertisementKnown`](../MultiCastChannel/README.md#anyadvertisementknown) | [src/channel/channels.ts:258](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L258) |
-| <a id="channelname"></a> `channelName` | `protected` | `string` | `undefined` | - | [`MultiCastChannel`](../MultiCastChannel/README.md).[`channelName`](../MultiCastChannel/README.md#channelname) | [src/channel/channels.ts:44](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L44) |
-| <a id="knownsubscribers"></a> `knownSubscribers` | `protected` | `Set`\<`string`\> | `undefined` | - | [`MultiCastChannel`](../MultiCastChannel/README.md).[`knownSubscribers`](../MultiCastChannel/README.md#knownsubscribers) | [src/channel/channels.ts:257](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L257) |
-| <a id="prefix"></a> `prefix` | `protected` | `string` | `undefined` | - | [`MultiCastChannel`](../MultiCastChannel/README.md).[`prefix`](../MultiCastChannel/README.md#prefix) | [src/channel/channels.ts:39](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L39) |
-| <a id="timeoutms"></a> `timeoutMs` | `protected` | `number` | `DEFAULT_QUERY_TIMEOUT_MS` | - | [`MultiCastChannel`](../MultiCastChannel/README.md).[`timeoutMs`](../MultiCastChannel/README.md#timeoutms) | [src/channel/channels.ts:37](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L37) |
-| <a id="transport"></a> `transport` | `protected` | [`ITransport`](../../transport/ITransport/README.md) | `undefined` | transport instance to use (ITransport) | [`MultiCastChannel`](../MultiCastChannel/README.md).[`transport`](../MultiCastChannel/README.md#transport) | [src/channel/channels.ts:54](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L54) |
-| <a id="unsubscribes"></a> `unsubscribes` | `protected` | `Set`\<() => `void`\> | `undefined` | - | [`MultiCastChannel`](../MultiCastChannel/README.md).[`unsubscribes`](../MultiCastChannel/README.md#unsubscribes) | [src/channel/channels.ts:62](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L62) |
+| Property                                                    | Modifier    | Type                                                                                 | Default value              | Description                            | Inherited from                                                                                                                     | Defined in                                            |
+| ----------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ | -------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| <a id="anyadvertisementknown"></a> `anyAdvertisementKnown?` | `protected` | [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`void`\> | `undefined`                | -                                      | [`MultiCastChannel`](../MultiCastChannel/README.md).[`anyAdvertisementKnown`](../MultiCastChannel/README.md#anyadvertisementknown) | packages/octagonal-wheels/src/channel/channels.ts:258 |
+| <a id="channelname"></a> `channelName`                      | `protected` | `string`                                                                             | `undefined`                | -                                      | [`MultiCastChannel`](../MultiCastChannel/README.md).[`channelName`](../MultiCastChannel/README.md#channelname)                     | packages/octagonal-wheels/src/channel/channels.ts:44  |
+| <a id="knownsubscribers"></a> `knownSubscribers`            | `protected` | `Set`\<`string`\>                                                                    | `undefined`                | -                                      | [`MultiCastChannel`](../MultiCastChannel/README.md).[`knownSubscribers`](../MultiCastChannel/README.md#knownsubscribers)           | packages/octagonal-wheels/src/channel/channels.ts:257 |
+| <a id="prefix"></a> `prefix`                                | `protected` | `string`                                                                             | `undefined`                | -                                      | [`MultiCastChannel`](../MultiCastChannel/README.md).[`prefix`](../MultiCastChannel/README.md#prefix)                               | packages/octagonal-wheels/src/channel/channels.ts:39  |
+| <a id="timeoutms"></a> `timeoutMs`                          | `protected` | `number`                                                                             | `DEFAULT_QUERY_TIMEOUT_MS` | -                                      | [`MultiCastChannel`](../MultiCastChannel/README.md).[`timeoutMs`](../MultiCastChannel/README.md#timeoutms)                         | packages/octagonal-wheels/src/channel/channels.ts:37  |
+| <a id="transport"></a> `transport`                          | `protected` | [`ITransport`](../../transport/ITransport/README.md)                                 | `undefined`                | transport instance to use (ITransport) | [`MultiCastChannel`](../MultiCastChannel/README.md).[`transport`](../MultiCastChannel/README.md#transport)                         | packages/octagonal-wheels/src/channel/channels.ts:54  |
+| <a id="unsubscribes"></a> `unsubscribes`                    | `protected` | `Set`\<() => `void`\>                                                                | `undefined`                | -                                      | [`MultiCastChannel`](../MultiCastChannel/README.md).[`unsubscribes`](../MultiCastChannel/README.md#unsubscribes)                   | packages/octagonal-wheels/src/channel/channels.ts:62  |
 
 ## Accessors
 
@@ -72,7 +72,7 @@ Constructor for Survey channel
 get prefixedChannelName(): string;
 ```
 
-Defined in: [src/channel/channels.ts:41](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L41)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:41
 
 ##### Returns
 
@@ -90,14 +90,14 @@ Defined in: [src/channel/channels.ts:41](https://github.com/vrtmrz/octagonal-whe
 protected addUnsubscribe(unsubscribeCallback: () => void, signal?: AbortSignal): void;
 ```
 
-Defined in: [src/channel/channels.ts:74](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L74)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:74
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `unsubscribeCallback` | () => `void` |
-| `signal?` | `AbortSignal` |
+| Parameter             | Type          |
+| --------------------- | ------------- |
+| `unsubscribeCallback` | () => `void`  |
+| `signal?`             | `AbortSignal` |
 
 #### Returns
 
@@ -107,7 +107,7 @@ Defined in: [src/channel/channels.ts:74](https://github.com/vrtmrz/octagonal-whe
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`addUnsubscribe`](../MultiCastChannel/README.md#addunsubscribe)
 
-***
+---
 
 ### advertiseSubId()
 
@@ -115,14 +115,14 @@ Defined in: [src/channel/channels.ts:74](https://github.com/vrtmrz/octagonal-whe
 protected advertiseSubId(subId: string, id: string): void;
 ```
 
-Defined in: [src/channel/channels.ts:296](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L296)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:296
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `subId` | `string` |
-| `id` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `subId`   | `string` |
+| `id`      | `string` |
 
 #### Returns
 
@@ -132,7 +132,7 @@ Defined in: [src/channel/channels.ts:296](https://github.com/vrtmrz/octagonal-wh
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`advertiseSubId`](../MultiCastChannel/README.md#advertisesubid)
 
-***
+---
 
 ### close()
 
@@ -140,7 +140,7 @@ Defined in: [src/channel/channels.ts:296](https://github.com/vrtmrz/octagonal-wh
 close(): void;
 ```
 
-Defined in: [src/channel/channels.ts:68](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L68)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:68
 
 Close the channel and clean up resources.
 This will unsubscribe all listeners associated with this channel.
@@ -153,7 +153,7 @@ This will unsubscribe all listeners associated with this channel.
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`close`](../MultiCastChannel/README.md#close)
 
-***
+---
 
 ### invoke()
 
@@ -161,15 +161,15 @@ This will unsubscribe all listeners associated with this channel.
 invoke(...args: T): Promise<Awaited<U>>[];
 ```
 
-Defined in: [src/channel/channels.ts:440](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L440)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:440
 
 Invoke all registered handlers and collect their results.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| ...`args` | `T` | arguments to pass to the registered functions |
+| Parameter | Type | Description                                   |
+| --------- | ---- | --------------------------------------------- |
+| ...`args` | `T`  | arguments to pass to the registered functions |
 
 #### Returns
 
@@ -181,7 +181,7 @@ a promise that resolves with an array of results from all handlers
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`invoke`](../MultiCastChannel/README.md#invoke)
 
-***
+---
 
 ### publish()
 
@@ -189,13 +189,13 @@ a promise that resolves with an array of results from all handlers
 protected publish(data: any): void;
 ```
 
-Defined in: [src/channel/channels.ts:116](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L116)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:116
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `data` | `any` |
+| Parameter | Type  |
+| --------- | ----- |
+| `data`    | `any` |
 
 #### Returns
 
@@ -205,7 +205,7 @@ Defined in: [src/channel/channels.ts:116](https://github.com/vrtmrz/octagonal-wh
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`publish`](../MultiCastChannel/README.md#publish)
 
-***
+---
 
 ### query()
 
@@ -213,21 +213,21 @@ Defined in: [src/channel/channels.ts:116](https://github.com/vrtmrz/octagonal-wh
 query<T, U>(args: T, subId?: string): Promise<Awaited<U>>;
 ```
 
-Defined in: [src/channel/channels.ts:121](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L121)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:121
 
 #### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `args` | `T` |
-| `subId?` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `args`    | `T`      |
+| `subId?`  | `string` |
 
 #### Returns
 
@@ -237,7 +237,7 @@ Defined in: [src/channel/channels.ts:121](https://github.com/vrtmrz/octagonal-wh
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`query`](../MultiCastChannel/README.md#query)
 
-***
+---
 
 ### register()
 
@@ -245,34 +245,28 @@ Defined in: [src/channel/channels.ts:121](https://github.com/vrtmrz/octagonal-wh
 register(func: ChannelFunc<T, Promise<Awaited<U>>>, options?: RegisterOptions): () => void;
 ```
 
-Defined in: [src/channel/channels.ts:265](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L265)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:265
 
 Register a function to handle incoming messages on the MultiCastChannel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `func` | [`ChannelFunc`](../ChannelFunc/README.md)\<`T`, `Promise`\<`Awaited`\<`U`\>\>\> | function to register |
-| `options?` | [`RegisterOptions`](../RegisterOptions/README.md) | optional RegisterOptions, including AbortSignal to unregister |
+| Parameter  | Type                                                                            | Description                                                   |
+| ---------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `func`     | [`ChannelFunc`](../ChannelFunc/README.md)\<`T`, `Promise`\<`Awaited`\<`U`\>\>\> | function to register                                          |
+| `options?` | [`RegisterOptions`](../RegisterOptions/README.md)                               | optional RegisterOptions, including AbortSignal to unregister |
 
 #### Returns
 
 a function to unregister the handler
 
-```ts
-(): void;
-```
-
-##### Returns
-
-`void`
+() => `void`
 
 #### Inherited from
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`register`](../MultiCastChannel/README.md#register)
 
-***
+---
 
 ### requestAdvertisement()
 
@@ -280,7 +274,7 @@ a function to unregister the handler
 requestAdvertisement(): Promise<void>;
 ```
 
-Defined in: [src/channel/channels.ts:324](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L324)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:324
 
 Request advertisement from other instances.
 
@@ -294,7 +288,7 @@ A promise that resolves when at least one advertisement is known.
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`requestAdvertisement`](../MultiCastChannel/README.md#requestadvertisement)
 
-***
+---
 
 ### respond()
 
@@ -305,16 +299,16 @@ protected respond(originalMessage: RequestMessage<any>, data: {
 }): void;
 ```
 
-Defined in: [src/channel/channels.ts:291](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L291)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:291
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `originalMessage` | `RequestMessage`\<`any`\> |
-| `data` | \{ `error?`: `any`; `result?`: `any`; \} |
-| `data.error?` | `any` |
-| `data.result?` | `any` |
+| Parameter         | Type                                     |
+| ----------------- | ---------------------------------------- |
+| `originalMessage` | `RequestMessage`\<`any`\>                |
+| `data`            | \{ `error?`: `any`; `result?`: `any`; \} |
+| `data.error?`     | `any`                                    |
+| `data.result?`    | `any`                                    |
 
 #### Returns
 
@@ -324,42 +318,36 @@ Defined in: [src/channel/channels.ts:291](https://github.com/vrtmrz/octagonal-wh
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`respond`](../MultiCastChannel/README.md#respond)
 
-***
+---
 
 ### subscribe()
 
 ```ts
 protected subscribe(
-   listener: (data: any) => void | Promise<void>, 
-   signal?: AbortSignal, 
+   listener: (data: any) => void | Promise<void>,
+   signal?: AbortSignal,
    tearDown?: () => void): () => void;
 ```
 
-Defined in: [src/channel/channels.ts:100](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L100)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:100
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `listener` | (`data`: `any`) => `void` \| `Promise`\<`void`\> |
-| `signal?` | `AbortSignal` |
-| `tearDown?` | () => `void` |
+| Parameter   | Type                                             |
+| ----------- | ------------------------------------------------ |
+| `listener`  | (`data`: `any`) => `void` \| `Promise`\<`void`\> |
+| `signal?`   | `AbortSignal`                                    |
+| `tearDown?` | () => `void`                                     |
 
 #### Returns
 
-```ts
-(): void;
-```
-
-##### Returns
-
-`void`
+() => `void`
 
 #### Inherited from
 
 [`MultiCastChannel`](../MultiCastChannel/README.md).[`subscribe`](../MultiCastChannel/README.md#subscribe)
 
-***
+---
 
 ### waitForAnyAdvertisement()
 
@@ -367,7 +355,7 @@ Defined in: [src/channel/channels.ts:100](https://github.com/vrtmrz/octagonal-wh
 waitForAnyAdvertisement(): Promise<void>;
 ```
 
-Defined in: [src/channel/channels.ts:337](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L337)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:337
 
 Wait until at least one advertisement is known.
 

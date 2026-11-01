@@ -1,31 +1,34 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / processAllGeneratorTasksWithConcurrencyLimit
 
 # Function: processAllGeneratorTasksWithConcurrencyLimit()
 
 ```ts
-function processAllGeneratorTasksWithConcurrencyLimit<T>(limit: number, tasks: AsyncGenerator<Task<T>, undefined, unknown>): AsyncGenerator<TaskResultWithKey<T, Error>, void, unknown>;
+function processAllGeneratorTasksWithConcurrencyLimit<T>(
+  limit: number,
+  tasks: AsyncGenerator<Task<T>, undefined, unknown>,
+): AsyncGenerator<TaskResultWithKey<T, Error>, void, unknown>;
 ```
 
-Defined in: [src/concurrency/task.ts:44](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L44)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:44
 
 Perform all tasks within given concurrency.
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `limit` | `number` | Concurrency limit |
-| `tasks` | `AsyncGenerator`\<[`Task`](../Task/README.md)\<`T`\>, `undefined`, `unknown`\> | Tasks to perform all |
+| Parameter | Type                                                                           | Description          |
+| --------- | ------------------------------------------------------------------------------ | -------------------- |
+| `limit`   | `number`                                                                       | Concurrency limit    |
+| `tasks`   | `AsyncGenerator`\<[`Task`](../Task/README.md)\<`T`\>, `undefined`, `unknown`\> | Tasks to perform all |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [common](../../README.md) / [logger](../README.md) / info
 
@@ -12,12 +12,12 @@
 function info(message: any): void;
 ```
 
-Defined in: [src/common/logger.ts:99](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L99)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:99
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type  |
+| --------- | ----- |
 | `message` | `any` |
 
 ### Returns
@@ -30,14 +30,14 @@ Defined in: [src/common/logger.ts:99](https://github.com/vrtmrz/octagonal-wheels
 function info(message: any, flags: LOG_KIND): void;
 ```
 
-Defined in: [src/common/logger.ts:100](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L100)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:100
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `message` | `any` |
-| `flags` | [`LOG_KIND`](../LOG_KIND/README.md) |
+| Parameter | Type                                |
+| --------- | ----------------------------------- |
+| `message` | `any`                               |
+| `flags`   | [`LOG_KIND`](../LOG_KIND/README.md) |
 
 ### Returns
 
@@ -49,14 +49,14 @@ Defined in: [src/common/logger.ts:100](https://github.com/vrtmrz/octagonal-wheel
 function info(message: any, key: string): void;
 ```
 
-Defined in: [src/common/logger.ts:101](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L101)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:101
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `message` | `any` |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `message` | `any`    |
+| `key`     | `string` |
 
 ### Returns
 
@@ -65,21 +65,18 @@ Defined in: [src/common/logger.ts:101](https://github.com/vrtmrz/octagonal-wheel
 ## Call Signature
 
 ```ts
-function info(
-   message: any, 
-   flags: LOG_KIND, 
-   key: string): void;
+function info(message: any, flags: LOG_KIND, key: string): void;
 ```
 
-Defined in: [src/common/logger.ts:102](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L102)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:102
 
 ### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `message` | `any` |
-| `flags` | [`LOG_KIND`](../LOG_KIND/README.md) |
-| `key` | `string` |
+| Parameter | Type                                |
+| --------- | ----------------------------------- |
+| `message` | `any`                               |
+| `flags`   | [`LOG_KIND`](../LOG_KIND/README.md) |
+| `key`     | `string`                            |
 
 ### Returns
 

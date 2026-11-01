@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [bulk](../README.md) / Batcher
 
 # Class: Batcher\<T\>
 
-Defined in: [src/concurrency/bulk.ts:273](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L273)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:273
 
 Batches items and yields them as arrays of a specified size.
 It respects a maximum capacity for the buffer and can be controlled with an AbortController.
@@ -22,8 +22,8 @@ It respects a maximum capacity for the buffer and can be controlled with an Abor
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Constructors
 
@@ -33,16 +33,16 @@ It respects a maximum capacity for the buffer and can be controlled with an Abor
 new Batcher<T>(param0: BatcherOptions, ac?: AbortController): Batcher<T>;
 ```
 
-Defined in: [src/concurrency/bulk.ts:286](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L286)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:286
 
 Creates an instance of the Batcher class.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `param0` | [`BatcherOptions`](../BatcherOptions/README.md) | Options for the batcher. |
-| `ac?` | `AbortController` | AbortController to control the batcher. |
+| Parameter | Type                                            | Description                             |
+| --------- | ----------------------------------------------- | --------------------------------------- |
+| `param0`  | [`BatcherOptions`](../BatcherOptions/README.md) | Options for the batcher.                |
+| `ac?`     | `AbortController`                               | AbortController to control the batcher. |
 
 #### Returns
 
@@ -54,13 +54,13 @@ Creates an instance of the Batcher class.
 
 ## Properties
 
-| Property | Modifier | Type | Default value | Description | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| <a id="ac"></a> `ac` | `protected` | `AbortController` | `undefined` | - | [`BulkBase`](../BulkBase/README.md).[`ac`](../BulkBase/README.md#ac) | [src/concurrency/bulk.ts:73](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L73) |
-| <a id="buffer"></a> `buffer` | `protected` | `T`[] | `[]` | - | [`BulkBase`](../BulkBase/README.md).[`buffer`](../BulkBase/README.md#buffer) | [src/concurrency/bulk.ts:74](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L74) |
-| <a id="freeflag"></a> `freeFlag` | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined` | Semaphore indicating whether items can be added (not full). | [`BulkBase`](../BulkBase/README.md).[`freeFlag`](../BulkBase/README.md#freeflag) | [src/concurrency/bulk.ts:84](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L84) |
-| <a id="unlocked"></a> `unlocked` | `protected` | `boolean` | `false` | If true, disables the concurrency control (always yields immediately but no items can be added). | [`BulkBase`](../BulkBase/README.md).[`unlocked`](../BulkBase/README.md#unlocked) | [src/concurrency/bulk.ts:89](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L89) |
-| <a id="yieldflag"></a> `yieldFlag` | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined` | Semaphore indicating whether items can be yielded. | [`BulkBase`](../BulkBase/README.md).[`yieldFlag`](../BulkBase/README.md#yieldflag) | [src/concurrency/bulk.ts:79](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L79) |
+| Property                           | Modifier    | Type                                          | Default value | Description                                                                                      | Inherited from                                                                     | Defined in                                           |
+| ---------------------------------- | ----------- | --------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| <a id="ac"></a> `ac`               | `protected` | `AbortController`                             | `undefined`   | -                                                                                                | [`BulkBase`](../BulkBase/README.md).[`ac`](../BulkBase/README.md#ac)               | packages/octagonal-wheels/src/concurrency/bulk.ts:73 |
+| <a id="buffer"></a> `buffer`       | `protected` | `T`[]                                         | `[]`          | -                                                                                                | [`BulkBase`](../BulkBase/README.md).[`buffer`](../BulkBase/README.md#buffer)       | packages/octagonal-wheels/src/concurrency/bulk.ts:74 |
+| <a id="freeflag"></a> `freeFlag`   | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined`   | Semaphore indicating whether items can be added (not full).                                      | [`BulkBase`](../BulkBase/README.md).[`freeFlag`](../BulkBase/README.md#freeflag)   | packages/octagonal-wheels/src/concurrency/bulk.ts:84 |
+| <a id="unlocked"></a> `unlocked`   | `protected` | `boolean`                                     | `false`       | If true, disables the concurrency control (always yields immediately but no items can be added). | [`BulkBase`](../BulkBase/README.md).[`unlocked`](../BulkBase/README.md#unlocked)   | packages/octagonal-wheels/src/concurrency/bulk.ts:89 |
+| <a id="yieldflag"></a> `yieldFlag` | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined`   | Semaphore indicating whether items can be yielded.                                               | [`BulkBase`](../BulkBase/README.md).[`yieldFlag`](../BulkBase/README.md#yieldflag) | packages/octagonal-wheels/src/concurrency/bulk.ts:79 |
 
 ## Accessors
 
@@ -72,7 +72,7 @@ Creates an instance of the Batcher class.
 get isAborted(): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:103](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L103)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:103
 
 Indicates whether the process has been aborted.
 
@@ -84,7 +84,7 @@ Indicates whether the process has been aborted.
 
 [`BulkBase`](../BulkBase/README.md).[`isAborted`](../BulkBase/README.md#isaborted)
 
-***
+---
 
 ### isBufferFull
 
@@ -94,7 +94,7 @@ Indicates whether the process has been aborted.
 get isBufferFull(): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:277](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L277)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:277
 
 Indicates whether the buffer is full (cannot add more items).
 
@@ -106,7 +106,7 @@ Indicates whether the buffer is full (cannot add more items).
 
 [`BulkBase`](../BulkBase/README.md).[`isBufferFull`](../BulkBase/README.md#isbufferfull)
 
-***
+---
 
 ### isBufferReady
 
@@ -116,7 +116,7 @@ Indicates whether the buffer is full (cannot add more items).
 get isBufferReady(): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:292](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L292)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:292
 
 Indicates whether the buffer is ready to yield items.
 
@@ -136,7 +136,7 @@ Indicates whether the buffer is ready to yield items.
 abort(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:94](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L94)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:94
 
 Aborts the batching/streaming process.
 
@@ -148,7 +148,7 @@ Aborts the batching/streaming process.
 
 [`BulkBase`](../BulkBase/README.md).[`abort`](../BulkBase/README.md#abort)
 
-***
+---
 
 ### add()
 
@@ -156,15 +156,15 @@ Aborts the batching/streaming process.
 add(item: T): Promise<void>;
 ```
 
-Defined in: [src/concurrency/bulk.ts:203](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L203)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:203
 
 Adds an item to the buffer.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | Item to add to the buffer |
+| Parameter | Type | Description               |
+| --------- | ---- | ------------------------- |
+| `item`    | `T`  | Item to add to the buffer |
 
 #### Returns
 
@@ -176,7 +176,7 @@ void
 
 [`BulkBase`](../BulkBase/README.md).[`add`](../BulkBase/README.md#add)
 
-***
+---
 
 ### addToBuffer()
 
@@ -184,15 +184,15 @@ void
 protected addToBuffer(item: T): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:192](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L192)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:192
 
 Adds an item to the buffer.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | Item to add to the buffer |
+| Parameter | Type | Description               |
+| --------- | ---- | ------------------------- |
+| `item`    | `T`  | Item to add to the buffer |
 
 #### Returns
 
@@ -202,7 +202,7 @@ Adds an item to the buffer.
 
 [`BulkBase`](../BulkBase/README.md).[`addToBuffer`](../BulkBase/README.md#addtobuffer)
 
-***
+---
 
 ### canYield()
 
@@ -210,15 +210,15 @@ Adds an item to the buffer.
 canYield(items: T[]): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:236](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L236)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:236
 
 Determines whether the yielded items can be yielded.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `items` | `T`[] | Items to be yielded |
+| Parameter | Type  | Description         |
+| --------- | ----- | ------------------- |
+| `items`   | `T`[] | Items to be yielded |
 
 #### Returns
 
@@ -230,7 +230,7 @@ True if the items can be yielded, false otherwise (skipped in yielding).
 
 [`BulkBase`](../BulkBase/README.md).[`canYield`](../BulkBase/README.md#canyield)
 
-***
+---
 
 ### checkFlags()
 
@@ -238,7 +238,7 @@ True if the items can be yielded, false otherwise (skipped in yielding).
 checkFlags(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:183](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L183)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:183
 
 Checks both flags.
 
@@ -250,7 +250,7 @@ Checks both flags.
 
 [`BulkBase`](../BulkBase/README.md).[`checkFlags`](../BulkBase/README.md#checkflags)
 
-***
+---
 
 ### checkFree()
 
@@ -258,7 +258,7 @@ Checks both flags.
 protected checkFree(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:148](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L148)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:148
 
 Checks the free flag and locks it if necessary.
 
@@ -272,7 +272,7 @@ void
 
 [`BulkBase`](../BulkBase/README.md).[`checkFree`](../BulkBase/README.md#checkfree)
 
-***
+---
 
 ### checkYielding()
 
@@ -280,7 +280,7 @@ void
 protected checkYielding(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:166](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L166)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:166
 
 Checks the yielding flag and locks it if necessary.
 
@@ -294,7 +294,7 @@ void
 
 [`BulkBase`](../BulkBase/README.md).[`checkYielding`](../BulkBase/README.md#checkyielding)
 
-***
+---
 
 ### disableControl()
 
@@ -302,7 +302,7 @@ void
 disableControl(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:120](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L120)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:120
 
 Disables the concurrency control.
 
@@ -314,7 +314,7 @@ Disables the concurrency control.
 
 [`BulkBase`](../BulkBase/README.md).[`disableControl`](../BulkBase/README.md#disablecontrol)
 
-***
+---
 
 ### enableControl()
 
@@ -322,7 +322,7 @@ Disables the concurrency control.
 enableControl(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:128](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L128)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:128
 
 Enables the concurrency control.
 
@@ -334,7 +334,7 @@ Enables the concurrency control.
 
 [`BulkBase`](../BulkBase/README.md).[`enableControl`](../BulkBase/README.md#enablecontrol)
 
-***
+---
 
 ### onAdd()
 
@@ -342,7 +342,7 @@ Enables the concurrency control.
 onAdd(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:250](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L250)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:250
 
 Hook called after adding an item.
 
@@ -354,7 +354,7 @@ Hook called after adding an item.
 
 [`BulkBase`](../BulkBase/README.md).[`onAdd`](../BulkBase/README.md#onadd)
 
-***
+---
 
 ### onYield()
 
@@ -362,7 +362,7 @@ Hook called after adding an item.
 onYield(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:243](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L243)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:243
 
 Hook called after yielding items.
 
@@ -374,7 +374,7 @@ Hook called after yielding items.
 
 [`BulkBase`](../BulkBase/README.md).[`onYield`](../BulkBase/README.md#onyield)
 
-***
+---
 
 ### yield()
 
@@ -382,7 +382,7 @@ Hook called after yielding items.
 yield(): AsyncGenerator<T[]>;
 ```
 
-Defined in: [src/concurrency/bulk.ts:217](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L217)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:217
 
 Yields items from the buffer as an async generator.
 
@@ -394,7 +394,7 @@ Yields items from the buffer as an async generator.
 
 [`BulkBase`](../BulkBase/README.md).[`yield`](../BulkBase/README.md#yield)
 
-***
+---
 
 ### yieldResult()
 
@@ -402,7 +402,7 @@ Yields items from the buffer as an async generator.
 yieldResult(): T[];
 ```
 
-Defined in: [src/concurrency/bulk.ts:296](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L296)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:296
 
 gets the result of yielding items from the buffer.
 

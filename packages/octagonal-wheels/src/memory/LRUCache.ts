@@ -50,16 +50,15 @@ export class LRUCache<K, V> {
      * @remarks After calling this method, the key will be updated to recently used.
      */
     get(key: K): V | undefined {
-        const v = this.cache.get(key);
+        if (!this.cache.has(key)) return undefined;
+        const v = this.cache.get(key) as V;
 
-        if (v) {
-            // update the key to recently used.
-            this.cache.delete(key);
-            this.cache.set(key, v);
-            if (this.enableReversed) {
-                this.revCache.delete(v);
-                this.revCache.set(v, key);
-            }
+        // Update the key to recently used, including falsy cached values.
+        this.cache.delete(key);
+        this.cache.set(key, v);
+        if (this.enableReversed) {
+            this.revCache.delete(v);
+            this.revCache.set(v, key);
         }
         return v;
     }
@@ -71,14 +70,12 @@ export class LRUCache<K, V> {
      * @remarks After calling this method, the key will be updated to recently used.
      */
     revGet(value: V): K | undefined {
-        const key = this.revCache.get(value);
-        if (key) {
-            // update the key to recently used.
-            this.cache.delete(key);
-            this.revCache.delete(value);
-            this.cache.set(key, value);
-            this.revCache.set(value, key);
-        }
+        if (!this.revCache.has(value)) return undefined;
+        const key = this.revCache.get(value) as K;
+        this.cache.delete(key);
+        this.revCache.delete(value);
+        this.cache.set(key, value);
+        this.revCache.set(value, key);
         return key;
     }
 

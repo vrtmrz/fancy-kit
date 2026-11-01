@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / generateAESSessionKey
 
@@ -10,7 +10,7 @@
 function generateAESSessionKey(): Promise<SessionKey>;
 ```
 
-Defined in: [src/encryption/asymmetric/keys.ts:103](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/keys.ts#L103)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/keys.ts:103
 
 Generates a new AES session key for data encryption.
 AES-256-GCM is used for authenticated encryption.

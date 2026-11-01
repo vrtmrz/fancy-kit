@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [dataobject](../../README.md) / [reactive](../README.md) / ReactiveSource
 
@@ -14,18 +14,18 @@ type ReactiveSource<T> = {
 };
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:17](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L17)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:17
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="offchanged"></a> `offChanged` | (`handler`: [`ReactiveChangeHandler`](../ReactiveChangeHandler/README.md)\<`T`\>) => `void` | [src/dataobject/reactive\_v2.ts:20](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L20) |
-| <a id="onchanged"></a> `onChanged` | (`handler`: [`ReactiveChangeHandler`](../ReactiveChangeHandler/README.md)\<`T`\>) => `void` | [src/dataobject/reactive\_v2.ts:19](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L19) |
-| <a id="value"></a> `value` | `T` | [src/dataobject/reactive\_v2.ts:18](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L18) |
+| Property                             | Type                                                                                        | Defined in                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| <a id="offchanged"></a> `offChanged` | (`handler`: [`ReactiveChangeHandler`](../ReactiveChangeHandler/README.md)\<`T`\>) => `void` | packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:20 |
+| <a id="onchanged"></a> `onChanged`   | (`handler`: [`ReactiveChangeHandler`](../ReactiveChangeHandler/README.md)\<`T`\>) => `void` | packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:19 |
+| <a id="value"></a> `value`           | `T`                                                                                         | packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:18 |

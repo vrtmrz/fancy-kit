@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [messagepassing](../../README.md) / [signal](../README.md) / waitForValue
 
@@ -10,19 +10,19 @@
 function waitForValue<T>(id: string, timeout?: number): Promise<WithTimeout<T>>;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:242](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L242)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:242
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `id` | `string` |
+| Parameter  | Type     |
+| ---------- | -------- |
+| `id`       | `string` |
 | `timeout?` | `number` |
 
 ## Returns

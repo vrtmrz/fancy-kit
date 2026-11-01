@@ -1,26 +1,26 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / TaskResult
 
 # Type Alias: TaskResult\<T, U\>
 
 ```ts
-type TaskResult<T, U> = 
+type TaskResult<T, U> =
   | {
-  ok: T;
-}
+      ok: T;
+    }
   | {
-  err: U;
-};
+      err: U;
+    };
 ```
 
-Defined in: [src/concurrency/task.ts:8](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L8)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:8
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` |
-| `U` *extends* `Error` |
+| Type Parameter        |
+| --------------------- |
+| `T`                   |
+| `U` _extends_ `Error` |

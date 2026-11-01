@@ -1,5 +1,5 @@
 import { writeString, arrayBufferToBase64Single } from '../binary/base64.js';
-import '../binary/encodedUTF16.js';
+import '../binary/encodedUTF16.tables.internal.js';
 import '../binary/hex.js';
 
 // Pure JS implementation of hash functions for fallback purposes.

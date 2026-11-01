@@ -1,16 +1,19 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [BackedQueue](../../README.md) / [BackedQueueTypes](../README.md) / DequeueCallback
 
-# Type Alias: DequeueCallback()\<T\>
+# Type Alias: DequeueCallback\<T\>
 
 ```ts
-type DequeueCallback<T> = (items: DequeuedItem<T>, context: QueueProcessContext) => Promise<any | void> | any | void;
+type DequeueCallback<T> = (
+  items: DequeuedItem<T>,
+  context: QueueProcessContext,
+) => Promise<any | void> | any | void;
 ```
 
-Defined in: [src/BackedQueue/BackedQueueTypes.ts:105](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueueTypes.ts#L105)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueueTypes.ts:105
 
 Callback type for processing dequeued items.
 If context.commit, context.requeue, or context.revoke is not called, the queue commits the item automatically after the callback finishes.
@@ -21,14 +24,14 @@ Warning: if the callback throws, default behaviour depends on implementation.
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `items` | [`DequeuedItem`](../DequeuedItem/README.md)\<`T`\> |
+| Parameter | Type                                                      |
+| --------- | --------------------------------------------------------- |
+| `items`   | [`DequeuedItem`](../DequeuedItem/README.md)\<`T`\>        |
 | `context` | [`QueueProcessContext`](../QueueProcessContext/README.md) |
 
 ## Returns

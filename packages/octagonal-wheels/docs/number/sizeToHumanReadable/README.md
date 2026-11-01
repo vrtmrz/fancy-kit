@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [number](../README.md) / sizeToHumanReadable
 
@@ -10,15 +10,15 @@
 function sizeToHumanReadable(size: number): string;
 ```
 
-Defined in: [src/number.ts:6](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/number.ts#L6)
+Defined in: packages/octagonal-wheels/src/number.ts:6
 
 Converts a size in bytes to a human-readable format.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `size` | `number` | The size in bytes. |
+| Parameter | Type     | Description        |
+| --------- | -------- | ------------------ |
+| `size`    | `number` | The size in bytes. |
 
 ## Returns
 

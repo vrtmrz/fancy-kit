@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [common](../../README.md) / [const](../README.md) / RESULT\_TIMED\_OUT
 
@@ -10,4 +10,4 @@
 const RESULT_TIMED_OUT: typeof RESULT_TIMED_OUT;
 ```
 
-Defined in: [src/common/const.ts:1](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/const.ts#L1)
+Defined in: packages/octagonal-wheels/src/common/const.ts:1

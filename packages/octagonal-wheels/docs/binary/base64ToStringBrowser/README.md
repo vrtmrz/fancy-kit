@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [binary](../README.md) / base64ToStringBrowser
 
@@ -10,15 +10,15 @@
 function base64ToStringBrowser(base64: string | string[]): string;
 ```
 
-Defined in: [src/binary/base64.ts:308](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/binary/base64.ts#L308)
+Defined in: packages/octagonal-wheels/src/binary/base64.ts:330
 
 Converts a base64 string or an array of base64 strings to a regular string in a browser environment.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `base64` | `string` \| `string`[] | The base64 string or an array of base64 strings to convert. |
+| Parameter | Type                   | Description                                                 |
+| --------- | ---------------------- | ----------------------------------------------------------- |
+| `base64`  | `string` \| `string`[] | The base64 string or an array of base64 strings to convert. |
 
 ## Returns
 

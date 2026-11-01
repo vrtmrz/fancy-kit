@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [events](../README.md) / InterceptiveEventTarget
 
 # Class: InterceptiveEventTarget
 
-Defined in: [src/events/CustomEventTargets.ts:9](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L9)
+Defined in: packages/octagonal-wheels/src/events/CustomEventTargets.ts:9
 
 LinkedEventTarget is an EventTarget that can link to upstream and downstream EventTargets.
 It will first try to dispatch the event upstream, and if that fails, it will dispatch it to itself.
@@ -32,14 +32,14 @@ If the event is not cancelable, it will always return true.
 new InterceptiveEventTarget(onBeforeDispatch?: (event: Event) => boolean, onAfterDispatch?: (event: Event) => boolean): InterceptiveEventTarget;
 ```
 
-Defined in: [src/events/CustomEventTargets.ts:13](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L13)
+Defined in: packages/octagonal-wheels/src/events/CustomEventTargets.ts:13
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter           | Type                            |
+| ------------------- | ------------------------------- |
 | `onBeforeDispatch?` | (`event`: `Event`) => `boolean` |
-| `onAfterDispatch?` | (`event`: `Event`) => `boolean` |
+| `onAfterDispatch?`  | (`event`: `Event`) => `boolean` |
 
 #### Returns
 
@@ -48,15 +48,15 @@ Defined in: [src/events/CustomEventTargets.ts:13](https://github.com/vrtmrz/octa
 #### Overrides
 
 ```ts
-EventTarget.constructor
+EventTarget.constructor;
 ```
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="_onafterdispatch"></a> `_onAfterDispatch?` | (`event`: `Event`) => `boolean` | [src/events/CustomEventTargets.ts:11](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L11) |
-| <a id="_onbeforedispatch"></a> `_onBeforeDispatch?` | (`event`: `Event`) => `boolean` | [src/events/CustomEventTargets.ts:10](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L10) |
+| Property                                            | Type                            | Defined in                                                    |
+| --------------------------------------------------- | ------------------------------- | ------------------------------------------------------------- |
+| <a id="_onafterdispatch"></a> `_onAfterDispatch?`   | (`event`: `Event`) => `boolean` | packages/octagonal-wheels/src/events/CustomEventTargets.ts:11 |
+| <a id="_onbeforedispatch"></a> `_onBeforeDispatch?` | (`event`: `Event`) => `boolean` | packages/octagonal-wheels/src/events/CustomEventTargets.ts:10 |
 
 ## Methods
 
@@ -64,8 +64,8 @@ EventTarget.constructor
 
 ```ts
 addEventListener(
-   type: string, 
-   callback: null | EventListenerOrEventListenerObject, 
+   type: string,
+   callback: EventListenerOrEventListenerObject | null,
    options?: boolean | AddEventListenerOptions): void;
 ```
 
@@ -77,11 +77,11 @@ The **`addEventListener()`** method of the EventTarget interface sets up a funct
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `string` |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `AddEventListenerOptions` |
+| Parameter  | Type                                           |
+| ---------- | ---------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `EventListenerOrEventListenerObject` \| `null` |
+| `options?` | `boolean` \| `AddEventListenerOptions`         |
 
 #### Returns
 
@@ -90,10 +90,10 @@ The **`addEventListener()`** method of the EventTarget interface sets up a funct
 #### Inherited from
 
 ```ts
-EventTarget.addEventListener
+EventTarget.addEventListener;
 ```
 
-***
+---
 
 ### dispatchEvent()
 
@@ -101,7 +101,7 @@ EventTarget.addEventListener
 dispatchEvent(event: Event): boolean;
 ```
 
-Defined in: [src/events/CustomEventTargets.ts:19](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/events/CustomEventTargets.ts#L19)
+Defined in: packages/octagonal-wheels/src/events/CustomEventTargets.ts:19
 
 The **`dispatchEvent()`** method of the EventTarget sends an Event to the object, (synchronously) invoking the affected event listeners in the appropriate order.
 
@@ -109,9 +109,9 @@ The **`dispatchEvent()`** method of the EventTarget sends an Event to the object
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `event` | `Event` |
+| Parameter | Type    |
+| --------- | ------- |
+| `event`   | `Event` |
 
 #### Returns
 
@@ -120,17 +120,17 @@ The **`dispatchEvent()`** method of the EventTarget sends an Event to the object
 #### Overrides
 
 ```ts
-EventTarget.dispatchEvent
+EventTarget.dispatchEvent;
 ```
 
-***
+---
 
 ### removeEventListener()
 
 ```ts
 removeEventListener(
-   type: string, 
-   callback: null | EventListenerOrEventListenerObject, 
+   type: string,
+   callback: EventListenerOrEventListenerObject | null,
    options?: boolean | EventListenerOptions): void;
 ```
 
@@ -142,11 +142,11 @@ The **`removeEventListener()`** method of the EventTarget interface removes an e
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `string` |
-| `callback` | `null` \| `EventListenerOrEventListenerObject` |
-| `options?` | `boolean` \| `EventListenerOptions` |
+| Parameter  | Type                                           |
+| ---------- | ---------------------------------------------- |
+| `type`     | `string`                                       |
+| `callback` | `EventListenerOrEventListenerObject` \| `null` |
+| `options?` | `boolean` \| `EventListenerOptions`            |
 
 #### Returns
 
@@ -155,5 +155,5 @@ The **`removeEventListener()`** method of the EventTarget interface removes an e
 #### Inherited from
 
 ```ts
-EventTarget.removeEventListener
+EventTarget.removeEventListener;
 ```

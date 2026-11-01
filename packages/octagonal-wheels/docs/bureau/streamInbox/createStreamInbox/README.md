@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [streamInbox](../README.md) / createStreamInbox
 
@@ -15,13 +15,13 @@ Defined in: packages/octagonal-wheels/src/bureau/StreamInbox.ts:120
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter  | Type                                                    |
+| ---------- | ------------------------------------------------------- |
 | `options?` | [`StreamInboxOptions`](../StreamInboxOptions/README.md) |
 
 ## Returns

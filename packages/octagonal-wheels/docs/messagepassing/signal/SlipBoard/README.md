@@ -1,18 +1,18 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [messagepassing](../../README.md) / [signal](../README.md) / SlipBoard
 
 # Class: SlipBoard\<Events\>
 
-Defined in: [src/bureau/SlipBoard.ts:63](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L63)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:63
 
 ## Type Parameters
 
-| Type Parameter | Default type |
-| ------ | ------ |
-| `Events` *extends* `LSSlips` | `LSSlips` |
+| Type Parameter               | Default type |
+| ---------------------------- | ------------ |
+| `Events` _extends_ `LSSlips` | `LSSlips`    |
 
 ## Constructors
 
@@ -28,9 +28,9 @@ new SlipBoard<Events>(): SlipBoard<Events>;
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="_clip"></a> `_clip` | `Map`\<`string` \| `number` \| `symbol`, [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`any`\>\> | [src/bureau/SlipBoard.ts:64](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L64) |
+| Property                   | Type                                                                                                                           | Defined in                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| <a id="_clip"></a> `_clip` | `Map`\<`string` \| `number` \| `symbol`, [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`any`\>\> | packages/octagonal-wheels/src/bureau/SlipBoard.ts:64 |
 
 ## Methods
 
@@ -40,21 +40,31 @@ Waits for the next event of the specified type and key, with an optional timeout
 
 #### Template
 
+**ET**
+
 The type of the events.
 
 #### Template
+
+**K**
 
 The key of the event type.
 
 #### Param
 
+**type**
+
 The type of the event to wait for.
 
 #### Param
 
+**key**
+
 The key associated with the event.
 
 #### Param
+
+**timeout**
 
 The optional timeout in milliseconds.
 
@@ -62,27 +72,27 @@ The optional timeout in milliseconds.
 
 ```ts
 awaitNext<ET, K>(
-   type: K, 
-   key: string, 
+   type: K,
+   key: string,
 opt?: AwaitOptionWithoutTimeout): Promise<ResultType<ET, K>>;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:121](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L121)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:121
 
 ##### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `LSSlips` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `LSSlips`                       |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `K` |
-| `key` | `string` |
-| `opt?` | [`AwaitOptionWithoutTimeout`](../AwaitOptionWithoutTimeout/README.md) |
+| Parameter | Type                                                                  |
+| --------- | --------------------------------------------------------------------- |
+| `type`    | `K`                                                                   |
+| `key`     | `string`                                                              |
+| `opt?`    | [`AwaitOptionWithoutTimeout`](../AwaitOptionWithoutTimeout/README.md) |
 
 ##### Returns
 
@@ -92,37 +102,37 @@ Defined in: [src/bureau/SlipBoard.ts:121](https://github.com/vrtmrz/octagonal-wh
 
 ```ts
 awaitNext<ET, K>(
-   type: K, 
-   key: string, 
+   type: K,
+   key: string,
    opt?: AwaitOptionWithTimeout): Promise<
   | typeof TIMED_OUT_SIGNAL
 | ResultType<ET, K>>;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:126](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L126)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:126
 
 ##### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `LSSlips` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `LSSlips`                       |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `K` |
-| `key` | `string` |
-| `opt?` | [`AwaitOptionWithTimeout`](../AwaitOptionWithTimeout/README.md) |
+| Parameter | Type                                                            |
+| --------- | --------------------------------------------------------------- |
+| `type`    | `K`                                                             |
+| `key`     | `string`                                                        |
+| `opt?`    | [`AwaitOptionWithTimeout`](../AwaitOptionWithTimeout/README.md) |
 
 ##### Returns
 
 `Promise`\<
-  \| *typeof* [`TIMED_OUT_SIGNAL`](../../../promises/TIMED_OUT_SIGNAL-1/README.md)
-  \| `ResultType`\<`ET`, `K`\>\>
+\| _typeof_ [`TIMED_OUT_SIGNAL`](../../../promises/TIMED_OUT_SIGNAL-1/README.md)
+\| `ResultType`\<`ET`, `K`\>\>
 
-***
+---
 
 ### isAwaiting()
 
@@ -130,23 +140,23 @@ Defined in: [src/bureau/SlipBoard.ts:126](https://github.com/vrtmrz/octagonal-wh
 isAwaiting<ET, K>(type: SlipType<ET, K>, key: string): boolean;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:75](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L75)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:75
 
 Checks if a specific key is awaiting.
 
 #### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `LSSlips` | The type of the events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The key of the event in the events type. |
+| Type Parameter                                 | Description                              |
+| ---------------------------------------------- | ---------------------------------------- |
+| `ET` _extends_ `LSSlips`                       | The type of the events.                  |
+| `K` _extends_ `string` \| `number` \| `symbol` | The key of the event in the events type. |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `type` | `SlipType`\<`ET`, `K`\> | The key representing the event type. |
-| `key` | `string` | The key representing the specific sub-event. |
+| Parameter | Type                    | Description                                  |
+| --------- | ----------------------- | -------------------------------------------- |
+| `type`    | `SlipType`\<`ET`, `K`\> | The key representing the event type.         |
+| `key`     | `string`                | The key representing the specific sub-event. |
 
 #### Returns
 
@@ -154,34 +164,34 @@ Checks if a specific key is awaiting.
 
 - Returns `true` if the event and sub-event combination is awaiting, otherwise `false`.
 
-***
+---
 
 ### issueAndProceed()
 
 ```ts
 issueAndProceed<T>(
-   type: string, 
-   key?: string, 
-opt?: SlipProcessOptions<T>): Promise<T>;
+   type: string,
+   key?: string,
+opt: SlipProcessOptions<T>): Promise<T>;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:97](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L97)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:97
 
 Issues a slip of process and proceeds with the provided options.
 
 #### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | The type of the result expected from the process. |
+| Type Parameter | Description                                       |
+| -------------- | ------------------------------------------------- |
+| `T`            | The type of the result expected from the process. |
 
 #### Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `type` | `string` | `undefined` | The type of the process to be issued. |
-| `key?` | `string` | `""` | An optional key to identify the process. |
-| `opt?` | [`SlipProcessOptions`](../SlipProcessOptions/README.md)\<`T`\> | `undefined` | The options for the process, including the callback to be executed. |
+| Parameter | Type                                                           | Default value | Description                                                         |
+| --------- | -------------------------------------------------------------- | ------------- | ------------------------------------------------------------------- |
+| `type`    | `string`                                                       | `undefined`   | The type of the process to be issued.                               |
+| `key?`    | `string`                                                       | `""`          | An optional key to identify the process.                            |
+| `opt?`    | [`SlipProcessOptions`](../SlipProcessOptions/README.md)\<`T`\> | `undefined`   | The options for the process, including the callback to be executed. |
 
 #### Returns
 
@@ -199,41 +209,41 @@ Issues a slip of process and proceeds with the provided options.
   - Otherwise, the error will be rejected.
 - The method returns a promise that resolves with the next result of the process.
 
-***
+---
 
 ### reject()
 
 ```ts
 reject<ET, K>(
-   type: SlipType<ET, K>, 
-   key?: string, 
-   reason?: any): void;
+   type: SlipType<ET, K>,
+   key?: string,
+   reason: any): void;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:228](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L228)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:228
 
 Rejects a task promise associated with a specific event type and key.
 
 #### Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `ET` *extends* `LSSlips` | The type of events. |
-| `K` *extends* `string` \| `number` \| `symbol` | The keys of the events. |
+| Type Parameter                                 | Description             |
+| ---------------------------------------------- | ----------------------- |
+| `ET` _extends_ `LSSlips`                       | The type of events.     |
+| `K` _extends_ `string` \| `number` \| `symbol` | The keys of the events. |
 
 #### Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `type` | `SlipType`\<`ET`, `K`\> | `undefined` | The type of the event. |
-| `key?` | `string` | `""` | The key associated with the event. Defaults to an empty string. |
-| `reason?` | `any` | `undefined` | The reason for rejecting the promise. |
+| Parameter | Type                    | Default value | Description                                                     |
+| --------- | ----------------------- | ------------- | --------------------------------------------------------------- |
+| `type`    | `SlipType`\<`ET`, `K`\> | `undefined`   | The type of the event.                                          |
+| `key?`    | `string`                | `""`          | The key associated with the event. Defaults to an empty string. |
+| `reason?` | `any`                   | `undefined`   | The reason for rejecting the promise.                           |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### submit()
 
@@ -241,21 +251,31 @@ Submits an event of a specified type with optional data.
 
 #### Template
 
+**ET**
+
 The type of events.
 
 #### Template
+
+**K**
 
 The key of the event type in ET.
 
 #### Param
 
+**type**
+
 The type of the event to submit.
 
 #### Param
 
+**key**
+
 An optional key associated with the event.
 
 #### Param
+
+**data**
 
 Optional data to be passed with the event.
 
@@ -265,21 +285,21 @@ Optional data to be passed with the event.
 submit<ET, K>(type: SlipWithoutData<ET, K>, key: string): void;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:173](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L173)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:173
 
 ##### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `LSSlips` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `LSSlips`                       |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `SlipWithoutData`\<`ET`, `K`\> |
-| `key` | `string` |
+| Parameter | Type                           |
+| --------- | ------------------------------ |
+| `type`    | `SlipWithoutData`\<`ET`, `K`\> |
+| `key`     | `string`                       |
 
 ##### Returns
 
@@ -289,33 +309,33 @@ Defined in: [src/bureau/SlipBoard.ts:173](https://github.com/vrtmrz/octagonal-wh
 
 ```ts
 submit<ET, K>(
-   type: SlipWithData<ET, K>, 
-   key: string, 
+   type: SlipWithData<ET, K>,
+   key: string,
    data: ET[K]): void;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:174](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L174)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:174
 
 ##### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `LSSlips` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `LSSlips`                       |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `SlipWithData`\<`ET`, `K`\> |
-| `key` | `string` |
-| `data` | `ET`\[`K`\] |
+| Parameter | Type                        |
+| --------- | --------------------------- |
+| `type`    | `SlipWithData`\<`ET`, `K`\> |
+| `key`     | `string`                    |
+| `data`    | `ET`\[`K`\]                 |
 
 ##### Returns
 
 `void`
 
-***
+---
 
 ### submitToAll()
 
@@ -323,21 +343,31 @@ Submits an event of a specified type to all listeners.
 
 #### Template
 
+**ET**
+
 The type of events.
 
 #### Template
+
+**K**
 
 The key of the event type in ET.
 
 #### Param
 
+**type**
+
 The type of the event to submit.
 
 #### Param
 
+**prefix**
+
 The prefix to match the keys of the listeners.
 
 #### Param
+
+**data**
 
 Optional data to be passed with the event.
 
@@ -347,21 +377,21 @@ Optional data to be passed with the event.
 submitToAll<ET, K>(type: SlipWithoutData<ET, K>, prefix: string): void;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:196](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L196)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:196
 
 ##### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `LSSlips` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `LSSlips`                       |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `SlipWithoutData`\<`ET`, `K`\> |
-| `prefix` | `string` |
+| Parameter | Type                           |
+| --------- | ------------------------------ |
+| `type`    | `SlipWithoutData`\<`ET`, `K`\> |
+| `prefix`  | `string`                       |
 
 ##### Returns
 
@@ -371,27 +401,27 @@ Defined in: [src/bureau/SlipBoard.ts:196](https://github.com/vrtmrz/octagonal-wh
 
 ```ts
 submitToAll<ET, K>(
-   type: SlipWithData<ET, K>, 
-   prefix: string, 
+   type: SlipWithData<ET, K>,
+   prefix: string,
    data: ET[K]): void;
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:197](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L197)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:197
 
 ##### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `ET` *extends* `LSSlips` |
-| `K` *extends* `string` \| `number` \| `symbol` |
+| Type Parameter                                 |
+| ---------------------------------------------- |
+| `ET` _extends_ `LSSlips`                       |
+| `K` _extends_ `string` \| `number` \| `symbol` |
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `SlipWithData`\<`ET`, `K`\> |
-| `prefix` | `string` |
-| `data` | `ET`\[`K`\] |
+| Parameter | Type                        |
+| --------- | --------------------------- |
+| `type`    | `SlipWithData`\<`ET`, `K`\> |
+| `prefix`  | `string`                    |
+| `data`    | `ET`\[`K`\]                 |
 
 ##### Returns
 

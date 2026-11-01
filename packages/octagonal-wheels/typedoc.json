@@ -1,4 +1,13 @@
 {
+    "plugin": ["typedoc-plugin-markdown", "./typedoc-compatibility-links.mjs"],
+    "entryPoints": ["src/index.ts", "src/resource.ts"],
+    "externalSymbolLinkMappings": {
+        "typescript": {
+            "String.split": "https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.split",
+            "Array.join": "https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.join"
+        }
+    },
+    "formatWithPrettier": true,
     "useCodeBlocks": true,
     "expandObjects": true,
     "expandParameters": true,

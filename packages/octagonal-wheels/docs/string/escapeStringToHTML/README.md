@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [string](../README.md) / escapeStringToHTML
 
@@ -10,15 +10,15 @@
 function escapeStringToHTML(str: string): string;
 ```
 
-Defined in: [src/string.ts:41](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/string.ts#L41)
+Defined in: packages/octagonal-wheels/src/string.ts:41
 
 Escapes a string to HTML by replacing special characters with their corresponding HTML entities.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `str` | `string` | The string to escape. |
+| Parameter | Type     | Description           |
+| --------- | -------- | --------------------- |
+| `str`     | `string` | The string to escape. |
 
 ## Returns
 

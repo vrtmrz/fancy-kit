@@ -1,20 +1,20 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [BackedQueue](../../README.md) / [QueueBackend](../README.md) / QueueBackend
 
 # Class: QueueBackend\<T\>
 
-Defined in: [src/BackedQueue/QueueBackend.ts:14](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L14)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:14
 
 Backend store implemented via prefixed namespacing over a SimpleStore.
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | Type of items stored in the queue. |
+| Type Parameter | Description                        |
+| -------------- | ---------------------------------- |
+| `T`            | Type of items stored in the queue. |
 
 ## Implements
 
@@ -26,26 +26,26 @@ Backend store implemented via prefixed namespacing over a SimpleStore.
 
 ```ts
 new QueueBackend<T>(
-   db: 
+   db:
   | SimpleStoreCRUDSupportTransaction<T>
-  | SimpleStoreTransaction<T>, 
-   name: string, 
-   basePrefix: string, 
+  | SimpleStoreTransaction<T>,
+   name: string,
+   basePrefix: string,
 shouldBypass?: (key: string) => boolean): QueueBackend<T>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:60](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L60)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:60
 
 Constructs a QueueBackend instance.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `db` | \| [`SimpleStoreCRUDSupportTransaction`](../../../databases/simplestorebase/SimpleStoreCRUDSupportTransaction/README.md)\<`T`\> \| [`SimpleStoreTransaction`](../../../databases/simplestorebase/SimpleStoreTransaction/README.md)\<`T`\> | Backend database instance. |
-| `name` | `string` | Logical name for this queue namespace. |
-| `basePrefix` | `string` | Root prefix applied to all keys. |
-| `shouldBypass?` | (`key`: `string`) => `boolean` | Optional predicate to bypass certain keys. |
+| Parameter       | Type                                                                                                                                                                                                                                      | Description                                |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `db`            | \| [`SimpleStoreCRUDSupportTransaction`](../../../databases/simplestorebase/SimpleStoreCRUDSupportTransaction/README.md)\<`T`\> \| [`SimpleStoreTransaction`](../../../databases/simplestorebase/SimpleStoreTransaction/README.md)\<`T`\> | Backend database instance.                 |
+| `name`          | `string`                                                                                                                                                                                                                                  | Logical name for this queue namespace.     |
+| `basePrefix`    | `string`                                                                                                                                                                                                                                  | Root prefix applied to all keys.           |
+| `shouldBypass?` | (`key`: `string`) => `boolean`                                                                                                                                                                                                            | Optional predicate to bypass certain keys. |
 
 #### Returns
 
@@ -53,15 +53,15 @@ Constructs a QueueBackend instance.
 
 ## Properties
 
-| Property | Modifier | Type | Default value | Description | Defined in |
-| ------ | ------ | ------ | ------ | ------ | ------ |
-| <a id="_backend"></a> `_backend` | `protected` | \| [`SimpleStoreCRUDSupportTransaction`](../../../databases/simplestorebase/SimpleStoreCRUDSupportTransaction/README.md)\<`T`\> \| [`SimpleStoreTransaction`](../../../databases/simplestorebase/SimpleStoreTransaction/README.md)\<`T`\> | `undefined` | Backend store used for transactional operations. Either SimpleStoreCRUDSupportTransaction or SimpleStoreTransaction. | [src/BackedQueue/QueueBackend.ts:20](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L20) |
-| <a id="_baseprefix"></a> `_basePrefix` | `readonly` | `string` | `undefined` | Base prefix used to namespace keys. Ensures keys remain distinct and ordered. | [src/BackedQueue/QueueBackend.ts:32](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L32) |
-| <a id="_incrementalid"></a> `_incrementalId` | `protected` | `number` | `0` | - | [src/BackedQueue/QueueBackend.ts:178](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L178) |
-| <a id="_name"></a> `_name` | `readonly` | `string` | `undefined` | Name of this backend store. | [src/BackedQueue/QueueBackend.ts:25](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L25) |
-| <a id="_sessionrandom"></a> `_sessionRandom` | `protected` | `number` | `undefined` | - | [src/BackedQueue/QueueBackend.ts:177](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L177) |
-| <a id="_shouldbypasskey"></a> `_shouldBypassKey` | `protected` | (`key`: `string`) => `boolean` | `undefined` | Predicate to decide whether a key is bypassed during queue scanning. | [src/BackedQueue/QueueBackend.ts:51](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L51) |
-| <a id="_startuptime"></a> `_startupTime` | `protected` | `number` | `undefined` | - | [src/BackedQueue/QueueBackend.ts:176](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L176) |
+| Property                                         | Modifier    | Type                                                                                                                                                                                                                                      | Default value | Description                                                                                                          | Defined in                                                    |
+| ------------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| <a id="_backend"></a> `_backend`                 | `protected` | \| [`SimpleStoreCRUDSupportTransaction`](../../../databases/simplestorebase/SimpleStoreCRUDSupportTransaction/README.md)\<`T`\> \| [`SimpleStoreTransaction`](../../../databases/simplestorebase/SimpleStoreTransaction/README.md)\<`T`\> | `undefined`   | Backend store used for transactional operations. Either SimpleStoreCRUDSupportTransaction or SimpleStoreTransaction. | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:20  |
+| <a id="_baseprefix"></a> `_basePrefix`           | `readonly`  | `string`                                                                                                                                                                                                                                  | `undefined`   | Base prefix used to namespace keys. Ensures keys remain distinct and ordered.                                        | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:32  |
+| <a id="_incrementalid"></a> `_incrementalId`     | `protected` | `number`                                                                                                                                                                                                                                  | `0`           | -                                                                                                                    | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:178 |
+| <a id="_name"></a> `_name`                       | `readonly`  | `string`                                                                                                                                                                                                                                  | `undefined`   | Name of this backend store.                                                                                          | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:25  |
+| <a id="_sessionrandom"></a> `_sessionRandom`     | `protected` | `number`                                                                                                                                                                                                                                  | `undefined`   | -                                                                                                                    | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:177 |
+| <a id="_shouldbypasskey"></a> `_shouldBypassKey` | `protected` | (`key`: `string`) => `boolean`                                                                                                                                                                                                            | `undefined`   | Predicate to decide whether a key is bypassed during queue scanning.                                                 | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:51  |
+| <a id="_startuptime"></a> `_startupTime`         | `protected` | `number`                                                                                                                                                                                                                                  | `undefined`   | -                                                                                                                    | packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:176 |
 
 ## Accessors
 
@@ -73,7 +73,7 @@ Constructs a QueueBackend instance.
 get prefix(): string;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:37](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L37)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:37
 
 Prefix used for queued items.
 
@@ -88,7 +88,7 @@ This prefix should not be included in processingPrefix.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`prefix`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#prefix)
 
-***
+---
 
 ### processingPrefix
 
@@ -98,7 +98,7 @@ This prefix should not be included in processingPrefix.
 get processingPrefix(): string;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:43](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L43)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:43
 
 Prefix used for items marked as processing.
 
@@ -121,20 +121,20 @@ This prefix should not be included in prefix.
 atomic<U>(callback: (store: QueueBackendTransaction<T>) => Promise<U>): Promise<U>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:123](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L123)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:123
 
 Performs a series of operations atomically inside a transaction.
 
 #### Type Parameters
 
 | Type Parameter |
-| ------ |
-| `U` |
+| -------------- |
+| `U`            |
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                                                                                         | Description                                       |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | `callback` | (`store`: [`QueueBackendTransaction`](../../QueueBackendTypes/QueueBackendTransaction/README.md)\<`T`\>) => `Promise`\<`U`\> | Function receiving a transactional queue backend. |
 
 #### Returns
@@ -147,7 +147,7 @@ Result returned by the callback.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`atomic`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#atomic)
 
-***
+---
 
 ### deleteProcessingItem()
 
@@ -155,15 +155,15 @@ Result returned by the callback.
 deleteProcessingItem(key: string): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:114](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L114)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:114
 
 Removes a processing item by key.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
 
 #### Returns
 
@@ -173,7 +173,7 @@ Removes a processing item by key.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`deleteProcessingItem`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#deleteprocessingitem)
 
-***
+---
 
 ### deleteQueueItem()
 
@@ -181,15 +181,15 @@ Removes a processing item by key.
 deleteQueueItem(key: string): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:92](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L92)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:92
 
 Removes a queued item by key.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
 
 #### Returns
 
@@ -199,22 +199,22 @@ Removes a queued item by key.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`deleteQueueItem`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#deletequeueitem)
 
-***
+---
 
 ### getNextQueueKey()
 
 ```ts
-getNextQueueKey(): Promise<undefined | string>;
+getNextQueueKey(): Promise<string | undefined>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:156](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L156)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:156
 
 Retrieves the next available queue key (without item mutation).
 Skips bypassed keys.
 
 #### Returns
 
-`Promise`\<`undefined` \| `string`\>
+`Promise`\<`string` \| `undefined`\>
 
 Next queue key, or undefined if none.
 
@@ -222,27 +222,27 @@ Next queue key, or undefined if none.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`getNextQueueKey`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#getnextqueuekey)
 
-***
+---
 
 ### getProcessingItem()
 
 ```ts
-getProcessingItem(key: string): Promise<undefined | T>;
+getProcessingItem(key: string): Promise<T | undefined>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:100](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L100)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:100
 
 Retrieves a processing item by key.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
 
 #### Returns
 
-`Promise`\<`undefined` \| `T`\>
+`Promise`\<`T` \| `undefined`\>
 
 Promise resolving to the item, or undefined if absent.
 
@@ -250,27 +250,27 @@ Promise resolving to the item, or undefined if absent.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`getProcessingItem`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#getprocessingitem)
 
-***
+---
 
 ### getQueuedItem()
 
 ```ts
-getQueuedItem(key: string): Promise<undefined | T>;
+getQueuedItem(key: string): Promise<T | undefined>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:78](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L78)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:78
 
 Retrieves a queued item by key.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
 
 #### Returns
 
-`Promise`\<`undefined` \| `T`\>
+`Promise`\<`T` \| `undefined`\>
 
 Promise resolving to the item, or undefined if absent.
 
@@ -278,7 +278,7 @@ Promise resolving to the item, or undefined if absent.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`getQueuedItem`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#getqueueditem)
 
-***
+---
 
 ### issueNewQueueKey()
 
@@ -286,7 +286,7 @@ Promise resolving to the item, or undefined if absent.
 issueNewQueueKey(): string;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:183](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L183)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:183
 
 Issues a new unique queue key.
 
@@ -298,28 +298,28 @@ Issues a new unique queue key.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`issueNewQueueKey`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#issuenewqueuekey)
 
-***
+---
 
 ### keys()
 
 ```ts
 keys(
-   from: undefined | string, 
-   to: undefined | string, 
+   from: string | undefined,
+   to: string | undefined,
 count?: number): Promise<string[]>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:147](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L147)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:147
 
 Retrieves keys in a range.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `from` | `undefined` \| `string` | Inclusive start key (optional). |
-| `to` | `undefined` \| `string` | Inclusive end key (optional). |
-| `count?` | `number` | Maximum number of keys (optional). |
+| Parameter | Type                    | Description                        |
+| --------- | ----------------------- | ---------------------------------- |
+| `from`    | `string` \| `undefined` | Inclusive start key (optional).    |
+| `to`      | `string` \| `undefined` | Inclusive end key (optional).      |
+| `count?`  | `number`                | Maximum number of keys (optional). |
 
 #### Returns
 
@@ -329,7 +329,7 @@ Retrieves keys in a range.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`keys`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#keys)
 
-***
+---
 
 ### setProcessingItem()
 
@@ -337,16 +337,16 @@ Retrieves keys in a range.
 setProcessingItem(key: string, item: T): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:107](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L107)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:107
 
 Stores a processing item by key.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
-| `item` | `T` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
+| `item`    | `T`      |
 
 #### Returns
 
@@ -356,7 +356,7 @@ Stores a processing item by key.
 
 [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md).[`setProcessingItem`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md#setprocessingitem)
 
-***
+---
 
 ### setQueueItem()
 
@@ -364,16 +364,16 @@ Stores a processing item by key.
 setQueueItem(key: string, item: T): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/QueueBackend.ts:85](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/QueueBackend.ts#L85)
+Defined in: packages/octagonal-wheels/src/BackedQueue/QueueBackend.ts:85
 
 Stores a queued item by key.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | `string` |
-| `item` | `T` |
+| Parameter | Type     |
+| --------- | -------- |
+| `key`     | `string` |
+| `item`    | `T`      |
 
 #### Returns
 

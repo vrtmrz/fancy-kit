@@ -32,6 +32,10 @@ function generateCRC32CTable() {
 }
 generateCRC32CTable();
 generateCRC32KTable();
+/**
+ * Reproduces the legacy CRC-derived string hash.
+ * @deprecated Retained for compatibility with existing hash values.
+ */
 function crc32CHash(strSrc) {
     let crc = 0xffffffff;
     const src = `s0` + strSrc + `\u0012\u0009` + strSrc.length;
@@ -46,6 +50,10 @@ function crc32CHash(strSrc) {
     crc ^= 0xffffffff;
     return crc.toString(32);
 }
+/**
+ * Reproduces the combined legacy CRC-derived string hash.
+ * @deprecated Retained for compatibility with existing hash values.
+ */
 function crc32CKHash(strSrc) {
     let crc = 0xffffffff;
     let crc2 = 0xffffffff;

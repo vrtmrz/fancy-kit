@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / Manifold
 
@@ -9,14 +9,14 @@
 ```ts
 Manifold: {
   of: <T>(name: string) => Manifold<T>;
-};
+}
 ```
 
-Defined in: [src/conduit/manifold.ts:13](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/manifold.ts#L13)
+Defined in: packages/octagonal-wheels/src/conduit/manifold.ts:13
 
 ## Type Declaration
 
-### of()
+### of
 
 ```ts
 of: <T>(name: string) => Manifold<T>;
@@ -24,15 +24,15 @@ of: <T>(name: string) => Manifold<T>;
 
 #### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `name` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `name`    | `string` |
 
 #### Returns
 

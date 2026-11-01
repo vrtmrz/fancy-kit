@@ -33,6 +33,16 @@ The published package is ESM and declares `obsidian >=1.8.7`. Direct dialogs, No
 
 Direct dialog functions and `createObsidianUi` render the same Obsidian UI. The distinction is architectural: direct functions are convenient at an Obsidian-specific boundary, while `UiInteractions` allows a workflow to receive a neutral capability that a test can replace.
 
+## Select command availability at invocation time
+
+The unreleased `createCommandCheck` helper from
+`@vrtmrz/obsidian-plugin-kit/command` produces an Obsidian `checkCallback`.
+It reselects the current value for every invocation, reports falsey values as
+unavailable, and passes the selected value to the action only during execution.
+See the [command example](../README.md#command-availability) for the complete
+falsey-value and error contracts. The focused entry imports no Obsidian runtime
+API, so application selection and execution policy can be tested without an App.
+
 ## Keep workflow capabilities narrow
 
 `createObsidianUi` returns the complete `UiInteractions` adapter for a plug-in composition root. A workflow should accept only the methods it uses. Define that boundary locally with `Pick` and give it a name that reflects the consumer operation:

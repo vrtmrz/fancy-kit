@@ -17,6 +17,8 @@ The packages use independent `0.x` versions. Use `npm view <package-name> versio
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness. See its [usage and testing guide](packages/ui-interactions/docs/usage-guide.md) for adapter composition and scripted tests.
 - [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history. See its [import and runtime guide](packages/octagonal-wheels/guides/imports-and-runtime.md) and [generated API index](packages/octagonal-wheels/docs/modules.md).
 
+See [Compose shared runtime utilities](docs/runtime-composition.md) for selecting operations, assigning cleanup ownership, and retaining application policy across these packages. The guide identifies APIs which are still unreleased.
+
 ## Workspace application
 
 - [`Fancy Kit Harness`](apps/obsidian-harness): a public interactive catalogue, guided real-device contract runner, and real Obsidian E2E fixture. Reviewed Harness releases provide a verified web installer that creates a Screwdriver document in a dedicated test Vault; follow the link in the selected [GitHub release](https://github.com/vrtmrz/fancy-kit/releases).

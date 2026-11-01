@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / noop
 
@@ -10,7 +10,7 @@
 function noop(): void;
 ```
 
-Defined in: [src/promises.ts:89](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L89)
+Defined in: packages/octagonal-wheels/src/promises.ts:89
 
 A no-operation function.
 

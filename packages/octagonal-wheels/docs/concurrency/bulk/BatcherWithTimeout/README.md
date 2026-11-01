@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [bulk](../README.md) / BatcherWithTimeout
 
 # Class: BatcherWithTimeout\<T\>
 
-Defined in: [src/concurrency/bulk.ts:320](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L320)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:320
 
 Batches items and yields them as arrays of a specified size or after a timeout.
 It respects a maximum capacity for the buffer and can be controlled with an AbortController.
@@ -18,8 +18,8 @@ It respects a maximum capacity for the buffer and can be controlled with an Abor
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Constructors
 
@@ -29,16 +29,16 @@ It respects a maximum capacity for the buffer and can be controlled with an Abor
 new BatcherWithTimeout<T>(__namedParameters: BatcherWithTimeoutOptions, ac?: AbortController): BatcherWithTimeout<T>;
 ```
 
-Defined in: [src/concurrency/bulk.ts:331](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L331)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:331
 
 Options for the batcher with timeout.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `__namedParameters` | [`BatcherWithTimeoutOptions`](../BatcherWithTimeoutOptions/README.md) | - |
-| `ac?` | `AbortController` | AbortController to control the batcher. |
+| Parameter           | Type                                                                  | Description                             |
+| ------------------- | --------------------------------------------------------------------- | --------------------------------------- |
+| `__namedParameters` | [`BatcherWithTimeoutOptions`](../BatcherWithTimeoutOptions/README.md) | -                                       |
+| `ac?`               | `AbortController`                                                     | AbortController to control the batcher. |
 
 #### Returns
 
@@ -50,13 +50,13 @@ Options for the batcher with timeout.
 
 ## Properties
 
-| Property | Modifier | Type | Default value | Description | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| <a id="ac"></a> `ac` | `protected` | `AbortController` | `undefined` | - | [`Batcher`](../Batcher/README.md).[`ac`](../Batcher/README.md#ac) | [src/concurrency/bulk.ts:73](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L73) |
-| <a id="buffer"></a> `buffer` | `protected` | `T`[] | `[]` | - | [`Batcher`](../Batcher/README.md).[`buffer`](../Batcher/README.md#buffer) | [src/concurrency/bulk.ts:74](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L74) |
-| <a id="freeflag"></a> `freeFlag` | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined` | Semaphore indicating whether items can be added (not full). | [`Batcher`](../Batcher/README.md).[`freeFlag`](../Batcher/README.md#freeflag) | [src/concurrency/bulk.ts:84](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L84) |
-| <a id="unlocked"></a> `unlocked` | `protected` | `boolean` | `false` | If true, disables the concurrency control (always yields immediately but no items can be added). | [`Batcher`](../Batcher/README.md).[`unlocked`](../Batcher/README.md#unlocked) | [src/concurrency/bulk.ts:89](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L89) |
-| <a id="yieldflag"></a> `yieldFlag` | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined` | Semaphore indicating whether items can be yielded. | [`Batcher`](../Batcher/README.md).[`yieldFlag`](../Batcher/README.md#yieldflag) | [src/concurrency/bulk.ts:79](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L79) |
+| Property                           | Modifier    | Type                                          | Default value | Description                                                                                      | Inherited from                                                                  | Defined in                                           |
+| ---------------------------------- | ----------- | --------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| <a id="ac"></a> `ac`               | `protected` | `AbortController`                             | `undefined`   | -                                                                                                | [`Batcher`](../Batcher/README.md).[`ac`](../Batcher/README.md#ac)               | packages/octagonal-wheels/src/concurrency/bulk.ts:73 |
+| <a id="buffer"></a> `buffer`       | `protected` | `T`[]                                         | `[]`          | -                                                                                                | [`Batcher`](../Batcher/README.md).[`buffer`](../Batcher/README.md#buffer)       | packages/octagonal-wheels/src/concurrency/bulk.ts:74 |
+| <a id="freeflag"></a> `freeFlag`   | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined`   | Semaphore indicating whether items can be added (not full).                                      | [`Batcher`](../Batcher/README.md).[`freeFlag`](../Batcher/README.md#freeflag)   | packages/octagonal-wheels/src/concurrency/bulk.ts:84 |
+| <a id="unlocked"></a> `unlocked`   | `protected` | `boolean`                                     | `false`       | If true, disables the concurrency control (always yields immediately but no items can be added). | [`Batcher`](../Batcher/README.md).[`unlocked`](../Batcher/README.md#unlocked)   | packages/octagonal-wheels/src/concurrency/bulk.ts:89 |
+| <a id="yieldflag"></a> `yieldFlag` | `protected` | [`WaitSemaphore`](../WaitSemaphore/README.md) | `undefined`   | Semaphore indicating whether items can be yielded.                                               | [`Batcher`](../Batcher/README.md).[`yieldFlag`](../Batcher/README.md#yieldflag) | packages/octagonal-wheels/src/concurrency/bulk.ts:79 |
 
 ## Accessors
 
@@ -68,7 +68,7 @@ Options for the batcher with timeout.
 get isAborted(): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:103](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L103)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:103
 
 Indicates whether the process has been aborted.
 
@@ -80,7 +80,7 @@ Indicates whether the process has been aborted.
 
 [`Batcher`](../Batcher/README.md).[`isAborted`](../Batcher/README.md#isaborted)
 
-***
+---
 
 ### isBufferFull
 
@@ -90,7 +90,7 @@ Indicates whether the process has been aborted.
 get isBufferFull(): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:277](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L277)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:277
 
 Indicates whether the buffer is full (cannot add more items).
 
@@ -102,7 +102,7 @@ Indicates whether the buffer is full (cannot add more items).
 
 [`Batcher`](../Batcher/README.md).[`isBufferFull`](../Batcher/README.md#isbufferfull)
 
-***
+---
 
 ### isBufferReady
 
@@ -112,7 +112,7 @@ Indicates whether the buffer is full (cannot add more items).
 get isBufferReady(): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:340](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L340)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:340
 
 Indicates whether the buffer is ready to yield items.
 
@@ -132,7 +132,7 @@ Indicates whether the buffer is ready to yield items.
 abort(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:94](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L94)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:94
 
 Aborts the batching/streaming process.
 
@@ -144,7 +144,7 @@ Aborts the batching/streaming process.
 
 [`Batcher`](../Batcher/README.md).[`abort`](../Batcher/README.md#abort)
 
-***
+---
 
 ### add()
 
@@ -152,15 +152,15 @@ Aborts the batching/streaming process.
 add(item: T): Promise<void>;
 ```
 
-Defined in: [src/concurrency/bulk.ts:203](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L203)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:203
 
 Adds an item to the buffer.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | Item to add to the buffer |
+| Parameter | Type | Description               |
+| --------- | ---- | ------------------------- |
+| `item`    | `T`  | Item to add to the buffer |
 
 #### Returns
 
@@ -172,7 +172,7 @@ void
 
 [`Batcher`](../Batcher/README.md).[`add`](../Batcher/README.md#add)
 
-***
+---
 
 ### addToBuffer()
 
@@ -180,15 +180,15 @@ void
 protected addToBuffer(item: T): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:192](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L192)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:192
 
 Adds an item to the buffer.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | Item to add to the buffer |
+| Parameter | Type | Description               |
+| --------- | ---- | ------------------------- |
+| `item`    | `T`  | Item to add to the buffer |
 
 #### Returns
 
@@ -198,7 +198,7 @@ Adds an item to the buffer.
 
 [`Batcher`](../Batcher/README.md).[`addToBuffer`](../Batcher/README.md#addtobuffer)
 
-***
+---
 
 ### canYield()
 
@@ -206,15 +206,15 @@ Adds an item to the buffer.
 canYield(items: T[]): boolean;
 ```
 
-Defined in: [src/concurrency/bulk.ts:377](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L377)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:377
 
 Checks if the items can be yielded.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `items` | `T`[] | Items to be yielded |
+| Parameter | Type  | Description         |
+| --------- | ----- | ------------------- |
+| `items`   | `T`[] | Items to be yielded |
 
 #### Returns
 
@@ -226,7 +226,7 @@ non-empty array means can yield, empty array means cannot yield (skip yielding).
 
 [`Batcher`](../Batcher/README.md).[`canYield`](../Batcher/README.md#canyield)
 
-***
+---
 
 ### checkFlags()
 
@@ -234,7 +234,7 @@ non-empty array means can yield, empty array means cannot yield (skip yielding).
 checkFlags(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:183](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L183)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:183
 
 Checks both flags.
 
@@ -246,7 +246,7 @@ Checks both flags.
 
 [`Batcher`](../Batcher/README.md).[`checkFlags`](../Batcher/README.md#checkflags)
 
-***
+---
 
 ### checkFree()
 
@@ -254,7 +254,7 @@ Checks both flags.
 protected checkFree(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:148](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L148)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:148
 
 Checks the free flag and locks it if necessary.
 
@@ -268,7 +268,7 @@ void
 
 [`Batcher`](../Batcher/README.md).[`checkFree`](../Batcher/README.md#checkfree)
 
-***
+---
 
 ### checkYielding()
 
@@ -276,7 +276,7 @@ void
 protected checkYielding(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:166](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L166)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:166
 
 Checks the yielding flag and locks it if necessary.
 
@@ -290,7 +290,7 @@ void
 
 [`Batcher`](../Batcher/README.md).[`checkYielding`](../Batcher/README.md#checkyielding)
 
-***
+---
 
 ### disableControl()
 
@@ -298,7 +298,7 @@ void
 disableControl(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:120](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L120)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:120
 
 Disables the concurrency control.
 
@@ -310,7 +310,7 @@ Disables the concurrency control.
 
 [`Batcher`](../Batcher/README.md).[`disableControl`](../Batcher/README.md#disablecontrol)
 
-***
+---
 
 ### enableControl()
 
@@ -318,7 +318,7 @@ Disables the concurrency control.
 enableControl(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:128](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L128)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:128
 
 Enables the concurrency control.
 
@@ -330,7 +330,7 @@ Enables the concurrency control.
 
 [`Batcher`](../Batcher/README.md).[`enableControl`](../Batcher/README.md#enablecontrol)
 
-***
+---
 
 ### onAdd()
 
@@ -338,7 +338,7 @@ Enables the concurrency control.
 onAdd(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:381](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L381)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:381
 
 Hook called after adding an item.
 
@@ -350,7 +350,7 @@ Hook called after adding an item.
 
 [`Batcher`](../Batcher/README.md).[`onAdd`](../Batcher/README.md#onadd)
 
-***
+---
 
 ### onYield()
 
@@ -358,7 +358,7 @@ Hook called after adding an item.
 onYield(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:386](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L386)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:386
 
 Hook called after yielding items.
 
@@ -370,7 +370,7 @@ Hook called after yielding items.
 
 [`Batcher`](../Batcher/README.md).[`onYield`](../Batcher/README.md#onyield)
 
-***
+---
 
 ### triggerTimeoutAdd()
 
@@ -378,7 +378,7 @@ Hook called after yielding items.
 triggerTimeoutAdd(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:348](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L348)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:348
 
 Triggers the timeout for adding items.
 
@@ -388,7 +388,7 @@ Triggers the timeout for adding items.
 
 void
 
-***
+---
 
 ### triggerTimeoutYield()
 
@@ -396,7 +396,7 @@ void
 triggerTimeoutYield(): void;
 ```
 
-Defined in: [src/concurrency/bulk.ts:362](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L362)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:362
 
 Triggers the timeout for yielding items.
 
@@ -406,7 +406,7 @@ Triggers the timeout for yielding items.
 
 void
 
-***
+---
 
 ### yield()
 
@@ -414,7 +414,7 @@ void
 yield(): AsyncGenerator<T[]>;
 ```
 
-Defined in: [src/concurrency/bulk.ts:217](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L217)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:217
 
 Yields items from the buffer as an async generator.
 
@@ -426,7 +426,7 @@ Yields items from the buffer as an async generator.
 
 [`Batcher`](../Batcher/README.md).[`yield`](../Batcher/README.md#yield)
 
-***
+---
 
 ### yieldResult()
 
@@ -434,7 +434,7 @@ Yields items from the buffer as an async generator.
 yieldResult(): T[];
 ```
 
-Defined in: [src/concurrency/bulk.ts:296](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/bulk.ts#L296)
+Defined in: packages/octagonal-wheels/src/concurrency/bulk.ts:296
 
 gets the result of yielding items from the buffer.
 

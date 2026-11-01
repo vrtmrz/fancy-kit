@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [channel](../../README.md) / [channels](../README.md) / RegisterOptions
 
@@ -12,12 +12,12 @@ type RegisterOptions = {
 };
 ```
 
-Defined in: [src/channel/channels.ts:28](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L28)
+Defined in: packages/octagonal-wheels/src/channel/channels.ts:28
 
 Options for registering a function to a channel
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="signal"></a> `signal?` | `AbortSignal` | [src/channel/channels.ts:29](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/channels.ts#L29) |
+| Property                      | Type          | Defined in                                           |
+| ----------------------------- | ------------- | ---------------------------------------------------- |
+| <a id="signal"></a> `signal?` | `AbortSignal` | packages/octagonal-wheels/src/channel/channels.ts:29 |

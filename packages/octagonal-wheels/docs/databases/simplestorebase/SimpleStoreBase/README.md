@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [databases](../../README.md) / [simplestorebase](../README.md) / SimpleStoreBase
 
 # Abstract Class: SimpleStoreBase\<T, TBackend\>
 
-Defined in: [src/databases/SimpleStoreBase.ts:93](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L93)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:93
 
 Represents a base class for a simple key-value-store.
 
@@ -17,10 +17,10 @@ Represents a base class for a simple key-value-store.
 
 ## Type Parameters
 
-| Type Parameter | Default type | Description |
-| ------ | ------ | ------ |
-| `T` | - | The type of the values stored in the store. |
-| `TBackend` | `any` | - |
+| Type Parameter | Default type | Description                                 |
+| -------------- | ------------ | ------------------------------------------- |
+| `T`            | -            | The type of the values stored in the store. |
+| `TBackend`     | `any`        | -                                           |
 
 ## Implements
 
@@ -45,16 +45,16 @@ new SimpleStoreBase<T, TBackend>(): SimpleStoreBase<T, TBackend>;
 #### Get Signature
 
 ```ts
-get abstract db(): undefined | Promise<TBackend>;
+get abstract db(): Promise<TBackend> | undefined;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:98](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L98)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:98
 
 Gets the underlying database instance.
 
 ##### Returns
 
-`undefined` \| `Promise`\<`TBackend`\>
+`Promise`\<`TBackend`\> \| `undefined`
 
 A Promise that resolves to the database instance, or undefined if not available.
 
@@ -70,7 +70,7 @@ A Promise that resolves to the database instance, or undefined if not available.
 abstract clear(): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:134](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L134)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:134
 
 Clears all entries in the store.
 
@@ -78,7 +78,7 @@ Clears all entries in the store.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### close()
 
@@ -86,7 +86,7 @@ Clears all entries in the store.
 abstract close(): void;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:138](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L138)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:138
 
 Closes the store.
 
@@ -94,7 +94,7 @@ Closes the store.
 
 `void`
 
-***
+---
 
 ### delete()
 
@@ -102,15 +102,15 @@ Closes the store.
 abstract delete(key: string): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:115](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L115)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:115
 
 Deletes the value associated with the specified key.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | The key to delete the value for. |
+| Parameter | Type     | Description                      |
+| --------- | -------- | -------------------------------- |
+| `key`     | `string` | The key to delete the value for. |
 
 #### Returns
 
@@ -120,7 +120,7 @@ Deletes the value associated with the specified key.
 
 [`SimpleStore`](../SimpleStore/README.md).[`delete`](../SimpleStore/README.md#delete)
 
-***
+---
 
 ### destroy()
 
@@ -128,7 +128,7 @@ Deletes the value associated with the specified key.
 abstract destroy(): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:142](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L142)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:142
 
 Destroys the store and releases all resources.
 
@@ -136,54 +136,54 @@ Destroys the store and releases all resources.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### get()
 
 ```ts
-abstract get(key: string): Promise<undefined | T>;
+abstract get(key: string): Promise<T | undefined>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:104](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L104)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:104
 
 Retrieves the value associated with the specified key.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | The key to retrieve the value for. |
+| Parameter | Type     | Description                        |
+| --------- | -------- | ---------------------------------- |
+| `key`     | `string` | The key to retrieve the value for. |
 
 #### Returns
 
-`Promise`\<`undefined` \| `T`\>
+`Promise`\<`T` \| `undefined`\>
 
 #### Implementation of
 
 [`SimpleStore`](../SimpleStore/README.md).[`get`](../SimpleStore/README.md#get)
 
-***
+---
 
 ### keys()
 
 ```ts
 abstract keys(
-   from?: string, 
-   to?: string, 
+   from?: string,
+   to?: string,
 count?: number): Promise<string[]>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:122](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L122)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:122
 
 Retrieves an array of keys within the specified range.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `from?` | `string` | The starting key (inclusive) of the range. If undefined, starts from the first key. |
-| `to?` | `string` | The ending key (inclusive) of the range. If undefined, ends at the last key. |
-| `count?` | `number` | The maximum number of keys to retrieve. If not specified, retrieves all keys within the range. |
+| Parameter | Type     | Description                                                                                    |
+| --------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `from?`   | `string` | The starting key (inclusive) of the range. If undefined, starts from the first key.            |
+| `to?`     | `string` | The ending key (inclusive) of the range. If undefined, ends at the last key.                   |
+| `count?`  | `number` | The maximum number of keys to retrieve. If not specified, retrieves all keys within the range. |
 
 #### Returns
 
@@ -193,7 +193,7 @@ Retrieves an array of keys within the specified range.
 
 [`SimpleStore`](../SimpleStore/README.md).[`keys`](../SimpleStore/README.md#keys)
 
-***
+---
 
 ### keysIDB()
 
@@ -201,22 +201,22 @@ Retrieves an array of keys within the specified range.
 abstract keysIDB(query?: IDBValidKey | IDBKeyRange, count?: number): Promise<IDBValidKey[]>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:129](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L129)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:129
 
 Retrieves an array of IndexedDB keys within the specified range.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `query?` | `IDBValidKey` \| `IDBKeyRange` | The key or key range to query. |
-| `count?` | `number` | The maximum number of keys to retrieve. If not specified, retrieves all keys within the range. |
+| Parameter | Type                           | Description                                                                                    |
+| --------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `query?`  | `IDBValidKey` \| `IDBKeyRange` | The key or key range to query.                                                                 |
+| `count?`  | `number`                       | The maximum number of keys to retrieve. If not specified, retrieves all keys within the range. |
 
 #### Returns
 
 `Promise`\<`IDBValidKey`[]\>
 
-***
+---
 
 ### set()
 
@@ -224,16 +224,16 @@ Retrieves an array of IndexedDB keys within the specified range.
 abstract set(key: string, value: T): Promise<void>;
 ```
 
-Defined in: [src/databases/SimpleStoreBase.ts:110](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/databases/SimpleStoreBase.ts#L110)
+Defined in: packages/octagonal-wheels/src/databases/SimpleStoreBase.ts:110
 
 Sets the value associated with the specified key.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | The key to set the value for. |
-| `value` | `T` | The value to be set. |
+| Parameter | Type     | Description                   |
+| --------- | -------- | ----------------------------- |
+| `key`     | `string` | The key to set the value for. |
+| `value`   | `T`      | The value to be set.          |
 
 #### Returns
 

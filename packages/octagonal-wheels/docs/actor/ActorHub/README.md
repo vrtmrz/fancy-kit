@@ -1,20 +1,20 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [actor](../README.md) / ActorHub
 
 # Class: ActorHub\<T\>
 
-Defined in: [src/actor.ts:11](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L11)
+Defined in: packages/octagonal-wheels/src/actor.ts:11
 
 Represents a hub for managing actors.
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | The type of the message that can be dispatched to actors. |
+| Type Parameter | Description                                               |
+| -------------- | --------------------------------------------------------- |
+| `T`            | The type of the message that can be dispatched to actors. |
 
 ## Constructors
 
@@ -24,7 +24,7 @@ Represents a hub for managing actors.
 new ActorHub<T>(): ActorHub<T>;
 ```
 
-Defined in: [src/actor.ts:12](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L12)
+Defined in: packages/octagonal-wheels/src/actor.ts:12
 
 #### Returns
 
@@ -32,10 +32,10 @@ Defined in: [src/actor.ts:12](https://github.com/vrtmrz/octagonal-wheels/blob/ma
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="_actormap"></a> `_actorMap` | `Map`\<`string`, [`Actor`](../Actor/README.md)\<`T`\>[]\> | Represents a map of actors. The key is a name of actors, and the value is an array of actors of type T. Exposed for testing purposes. Do not use it directly. | [src/actor.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L21) |
-| <a id="_actorrrindex"></a> `_actorRRIndex` | `Map`\<`string`, `number`\> | Represents a map of round-robin indexes for actors. The key is a name of actors, and the value is an index of the actor in the array of actors of type T. Exposed for testing purposes. Do not use it directly. | [src/actor.ts:28](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L28) |
+| Property                                   | Type                                                      | Description                                                                                                                                                                                                     | Defined in                                |
+| ------------------------------------------ | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| <a id="_actormap"></a> `_actorMap`         | `Map`\<`string`, [`Actor`](../Actor/README.md)\<`T`\>[]\> | Represents a map of actors. The key is a name of actors, and the value is an array of actors of type T. Exposed for testing purposes. Do not use it directly.                                                   | packages/octagonal-wheels/src/actor.ts:21 |
+| <a id="_actorrrindex"></a> `_actorRRIndex` | `Map`\<`string`, `number`\>                               | Represents a map of round-robin indexes for actors. The key is a name of actors, and the value is an index of the actor in the array of actors of type T. Exposed for testing purposes. Do not use it directly. | packages/octagonal-wheels/src/actor.ts:28 |
 
 ## Methods
 
@@ -45,22 +45,22 @@ Defined in: [src/actor.ts:12](https://github.com/vrtmrz/octagonal-wheels/blob/ma
 add(actor: Actor<T>): void;
 ```
 
-Defined in: [src/actor.ts:35](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L35)
+Defined in: packages/octagonal-wheels/src/actor.ts:35
 
 Adds an actor to be managed by the hub.
 This method is used internally by the Actor class, but it can be used if you are sure and want to make an original and custom actor.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `actor` | [`Actor`](../Actor/README.md)\<`T`\> | The actor to be added. |
+| Parameter | Type                                 | Description            |
+| --------- | ------------------------------------ | ---------------------- |
+| `actor`   | [`Actor`](../Actor/README.md)\<`T`\> | The actor to be added. |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### dispatch()
 
@@ -68,20 +68,20 @@ This method is used internally by the Actor class, but it can be used if you are
 dispatch(actorName: string, message: T): void;
 ```
 
-Defined in: [src/actor.ts:63](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L63)
+Defined in: packages/octagonal-wheels/src/actor.ts:63
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter   | Type     |
+| ----------- | -------- |
 | `actorName` | `string` |
-| `message` | `T` |
+| `message`   | `T`      |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### remove()
 
@@ -89,13 +89,13 @@ Defined in: [src/actor.ts:63](https://github.com/vrtmrz/octagonal-wheels/blob/ma
 remove(actor: Actor<T>): void;
 ```
 
-Defined in: [src/actor.ts:54](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/actor.ts#L54)
+Defined in: packages/octagonal-wheels/src/actor.ts:54
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `actor` | [`Actor`](../Actor/README.md)\<`T`\> |
+| Parameter | Type                                 |
+| --------- | ------------------------------------ |
+| `actor`   | [`Actor`](../Actor/README.md)\<`T`\> |
 
 #### Returns
 

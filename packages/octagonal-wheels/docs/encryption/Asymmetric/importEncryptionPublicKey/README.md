@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [encryption](../../README.md) / [Asymmetric](../README.md) / importEncryptionPublicKey
 
@@ -10,14 +10,14 @@
 function importEncryptionPublicKey(publicKeyString: string): Promise<CryptoKey>;
 ```
 
-Defined in: [src/encryption/asymmetric/keys.ts:250](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/asymmetric/keys.ts#L250)
+Defined in: packages/octagonal-wheels/src/encryption/asymmetric/keys.ts:250
 
 Restores a CryptoKey from a Base64-encoded public key string.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter         | Type     | Description                    |
+| ----------------- | -------- | ------------------------------ |
 | `publicKeyString` | `string` | The Base64-encoded public key. |
 
 ## Returns

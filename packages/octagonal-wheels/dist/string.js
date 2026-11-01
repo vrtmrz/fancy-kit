@@ -51,6 +51,28 @@ function escapeStringToHTML(str) {
         return escape[match];
     });
 }
+/**
+ * Splits a string on a delimiter and removes empty elements.
+ *
+ * @param source - The string to split.
+ * @param delimiter - The delimiter passed to {@link String.split}.
+ * @returns The split elements, excluding elements whose length is zero.
+ * @remarks Elements are not trimmed or unescaped. An empty delimiter follows
+ * JavaScript's behaviour of splitting by UTF-16 code unit.
+ */
+function splitDelimitedList(source, delimiter) {
+    return source.split(delimiter).filter((item) => item.length > 0);
+}
+/**
+ * Joins string elements with a delimiter.
+ *
+ * @param items - The elements to join. Empty elements are retained.
+ * @param delimiter - The separator inserted between elements.
+ * @returns The joined string, following {@link Array.join} semantics.
+ */
+function joinDelimitedList(items, delimiter) {
+    return items.join(delimiter);
+}
 
-export { escapeStringToHTML, replaceAll, replaceAllPairs };
+export { escapeStringToHTML, joinDelimitedList, replaceAll, replaceAllPairs, splitDelimitedList };
 //# sourceMappingURL=string.js.map

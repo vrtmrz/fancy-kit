@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [channel](../../README.md) / [transport](../README.md) / BroadcastChannelTransport
 
 # Class: BroadcastChannelTransport
 
-Defined in: [src/channel/transport.ts:124](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L124)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:124
 
 Transport Implementation: BroadcastChannel
 Used for communication between different browser tabs, windows, iframes, or workers of the same origin.
@@ -22,16 +22,16 @@ Do not pass non-cloneable objects (e.g., functions, DOM nodes) through this tran
 ### Constructor
 
 ```ts
-new BroadcastChannelTransport(enableEcho: boolean): BroadcastChannelTransport;
+new BroadcastChannelTransport(enableEcho?: boolean): BroadcastChannelTransport;
 ```
 
-Defined in: [src/channel/transport.ts:131](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L131)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:131
 
 #### Parameters
 
-| Parameter | Type | Default value |
-| ------ | ------ | ------ |
-| `enableEcho` | `boolean` | `true` |
+| Parameter    | Type      | Default value |
+| ------------ | --------- | ------------- |
+| `enableEcho` | `boolean` | `true`        |
 
 #### Returns
 
@@ -45,7 +45,7 @@ Defined in: [src/channel/transport.ts:131](https://github.com/vrtmrz/octagonal-w
 close(): void;
 ```
 
-Defined in: [src/channel/transport.ts:192](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L192)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:192
 
 Close the transport and clean up resources.
 
@@ -57,7 +57,7 @@ Close the transport and clean up resources.
 
 [`ITransport`](../ITransport/README.md).[`close`](../ITransport/README.md#close)
 
-***
+---
 
 ### publish()
 
@@ -65,16 +65,16 @@ Close the transport and clean up resources.
 publish(channelName: string, data: any): void;
 ```
 
-Defined in: [src/channel/transport.ts:184](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L184)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:184
 
 Publish a message to a specific channel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter     | Type     | Description                            |
+| ------------- | -------- | -------------------------------------- |
 | `channelName` | `string` | The name of the channel to publish to. |
-| `data` | `any` | The data to send with the message. |
+| `data`        | `any`    | The data to send with the message.     |
 
 #### Returns
 
@@ -84,7 +84,7 @@ Publish a message to a specific channel.
 
 [`ITransport`](../ITransport/README.md).[`publish`](../ITransport/README.md#publish)
 
-***
+---
 
 ### subscribe()
 
@@ -92,28 +92,22 @@ Publish a message to a specific channel.
 subscribe(channelName: string, listener: (data: any) => void): () => void;
 ```
 
-Defined in: [src/channel/transport.ts:163](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/channel/transport.ts#L163)
+Defined in: packages/octagonal-wheels/src/channel/transport.ts:163
 
 Subscribe to messages on a specific channel.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `channelName` | `string` | The name of the channel to subscribe to. |
-| `listener` | (`data`: `any`) => `void` | The callback function to invoke when a message is received on the channel. |
+| Parameter     | Type                      | Description                                                                |
+| ------------- | ------------------------- | -------------------------------------------------------------------------- |
+| `channelName` | `string`                  | The name of the channel to subscribe to.                                   |
+| `listener`    | (`data`: `any`) => `void` | The callback function to invoke when a message is received on the channel. |
 
 #### Returns
 
 A function to unsubscribe from the channel.
 
-```ts
-(): void;
-```
-
-##### Returns
-
-`void`
+() => `void`
 
 #### Implementation of
 

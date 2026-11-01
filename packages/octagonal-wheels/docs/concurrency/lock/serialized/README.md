@@ -1,34 +1,38 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [lock](../README.md) / serialized
 
-# Function: serialized()
+# ~~Function: serialized()~~
 
 ```ts
 function serialized<T>(key: string | symbol, proc: Task<T>): Promise<T>;
 ```
 
-Defined in: [src/concurrency/lock\_v2.ts:38](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/lock_v2.ts#L38)
+Defined in: packages/octagonal-wheels/src/concurrency/lock\_v2.ts:28
 
-Run tasks one by one in their group.
+Runs tasks one at a time in their keyed group.
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` \| `symbol` | key of the group |
-| `proc` | [`Task`](../Task/README.md)\<`T`\> | process to run |
+| Parameter | Type                               | Description                                  |
+| --------- | ---------------------------------- | -------------------------------------------- |
+| `key`     | `string` \| `symbol`               | Shared lock group.                           |
+| `proc`    | [`Task`](../Task/README.md)\<`T`\> | Operation to execute while holding the lock. |
 
 ## Returns
 
 `Promise`\<`T`\>
 
-result of the process
+The operation result, using the same locks as withLock and withLocks.
+
+## Deprecated
+
+Use withLock for new code.

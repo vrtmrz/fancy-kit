@@ -1,13 +1,9 @@
-/**
- * Reusable, Obsidian-specific building blocks for plugin development.
- *
- * Public exports will be added one feature at a time after their contracts
- * and migration notes have been settled.
- */
-export * from "./dialog.js";
-export * from "./notice.js";
-export * from "./progress.js";
-export * from "./ui-context.js";
-export * from "./vault.js";
-export * from "./secrets.js";
-export * from "./local-storage.js";
+/** Reusable, Obsidian-specific building blocks for plug-in development. */
+export * from "./command.ts";
+export * from "./dialog.ts";
+export * from "./notice.ts";
+export * from "./progress.ts";
+export * from "./ui-context.ts";
+export * from "./vault.ts";
+export * from "./secrets.ts";
+export * from "./local-storage.ts";

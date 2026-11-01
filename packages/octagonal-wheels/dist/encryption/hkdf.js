@@ -1,6 +1,6 @@
 import { base64ToArrayBuffer, readString, writeString, arrayBufferToBase64Single } from '../binary/base64.js';
 import { uint8ArrayToHexString } from '../binary/hex.js';
-import { concatUInt8Array, createTypedArrayReader } from '../collection.js';
+import { concatUInt8Array, createTypedArrayReader } from '../binary/typedArray.js';
 import { Logger, LOG_LEVEL_VERBOSE } from '../common/logger.js';
 import { memoWithMap } from '../memory/memo.js';
 

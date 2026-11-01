@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [messagepassing](../../README.md) / [signal](../README.md) / SlipProcessOptions
 
@@ -9,7 +9,7 @@
 ```ts
 type SlipProcessOptions<T> = {
   callback: () => Promise<T> | T;
-} & 
+} &
   | {
   dropSlipWithRisks?: boolean;
   submitAsSuccess?: false;
@@ -20,11 +20,11 @@ type SlipProcessOptions<T> = {
 };
 ```
 
-Defined in: [src/bureau/SlipBoard.ts:46](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/SlipBoard.ts#L46)
+Defined in: packages/octagonal-wheels/src/bureau/SlipBoard.ts:46
 
 ## Type Declaration
 
-### callback()
+### callback
 
 ```ts
 callback: () => Promise<T> | T;
@@ -37,5 +37,5 @@ callback: () => Promise<T> | T;
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |

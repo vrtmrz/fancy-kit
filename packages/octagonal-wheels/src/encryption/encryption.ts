@@ -337,7 +337,6 @@ export async function testCryptV3() {
 
 /**
  * Tests the encryption and decryption functionality.
- * @deprecated Use `hkdf.testEncryptionFeature` instead.
  * @returns {Promise<boolean>} A promise that resolves to `true` if encryption and decryption are successful, and `false` otherwise.
  */
 export async function testCrypt() {

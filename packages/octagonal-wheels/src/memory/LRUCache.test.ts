@@ -74,6 +74,61 @@ describe("LRUCache", () => {
         expect(cache.has(4)).toBe(true);
     });
 
+    test.each(["", 0, false, null, undefined])("refreshes recency when the cached value is %s", (value) => {
+        const cache = new LRUCache<string, unknown>(2, 1);
+        cache.set("first", value);
+        cache.set("second", "second-value");
+
+        expect(cache.get("first")).toBe(value);
+        cache.set("third", "third-value");
+
+        expect(cache.has("first")).toBe(true);
+        expect(cache.has("second")).toBe(false);
+        expect(cache.get("third")).toBe("third-value");
+    });
+
+    test.each(["", 0, false, null, undefined])("refreshes recency when reverse lookup returns key %s", (key) => {
+        const cache = new LRUCache<unknown, string>(2, 1);
+        cache.set(key, "first-value");
+        cache.set("second", "second-value");
+
+        expect(cache.revGet("first-value")).toBe(key);
+        cache.set("third", "third-value");
+
+        expect(cache.has(key)).toBe(true);
+        expect(cache.has("second")).toBe(false);
+        expect(cache.get("third")).toBe("third-value");
+    });
+
+    test("does not insert missing entries while looking them up", () => {
+        const cache = new LRUCache<string, string>(2, 1);
+        cache.set("first", "first-value");
+        cache.set("second", "second-value");
+
+        expect(cache.get("missing")).toBeUndefined();
+        expect(cache.revGet("missing-value")).toBeUndefined();
+        expect(cache.has("missing")).toBe(false);
+        cache.set("third", "third-value");
+
+        expect(cache.has("first")).toBe(false);
+        expect(cache.has("second")).toBe(true);
+        expect(cache.has("third")).toBe(true);
+    });
+
+    test("refreshes falsy values when reverse lookup is disabled", () => {
+        const cache = new LRUCache<string, string>(2, 1, true);
+        cache.set("first", "");
+        cache.set("second", "second-value");
+
+        expect(cache.get("first")).toBe("");
+        expect(cache.revGet("")).toBeUndefined();
+        cache.set("third", "third-value");
+
+        expect(cache.has("first")).toBe(true);
+        expect(cache.has("second")).toBe(false);
+        expect(cache.has("third")).toBe(true);
+    });
+
     test("should clear the cache", () => {
         cache.set(1, "Value 1");
         cache.set(2, "Value 2");

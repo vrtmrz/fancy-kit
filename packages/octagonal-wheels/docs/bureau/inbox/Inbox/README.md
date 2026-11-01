@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [inbox](../README.md) / Inbox
 
 # Class: Inbox\<T\>
 
-Defined in: [src/bureau/Inbox.ts:178](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L178)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:178
 
 ## Extends
 
@@ -19,8 +19,8 @@ Defined in: [src/bureau/Inbox.ts:178](https://github.com/vrtmrz/octagonal-wheels
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Constructors
 
@@ -30,14 +30,14 @@ Defined in: [src/bureau/Inbox.ts:178](https://github.com/vrtmrz/octagonal-wheels
 new Inbox<T>(capacity: number): Inbox<T>;
 ```
 
-Defined in: [src/bureau/Inbox.ts:186](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L186)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:186
 
 Creates a new PostBox.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type     | Description                 |
+| ---------- | -------- | --------------------------- |
 | `capacity` | `number` | The capacity of the buffer. |
 
 #### Returns
@@ -50,17 +50,17 @@ Creates a new PostBox.
 
 ## Properties
 
-| Property | Type | Default value | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
-| <a id="_buffer"></a> `_buffer` | `T`[] | `undefined` | [`SyncInbox`](../SyncInbox/README.md).[`_buffer`](../SyncInbox/README.md#_buffer) | [src/bureau/Inbox.ts:15](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L15) |
-| <a id="_capacity"></a> `_capacity` | `number` | `undefined` | [`SyncInbox`](../SyncInbox/README.md).[`_capacity`](../SyncInbox/README.md#_capacity) | [src/bureau/Inbox.ts:14](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L14) |
-| <a id="_disposedpromise"></a> `_disposedPromise` | [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`void`\> | `undefined` | [`SyncInbox`](../SyncInbox/README.md).[`_disposedPromise`](../SyncInbox/README.md#_disposedpromise) | [src/bureau/Inbox.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L21) |
-| <a id="_isdisposed"></a> `_isDisposed` | `boolean` | `false` | [`SyncInbox`](../SyncInbox/README.md).[`_isDisposed`](../SyncInbox/README.md#_isdisposed) | [src/bureau/Inbox.ts:20](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L20) |
-| <a id="_lockfull"></a> `_lockFull` | \| `undefined` \| [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<*typeof* [`READY_POST_SIGNAL`](../READY_POST_SIGNAL-1/README.md)\> | `undefined` | - | [src/bureau/Inbox.ts:179](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L179) |
-| <a id="_lockready"></a> `_lockReady` | \| `undefined` \| [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<*typeof* [`READY_PICK_SIGNAL`](../READY_PICK_SIGNAL-1/README.md)\> | `undefined` | - | [src/bureau/Inbox.ts:180](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L180) |
-| <a id="_readidx"></a> `_readIdx` | `number` | `0` | [`SyncInbox`](../SyncInbox/README.md).[`_readIdx`](../SyncInbox/README.md#_readidx) | [src/bureau/Inbox.ts:18](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L18) |
-| <a id="_wraparoundcount"></a> `_wrapAroundCount` | `number` | `0` | [`SyncInbox`](../SyncInbox/README.md).[`_wrapAroundCount`](../SyncInbox/README.md#_wraparoundcount) | [src/bureau/Inbox.ts:19](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L19) |
-| <a id="_writeidx"></a> `_writeIdx` | `number` | `0` | [`SyncInbox`](../SyncInbox/README.md).[`_writeIdx`](../SyncInbox/README.md#_writeidx) | [src/bureau/Inbox.ts:17](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L17) |
+| Property                                         | Type                                                                                                                                                             | Default value | Inherited from                                                                                      | Defined in                                        |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| <a id="_buffer"></a> `_buffer`                   | `T`[]                                                                                                                                                            | `undefined`   | [`SyncInbox`](../SyncInbox/README.md).[`_buffer`](../SyncInbox/README.md#_buffer)                   | packages/octagonal-wheels/src/bureau/Inbox.ts:15  |
+| <a id="_capacity"></a> `_capacity`               | `number`                                                                                                                                                         | `undefined`   | [`SyncInbox`](../SyncInbox/README.md).[`_capacity`](../SyncInbox/README.md#_capacity)               | packages/octagonal-wheels/src/bureau/Inbox.ts:14  |
+| <a id="_disposedpromise"></a> `_disposedPromise` | [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`void`\>                                                                             | `undefined`   | [`SyncInbox`](../SyncInbox/README.md).[`_disposedPromise`](../SyncInbox/README.md#_disposedpromise) | packages/octagonal-wheels/src/bureau/Inbox.ts:21  |
+| <a id="_isdisposed"></a> `_isDisposed`           | `boolean`                                                                                                                                                        | `false`       | [`SyncInbox`](../SyncInbox/README.md).[`_isDisposed`](../SyncInbox/README.md#_isdisposed)           | packages/octagonal-wheels/src/bureau/Inbox.ts:20  |
+| <a id="_lockfull"></a> `_lockFull`               | \| [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<_typeof_ [`READY_POST_SIGNAL`](../READY_POST_SIGNAL-1/README.md)\> \| `undefined` | `undefined`   | -                                                                                                   | packages/octagonal-wheels/src/bureau/Inbox.ts:179 |
+| <a id="_lockready"></a> `_lockReady`             | \| [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<_typeof_ [`READY_PICK_SIGNAL`](../READY_PICK_SIGNAL-1/README.md)\> \| `undefined` | `undefined`   | -                                                                                                   | packages/octagonal-wheels/src/bureau/Inbox.ts:180 |
+| <a id="_readidx"></a> `_readIdx`                 | `number`                                                                                                                                                         | `0`           | [`SyncInbox`](../SyncInbox/README.md).[`_readIdx`](../SyncInbox/README.md#_readidx)                 | packages/octagonal-wheels/src/bureau/Inbox.ts:18  |
+| <a id="_wraparoundcount"></a> `_wrapAroundCount` | `number`                                                                                                                                                         | `0`           | [`SyncInbox`](../SyncInbox/README.md).[`_wrapAroundCount`](../SyncInbox/README.md#_wraparoundcount) | packages/octagonal-wheels/src/bureau/Inbox.ts:19  |
+| <a id="_writeidx"></a> `_writeIdx`               | `number`                                                                                                                                                         | `0`           | [`SyncInbox`](../SyncInbox/README.md).[`_writeIdx`](../SyncInbox/README.md#_writeidx)               | packages/octagonal-wheels/src/bureau/Inbox.ts:17  |
 
 ## Accessors
 
@@ -72,7 +72,7 @@ Creates a new PostBox.
 get free(): number;
 ```
 
-Defined in: [src/bureau/Inbox.ts:53](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L53)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:53
 
 The number of free slots in the buffer.
 
@@ -84,7 +84,7 @@ The number of free slots in the buffer.
 
 [`SyncInbox`](../SyncInbox/README.md).[`free`](../SyncInbox/README.md#free)
 
-***
+---
 
 ### isDisposed
 
@@ -94,7 +94,7 @@ The number of free slots in the buffer.
 get isDisposed(): boolean;
 ```
 
-Defined in: [src/bureau/Inbox.ts:78](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L78)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:78
 
 ##### Returns
 
@@ -104,7 +104,7 @@ Defined in: [src/bureau/Inbox.ts:78](https://github.com/vrtmrz/octagonal-wheels/
 
 [`SyncInbox`](../SyncInbox/README.md).[`isDisposed`](../SyncInbox/README.md#isdisposed)
 
-***
+---
 
 ### isFull
 
@@ -114,7 +114,7 @@ Defined in: [src/bureau/Inbox.ts:78](https://github.com/vrtmrz/octagonal-wheels/
 get isFull(): boolean;
 ```
 
-Defined in: [src/bureau/Inbox.ts:67](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L67)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:67
 
 Whether the buffer is full.
 
@@ -126,7 +126,7 @@ Whether the buffer is full.
 
 [`SyncInbox`](../SyncInbox/README.md).[`isFull`](../SyncInbox/README.md#isfull)
 
-***
+---
 
 ### isReady
 
@@ -136,7 +136,7 @@ Whether the buffer is full.
 get isReady(): boolean;
 ```
 
-Defined in: [src/bureau/Inbox.ts:74](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L74)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:74
 
 Whether the buffer is ready to be picked.
 
@@ -148,7 +148,7 @@ Whether the buffer is ready to be picked.
 
 [`SyncInbox`](../SyncInbox/README.md).[`isReady`](../SyncInbox/README.md#isready)
 
-***
+---
 
 ### isRunningOut
 
@@ -158,7 +158,7 @@ Whether the buffer is ready to be picked.
 get isRunningOut(): boolean;
 ```
 
-Defined in: [src/bureau/Inbox.ts:60](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L60)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:60
 
 Whether the buffer is running out.
 
@@ -170,7 +170,7 @@ Whether the buffer is running out.
 
 [`SyncInbox`](../SyncInbox/README.md).[`isRunningOut`](../SyncInbox/README.md#isrunningout)
 
-***
+---
 
 ### onDisposed
 
@@ -180,7 +180,7 @@ Whether the buffer is running out.
 get onDisposed(): Promise<void>;
 ```
 
-Defined in: [src/bureau/Inbox.ts:81](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L81)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:81
 
 ##### Returns
 
@@ -190,7 +190,7 @@ Defined in: [src/bureau/Inbox.ts:81](https://github.com/vrtmrz/octagonal-wheels/
 
 [`SyncInbox`](../SyncInbox/README.md).[`onDisposed`](../SyncInbox/README.md#ondisposed)
 
-***
+---
 
 ### size
 
@@ -200,7 +200,7 @@ Defined in: [src/bureau/Inbox.ts:81](https://github.com/vrtmrz/octagonal-wheels/
 get size(): number;
 ```
 
-Defined in: [src/bureau/Inbox.ts:47](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L47)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:47
 
 The number of items in the buffer.
 
@@ -212,7 +212,7 @@ The number of items in the buffer.
 
 [`SyncInbox`](../SyncInbox/README.md).[`size`](../SyncInbox/README.md#size)
 
-***
+---
 
 ### state
 
@@ -222,7 +222,7 @@ The number of items in the buffer.
 get state(): InboxStateDetail;
 ```
 
-Defined in: [src/bureau/Inbox.ts:96](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L96)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:96
 
 ##### Returns
 
@@ -240,7 +240,7 @@ Defined in: [src/bureau/Inbox.ts:96](https://github.com/vrtmrz/octagonal-wheels/
 __fixIdx(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:85](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L85)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:85
 
 #### Returns
 
@@ -250,7 +250,7 @@ Defined in: [src/bureau/Inbox.ts:85](https://github.com/vrtmrz/octagonal-wheels/
 
 [`SyncInbox`](../SyncInbox/README.md).[`__fixIdx`](../SyncInbox/README.md#__fixidx)
 
-***
+---
 
 ### \_\_onPicked()
 
@@ -258,7 +258,7 @@ Defined in: [src/bureau/Inbox.ts:85](https://github.com/vrtmrz/octagonal-wheels/
 __onPicked(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:223](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L223)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:223
 
 #### Returns
 
@@ -268,7 +268,7 @@ Defined in: [src/bureau/Inbox.ts:223](https://github.com/vrtmrz/octagonal-wheels
 
 [`SyncInbox`](../SyncInbox/README.md).[`__onPicked`](../SyncInbox/README.md#__onpicked)
 
-***
+---
 
 ### \_\_onPosted()
 
@@ -276,7 +276,7 @@ Defined in: [src/bureau/Inbox.ts:223](https://github.com/vrtmrz/octagonal-wheels
 __onPosted(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:219](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L219)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:219
 
 #### Returns
 
@@ -286,7 +286,7 @@ Defined in: [src/bureau/Inbox.ts:219](https://github.com/vrtmrz/octagonal-wheels
 
 [`SyncInbox`](../SyncInbox/README.md).[`__onPosted`](../SyncInbox/README.md#__onposted)
 
-***
+---
 
 ### \_\_onProgress()
 
@@ -294,7 +294,7 @@ Defined in: [src/bureau/Inbox.ts:219](https://github.com/vrtmrz/octagonal-wheels
 __onProgress(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:127](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L127)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:127
 
 #### Returns
 
@@ -304,7 +304,7 @@ Defined in: [src/bureau/Inbox.ts:127](https://github.com/vrtmrz/octagonal-wheels
 
 [`SyncInbox`](../SyncInbox/README.md).[`__onProgress`](../SyncInbox/README.md#__onprogress)
 
-***
+---
 
 ### \_notifyFree()
 
@@ -312,13 +312,13 @@ Defined in: [src/bureau/Inbox.ts:127](https://github.com/vrtmrz/octagonal-wheels
 _notifyFree(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:200](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L200)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:200
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### \_notifyReady()
 
@@ -326,13 +326,13 @@ Defined in: [src/bureau/Inbox.ts:200](https://github.com/vrtmrz/octagonal-wheels
 _notifyReady(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:215](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L215)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:215
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### \_waitForFree()
 
@@ -340,13 +340,13 @@ Defined in: [src/bureau/Inbox.ts:215](https://github.com/vrtmrz/octagonal-wheels
 _waitForFree(): Promise<typeof READY_POST_SIGNAL>;
 ```
 
-Defined in: [src/bureau/Inbox.ts:190](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L190)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:190
 
 #### Returns
 
-`Promise`\<*typeof* [`READY_POST_SIGNAL`](../READY_POST_SIGNAL-1/README.md)\>
+`Promise`\<_typeof_ [`READY_POST_SIGNAL`](../READY_POST_SIGNAL-1/README.md)\>
 
-***
+---
 
 ### \_waitForReady()
 
@@ -354,13 +354,13 @@ Defined in: [src/bureau/Inbox.ts:190](https://github.com/vrtmrz/octagonal-wheels
 _waitForReady(): Promise<typeof READY_PICK_SIGNAL>;
 ```
 
-Defined in: [src/bureau/Inbox.ts:205](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L205)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:205
 
 #### Returns
 
-`Promise`\<*typeof* [`READY_PICK_SIGNAL`](../READY_PICK_SIGNAL-1/README.md)\>
+`Promise`\<_typeof_ [`READY_PICK_SIGNAL`](../READY_PICK_SIGNAL-1/README.md)\>
 
-***
+---
 
 ### dispose()
 
@@ -368,7 +368,7 @@ Defined in: [src/bureau/Inbox.ts:205](https://github.com/vrtmrz/octagonal-wheels
 dispose(): void;
 ```
 
-Defined in: [src/bureau/Inbox.ts:228](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L228)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:228
 
 #### Returns
 
@@ -378,7 +378,7 @@ Defined in: [src/bureau/Inbox.ts:228](https://github.com/vrtmrz/octagonal-wheels
 
 [`SyncInbox`](../SyncInbox/README.md).[`dispose`](../SyncInbox/README.md#dispose)
 
-***
+---
 
 ### pick()
 
@@ -386,46 +386,46 @@ Defined in: [src/bureau/Inbox.ts:228](https://github.com/vrtmrz/octagonal-wheels
 pick(timeout?: number, cancellation?: Promise<any>[]): Promise<typeof NOT_AVAILABLE | T>;
 ```
 
-Defined in: [src/bureau/Inbox.ts:293](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L293)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:293
 
 Picks an item from the buffer.
 Waits until an item is available.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `timeout?` | `number` | The timeout in milliseconds. |
+| Parameter       | Type                 | Description                             |
+| --------------- | -------------------- | --------------------------------------- |
+| `timeout?`      | `number`             | The timeout in milliseconds.            |
 | `cancellation?` | `Promise`\<`any`\>[] | The promise that cancels the operation. |
 
 #### Returns
 
-`Promise`\<*typeof* [`NOT_AVAILABLE`](../NOT_AVAILABLE-1/README.md) \| `T`\>
+`Promise`\<_typeof_ [`NOT_AVAILABLE`](../NOT_AVAILABLE-1/README.md) \| `T`\>
 
 The item picked.
 
-***
+---
 
 ### post()
 
 ```ts
 post(
-   item: T, 
-   timeout?: number, 
+   item: T,
+   timeout?: number,
 cancellation?: Promise<any>[]): Promise<boolean>;
 ```
 
-Defined in: [src/bureau/Inbox.ts:248](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L248)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:248
 
 Posts an item to the buffer.
 Waits until a slot is available.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | The item to post. |
-| `timeout?` | `number` | The timeout in milliseconds. |
+| Parameter       | Type                 | Description                             |
+| --------------- | -------------------- | --------------------------------------- |
+| `item`          | `T`                  | The item to post.                       |
+| `timeout?`      | `number`             | The timeout in milliseconds.            |
 | `cancellation?` | `Promise`\<`any`\>[] | The promise that cancels the operation. |
 
 #### Returns
@@ -434,7 +434,7 @@ Waits until a slot is available.
 
 whether the item is posted.
 
-***
+---
 
 ### tryCancelPost()
 
@@ -442,13 +442,13 @@ whether the item is posted.
 tryCancelPost(): typeof NOT_AVAILABLE | T;
 ```
 
-Defined in: [src/bureau/Inbox.ts:150](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L150)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:150
 
 Tries to cancel the last posted item.
 
 #### Returns
 
-*typeof* [`NOT_AVAILABLE`](../NOT_AVAILABLE-1/README.md) \| `T`
+_typeof_ [`NOT_AVAILABLE`](../NOT_AVAILABLE-1/README.md) \| `T`
 
 The item picked, or `NOT_AVAILABLE` if no item is available.
 
@@ -456,7 +456,7 @@ The item picked, or `NOT_AVAILABLE` if no item is available.
 
 [`SyncInbox`](../SyncInbox/README.md).[`tryCancelPost`](../SyncInbox/README.md#trycancelpost)
 
-***
+---
 
 ### tryPick()
 
@@ -464,13 +464,13 @@ The item picked, or `NOT_AVAILABLE` if no item is available.
 tryPick(): typeof NOT_AVAILABLE | T;
 ```
 
-Defined in: [src/bureau/Inbox.ts:166](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L166)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:166
 
 Tries to pick an item from the buffer.
 
 #### Returns
 
-*typeof* [`NOT_AVAILABLE`](../NOT_AVAILABLE-1/README.md) \| `T`
+_typeof_ [`NOT_AVAILABLE`](../NOT_AVAILABLE-1/README.md) \| `T`
 
 The item picked, or `NOT_AVAILABLE` if no item is available.
 
@@ -478,7 +478,7 @@ The item picked, or `NOT_AVAILABLE` if no item is available.
 
 [`SyncInbox`](../SyncInbox/README.md).[`tryPick`](../SyncInbox/README.md#trypick)
 
-***
+---
 
 ### tryPost()
 
@@ -486,15 +486,15 @@ The item picked, or `NOT_AVAILABLE` if no item is available.
 tryPost(item: T): boolean;
 ```
 
-Defined in: [src/bureau/Inbox.ts:136](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L136)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:136
 
 Tries to post an item to the buffer.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | The item to post. |
+| Parameter | Type | Description       |
+| --------- | ---- | ----------------- |
+| `item`    | `T`  | The item to post. |
 
 #### Returns
 

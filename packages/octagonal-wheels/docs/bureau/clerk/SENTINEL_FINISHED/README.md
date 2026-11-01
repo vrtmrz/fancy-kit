@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [clerk](../README.md) / SENTINEL\_FINISHED
 
@@ -10,4 +10,4 @@
 const SENTINEL_FINISHED: typeof SENTINEL_FINISHED;
 ```
 
-Defined in: [src/bureau/Clerk.ts:27](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L27)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:27

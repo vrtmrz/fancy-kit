@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / ConnectorFuncOf
 
 # Interface: ConnectorFuncOf\<T, U\>
 
-Defined in: [src/conduit/connector.ts:30](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L30)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:30
 
 ConnectorFuncOf
 
@@ -17,16 +17,16 @@ It is used to connect a function to a name, and then invoke that function later.
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` *extends* `any`[] | the type of the arguments |
-| `U` | the type of the return value |
+| Type Parameter        | Description                  |
+| --------------------- | ---------------------------- |
+| `T` _extends_ `any`[] | the type of the arguments    |
+| `U`                   | the type of the return value |
 
 ## Properties
 
-| Property | Modifier | Type | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="isconnected"></a> `isConnected` | `readonly` | `boolean` | [src/conduit/connector.ts:60](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L60) |
+| Property                               | Modifier   | Type      | Defined in                                            |
+| -------------------------------------- | ---------- | --------- | ----------------------------------------------------- |
+| <a id="isconnected"></a> `isConnected` | `readonly` | `boolean` | packages/octagonal-wheels/src/conduit/connector.ts:60 |
 
 ## Methods
 
@@ -36,16 +36,16 @@ It is used to connect a function to a name, and then invoke that function later.
 connect(func: ConnectorFunc<T, U>, teardown?: () => void): void;
 ```
 
-Defined in: [src/conduit/connector.ts:37](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L37)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:37
 
 Connect a function to the connector
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `func` | [`ConnectorFunc`](../ConnectorFunc/README.md)\<`T`, `U`\> | The function to connect |
-| `teardown?` | () => `void` | Optional callback to be called when the function is disconnected |
+| Parameter   | Type                                                      | Description                                                      |
+| ----------- | --------------------------------------------------------- | ---------------------------------------------------------------- |
+| `func`      | [`ConnectorFunc`](../ConnectorFunc/README.md)\<`T`, `U`\> | The function to connect                                          |
+| `teardown?` | () => `void`                                              | Optional callback to be called when the function is disconnected |
 
 #### Returns
 
@@ -53,7 +53,7 @@ Connect a function to the connector
 
 #### Remarks
 
-***
+---
 
 ### disconnect()
 
@@ -61,7 +61,7 @@ Connect a function to the connector
 disconnect(): void;
 ```
 
-Defined in: [src/conduit/connector.ts:58](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L58)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:58
 
 Disconnect the connected function
 
@@ -75,7 +75,7 @@ void
 
 This will remove the function from the connector and clear the connection.
 
-***
+---
 
 ### invoke()
 
@@ -83,15 +83,15 @@ This will remove the function from the connector and clear the connection.
 invoke(...args: T): Promise<Awaited<U>>;
 ```
 
-Defined in: [src/conduit/connector.ts:44](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L44)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:44
 
 Invoke the connected function
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| ...`args` | `T` | The arguments to pass to the function |
+| Parameter | Type | Description                           |
+| --------- | ---- | ------------------------------------- |
+| ...`args` | `T`  | The arguments to pass to the function |
 
 #### Returns
 
@@ -103,7 +103,7 @@ result of the function
 
 If no function is connected yet, this will wait for the function to be connected and then invoke it.
 
-***
+---
 
 ### invokeSync()
 
@@ -111,15 +111,15 @@ If no function is connected yet, this will wait for the function to be connected
 invokeSync(...args: T): U;
 ```
 
-Defined in: [src/conduit/connector.ts:51](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L51)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:51
 
 Invoke the connected function synchronously
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| ...`args` | `T` | The arguments to pass to the function |
+| Parameter | Type | Description                           |
+| --------- | ---- | ------------------------------------- |
+| ...`args` | `T`  | The arguments to pass to the function |
 
 #### Returns
 

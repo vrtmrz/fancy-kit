@@ -1,2 +1,3 @@
-export { Semaphore } from './semaphore_v2.js';
+export { Semaphore } from './semaphore.internal.js';
+export { acquirePermit, withSemaphore } from './semaphore.scoped.js';
 //# sourceMappingURL=semaphore.js.map

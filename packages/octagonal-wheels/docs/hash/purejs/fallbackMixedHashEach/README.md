@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [hash](../../README.md) / [purejs](../README.md) / fallbackMixedHashEach
 
@@ -10,13 +10,13 @@
 function fallbackMixedHashEach(src: string): string;
 ```
 
-Defined in: [src/hash/purejs.ts:56](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/hash/purejs.ts#L56)
+Defined in: packages/octagonal-wheels/src/hash/purejs.ts:56
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `src` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `src`     | `string` |
 
 ## Returns
 

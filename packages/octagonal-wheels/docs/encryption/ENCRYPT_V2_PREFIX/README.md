@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [encryption](../README.md) / ENCRYPT\_V2\_PREFIX
 
@@ -10,4 +10,4 @@
 const ENCRYPT_V2_PREFIX: "%" = "%";
 ```
 
-Defined in: [src/encryption/encryption.ts:9](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/encryption/encryption.ts#L9)
+Defined in: packages/octagonal-wheels/src/encryption/encryption.ts:9

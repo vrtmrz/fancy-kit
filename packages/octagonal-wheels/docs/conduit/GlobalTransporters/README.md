@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / GlobalTransporters
 
@@ -12,7 +12,7 @@ const GlobalTransporters: {
 };
 ```
 
-Defined in: [src/conduit/transporter.ts:281](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporter.ts#L281)
+Defined in: packages/octagonal-wheels/src/conduit/transporter.ts:281
 
 ## Type Declaration
 
@@ -24,16 +24,16 @@ of<T, U>(name: string): TransporterTuple<T, U>;
 
 #### Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `name` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `name`    | `string` |
 
 #### Returns
 

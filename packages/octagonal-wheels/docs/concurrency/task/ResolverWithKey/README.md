@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [concurrency](../../README.md) / [task](../README.md) / ResolverWithKey
 
@@ -13,17 +13,17 @@ type ResolverWithKey<T> = {
 };
 ```
 
-Defined in: [src/concurrency/task.ts:209](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L209)
+Defined in: packages/octagonal-wheels/src/concurrency/task.ts:209
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="key"></a> `key` | `string` | [src/concurrency/task.ts:209](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L209) |
-| <a id="resolver"></a> `resolver` | [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`T`\> | [src/concurrency/task.ts:209](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/concurrency/task.ts#L209) |
+| Property                         | Type                                                                              | Defined in                                            |
+| -------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| <a id="key"></a> `key`           | `string`                                                                          | packages/octagonal-wheels/src/concurrency/task.ts:209 |
+| <a id="resolver"></a> `resolver` | [`PromiseWithResolvers`](../../../promises/PromiseWithResolvers/README.md)\<`T`\> | packages/octagonal-wheels/src/concurrency/task.ts:209 |

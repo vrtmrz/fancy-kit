@@ -1,10 +1,10 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [promises](../README.md) / promiseWithResolver
 
-# ~~Variable: promiseWithResolver()~~
+# ~~Variable: promiseWithResolver~~
 
 ```ts
 const promiseWithResolver: <T>() => {
@@ -14,7 +14,7 @@ const promiseWithResolver: <T>() => {
 } = polyfilledFunc;
 ```
 
-Defined in: [src/promises.ts:84](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/promises.ts#L84)
+Defined in: packages/octagonal-wheels/src/promises.ts:84
 
 Creates a promise with custom resolvers. This is kept for compatibility with older code.
 
@@ -22,9 +22,9 @@ Creates a native promise with resolvers. This function is used when the `Promise
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | The type of the promise value. |
+| Type Parameter | Description                    |
+| -------------- | ------------------------------ |
+| `T`            | The type of the promise value. |
 
 ## Returns
 
@@ -44,7 +44,7 @@ An object containing the promise, resolve function, and reject function.
 promise: Promise<T>;
 ```
 
-### ~~reject()~~
+### ~~reject~~
 
 ```ts
 reject: (reason?: any) => void;
@@ -52,15 +52,15 @@ reject: (reason?: any) => void;
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type  |
+| --------- | ----- |
 | `reason?` | `any` |
 
 #### Returns
 
 `void`
 
-### ~~resolve()~~
+### ~~resolve~~
 
 ```ts
 resolve: (value: T | PromiseLike<T>) => void;
@@ -68,9 +68,9 @@ resolve: (value: T | PromiseLike<T>) => void;
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `value` | `T` \| `PromiseLike`\<`T`\> |
+| Parameter | Type                        |
+| --------- | --------------------------- |
+| `value`   | `T` \| `PromiseLike`\<`T`\> |
 
 #### Returns
 

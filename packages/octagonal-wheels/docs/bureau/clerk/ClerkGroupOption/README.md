@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [clerk](../README.md) / ClerkGroupOption
 
@@ -14,7 +14,7 @@ type ClerkGroupOption<T, U> = ClerkOptionBase<T> & {
 };
 ```
 
-Defined in: [src/bureau/Clerk.ts:21](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Clerk.ts#L21)
+Defined in: packages/octagonal-wheels/src/bureau/Clerk.ts:21
 
 ## Type Declaration
 
@@ -24,7 +24,7 @@ Defined in: [src/bureau/Clerk.ts:21](https://github.com/vrtmrz/octagonal-wheels/
 initialMemberCount: number;
 ```
 
-### instantiate()
+### instantiate
 
 ```ts
 instantiate: (params: ClerkOption<T>) => U;
@@ -32,15 +32,15 @@ instantiate: (params: ClerkOption<T>) => U;
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `params` | [`ClerkOption`](../ClerkOption/README.md)\<`T`\> |
+| Parameter | Type                                             |
+| --------- | ------------------------------------------------ |
+| `params`  | [`ClerkOption`](../ClerkOption/README.md)\<`T`\> |
 
 #### Returns
 
 `U`
 
-### job()
+### job
 
 ```ts
 job: (item: T) => Promise<any> | any;
@@ -49,8 +49,8 @@ job: (item: T) => Promise<any> | any;
 #### Parameters
 
 | Parameter | Type |
-| ------ | ------ |
-| `item` | `T` |
+| --------- | ---- |
+| `item`    | `T`  |
 
 #### Returns
 
@@ -58,7 +58,7 @@ job: (item: T) => Promise<any> | any;
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` |
-| `U` *extends* [`ClerkBase`](../ClerkBase/README.md)\<`T`\> |
+| Type Parameter                                             |
+| ---------------------------------------------------------- |
+| `T`                                                        |
+| `U` _extends_ [`ClerkBase`](../ClerkBase/README.md)\<`T`\> |

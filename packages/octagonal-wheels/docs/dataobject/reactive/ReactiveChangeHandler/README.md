@@ -1,27 +1,27 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [dataobject](../../README.md) / [reactive](../README.md) / ReactiveChangeHandler
 
-# Type Alias: ReactiveChangeHandler()\<T\>
+# Type Alias: ReactiveChangeHandler\<T\>
 
 ```ts
 type ReactiveChangeHandler<T> = (instance: ReactiveInstance<T>) => unknown;
 ```
 
-Defined in: [src/dataobject/reactive\_v2.ts:8](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/reactive_v2.ts#L8)
+Defined in: packages/octagonal-wheels/src/dataobject/reactive\_v2.ts:8
 
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter  | Type                                                       |
+| ---------- | ---------------------------------------------------------- |
 | `instance` | [`ReactiveInstance`](../ReactiveInstance/README.md)\<`T`\> |
 
 ## Returns

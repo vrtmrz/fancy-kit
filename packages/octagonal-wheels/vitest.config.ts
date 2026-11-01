@@ -15,6 +15,17 @@ export default defineConfig({
         include: ['src/**/*.test.ts'],
         coverage: {
             include: ['src/**/*.ts'],
+            // Coverage measures maintained runtime code; compatibility tests still run.
+            exclude: [
+                'src/concurrency/lock_v1.ts',
+                'src/concurrency/processor_v1.ts',
+                'src/concurrency/semaphore_v1.ts',
+                'src/dataobject/reactive_v1.ts',
+                'src/messagepassing/signal_v1.ts',
+                'src/binary/encodedUTF16.deprecated.ts',
+                'src/hash/crc32.ts',
+                'src/**/*.bench.ts',
+            ],
             provider: 'istanbul',
             reporter: ['text', 'json', 'html',
                 ['text', { file: 'coverage-text.txt' }],

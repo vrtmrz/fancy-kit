@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / PostMessageBackbone
 
 # Class: PostMessageBackbone\<T\>
 
-Defined in: [src/conduit/transporterAdapter.ts:37](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L37)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:37
 
 PostMessageBackbone is a TransporterBackbone implementation that uses the postMessage API to send and receive messages.
 It can be used with MessageChannel, Window, Worker, or any other target that supports postMessage.
@@ -17,8 +17,8 @@ if you want to communicate with multiple transporters.
 ## Type Parameters
 
 | Type Parameter |
-| ------ |
-| `T` |
+| -------------- |
+| `T`            |
 
 ## Implements
 
@@ -32,12 +32,12 @@ if you want to communicate with multiple transporters.
 new PostMessageBackbone<T>(channel: MessageChannel): PostMessageBackbone<T>;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:38](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L38)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:38
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type             |
+| --------- | ---------------- |
 | `channel` | `MessageChannel` |
 
 #### Returns
@@ -50,13 +50,13 @@ Defined in: [src/conduit/transporterAdapter.ts:38](https://github.com/vrtmrz/oct
 new PostMessageBackbone<T>(receiver: TransporterTarget, transmitter?: TransporterTarget): PostMessageBackbone<T>;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:39](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L39)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:39
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `receiver` | [`TransporterTarget`](../TransporterTarget/README.md) |
+| Parameter      | Type                                                  |
+| -------------- | ----------------------------------------------------- |
+| `receiver`     | [`TransporterTarget`](../TransporterTarget/README.md) |
 | `transmitter?` | [`TransporterTarget`](../TransporterTarget/README.md) |
 
 #### Returns
@@ -65,13 +65,13 @@ Defined in: [src/conduit/transporterAdapter.ts:39](https://github.com/vrtmrz/oct
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="_abortcontroller"></a> `_abortController` | `AbortController` | [src/conduit/transporterAdapter.ts:64](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L64) |
-| <a id="_messagehandler"></a> `_messageHandler` | `Map`\<`string`, (`message`: `T`) => `void`\> | [src/conduit/transporterAdapter.ts:70](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L70) |
-| <a id="_onceset"></a> `_onceSet` | `Map`\<`string`, `WeakSet`\<(`message`: `T`) => `void`\>\> | [src/conduit/transporterAdapter.ts:72](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L72) |
-| <a id="_rx"></a> `_rx` | [`TransporterTarget`](../TransporterTarget/README.md) | [src/conduit/transporterAdapter.ts:61](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L61) |
-| <a id="_tx"></a> `_tx` | [`TransporterTarget`](../TransporterTarget/README.md) | [src/conduit/transporterAdapter.ts:62](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L62) |
+| Property                                         | Type                                                       | Defined in                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------- |
+| <a id="_abortcontroller"></a> `_abortController` | `AbortController`                                          | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:64 |
+| <a id="_messagehandler"></a> `_messageHandler`   | `Map`\<`string`, (`message`: `T`) => `void`\>              | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:70 |
+| <a id="_onceset"></a> `_onceSet`                 | `Map`\<`string`, `WeakSet`\<(`message`: `T`) => `void`\>\> | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:72 |
+| <a id="_rx"></a> `_rx`                           | [`TransporterTarget`](../TransporterTarget/README.md)      | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:61 |
+| <a id="_tx"></a> `_tx`                           | [`TransporterTarget`](../TransporterTarget/README.md)      | packages/octagonal-wheels/src/conduit/transporterAdapter.ts:62 |
 
 ## Methods
 
@@ -81,19 +81,19 @@ Defined in: [src/conduit/transporterAdapter.ts:39](https://github.com/vrtmrz/oct
 _onMessageOnTarget(event: Event): TransportResult;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:74](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L74)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:74
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `event` | `Event` |
+| Parameter | Type    |
+| --------- | ------- |
+| `event`   | `Event` |
 
 #### Returns
 
 `TransportResult`
 
-***
+---
 
 ### close()
 
@@ -101,7 +101,7 @@ Defined in: [src/conduit/transporterAdapter.ts:74](https://github.com/vrtmrz/oct
 close(): void;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:173](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L173)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:173
 
 #### Returns
 
@@ -111,7 +111,7 @@ Defined in: [src/conduit/transporterAdapter.ts:173](https://github.com/vrtmrz/oc
 
 [`TransporterBackbone`](../TransporterBackbone/README.md).[`close`](../TransporterBackbone/README.md#close)
 
-***
+---
 
 ### dispatchMessage()
 
@@ -119,14 +119,14 @@ Defined in: [src/conduit/transporterAdapter.ts:173](https://github.com/vrtmrz/oc
 dispatchMessage(type: string, message: T): void;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:159](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L159)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:159
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `string` |
-| `message` | `T` |
+| Parameter | Type     |
+| --------- | -------- |
+| `type`    | `string` |
+| `message` | `T`      |
 
 #### Returns
 
@@ -136,7 +136,7 @@ Defined in: [src/conduit/transporterAdapter.ts:159](https://github.com/vrtmrz/oc
 
 [`TransporterBackbone`](../TransporterBackbone/README.md).[`dispatchMessage`](../TransporterBackbone/README.md#dispatchmessage)
 
-***
+---
 
 ### removeListener()
 
@@ -144,13 +144,13 @@ Defined in: [src/conduit/transporterAdapter.ts:159](https://github.com/vrtmrz/oc
 removeListener(type: string, callback: (message: T) => void): void;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:146](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L146)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:146
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `type` | `string` |
+| Parameter  | Type                       |
+| ---------- | -------------------------- |
+| `type`     | `string`                   |
 | `callback` | (`message`: `T`) => `void` |
 
 #### Returns
@@ -161,45 +161,39 @@ Defined in: [src/conduit/transporterAdapter.ts:146](https://github.com/vrtmrz/oc
 
 [`TransporterBackbone`](../TransporterBackbone/README.md).[`removeListener`](../TransporterBackbone/README.md#removelistener)
 
-***
+---
 
 ### setListener()
 
 ```ts
 setListener(
-   type: string, 
-   callback: (message: T) => void, 
-   opt: {
+   type: string,
+   callback: (message: T) => void,
+   opt?: {
   once?: boolean;
   signal?: AbortSignal;
 }): () => void;
 ```
 
-Defined in: [src/conduit/transporterAdapter.ts:124](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/transporterAdapter.ts#L124)
+Defined in: packages/octagonal-wheels/src/conduit/transporterAdapter.ts:124
 
 Registers a callback to be called when a message is received.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `type` | `string` | - |
-| `callback` | (`message`: `T`) => `void` | The function to call when a message is received. |
-| `opt` | \{ `once?`: `boolean`; `signal?`: `AbortSignal`; \} | - |
-| `opt.once?` | `boolean` | - |
-| `opt.signal?` | `AbortSignal` | - |
+| Parameter     | Type                                                | Description                                      |
+| ------------- | --------------------------------------------------- | ------------------------------------------------ |
+| `type`        | `string`                                            | -                                                |
+| `callback`    | (`message`: `T`) => `void`                          | The function to call when a message is received. |
+| `opt`         | \{ `once?`: `boolean`; `signal?`: `AbortSignal`; \} | -                                                |
+| `opt.once?`   | `boolean`                                           | -                                                |
+| `opt.signal?` | `AbortSignal`                                       | -                                                |
 
 #### Returns
 
 A function that can be called to remove the listener.
 
-```ts
-(): void;
-```
-
-##### Returns
-
-`void`
+() => `void`
 
 #### Implementation of
 

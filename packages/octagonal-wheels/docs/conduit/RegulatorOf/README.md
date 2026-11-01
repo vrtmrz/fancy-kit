@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / RegulatorOf
 
 # Interface: RegulatorOf\<T, U\>
 
-Defined in: [src/conduit/regulator.ts:19](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/regulator.ts#L19)
+Defined in: packages/octagonal-wheels/src/conduit/regulator.ts:19
 
 Regulator
 
@@ -27,10 +27,10 @@ reg.invoke([1, 2, 3]); (all example will be called with [1, 2, 3] but only 2 at 
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 ## Methods
 
@@ -40,13 +40,13 @@ reg.invoke([1, 2, 3]); (all example will be called with [1, 2, 3] but only 2 at 
 invoke(...args: T): Promise<U>;
 ```
 
-Defined in: [src/conduit/regulator.ts:41](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/regulator.ts#L41)
+Defined in: packages/octagonal-wheels/src/conduit/regulator.ts:41
 
 #### Parameters
 
 | Parameter | Type | Description |
-| ------ | ------ | ------ |
-| ...`args` | `T` |  |
+| --------- | ---- | ----------- |
+| ...`args` | `T`  | -           |
 
 #### Returns
 
@@ -58,7 +58,7 @@ Defined in: [src/conduit/regulator.ts:41](https://github.com/vrtmrz/octagonal-wh
 
 Invoke the regulator with the given arguments.
 
-***
+---
 
 ### invokeAll()
 
@@ -66,13 +66,13 @@ Invoke the regulator with the given arguments.
 invokeAll(items: T[]): Promise<U>[];
 ```
 
-Defined in: [src/conduit/regulator.ts:49](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/regulator.ts#L49)
+Defined in: packages/octagonal-wheels/src/conduit/regulator.ts:49
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `items` | `T`[] |  |
+| Parameter | Type  | Description |
+| --------- | ----- | ----------- |
+| `items`   | `T`[] | -           |
 
 #### Returns
 
@@ -84,7 +84,7 @@ Invoke the regulator with the given arguments.
 This will call the function with the given arguments and return a promise that resolves when all functions are done.
 Note that order of the results is not same as the order of the arguments.
 
-***
+---
 
 ### maxConcurrency()
 
@@ -92,13 +92,13 @@ Note that order of the results is not same as the order of the arguments.
 maxConcurrency(n: number): RegulatorOf<T, U>;
 ```
 
-Defined in: [src/conduit/regulator.ts:27](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/regulator.ts#L27)
+Defined in: packages/octagonal-wheels/src/conduit/regulator.ts:27
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `n` | `number` |  |
+| Parameter | Type     | Description |
+| --------- | -------- | ----------- |
+| `n`       | `number` | -           |
 
 #### Returns
 
@@ -111,7 +111,7 @@ Defined in: [src/conduit/regulator.ts:27](https://github.com/vrtmrz/octagonal-wh
 Set the maximum number of concurrent processes.
 Default is 1.
 
-***
+---
 
 ### onProcess()
 
@@ -119,13 +119,13 @@ Default is 1.
 onProcess(func: (...args: T) => Promise<U>): RegulatorOf<T, U>;
 ```
 
-Defined in: [src/conduit/regulator.ts:34](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/regulator.ts#L34)
+Defined in: packages/octagonal-wheels/src/conduit/regulator.ts:34
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `func` | (...`args`: `T`) => `Promise`\<`U`\> |  |
+| Parameter | Type                                 | Description |
+| --------- | ------------------------------------ | ----------- |
+| `func`    | (...`args`: `T`) => `Promise`\<`U`\> | -           |
 
 #### Returns
 

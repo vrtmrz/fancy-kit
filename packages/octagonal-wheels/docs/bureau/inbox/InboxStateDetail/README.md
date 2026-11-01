@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [bureau](../../README.md) / [inbox](../README.md) / InboxStateDetail
 
@@ -17,15 +17,15 @@ type InboxStateDetail = {
 };
 ```
 
-Defined in: [src/bureau/Inbox.ts:338](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L338)
+Defined in: packages/octagonal-wheels/src/bureau/Inbox.ts:338
 
 ## Properties
 
-| Property | Type | Defined in |
-| ------ | ------ | ------ |
-| <a id="free"></a> `free` | `number` | [src/bureau/Inbox.ts:341](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L341) |
-| <a id="isfull"></a> `isFull` | `boolean` | [src/bureau/Inbox.ts:342](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L342) |
-| <a id="isready"></a> `isReady` | `boolean` | [src/bureau/Inbox.ts:344](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L344) |
-| <a id="isrunningout"></a> `isRunningOut` | `boolean` | [src/bureau/Inbox.ts:343](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L343) |
-| <a id="processed"></a> `processed` | `number` | [src/bureau/Inbox.ts:339](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L339) |
-| <a id="size"></a> `size` | `number` | [src/bureau/Inbox.ts:340](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/bureau/Inbox.ts#L340) |
+| Property                                 | Type      | Defined in                                        |
+| ---------------------------------------- | --------- | ------------------------------------------------- |
+| <a id="free"></a> `free`                 | `number`  | packages/octagonal-wheels/src/bureau/Inbox.ts:341 |
+| <a id="isfull"></a> `isFull`             | `boolean` | packages/octagonal-wheels/src/bureau/Inbox.ts:342 |
+| <a id="isready"></a> `isReady`           | `boolean` | packages/octagonal-wheels/src/bureau/Inbox.ts:344 |
+| <a id="isrunningout"></a> `isRunningOut` | `boolean` | packages/octagonal-wheels/src/bureau/Inbox.ts:343 |
+| <a id="processed"></a> `processed`       | `number`  | packages/octagonal-wheels/src/bureau/Inbox.ts:339 |
+| <a id="size"></a> `size`                 | `number`  | packages/octagonal-wheels/src/bureau/Inbox.ts:340 |

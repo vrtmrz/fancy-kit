@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [common](../../README.md) / [logger](../README.md) / defaultLoggerEnv
 
@@ -12,7 +12,7 @@ const defaultLoggerEnv: {
 };
 ```
 
-Defined in: [src/common/logger.ts:35](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/common/logger.ts#L35)
+Defined in: packages/octagonal-wheels/src/common/logger.ts:35
 
 ## Type Declaration
 

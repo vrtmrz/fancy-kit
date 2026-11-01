@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../README.md)
 
-***
+---
 
 [octagonal-wheels](../modules.md) / encryption
 
@@ -35,7 +35,7 @@
 - [~~encryptV1~~](encryptV1/README.md)
 - [~~encryptV3~~](encryptV3/README.md)
 - [~~generateKey~~](generateKey/README.md)
-- [~~testCrypt~~](testCrypt/README.md)
+- [testCrypt](testCrypt/README.md)
 - [~~testCryptV3~~](testCryptV3/README.md)
 - [~~tryDecrypt~~](tryDecrypt/README.md)
 

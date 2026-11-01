@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [binary](../README.md) / decodeToArrayBuffer
 
@@ -10,13 +10,15 @@
 function decodeToArrayBuffer(src: string[]): ArrayBuffer;
 ```
 
-Defined in: [src/binary/encodedUTF16.ts:89](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/binary/encodedUTF16.ts#L89)
+Defined in: packages/octagonal-wheels/src/binary/encodedUTF16.ts:6
+
+Decodes ordered legacy UTF-16 parts into their original bytes.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `src` | `string`[] |
+| Parameter | Type       |
+| --------- | ---------- |
+| `src`     | `string`[] |
 
 ## Returns
 

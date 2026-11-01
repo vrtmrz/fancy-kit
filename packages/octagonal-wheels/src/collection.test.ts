@@ -1,5 +1,5 @@
 // OK.
-import { arrayToChunkedArray, createTypedArrayReader, range, unique } from "./collection.ts";
+import { arrayToChunkedArray, createTypedArrayReader, range, stepCyclicIndex, unique } from "./collection.ts";
 import { describe, expect, it, test } from "vitest";
 import { concatUInt8Array } from "./collection.ts";
 
@@ -142,5 +142,27 @@ describe("concatUInt8Array", () => {
         const arr2 = new Uint8Array([6, 7, 8, 9, 10]);
         const result = concatUInt8Array([arr1, arr2]);
         expect(Array.from(result)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    });
+});
+
+describe("stepCyclicIndex", () => {
+    it.each<[number, number, "prev" | "next", number]>([
+        [-1, 3, "next", 0],
+        [-1, 3, "prev", 2],
+        [-1, 1, "next", 0],
+        [-1, 1, "prev", 0],
+        [0, 1, "next", 0],
+        [0, 1, "prev", 0],
+        [1, 4, "next", 2],
+        [2, 4, "prev", 1],
+        [3, 4, "next", 0],
+        [0, 4, "prev", 3],
+    ])("steps index %s with count %s in the %s direction", (currentIndex, count, direction, expected) => {
+        expect(stepCyclicIndex(currentIndex, count, direction)).toBe(expected);
+    });
+
+    it("preserves the current index for an empty collection", () => {
+        expect(stepCyclicIndex(-1, 0, "next")).toBe(-1);
+        expect(stepCyclicIndex(-1, 0, "prev")).toBe(-1);
     });
 });

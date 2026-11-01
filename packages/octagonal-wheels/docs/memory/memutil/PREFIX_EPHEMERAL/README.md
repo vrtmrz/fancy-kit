@@ -1,6 +1,6 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [memory](../../README.md) / [memutil](../README.md) / PREFIX\_EPHEMERAL
 
@@ -10,4 +10,4 @@
 const PREFIX_EPHEMERAL: "ephemeral" = "ephemeral";
 ```
 
-Defined in: [src/memory/memutil.ts:6](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/memory/memutil.ts#L6)
+Defined in: packages/octagonal-wheels/src/memory/memutil.ts:6

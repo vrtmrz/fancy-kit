@@ -1,19 +1,20 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [dataobject](../../README.md) / [computed](../README.md) / ResolvedComputed
 
 # Interface: ResolvedComputed\<T, U\>
 
-Defined in: [src/dataobject/Computed.ts:30](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/Computed.ts#L30)
+Defined in: packages/octagonal-wheels/src/dataobject/Computed.ts:30
 
 A class that computes a value based on provided arguments and caches the result.
 The computation is only re-evaluated when the arguments change or when a forced update is requested.
 Mostly similar to 'Refiner', but simpler implementation and features.
 This class is designed for:
+
 - Caching computed values based on arguments.
-Not designed for:
+  Not designed for:
 - Reactive updates or subscriptions. (Use Refiner for that).
 
 ## Extends
@@ -22,16 +23,16 @@ Not designed for:
 
 ## Type Parameters
 
-| Type Parameter |
-| ------ |
-| `T` *extends* `any`[] |
-| `U` |
+| Type Parameter        |
+| --------------------- |
+| `T` _extends_ `any`[] |
+| `U`                   |
 
 ## Properties
 
-| Property | Type | Description | Overrides | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
-| <a id="value"></a> `value` | `U` | Gets the current computed value. if the last evaluation resulted in an error, it throws that error. If never evaluated, it returns null. (because we cannot define a default value). | [`Computed`](../Computed/README.md).[`value`](../Computed/README.md#value) | [src/dataobject/Computed.ts:31](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/Computed.ts#L31) |
+| Property                   | Type | Description                                                                                                                                                                          | Overrides                                                                  | Defined in                                              |
+| -------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| <a id="value"></a> `value` | `U`  | Gets the current computed value. if the last evaluation resulted in an error, it throws that error. If never evaluated, it returns null. (because we cannot define a default value). | [`Computed`](../Computed/README.md).[`value`](../Computed/README.md#value) | packages/octagonal-wheels/src/dataobject/Computed.ts:31 |
 
 ## Methods
 
@@ -41,7 +42,7 @@ Not designed for:
 reset(): void;
 ```
 
-Defined in: [src/dataobject/Computed.ts:136](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/Computed.ts#L136)
+Defined in: packages/octagonal-wheels/src/dataobject/Computed.ts:136
 
 Resets the cached arguments and result.
 If called, the next update will always re-evaluate the computation.
@@ -54,7 +55,7 @@ If called, the next update will always re-evaluate the computation.
 
 [`Computed`](../Computed/README.md).[`reset`](../Computed/README.md#reset)
 
-***
+---
 
 ### update()
 
@@ -62,16 +63,16 @@ If called, the next update will always re-evaluate the computation.
 update(...args: T): Promise<ResolvedComputed<T, U>>;
 ```
 
-Defined in: [src/dataobject/Computed.ts:147](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/Computed.ts#L147)
+Defined in: packages/octagonal-wheels/src/dataobject/Computed.ts:147
 
 Updates the computed value and returns the instance.
 (Convenience method)
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| ...`args` | `T` | The current arguments. |
+| Parameter | Type | Description            |
+| --------- | ---- | ---------------------- |
+| ...`args` | `T`  | The current arguments. |
 
 #### Returns
 
@@ -83,7 +84,7 @@ The Computed instance (but value is guaranteed to be resolved).
 
 [`Computed`](../Computed/README.md).[`update`](../Computed/README.md#update)
 
-***
+---
 
 ### updateValue()
 
@@ -91,16 +92,16 @@ The Computed instance (but value is guaranteed to be resolved).
 updateValue(...args: T): Promise<boolean>;
 ```
 
-Defined in: [src/dataobject/Computed.ts:101](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/dataobject/Computed.ts#L101)
+Defined in: packages/octagonal-wheels/src/dataobject/Computed.ts:101
 
 Updates the computed value if necessary.
-if requiresUpdate and  throws something, this method will reject with that error.
+if requiresUpdate and throws something, this method will reject with that error.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| ...`args` | `T` | The current arguments. |
+| Parameter | Type | Description            |
+| --------- | ---- | ---------------------- |
+| ...`args` | `T`  | The current arguments. |
 
 #### Returns
 

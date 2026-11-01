@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../modules.md) / [conduit](../README.md) / ConnectorInstanceOf
 
 # Interface: ConnectorInstanceOf\<T\>
 
-Defined in: [src/conduit/connector.ts:70](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L70)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:70
 
 ConnectorInstanceOf
 
@@ -17,15 +17,15 @@ It is used to connect an instance to a name, and then retrieve that instance lat
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | the type of the instance |
+| Type Parameter | Description              |
+| -------------- | ------------------------ |
+| `T`            | the type of the instance |
 
 ## Properties
 
-| Property | Modifier | Type | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="isconnected"></a> `isConnected` | `readonly` | `boolean` | [src/conduit/connector.ts:98](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L98) |
+| Property                               | Modifier   | Type      | Defined in                                            |
+| -------------------------------------- | ---------- | --------- | ----------------------------------------------------- |
+| <a id="isconnected"></a> `isConnected` | `readonly` | `boolean` | packages/octagonal-wheels/src/conduit/connector.ts:98 |
 
 ## Methods
 
@@ -35,15 +35,15 @@ It is used to connect an instance to a name, and then retrieve that instance lat
 connect(obj: T, teardown?: () => void): void;
 ```
 
-Defined in: [src/conduit/connector.ts:77](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L77)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:77
 
 Connect an instance to the connector
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `obj` | `T` | The instance to connect |
+| Parameter   | Type         | Description                                                      |
+| ----------- | ------------ | ---------------------------------------------------------------- |
+| `obj`       | `T`          | The instance to connect                                          |
 | `teardown?` | () => `void` | Optional callback to be called when the instance is disconnected |
 
 #### Returns
@@ -52,7 +52,7 @@ Connect an instance to the connector
 
 #### Remarks
 
-***
+---
 
 ### connected()
 
@@ -60,7 +60,7 @@ Connect an instance to the connector
 connected(): Promise<T>;
 ```
 
-Defined in: [src/conduit/connector.ts:83](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L83)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:83
 
 Get the connected instance
 
@@ -72,7 +72,7 @@ a promise that resolves to the connected instance
 
 #### Remarks
 
-***
+---
 
 ### connectedSync()
 
@@ -80,7 +80,7 @@ a promise that resolves to the connected instance
 connectedSync(): T;
 ```
 
-Defined in: [src/conduit/connector.ts:90](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L90)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:90
 
 Get the connected instance synchronously
 
@@ -96,7 +96,7 @@ the connected instance
 
 Error if no instance is connected yet
 
-***
+---
 
 ### disconnect()
 
@@ -104,7 +104,7 @@ Error if no instance is connected yet
 disconnect(): void;
 ```
 
-Defined in: [src/conduit/connector.ts:97](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/conduit/connector.ts#L97)
+Defined in: packages/octagonal-wheels/src/conduit/connector.ts:97
 
 Disconnect the connected instance
 

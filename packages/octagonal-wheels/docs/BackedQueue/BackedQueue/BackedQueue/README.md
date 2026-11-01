@@ -1,12 +1,12 @@
 [**octagonal-wheels**](../../../README.md)
 
-***
+---
 
 [octagonal-wheels](../../../modules.md) / [BackedQueue](../../README.md) / [BackedQueue](../README.md) / BackedQueue
 
 # Abstract Class: BackedQueue\<T\>
 
-Defined in: [src/BackedQueue/BackedQueue.ts:30](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L30)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:30
 
 Abstract base class for a backed queue.
 We employ simple in-memory tracking for primary implementation purposes.
@@ -19,9 +19,9 @@ Operations prior to commit are non-atomic, must be idempotent, and must avoid si
 
 ## Type Parameters
 
-| Type Parameter | Description |
-| ------ | ------ |
-| `T` | Type of items in the queue. |
+| Type Parameter | Description                 |
+| -------------- | --------------------------- |
+| `T`            | Type of items in the queue. |
 
 ## Constructors
 
@@ -31,15 +31,15 @@ Operations prior to commit are non-atomic, must be idempotent, and must avoid si
 new BackedQueue<T>(name: string): BackedQueue<T>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:103](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L103)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:103
 
 Construct a new BackedQueue instance.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `name` | `string` | Queue name. |
+| Parameter | Type     | Description |
+| --------- | -------- | ----------- |
+| `name`    | `string` | Queue name. |
 
 #### Returns
 
@@ -47,11 +47,11 @@ Construct a new BackedQueue instance.
 
 ## Properties
 
-| Property | Modifier | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
-| <a id="_name"></a> `_name` | `readonly` | `string` | Name of the queue. | [src/BackedQueue/BackedQueue.ts:98](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L98) |
-| <a id="backend"></a> `backend` | `abstract` | [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md)\<`T`\> | Backend store for the queue. | [src/BackedQueue/BackedQueue.ts:34](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L34) |
-| <a id="readypromise"></a> `readyPromise` | `protected` | `Promise`\<`void`\> | Promise that resolves when the queue is ready. | [src/BackedQueue/BackedQueue.ts:38](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L38) |
+| Property                                 | Modifier    | Type                                                                                                  | Description                                    | Defined in                                                  |
+| ---------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------- |
+| <a id="_name"></a> `_name`               | `readonly`  | `string`                                                                                              | Name of the queue.                             | packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:98 |
+| <a id="backend"></a> `backend`           | `abstract`  | [`QueueBackendWithTransaction`](../../QueueBackendTypes/QueueBackendWithTransaction/README.md)\<`T`\> | Backend store for the queue.                   | packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:34 |
+| <a id="readypromise"></a> `readyPromise` | `protected` | `Promise`\<`void`\>                                                                                   | Promise that resolves when the queue is ready. | packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:38 |
 
 ## Accessors
 
@@ -63,7 +63,7 @@ Construct a new BackedQueue instance.
 get isReady(): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:39](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L39)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:39
 
 ##### Returns
 
@@ -77,22 +77,22 @@ Defined in: [src/BackedQueue/BackedQueue.ts:39](https://github.com/vrtmrz/octago
 protected _queueToProcessing(tx: QueueBackendTransaction<T>, key: string): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:228](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L228)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:228
 
 Move an item from queue to processing.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `tx` | [`QueueBackendTransaction`](../../QueueBackendTypes/QueueBackendTransaction/README.md)\<`T`\> | Backend store transaction. |
-| `key` | `string` | Key of the item to move. |
+| Parameter | Type                                                                                          | Description                |
+| --------- | --------------------------------------------------------------------------------------------- | -------------------------- |
+| `tx`      | [`QueueBackendTransaction`](../../QueueBackendTypes/QueueBackendTransaction/README.md)\<`T`\> | Backend store transaction. |
+| `key`     | `string`                                                                                      | Key of the item to move.   |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addDeadLetter()
 
@@ -100,22 +100,22 @@ Move an item from queue to processing.
 abstract protected addDeadLetter(key: string, item: T): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:47](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L47)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:47
 
 Add an item to the dead letter queue.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | Key of the item being added to the dead letter queue. |
-| `item` | `T` | Item being added to the dead letter queue. |
+| Parameter | Type     | Description                                           |
+| --------- | -------- | ----------------------------------------------------- |
+| `key`     | `string` | Key of the item being added to the dead letter queue. |
+| `item`    | `T`      | Item being added to the dead letter queue.            |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### commit()
 
@@ -123,21 +123,21 @@ Add an item to the dead letter queue.
 commit(key: string): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:53](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L53)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:53
 
 Commit a processed item.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | Key of the item to commit. |
+| Parameter | Type     | Description                |
+| --------- | -------- | -------------------------- |
+| `key`     | `string` | Key of the item to commit. |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### dequeue()
 
@@ -145,14 +145,14 @@ Commit a processed item.
 dequeue(options?: QueryOptions): Promise<DequeuedItem<T>>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:317](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L317)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:317
 
 Dequeue an item.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                            | Description      |
+| ---------- | --------------------------------------------------------------- | ---------------- |
 | `options?` | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md) | Dequeue options. |
 
 #### Returns
@@ -161,7 +161,7 @@ Dequeue an item.
 
 Dequeued item.
 
-***
+---
 
 ### enqueue()
 
@@ -169,15 +169,15 @@ Dequeued item.
 enqueue(item: T): Promise<string>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:326](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L326)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:326
 
 Enqueue an item.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `item` | `T` | Item to enqueue. |
+| Parameter | Type | Description      |
+| --------- | ---- | ---------------- |
+| `item`    | `T`  | Item to enqueue. |
 
 #### Returns
 
@@ -185,7 +185,7 @@ Enqueue an item.
 
 Key of the enqueued item.
 
-***
+---
 
 ### isAnyInFlight()
 
@@ -193,7 +193,7 @@ Key of the enqueued item.
 isAnyInFlight(): Promise<boolean>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:269](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L269)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:269
 
 Check if any items are in flight.
 
@@ -203,7 +203,7 @@ Check if any items are in flight.
 
 True if at least one item is in flight, false otherwise.
 
-***
+---
 
 ### isQueueEmpty()
 
@@ -211,7 +211,7 @@ True if at least one item is in flight, false otherwise.
 isQueueEmpty(): Promise<boolean>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:261](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L261)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:261
 
 Check if the queue is empty.
 
@@ -221,34 +221,34 @@ Check if the queue is empty.
 
 True if empty, false otherwise.
 
-***
+---
 
 ### onDeadLetter()
 
 ```ts
 protected onDeadLetter(
-   key: string, 
-   item: T, 
+   key: string,
+   item: T,
 reason: Error): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:113](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L113)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:113
 
 Handle an item added to the dead letter queue.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | Key of the item added to the dead letter queue. |
-| `item` | `T` | Item added to the dead letter queue. |
-| `reason` | `Error` | Reason for dead lettering. |
+| Parameter | Type     | Description                                     |
+| --------- | -------- | ----------------------------------------------- |
+| `key`     | `string` | Key of the item added to the dead letter queue. |
+| `item`    | `T`      | Item added to the dead letter queue.            |
+| `reason`  | `Error`  | Reason for dead lettering.                      |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### onDequeued()
 
@@ -256,7 +256,7 @@ Handle an item added to the dead letter queue.
 protected onDequeued(): void;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:218](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L218)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:218
 
 Notify that an item has been dequeued.
 
@@ -264,7 +264,7 @@ Notify that an item has been dequeued.
 
 `void`
 
-***
+---
 
 ### onEnqueued()
 
@@ -272,7 +272,7 @@ Notify that an item has been dequeued.
 protected onEnqueued(): void;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:209](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L209)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:209
 
 Notify that an item has been enqueued.
 We allow spurious wake-ups for robustness.
@@ -281,7 +281,7 @@ We allow spurious wake-ups for robustness.
 
 `void`
 
-***
+---
 
 ### process()
 
@@ -289,45 +289,45 @@ We allow spurious wake-ups for robustness.
 process(options: QueryOptions, callback: DequeueCallback<T>): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:338](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L338)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:338
 
 Dequeue and process an item via a callback.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `options` | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md) | Dequeue options. |
+| Parameter  | Type                                                                         | Description          |
+| ---------- | ---------------------------------------------------------------------------- | -------------------- |
+| `options`  | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md)              | Dequeue options.     |
 | `callback` | [`DequeueCallback`](../../BackedQueueTypes/DequeueCallback/README.md)\<`T`\> | Processing callback. |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### requeue()
 
 ```ts
-requeue(key: string, position: RequestPositions): Promise<void>;
+requeue(key: string, position?: RequestPositions): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:65](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L65)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:65
 
 Requeue an item.
 
 #### Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `key` | `string` | `undefined` | Key of the item to requeue. |
+| Parameter  | Type                                                                    | Default value          | Description                            |
+| ---------- | ----------------------------------------------------------------------- | ---------------------- | -------------------------------------- |
+| `key`      | `string`                                                                | `undefined`            | Key of the item to requeue.            |
 | `position` | [`RequestPositions`](../../BackedQueueTypes/RequestPositions/README.md) | `RequeuePosition.LAST` | Target position for the requeued item. |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### restoreToQueue()
 
@@ -335,15 +335,15 @@ Requeue an item.
 protected restoreToQueue(key: string): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:247](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L247)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:247
 
 Restore an item from processing back to the queue.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | Key of the item to restore. |
+| Parameter | Type     | Description                 |
+| --------- | -------- | --------------------------- |
+| `key`     | `string` | Key of the item to restore. |
 
 #### Returns
 
@@ -351,7 +351,7 @@ Restore an item from processing back to the queue.
 
 Promise that resolves when complete.
 
-***
+---
 
 ### revoke()
 
@@ -359,7 +359,7 @@ Promise that resolves when complete.
 revoke(key: string): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:88](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L88)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:88
 
 Revoke an item from queue or processing.
 If the item is in the queue, we remove it.
@@ -367,15 +367,15 @@ In-flight items are marked revoked and are not committed. Call this when process
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | Key of the item to revoke. |
+| Parameter | Type     | Description                |
+| --------- | -------- | -------------------------- |
+| `key`     | `string` | Key of the item to revoke. |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForEmptyQueue()
 
@@ -383,21 +383,21 @@ In-flight items are marked revoked and are not committed. Call this when process
 waitForEmptyQueue(options?: QueryOptions): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:373](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L373)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:373
 
 Wait until the queue becomes empty.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                            | Description    |
+| ---------- | --------------------------------------------------------------- | -------------- |
 | `options?` | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md) | Query options. |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForNext()
 
@@ -405,21 +405,21 @@ Wait until the queue becomes empty.
 protected waitForNext(options?: QueryOptions): Promise<string>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:279](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L279)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:279
 
 Wait until at least one item is available.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                            | Description                                                    |
+| ---------- | --------------------------------------------------------------- | -------------------------------------------------------------- |
 | `options?` | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md) | Query options (same shape as DequeueOptions, without dequeue). |
 
 #### Returns
 
 `Promise`\<`string`\>
 
-***
+---
 
 ### waitNextDequeue()
 
@@ -427,21 +427,21 @@ Wait until at least one item is available.
 protected waitNextDequeue(options?: QueryOptions): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:193](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L193)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:193
 
 Wait for the next dequeue.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                            | Description    |
+| ---------- | --------------------------------------------------------------- | -------------- |
 | `options?` | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md) | Query options. |
 
 #### Returns
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitNextEnqueued()
 
@@ -449,14 +449,14 @@ Wait for the next dequeue.
 protected waitNextEnqueued(options?: QueryOptions): Promise<void>;
 ```
 
-Defined in: [src/BackedQueue/BackedQueue.ts:177](https://github.com/vrtmrz/octagonal-wheels/blob/main/src/BackedQueue/BackedQueue.ts#L177)
+Defined in: packages/octagonal-wheels/src/BackedQueue/BackedQueue.ts:177
 
 Wait for the next enqueue.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                            | Description    |
+| ---------- | --------------------------------------------------------------- | -------------- |
 | `options?` | [`QueryOptions`](../../BackedQueueTypes/QueryOptions/README.md) | Query options. |
 
 #### Returns
