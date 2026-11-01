@@ -3,7 +3,7 @@ date: 2026-10-29
 octagonal-wheels-version: "0.1.55"
 commonlib-version: "0.2.2"
 livesync-version: "1.0.42"
-status: implemented-unreleased
+status: published
 ---
 
 <a id="execution-scopes-pipelines-and-iteration"></a>
@@ -21,8 +21,10 @@ The detailed contracts were accepted for implementation on 29 October 2026.
 The review on 31 October 2026 refined the public type name to `ScopedPipeline`
 and separated the iteration entry from its internal runner without changing
 the lifecycle contracts below.
-The runtime APIs are included in the prepared `octagonal-wheels@0.1.56`
-release. Registry publication is pending. Commonlib and Self-hosted LiveSync
+The runtime APIs were published in
+[`octagonal-wheels@0.1.56`](https://www.npmjs.com/package/octagonal-wheels/v/0.1.56)
+on 1 November 2026. The registry archive matches the validated release
+candidate. Commonlib and Self-hosted LiveSync
 consumer pilots remain unpublished candidates, with their dependency updates
 and additional integration changes reviewed separately.
 The [usage guide](../../packages/octagonal-wheels/guides/execution-scopes.md)
