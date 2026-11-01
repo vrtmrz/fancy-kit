@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.56
+
 ### New features
 
 - Added the focused `binary/blob` entry with `createTextBlob`, `createBinaryBlob`, and `toBlob`. Creation preserves line endings and binary view ranges; normalisation preserves existing Blob identity. The entry can be imported without DOM or fetch globals; creation and normalisation use the standard Blob constructor when called.
@@ -21,6 +23,9 @@
 - The `testCrypt` entry no longer carries a deprecation annotation, so consumers can retain its combined diagnostics for legacy encryption formats and HKDF without a deprecation warning.
 
 ### Resource ownership
+
+- We can give an asynchronous operation a defined resource lifetime with `withScope` and `scoped` from `resource/scope`. Registered cleanup runs in reverse order before the result settles, and multiple body or cleanup failures retain their original values in `AggregateError`. Typed pipelines share the operation scope; `pipeScoped` closes a child scope before the next step.
+- `withCancellation` adds cooperative cancellation, and `forEachInScope` and `mapInScope` bound concurrent item work while awaiting started operations and their cleanup. Applications retain their cancellation, partial-result, and item-failure policy.
 
 - Generated API references now include the focused resource and operation scope APIs. Existing reference URLs are preserved, and adapter references show each callback's return type directly.
 

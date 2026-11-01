@@ -62,7 +62,7 @@ export { encoding_index as encoding };
  * @returns The version of the library.
  */
 function libVersion() {
-    return "octagonal-wheels-0.1.55";
+    return "octagonal-wheels-0.1.56";
 }
 
 export { libVersion };

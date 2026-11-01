@@ -4,6 +4,12 @@ Fancy Kit is built from recurring needs in maintained Obsidian plug-ins and appl
 
 This is evidence for the named contract, not a package-wide promise that every API has passed every platform combination. Each package remains independently versioned in `0.x`; consult its own guide for the exact runtime and lifecycle boundary.
 
+The shared runtime package APIs below target `octagonal-wheels@0.1.56`
+and `@vrtmrz/obsidian-plugin-kit@0.1.7` or later. See the
+[composition guide](runtime-composition.md) for package availability. Commonlib
+and Self-hosted LiveSync integrations labelled as candidates remain unpublished
+independently of those package releases.
+
 ## How to read the evidence
 
 The projects use four complementary levels of verification:
@@ -45,7 +51,7 @@ LiveSync's WebApp and WebPeer create `@vrtmrz/browser-ui-kit` interaction and no
 
 ## Disposable asynchronous input
 
-The unreleased `octagonal-wheels/iterable/asyncQueue` entry provides a FIFO input
+The `octagonal-wheels/iterable/asyncQueue` entry provides a FIFO input
 with one iterator, draining completion, and explicit disposal. Its
 [browser contracts](../packages/octagonal-wheels/src/iterable/asyncQueue.test.ts)
 cover item identity, terminal admission, waiting reads, and ownership through
@@ -73,7 +79,7 @@ LiveSync version or physical-device behaviour.
 
 ## Blob utilities: construction, normalisation, and comparison
 
-The unreleased `octagonal-wheels/binary/blob` entry extracts text and binary
+The `octagonal-wheels/binary/blob` entry extracts text and binary
 Blob construction from Commonlib 0.2.0. Self-hosted LiveSync 1.0.40 uses the
 original Commonlib helpers to prepare hidden-file content. Its existing
 `createBlob` helper returns Blob inputs unchanged; the new normalisation API
@@ -120,7 +126,7 @@ Commonlib.
 
 ## Deferred action ownership: candidate integration
 
-The unreleased `octagonal-wheels/concurrency/deferredAction` entry provides
+The `octagonal-wheels/concurrency/deferredAction` entry provides
 `createDeferredAction` for one replaceable delayed callback per owner.
 Cancellation permits another schedule; disposal ends the action's
 lifetime. An injected `TimeoutScheduler` selects the host operation without
@@ -193,7 +199,7 @@ package-specific usage guide, then use the linked consumer source as a complete 
 
 ## Semaphore permits: candidate integration
 
-The unreleased `withSemaphore` export from
+The `withSemaphore` export from
 `octagonal-wheels/concurrency/semaphore` runs a callback after acquiring a
 permit and releases it once after the callback settles. It retains the
 acquisition receiver, default quantity, and ordinary `finally` failure
@@ -221,7 +227,7 @@ tests rather than assertions about ConfigSync's current implementation.
 
 ## Operation scopes: candidate integration
 
-The unpublished scope APIs combine a borrowed value, registered cleanup, typed
+The operation scope APIs combine a borrowed value, registered cleanup, typed
 pipelines, child scopes, cancellation observation, and bounded iteration.
 The [scope contracts](../packages/octagonal-wheels/src/resource/scope.test.ts),
 [cancellation contracts](../packages/octagonal-wheels/src/concurrency/cancellation.test.ts),
@@ -254,7 +260,7 @@ per-item failure logging and completion policy. The same notifier also replaces
 count-only callbacks in offline reconciliation and rebuilding, retaining attempted
 counts and the absence of a final partial notification.
 
-The unreleased `modification` entry now owns `createModificationHandler`. ConfigSync's text
+The `modification` entry now owns `createModificationHandler`. ConfigSync's text
 and binary adapters retain read fallback, content equality, write ordering, and
 the decision to update stored state. The [content contracts](../packages/octagonal-wheels/src/modification.test.ts)
 exercise synchronous and asynchronous callbacks, unchanged content, completion
@@ -280,7 +286,7 @@ separate boundary from these package and consumer checks.
 
 ## Resource ownership: candidate integration
 
-The unreleased `resource` entry separates a disposal capability from ownership
+The `resource` entry separates a disposal capability from ownership
 of a value. LiveSync's `withOwnedRemoteResource` delegates its existing finite
 operation scope to `withOwnedResource`. Its Replicator disposer uses
 `createOwnedResource` while preserving deferred closing, the original receiver,
@@ -296,7 +302,7 @@ or real-Obsidian and mobile workflow validation.
 
 ## Multi-key locks and callback utilities: candidate integration
 
-The unreleased `withLocks` export from `octagonal-wheels/concurrency/lock`
+The `withLocks` export from `octagonal-wheels/concurrency/lock`
 shares the existing single-key lock groups. Commonlib's offline Metadata repair
 and file-event processing now import it directly. Those consumers still own
 key namespaces, deduplication, sorting, and conflict hooks deferred until every

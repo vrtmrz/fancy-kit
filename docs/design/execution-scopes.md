@@ -21,7 +21,10 @@ The detailed contracts were accepted for implementation on 29 October 2026.
 The review on 31 October 2026 refined the public type name to `ScopedPipeline`
 and separated the iteration entry from its internal runner without changing
 the lifecycle contracts below.
-The runtime APIs and consumer pilots are implemented as unpublished candidates.
+The runtime APIs are included in the prepared `octagonal-wheels@0.1.56`
+release. Registry publication is pending. Commonlib and Self-hosted LiveSync
+consumer pilots remain unpublished candidates, with their dependency updates
+and additional integration changes reviewed separately.
 The [usage guide](../../packages/octagonal-wheels/guides/execution-scopes.md)
 describes the current APIs. The original declaration sketches alongside this
 design are retained as reviewed design evidence; maintained public API checks
