@@ -3,8 +3,11 @@
 Choose a shared operation by the behaviour it owns, then supply the host-specific
 capabilities at the application boundary. This guide connects the utilities used
 by the current unpublished Commonlib and Self-hosted LiveSync integrations.
-The new APIs require the corresponding candidate packages until released;
-installing the last published versions does not provide them all.
+The shared APIs below require `octagonal-wheels@0.1.56` and
+`@vrtmrz/obsidian-plugin-kit@0.1.7` or later. Check each package's npm
+version and dist-tags for registry availability; source builds can use the
+[local-tarball workflow](releasing.md#testing-unpublished-package-changes).
+Commonlib and Self-hosted LiveSync dependency updates remain separate work.
 
 ## Choose the operation and its owner
 

@@ -6,6 +6,8 @@ The library is exercised in maintained Self-hosted LiveSync, DiffZip, and Screwd
 
 The APIs are designed for specific trade-offs rather than as universal replacements for platform or standard-library features. Select the smallest public entry point whose contract fits the application.
 
+The shared runtime APIs below require `octagonal-wheels@0.1.56` or later. Check `npm view octagonal-wheels version dist-tags` for registry availability. For source builds which are not yet published, follow [Testing unpublished package changes](https://github.com/vrtmrz/fancy-kit/blob/main/docs/releasing.md#testing-unpublished-package-changes).
+
 > [!IMPORTANT]
 > This package remains in `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
@@ -64,7 +66,7 @@ for input types, line endings, binary view ranges, comparison, and runtime requi
 
 ## Handle source modifications
 
-Use `createModificationHandler` from the unreleased `modification` entry to compose reading,
+Use `createModificationHandler` from the `modification` entry to compose reading,
 decoding, comparison, and conditional writing. Inject storage and recovery policy;
 only a read failure invokes the supplied fallback. The result distinguishes a
 completed write from an unchanged target. See the
@@ -83,7 +85,7 @@ lifecycle and testing contracts.
 
 ## Operation scopes
 
-The unreleased operation scope APIs keep resource acquisition, typed pipelines,
+The operation scope APIs keep resource acquisition, typed pipelines,
 and deferred cleanup within one operation. Use `withScope` and `scoped` from
 `resource/scope`, `withCancellation` from `concurrency/cancellation`, and
 `forEachInScope` or `mapInScope` from `concurrency/scoped.iteration`.

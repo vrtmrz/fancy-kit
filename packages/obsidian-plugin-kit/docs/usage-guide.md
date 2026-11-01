@@ -35,8 +35,8 @@ Direct dialog functions and `createObsidianUi` render the same Obsidian UI. The 
 
 ## Select command availability at invocation time
 
-The unreleased `createCommandCheck` helper from
-`@vrtmrz/obsidian-plugin-kit/command` produces an Obsidian `checkCallback`.
+The `createCommandCheck` helper from
+`@vrtmrz/obsidian-plugin-kit/command`, added in 0.1.7, produces an Obsidian `checkCallback`.
 It reselects the current value for every invocation, reports falsey values as
 unavailable, and passes the selected value to the action only during execution.
 See the [command example](../README.md#command-availability) for the complete

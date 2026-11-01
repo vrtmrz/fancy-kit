@@ -17,7 +17,7 @@ The packages use independent `0.x` versions. Use `npm view <package-name> versio
 - [`@vrtmrz/ui-interactions`](packages/ui-interactions): framework-neutral UI contracts, drivers, and an App-free consumer test harness. See its [usage and testing guide](packages/ui-interactions/docs/usage-guide.md) for adapter composition and scripted tests.
 - [`octagonal-wheels`](packages/octagonal-wheels): pure utilities and generic structural algorithms, maintained here with its existing package and commit history. See its [import and runtime guide](packages/octagonal-wheels/guides/imports-and-runtime.md) and [generated API index](packages/octagonal-wheels/docs/modules.md).
 
-See [Compose shared runtime utilities](docs/runtime-composition.md) for selecting operations, assigning cleanup ownership, and retaining application policy across these packages. The guide identifies APIs which are still unreleased.
+See [Compose shared runtime utilities](docs/runtime-composition.md) for selecting operations, assigning cleanup ownership, and retaining application policy across these packages. The guide identifies the package versions required by the shared APIs.
 
 ## Workspace application
 

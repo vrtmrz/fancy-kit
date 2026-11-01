@@ -3,8 +3,9 @@
 # Operation scopes
 
 Use an operation scope when one asynchronous operation acquires resources and
-must finish their cleanup before returning. The APIs in this guide are
-unreleased. The previous `octagonal-wheels/concurrency/scopedIteration` import
+must finish their cleanup before returning. The APIs in this guide require
+`octagonal-wheels@0.1.56` or later; see the [package README](../README.md)
+for registry availability and source builds. The previous `octagonal-wheels/concurrency/scopedIteration` import
 remains available as a compatibility re-export.
 Select `withScope` for one operation, add typed steps with `scoped().pipe()`, and
 use `pipeScoped()` when one step must close its resources before the next starts.

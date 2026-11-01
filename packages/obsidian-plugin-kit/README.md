@@ -5,8 +5,10 @@ Reusable, testable primitives for Obsidian plug-ins.
 > [!IMPORTANT]
 > This package is in initial `0.x` development. npm's normal compatible range accepts patch releases but not the next minor release. Commit the lockfile for repeatable installations; use `--save-exact` when every upgrade must be reviewed explicitly.
 
+The examples below target 0.1.7 or later. Check `npm view @vrtmrz/obsidian-plugin-kit version dist-tags` for registry availability. See the [release notes](docs/updates.md) for changes and [source-build guidance](https://github.com/vrtmrz/fancy-kit/blob/main/docs/releasing.md#testing-unpublished-package-changes) for versions which are not yet published.
+
 ```bash
-npm install --save-exact @vrtmrz/obsidian-plugin-kit@0.1.6
+npm install --save-exact @vrtmrz/obsidian-plugin-kit@0.1.7
 ```
 
 The package is ESM and declares `obsidian >=1.8.7` as a peer dependency. The `command` entry is a platform-independent command callback helper and imports no Obsidian runtime API. The `dialog`, `notice`, `progress`, `ui`, and `vault` runtime entry points use Obsidian or DOM APIs and belong inside an Obsidian plug-in. The `testing` entry point is App-free and is intended for application-flow tests that do not need Obsidian rendering or Vault integration. The `secrets` entry adapts an injected SecretStorage capability and can be imported without Obsidian or DOM globals; the real host API requires Obsidian 1.11.4 or later. The `secrets` and `local-storage` entries are added in 0.1.5, which pins `@vrtmrz/secret-store@0.1.0` and `@vrtmrz/value-store@0.1.0`. The `local-storage` entry adapts the App `loadLocalStorage` and `saveLocalStorage` methods, documented since Obsidian 1.8.7, through the shared `@vrtmrz/value-store` core. The existing `obsidian >=1.8.7` peer requirement is unchanged.
@@ -30,7 +32,7 @@ The UI, Vault, and testing boundaries are also used in maintained plug-ins. See 
 
 ## Command availability
 
-The unreleased `command` entry provides `createCommandCheck` for an Obsidian command's `checkCallback`:
+The `command` entry, added in 0.1.7, provides `createCommandCheck` for an Obsidian command's `checkCallback`:
 
 ```ts
 import { Notice } from "obsidian";

@@ -144,7 +144,7 @@ interchangeable identifiers.
 
 ## Apply content when it changes
 
-The unreleased `createModificationHandler` factory in `octagonal-wheels/modification`
+The `createModificationHandler` factory in `octagonal-wheels/modification` (0.1.56 or later)
 accepts a `ModificationHandlerAdapter<TTarget, TSource, TExisting, TContent>` and
 returns a `ModificationHandler<TTarget, TSource>`. The adapter supplies `read`,
 `onReadError`, `decode`, `isSame`, and `write` callbacks. Each accepts synchronous
