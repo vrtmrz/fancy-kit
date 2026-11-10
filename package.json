@@ -33,7 +33,7 @@
     "test:test-session": "npm run test --workspace @vrtmrz/obsidian-test-session",
     "test:octagonal-wheels": "npm test --workspace octagonal-wheels -- --reporter=dot && npm run test:node --workspace octagonal-wheels",
     "test:harness": "vitest run apps/obsidian-harness",
-    "test:workspace": "npm test && npm run test:harness && npm run test:octagonal-wheels && npm run test:age:codec && npm run test:value-store:browser && npm run test:value-serializers",
+    "test:workspace": "npm test && npm run test:harness && npm run test:octagonal-wheels && npm run test:age:codec && npm run test:value-store:browser && npm run test:value-serializers && npm run test:sqlite:node --workspace @vrtmrz/value-store",
     "pack:workspace": "npm pack --dry-run --json --workspaces",
     "release:prepare": "node scripts/prepare-release.mjs",
     "release:prepare:harness": "npm run check:harness && npm run build:harness && node scripts/prepare-harness-release.mjs",

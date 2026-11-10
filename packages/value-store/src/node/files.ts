@@ -1,8 +1,9 @@
 import { constants, type BigIntStats } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
-import type { ValueDeleter, ValueStore } from "../contracts.js";
-import { createDeletableValueStore } from "../store.js";
+import type { ValueClearer } from "../contracts.js";
+import type { EnhancedValueStore } from "../enhanced-store.js";
+import { createEnhancedValueStore } from "../enhanced-store.js";
 import { ValueStoreError, sanitiseValueStoreError } from "../errors.js";
 import { validateValueKey, validateValuePrefix, validateValueString } from "../validation.js";
 import { decodeDocument, encodeDocument, MAX_DOCUMENT_BYTES } from "./format.js";
@@ -31,6 +32,7 @@ function sameFile(left: BigIntStats, right: BigIntStats): boolean {
   return left.dev === right.dev && left.ino === right.ino;
 }
 
+/** Reject non-regular files and hard links; identity checks rely on one path to the document. */
 function regularFile(stat: BigIntStats, allowUnlinked = false): void {
   if (!stat.isFile() || stat.nlink > 1n || (stat.nlink === 0n && !allowUnlinked)) {
     throw new ValueStoreError("invalid-data");
@@ -38,7 +40,7 @@ function regularFile(stat: BigIntStats, allowUnlinked = false): void {
 }
 
 /** Private injected constructor; the public entry uses only real Node I/O. */
-export function createJsonFileValueStoreWithOperations(options: JsonFileValueStoreOptions, operations: JsonFileOperations): ValueStore & ValueDeleter {
+export function createJsonFileValueStoreWithOperations(options: JsonFileValueStoreOptions, operations: JsonFileOperations): EnhancedValueStore & ValueClearer {
   try {
     const prefix = options?.prefix;
     validateValuePrefix(prefix);
@@ -61,6 +63,7 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
         regularFile(stat);
         return stat;
       } catch (error) {
+        // ENOENT means an empty store only before any valid document has been observed.
         if (codeOf(error) === "ENOENT" && !fileSeen) return null;
         throw error;
       }
@@ -112,6 +115,7 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
     }
 
     function replace(entries: Map<string, string>): void {
+      // Build one complete replacement beside the target so rename stays on the same filesystem.
       const bytes = encodeDocument(entries);
       let temporaryPath: string | undefined;
       let temporaryIdentity: BigIntStats | undefined;
@@ -120,6 +124,7 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
         validateParent();
         inspectEntry();
         const candidate = join(parent, `.value-store-${randomUUID()}.tmp`);
+        // Exclusive creation avoids clobbering another temporary file; mode 0600 limits POSIX disclosure.
         const descriptor = operations.open(candidate, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0), 0o600);
         temporaryPath = candidate;
         try {
@@ -140,6 +145,7 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
         const currentTemporary = operations.statPath(candidate);
         regularFile(currentTemporary);
         if (!sameFile(currentTemporary, temporaryIdentity)) throw new ValueStoreError("operation-failed");
+        // From this point a failed rename may have an uncertain persistent outcome.
         replacementStarted = true;
         operations.rename(candidate, filePath);
         temporaryPath = undefined;
@@ -156,7 +162,7 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
       }
     }
 
-    const store = createDeletableValueStore({
+    const store = createEnhancedValueStore({
       get(key) {
         try {
           validateValueKey(key);
@@ -178,6 +184,38 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
           validateValueKey(key);
           const entries = readEntries();
           if (entries.delete(prefix + key)) replace(entries);
+        } catch (error) { throw sanitiseFileError(error); }
+      },
+      writeBatch(operations) {
+        if (operations.length === 0) return;
+        try {
+          // Apply to one in-memory candidate, then replace the document at most once.
+          const entries = readEntries();
+          let changed = false;
+          for (const operation of operations) {
+            const key = prefix + operation.key;
+            if (operation.type === "delete") {
+              if (entries.delete(key)) changed = true;
+            } else if (!operation.ifAbsent || !entries.has(key)) {
+              entries.set(key, operation.value);
+              changed = true;
+            }
+          }
+          if (changed) replace(entries);
+        } catch (error) { throw sanitiseFileError(error); }
+      },
+      clear() {
+        try {
+          const entries = readEntries();
+          let changed = false;
+          // Prefix matching is literal and scoped to the captured physical prefix.
+          for (const key of entries.keys()) {
+            if (key.startsWith(prefix)) {
+              entries.delete(key);
+              changed = true;
+            }
+          }
+          if (changed) replace(entries);
         } catch (error) { throw sanitiseFileError(error); }
       },
     }, options);

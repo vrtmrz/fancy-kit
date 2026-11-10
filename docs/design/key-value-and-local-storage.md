@@ -34,6 +34,13 @@ SecretStore profile. Keeping those responsibilities separate removes duplicate
 value handling and lets a consumer install ValueStore without secret-purpose
 code or cryptographic dependencies.
 
+## Batch and SQLite extension
+
+The [batch and SQLite design](value-store-sqlite.md) describes additive batch,
+scoped clearing, and disposal capabilities, together with managed and borrowed
+SQLite adapters. Those extensions have an unpublished implementation candidate. The existing
+guarantees below remain the baseline for the established adapters.
+
 ## Scope and ownership
 
 | Boundary | Responsibility |

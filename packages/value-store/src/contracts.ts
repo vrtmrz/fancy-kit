@@ -42,6 +42,8 @@ export interface ValueStoreOptions {
   /**
    * Complete paired conversion, captured at construction without invoking it.
    * Omit it for identity conversion. Partial or malformed pairs are invalid.
+   *
+   * @defaultValue Identity conversion.
    */
   serializer?: ValueSerializer;
 }
@@ -121,4 +123,143 @@ export interface ValueStore extends ValueReader {
 export interface ValueDeleter {
   /** Removes a key without passing through the serializer. */
   delete(key: string): Promise<void>;
+}
+
+/**
+ * One logical mutation in an ordered batch.
+ *
+ * @remarks
+ * Keys are exact logical keys, before any backend prefix is added. Repeated
+ * keys are allowed: application observes earlier operations in this batch.
+ * Value writes are validated and snapshotted before serialisation or storage
+ * application begins.
+ */
+export type ValueBatchOperation =
+  | {
+    /** Stores a logical string; the empty string is data. */
+    type: "setValue";
+    /** Exact logical key, without a backend prefix. */
+    key: string;
+    /** Logical string passed once through the captured serialiser during preparation. */
+    value: string;
+    /**
+     * When true, applies this write only if the key is absent at application
+     * time, including after earlier operations in this batch. The value is
+     * still serialised during preparation if this write is later skipped.
+     * Omitted or false means replace any present value.
+     *
+     * @defaultValue `false`.
+     */
+    ifAbsent?: boolean;
+  }
+  | {
+    /** Stores a supported JSON value as a detached snapshot. */
+    type: "setObject";
+    /** Exact logical key, without a backend prefix. */
+    key: string;
+    /** JSON value copied and encoded before the first await. */
+    value: ObjectValue;
+    /**
+     * When true, applies this write only if the key is absent at application
+     * time, including after earlier operations in this batch. The encoded value
+     * is still serialised during preparation if this write is later skipped.
+     * Omitted or false means replace any present value.
+     *
+     * @defaultValue `false`.
+     */
+    ifAbsent?: boolean;
+  }
+  | {
+    /** Removes an entry without invoking the serialiser. */
+    type: "delete";
+    /** Exact logical key, without a backend prefix. */
+    key: string;
+  };
+
+/** Explicit capability for ordered, fully prepared logical mutations. */
+export interface ValueBatchWriter {
+  /**
+   * Prepares and applies ordered logical mutations through the captured backend.
+   *
+   * @remarks
+   * Snapshots and validates the complete array, its operation fields, and JSON
+   * values before the first await. Then prepares each value write through the
+   * captured serialiser in array order, before asking the backend to apply any
+   * mutation. Conditional writes still invoke the serialiser once even when
+   * application skips them. Repeated keys observe earlier operations in this
+   * batch. Concurrent calls have no FIFO guarantee.
+   *
+   * Application is ordered and stops at the first failure. Whether earlier
+   * mutations remain visible depends on the backend; this method does not
+   * expose an atomicity option or promise rollback. An empty batch performs no
+   * data I/O but still observes lifecycle and initialisation failures.
+   *
+   * @param operations - The ordered logical mutations to validate, prepare, and apply.
+   * @returns A promise that fulfils with `undefined` after every mutation reports success.
+   * @throws The returned promise rejects with a sanitised `ValueStoreError` on
+   * invalid input, serialiser failure, backend failure, or an adapter-specific
+   * lifecycle failure. Input and serialiser failures precede this batch's data
+   * application; backend failure can follow partial or uncertain effects as
+   * documented by the adapter.
+   * @example
+   * ```ts
+   * import { MemoryValueStore } from "@vrtmrz/value-store";
+   *
+   * const store = new MemoryValueStore();
+   * await store.writeBatch([
+   *   { type: "setValue", key: "status", value: "ready" },
+   *   { type: "setObject", key: "checkpoint", value: { offset: 42 }, ifAbsent: true },
+   * ]);
+   * await store.dispose();
+   * ```
+   */
+  writeBatch(operations: readonly ValueBatchOperation[]): Promise<void>;
+}
+
+/** Explicit capability for removing entries in a backend-defined captured scope. */
+export interface ValueClearer {
+  /**
+   * Removes entries in this instance's captured storage scope.
+   *
+   * @remarks
+   * The concrete adapter defines that scope. Overlapping scopes can share
+   * entries. This does not
+   * cancel accepted writes that are still preparing, so one can apply after
+   * this call completes. Stop and drain producers before using clear as a reset
+   * boundary. A failure's effect on earlier removals is backend-specific.
+   *
+   * @returns A promise that fulfils after the backend reports the scoped clear complete.
+   * @throws The returned promise rejects with a sanitised backend or lifecycle
+   * error; a rejection does not imply that no entries were removed.
+   */
+  clear(): Promise<void>;
+}
+
+/** Explicit completion of a store's accepted operations and owned resources. */
+export interface ValueStoreDisposer {
+  /**
+   * Permanently stops admission and drains this store's accepted work.
+   *
+   * @remarks
+   * Stops admission synchronously, then waits for every operation already
+   * accepted by this facade to settle, including asynchronous serialisation and
+   * deserialisation. Later data operations reject with `unavailable`. Disposal
+   * does not retry operations or replay their failures, and its success does
+   * not certify that each write succeeded; observe each operation's own
+   * promise. There is no implicit timeout or cancellation.
+   *
+   * Every call returns the same terminal promise, including after it has
+   * fulfilled or rejected. The adapter documents which resources this facade
+   * owns and how shared or borrowed resources are handled; disposal does not
+   * imply that other users are drained or an external resource is closed. Do
+   * not await this store's disposal from one of its own serialiser callbacks;
+   * that operation would be waiting for its own completion.
+   *
+   * @returns The shared promise that fulfils after accepted work drains and
+   * adapter-owned disposal completes.
+   * @throws The returned promise can reject with a sanitised lifecycle,
+   * initialisation, or resource-release failure after accepted work settles.
+   * Ordinary operation failures remain on their original promises.
+   */
+  dispose(): Promise<void>;
 }

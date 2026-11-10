@@ -9,6 +9,10 @@ import type {
   ValueBackend,
   ValueBackendDeleter,
   ValueBackendReader,
+  ValueBatchOperation,
+  ValueBatchWriter,
+  ValueClearer,
+  ValueStoreDisposer,
   ValueDeleter,
   ValueReader,
   ValueStore,
@@ -16,6 +20,7 @@ import type {
   ValueSerializer,
 } from "../src/index.js";
 import { createWebStorageValueStore } from "../src/web-storage.js";
+import { createJsonFileValueStore } from "../src/node/index.js";
 
 const serializer: ValueSerializer = {
   serialize: (_key, value) => `wire:${value}`,
@@ -102,3 +107,37 @@ const assumedString: Promise<string> = reader.getValue("missing");
 const concreteMemory = new MemoryValueStore();
 const concreteDefault: Promise<string> = concreteMemory.getValue("missing", "");
 void [assumedString, concreteDefault];
+
+const batch: readonly ValueBatchOperation[] = [
+  { type: "setValue", key: "raw", value: "", ifAbsent: true },
+  { type: "setObject", key: "json", value: null, ifAbsent: false },
+  { type: "delete", key: "removed" },
+];
+const memoryCapabilities: ValueBatchWriter & ValueClearer & ValueStoreDisposer = concreteMemory;
+const memoryBatch: Promise<void> = concreteMemory.writeBatch(batch);
+const memoryClear: Promise<void> = concreteMemory.clear();
+const memoryDisposal: Promise<void> = concreteMemory.dispose();
+const enhancedWeb = createWebStorageValueStore({
+  getItem: (_key) => null,
+  setItem: (_key, _value) => undefined,
+  removeItem: (_key) => undefined,
+}, { prefix: "" });
+const webCapabilities: ValueBatchWriter & ValueStoreDisposer = enhancedWeb;
+// @ts-expect-error Web Storage has no injected enumeration capability.
+enhancedWeb.clear();
+// @ts-expect-error Minimal custom backends do not acquire batching.
+storeFacade.writeBatch(batch);
+// @ts-expect-error Minimal custom backends do not acquire lifecycle control.
+storeFacade.dispose();
+// @ts-expect-error Deletion alone does not imply batching.
+deletableFacade.writeBatch(batch);
+// @ts-expect-error An insertion condition must be boolean.
+const invalidBatch: ValueBatchOperation = { type: "setValue", key: "key", value: "value", ifAbsent: 1 };
+void [memoryCapabilities, memoryBatch, memoryClear, memoryDisposal, webCapabilities, invalidBatch];
+
+const enhancedJson = createJsonFileValueStore({ filePath: "values.json", prefix: "" });
+const jsonCapabilities: ValueStore & ValueDeleter & ValueBatchWriter & ValueClearer & ValueStoreDisposer = enhancedJson;
+const jsonBatch: Promise<void> = enhancedJson.writeBatch(batch);
+const jsonClear: Promise<void> = enhancedJson.clear();
+const jsonDisposal: Promise<void> = enhancedJson.dispose();
+void [jsonCapabilities, jsonBatch, jsonClear, jsonDisposal];

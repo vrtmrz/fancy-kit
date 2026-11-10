@@ -177,6 +177,17 @@ async function main() {
         ? null
         : Array.from({ length: value.length }, (_, index) => value.charCodeAt(index));
 
+      const batchStore = createWebStorageValueStore(window.localStorage, { prefix: "batch:" });
+      await batchStore.writeBatch([
+        { type: "setValue", key: "key", value: "kept" },
+        { type: "setValue", key: "key", value: "skipped", ifAbsent: true },
+        { type: "setObject", key: "json", value: null },
+      ]);
+      if (await batchStore.getValue("key") !== "kept" || await batchStore.getObject("json") !== null) throw new Error("Web Storage batch contract failed");
+      await batchStore.dispose();
+      let disposedRejected = false;
+      try { await batchStore.getValue("key"); } catch (error) { disposedRejected = error.code === "unavailable"; }
+      if (!disposedRejected) throw new Error("Disposed Web Storage accepted work");
       const stringStore = createWebStorageValueStore(window.localStorage, { prefix: "strings:" });
       const stringValues = [];
       for (const { key, value } of strings) {

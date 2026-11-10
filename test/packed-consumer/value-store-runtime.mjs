@@ -4,6 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ValueStoreError, MemoryValueStore } from "@vrtmrz/value-store";
+import { createSqliteFileValueStore } from "@vrtmrz/value-store/node-sqlite";
 import { createJsonFileValueStore } from "@vrtmrz/value-store/node-json-file";
 import { createWebStorageValueStore } from "@vrtmrz/value-store/web-storage";
 import { createCompatibleObsidianLocalStore, createObsidianLocalStore } from "@vrtmrz/obsidian-plugin-kit/local-storage";
@@ -40,6 +41,15 @@ const serializer = {
 };
 const temporaryRoot = await mkdtemp(join(tmpdir(), "packed-local-storage-"));
 try {
+  const sqlitePath = join(temporaryRoot, "state.sqlite");
+  const sqlite = createSqliteFileValueStore({ filePath: sqlitePath, prefix: "sqlite:" });
+  await sqlite.writeBatch(cases.map(({ key, value }) => ({ type: "setValue", key, value })));
+  for (const { key, value } of cases) assert.equal(await sqlite.getValue(key), value);
+  await sqlite.dispose();
+  const sqliteReopened = createSqliteFileValueStore({ filePath: sqlitePath, prefix: "sqlite:" });
+  assert.equal(await sqliteReopened.getValue(cases[0].key), cases[0].value);
+  await sqliteReopened.clear();
+  await sqliteReopened.dispose();
   const filePath = join(temporaryRoot, "local-storage.json");
   const nodeStore = createJsonFileValueStore({ filePath, prefix: "node/" });
   const otherPrefix = createJsonFileValueStore({ filePath, prefix: "other/" });

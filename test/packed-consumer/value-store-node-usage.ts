@@ -25,3 +25,16 @@ const defaultJson = store.getObject("missing", null);
 void [defaultString, defaultJson];
 const defaultObject: Promise<ObjectValue> = store.getObject("missing", false);
 void defaultObject;
+
+import { DatabaseSync } from "node:sqlite";
+import { createSqliteFileValueStore, createSqliteValueStore, type SqliteValueStore } from "@vrtmrz/value-store/node-sqlite";
+const sqlite: SqliteValueStore = createSqliteFileValueStore({ filePath: "consumer-owned/state.sqlite", prefix: "plugin:", durability: "full" });
+const batch: Promise<void> = sqlite.writeBatch([{ type: "setObject", key: "key", value: null, ifAbsent: true }]);
+const clear: Promise<void> = sqlite.clear();
+const disposal: Promise<void> = sqlite.dispose();
+const borrowed = createSqliteValueStore(new DatabaseSync(":memory:"), { prefix: "" });
+void [batch, clear, disposal, borrowed];
+// @ts-expect-error Scope must be explicit.
+createSqliteFileValueStore({ filePath: "state.sqlite" });
+// @ts-expect-error No public atomic switch.
+sqlite.writeBatch([], { atomic: true });

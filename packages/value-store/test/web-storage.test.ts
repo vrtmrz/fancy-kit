@@ -243,3 +243,63 @@ describe("createWebStorageValueStore", () => {
     expect(store).toHaveProperty("setObject");
   });
 });
+
+
+describe("Web Storage batch and disposal capabilities", () => {
+  it("applies conditional and repeated keys without reading unconditional writes", async () => {
+    const entries = new Map([["p:present", ""]]);
+    const getItem = vi.fn((key: string) => entries.get(key) ?? null);
+    const setItem = vi.fn((key: string, value: string) => { entries.set(key, value); });
+    const removeItem = vi.fn((key: string) => { entries.delete(key); });
+    const store = createWebStorageValueStore({ getItem, setItem, removeItem }, { prefix: "p:" });
+    await store.writeBatch([
+      { type: "setValue", key: "present", value: "skipped", ifAbsent: true },
+      { type: "setValue", key: "ordered", value: "first" },
+      { type: "delete", key: "ordered" },
+      { type: "setObject", key: "ordered", value: null, ifAbsent: true },
+      { type: "setValue", key: "ordered", value: "skipped", ifAbsent: true },
+    ]);
+    expect([...entries]).toEqual([["p:present", ""], ["p:ordered", "null"]]);
+    expect(getItem.mock.calls).toEqual([["p:present"], ["p:ordered"], ["p:ordered"]]);
+    expect(setItem.mock.calls).toEqual([["p:ordered", "first"], ["p:ordered", "null"]]);
+    expect(removeItem).toHaveBeenCalledExactlyOnceWith("p:ordered");
+    expect(store).not.toHaveProperty("clear");
+  });
+
+  it("applies all per-key calls synchronously and retains earlier entries on a quota failure", async () => {
+    const events: string[] = [];
+    const entries = new Map<string, string>();
+    const store = createWebStorageValueStore({
+      getItem: (key) => entries.get(key) ?? null,
+      setItem(key, value) {
+        events.push(`set:${key}`);
+        void Promise.resolve().then(() => { events.push(`microtask:${key}`); });
+        if (key === "p:second") throw Object.assign(new Error("private-quota"), { name: "QuotaExceededError" });
+        entries.set(key, value);
+      },
+      removeItem: (key) => { entries.delete(key); },
+    }, { prefix: "p:" });
+    await expect(store.writeBatch([
+      { type: "setValue", key: "first", value: "kept" },
+      { type: "setValue", key: "second", value: "fails" },
+      { type: "setValue", key: "third", value: "never-applied" },
+    ])).rejects.toMatchObject({ code: "quota-exceeded" });
+    expect(events.slice(0, 2)).toEqual(["set:p:first", "set:p:second"]);
+    expect([...entries]).toEqual([["p:first", "kept"]]);
+    expect(await store.getValue("first")).toBe("kept");
+    await expect(store.dispose()).resolves.toBeUndefined();
+  });
+
+  it("does no storage work for empty batches or after disposal", async () => {
+    const storage = { getItem: vi.fn(() => null), setItem: vi.fn(), removeItem: vi.fn() };
+    const store = createWebStorageValueStore(storage, { prefix: "" });
+    await store.writeBatch([]);
+    await store.dispose();
+    await expect(store.writeBatch([])).rejects.toMatchObject({ code: "unavailable" });
+    await expect(store.getValue("key")).rejects.toMatchObject({ code: "unavailable" });
+    await expect(store.setValue("key", "value")).rejects.toMatchObject({ code: "unavailable" });
+    expect(storage.getItem).not.toHaveBeenCalled();
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(storage.removeItem).not.toHaveBeenCalled();
+  });
+});

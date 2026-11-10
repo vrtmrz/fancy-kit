@@ -14,6 +14,7 @@ This repository contains eight independently versioned packages and one public-s
 
 @vrtmrz/value-store/web-storage (Web Storage adapter)
 @vrtmrz/value-store/node-json-file (Node JSON-file adapter)
+@vrtmrz/value-store/node-sqlite (native SQLite adapter)
 
 @vrtmrz/ui-interactions
           ↑                         ↑
@@ -97,6 +98,10 @@ An optional paired `ValueSerializer` converts logical strings before a raw strin
 
 The focused `@vrtmrz/obsidian-plugin-kit/local-storage` entry adapts Obsidian's synchronous App methods through the same asynchronous contract. The App owns Vault scoping; the application supplies the complete literal plug-in prefix. Explicit deletion maps to `saveLocalStorage(key, null)`. Because Obsidian treats a raw empty-string write as deletion, the adapter rejects an empty physical output with `invalid-value` before calling the host. A serializer can preserve an empty logical value only by producing a non-empty physical string. `setObject` stores top-level falsy JSON data through JSON text. The compatibility selector considers its explicit legacy Web Storage source only when both official methods are absent; it does not migrate data or switch sources after an operation failure.
 
-Earlier host probes observed that Obsidian 1.13.6 can suppress underlying storage failures. The adapter cannot distinguish a suppressed read failure from absence or confirm a write the host reports as complete. Package-owned tests, browser persistence, and the complete reviewed Obsidian 1.13.6 suite passed for ADR 0003 on 2026-10-19; [current validation evidence](proven-in-use.md#valuestore-package-owned-evidence) records the qualified runtimes and revised empty-string semantics. The existing `obsidian >=1.8.7` peer floor is unchanged; the 1.7.7 probe remains unverified. The Node file adapter keeps its strict version-1 string-pair document and inclusive 1 MiB UTF-8 limit; its public API is asynchronous although file operations remain synchronous.
+Earlier host probes observed that Obsidian 1.13.6 can suppress underlying storage failures. The adapter cannot distinguish a suppressed read failure from absence or confirm a write the host reports as complete. Package-owned tests, browser persistence, and the complete reviewed Obsidian 1.13.6 suite passed for ADR 0003 on 2026-10-19; [current validation evidence](proven-in-use.md#valuestore-package-and-consumer-evidence) records the qualified runtimes and revised empty-string semantics. The existing `obsidian >=1.8.7` peer floor is unchanged; the 1.7.7 probe remains unverified. The Node file adapter keeps its strict version-1 string-pair document and inclusive 1 MiB UTF-8 limit; its public API is asynchronous although file operations remain synchronous.
 
 This package does not replace the existing IndexedDB `KeyValueStore` family or `PersistentMap`, whose formats and behaviour remain unchanged. Value storage is not a secret store and adds no encryption or secret-management guarantees.
+
+### Batch and SQLite extension
+
+The [SQLite design](design/value-store-sqlite.md) adds independent `ValueBatchWriter`, `ValueClearer`, and `ValueStoreDisposer` capabilities without widening minimal custom backends. Shared preparation and tracking remain in ValueStore; backend application retains its documented failure boundary. The `./node-sqlite` entry owns the lossless BLOB codec, Kit-specific schema, native connection coordinator, and internal file manager. Managed and borrowed entry points share the value engine. Node modules remain outside the root and Web Storage graphs, and no package dependency is added. The implementation is an unpublished candidate; Bridge integration remains consumer-owned follow-up.
