@@ -35,12 +35,18 @@
     "./node-json-file": {
       "types": "./dist/node/index.d.ts",
       "import": "./dist/node/index.js"
+    },
+    "./node-sqlite": {
+      "types": "./dist/sqlite/index.d.ts",
+      "import": "./dist/sqlite/index.js"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.check.json",
     "test": "vitest run --maxWorkers=1",
-    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build",
+    "test:sqlite:node": "node test/sqlite-runtime.mjs",
+    "test:sqlite:deno": "deno run --no-config --allow-all test/sqlite-runtime.mjs"
   }
 }

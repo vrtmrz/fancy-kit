@@ -418,3 +418,109 @@ describe("Node value serialisation", () => {
     expect(readdirSync(options.root)).toEqual(["settings.json"]);
   });
 });
+
+
+describe("JSON-file batch, clear, and disposal capabilities", () => {
+  it("reads once and replaces once for a mixed ordered batch, preserving other prefixes", async () => {
+    const options = fixture();
+    writeFileSync(options.filePath, JSON.stringify({ version: 1, entries: [["other:key", "keep"], ["plugin:empty", ""]] }));
+    const open = vi.fn(jsonFileOperations.open);
+    const rename = vi.fn(jsonFileOperations.rename);
+    const store = createJsonFileValueStoreWithOperations(options, { ...jsonFileOperations, open, rename });
+    open.mockClear();
+    await store.writeBatch([
+      { type: "setValue", key: "empty", value: "skipped", ifAbsent: true },
+      { type: "setValue", key: "ordered", value: "first" },
+      { type: "delete", key: "ordered" },
+      { type: "setObject", key: "ordered", value: null, ifAbsent: true },
+      { type: "setValue", key: "ordered", value: "skipped", ifAbsent: true },
+    ]);
+    expect(open.mock.calls.filter(([, flags]) => (flags & constants.O_CREAT) === 0)).toHaveLength(1);
+    expect(open.mock.calls.filter(([, flags]) => (flags & constants.O_CREAT) !== 0)).toHaveLength(1);
+    expect(rename).toHaveBeenCalledOnce();
+    expect(JSON.parse(readFileSync(options.filePath, "utf8"))).toEqual({ version: 1, entries: [
+      ["other:key", "keep"], ["plugin:empty", ""], ["plugin:ordered", "null"],
+    ] });
+    const reopened = createJsonFileValueStore(options);
+    expect(await reopened.getObject("ordered")).toBeNull();
+    expect(await reopened.getValue("empty")).toBe("");
+  });
+
+  it("enforces the inclusive complete candidate size before any batch replacement", async () => {
+    const options = fixture();
+    const rename = vi.fn(jsonFileOperations.rename);
+    const store = createJsonFileValueStoreWithOperations(options, { ...jsonFileOperations, rename });
+    const overhead = Buffer.byteLength(JSON.stringify({ version: 1, entries: [["plugin:key", ""]] }));
+    const value = "x".repeat(MAX_DOCUMENT_BYTES - overhead);
+    await store.writeBatch([{ type: "setValue", key: "key", value }]);
+    expect(statSync(options.filePath).size).toBe(MAX_DOCUMENT_BYTES);
+    rename.mockClear();
+    const before = readFileSync(options.filePath);
+    await expect(store.writeBatch([
+      { type: "delete", key: "key" },
+      { type: "setValue", key: "key", value: `${value}x` },
+    ])).rejects.toMatchObject({ code: "quota-exceeded" });
+    expect(rename).not.toHaveBeenCalled();
+    expect(readFileSync(options.filePath)).toEqual(before);
+    expect(readdirSync(options.root)).toEqual(["settings.json"]);
+  });
+
+  it("clears literal overlapping prefixes once and supports an empty prefix", async () => {
+    const options = { ...fixture(), prefix: "a%_" };
+    writeFileSync(options.filePath, JSON.stringify({ version: 1, entries: [
+      ["a%_one", "one"], ["a%_nested:two", "two"], ["aXYthree", "keep"], ["other", "keep"],
+    ] }));
+    const rename = vi.fn(jsonFileOperations.rename);
+    const open = vi.fn(jsonFileOperations.open);
+    const store = createJsonFileValueStoreWithOperations(options, { ...jsonFileOperations, rename, open });
+    open.mockClear();
+    await store.clear();
+    expect(rename).toHaveBeenCalledOnce();
+    expect(open.mock.calls.filter(([, flags]) => (flags & constants.O_CREAT) === 0)).toHaveLength(1);
+    expect(JSON.parse(readFileSync(options.filePath, "utf8"))).toEqual({ version: 1, entries: [["aXYthree", "keep"], ["other", "keep"]] });
+    await createJsonFileValueStore({ ...options, prefix: "" }).clear();
+    expect(JSON.parse(readFileSync(options.filePath, "utf8"))).toEqual({ version: 1, entries: [] });
+  });
+
+  it("keeps a batch unapplied when preparation or replacement fails", async () => {
+    const options = fixture();
+    await createJsonFileValueStore(options).setValue("key", "old");
+    const before = readFileSync(options.filePath);
+    const rename = vi.fn(jsonFileOperations.rename);
+    const failedPreparation = createJsonFileValueStoreWithOperations({ ...options, serializer: {
+      serialize(_key, value) { if (value === "fail") throw failure(); return value; },
+      deserialize: (_key, value) => value,
+    } }, { ...jsonFileOperations, rename });
+    await expect(failedPreparation.writeBatch([
+      { type: "setValue", key: "key", value: "prepared" },
+      { type: "setValue", key: "later", value: "fail" },
+    ])).rejects.toMatchObject({ code: "operation-failed" });
+    expect(rename).not.toHaveBeenCalled();
+    expect(readFileSync(options.filePath)).toEqual(before);
+    const failedReplacement = createJsonFileValueStoreWithOperations(options, { ...jsonFileOperations,
+      write() { throw failure("ENOSPC"); },
+    });
+    await expect(failedReplacement.writeBatch([{ type: "setValue", key: "key", value: "new" }])).rejects.toMatchObject({ code: "quota-exceeded" });
+    expect(readFileSync(options.filePath)).toEqual(before);
+    expect(readdirSync(options.root)).toEqual(["settings.json"]);
+  });
+
+  it("does no operation I/O for an empty batch or after disposal and does not create absent files", async () => {
+    const options = fixture();
+    const statDirectory = vi.fn(jsonFileOperations.statDirectory);
+    const store = createJsonFileValueStoreWithOperations(options, { ...jsonFileOperations, statDirectory });
+    statDirectory.mockClear();
+    await store.writeBatch([]);
+    expect(statDirectory).not.toHaveBeenCalled();
+    await store.writeBatch([{ type: "delete", key: "absent" }]);
+    await store.clear();
+    expect(existsSync(options.filePath)).toBe(false);
+    statDirectory.mockClear();
+    await store.dispose();
+    await expect(store.writeBatch([])).rejects.toMatchObject({ code: "unavailable" });
+    await expect(store.clear()).rejects.toMatchObject({ code: "unavailable" });
+    await expect(store.getValue("key")).rejects.toMatchObject({ code: "unavailable" });
+    expect(statDirectory).not.toHaveBeenCalled();
+    expect(existsSync(options.filePath)).toBe(false);
+  });
+});

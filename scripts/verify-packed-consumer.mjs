@@ -21,6 +21,7 @@ const runtimeSafeEntries = [
   "@vrtmrz/value-store",
   "@vrtmrz/value-store/web-storage",
   "@vrtmrz/value-store/node-json-file",
+  "@vrtmrz/value-store/node-sqlite",
   "@vrtmrz/obsidian-plugin-kit/secrets",
   "@vrtmrz/obsidian-plugin-kit/local-storage",
   "@vrtmrz/secret-store",
@@ -641,6 +642,7 @@ export { ValueStoreError } from "@vrtmrz/value-store";`,
       "node_modules/@vrtmrz/value-store/dist/node/format.js",
       "node_modules/@vrtmrz/value-store/dist/node/operations.js",
       "node_modules/@vrtmrz/value-store/dist/node/types.js",
+      ...["index", "manager", "connection", "codec", "errors", "types"].map(name => `node_modules/@vrtmrz/value-store/dist/sqlite/${name}.js`),
     ];
     await verifyTreeShakenBundle({
       temporaryRoot,

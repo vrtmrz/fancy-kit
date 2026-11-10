@@ -170,6 +170,32 @@ This is package-owned evidence, not consumer adoption, a mobile qualification, o
 
 ## ValueStore: package and consumer evidence
 
+### Unpublished batch and SQLite candidate
+
+On 10 November 2026, the [batch and SQLite implementation](design/value-store-sqlite.md) passed the complete workspace gate, including browser persistence, installed tarball type/runtime fixtures, and checks keeping Node code out of the neutral and Web Storage bundles. ValueStore's final gate run passed 181 tests, including the 28-test SQLite suite. Failure-boundary cases cover uncertain COMMIT, failed rollback/poisoned state, independent-connection busy handling, disposal while another store prepares a write, and host-specific statement result defaults.
+
+The built native scenario in `packages/value-store/test/sqlite-runtime.mjs` passed on Node 24.18.0, Node 26.13.0, and Deno 2.9.7 on Linux arm64. It checks exact UTF-16 strings, ordered conditional batches, namespace clear, borrowed ownership, normal close/reopen, and an 11 MiB value exceeding the reported localStorage ceiling. Deno uses `--allow-all`. Deno 2.9.7 resolves the existing-only URI incorrectly under scoped permissions, so that execution mode remains unqualified. Tests cover process/native behaviour; they do not establish power-loss durability or general network-filesystem support.
+
+A separate storage benchmark saved and verified all 70,000 entries after reopening, using batches of 1,000 under both FULL and NORMAL. The [benchmark source](../packages/value-store/bench/sqlite.mjs) measures startup, idle reopen, individual commits, sampled RSS, and event-loop delay. It is a single local workload, not a stable throughput guarantee or a complete application benchmark.
+
+A follow-up review on 10 November added 45 behavioural and error-boundary cases, bringing the ValueStore package run to 226 passing tests. It directly checks literal wildcard-looking prefix clear, replacement of a known file or parent, preservation of host tables and database PRAGMAs, incomplete/conflicting schemas, startup-close failure, both COMMIT error timings, poisoned managed disposal, rejected notification hooks, and busy recovery through both factories. Comments now explain SQL choices, transaction ownership, snapshot timing, and connection lifetime. TypeScript AST and comment-stripped emitted JavaScript match the preceding implementation.
+
+Coverage was measured with Vitest 4.1.12 and Istanbul 4.1.12 on Node 24.18.0, one worker, and `src/**/*.ts`, with no new exclusions or thresholds. The same 942 statements and 546 branch outcomes were in scope before and after the review:
+
+| Scope | Statement coverage | Branch coverage | Function coverage | Line coverage |
+| --- | --- | --- | --- | --- |
+| ValueStore package | 95.11% (896/942) | 91.39% (499/546) | 100% (191/191) | 95.75% (766/800) |
+| SQLite adapter | 98.87% (350/354) | 97.91% (188/192) | 100% (88/88) | 99.24% (263/265) |
+| SQLite connection coordinator | 100% (90/90) | 100% (47/47) | 100% (19/19) | 100% (69/69) |
+
+Package branch coverage rose from 86.08%; SQLite branch coverage rose from 82.81%. Every executable source file is included; type-only declarations and the re-export-only root have no executable statements. These percentages describe the Node package tests, including real temporary databases and injected faults. They do not combine browser or Deno runs, measure SQLite's native internals, or establish power-loss behaviour. The remaining SQLite branches concern native file-creation errors/races, the platform fallback for `O_NOFOLLOW`, and defensive invalid-data/path guards. Real filesystem races and deployment-specific permissions still need their own qualification. The separate Node and Deno built-entry checks passed again after the comments and tests were added.
+
+The standalone [peer state example](../packages/value-store/test/peer-state-example.mjs) also passed on Node 24.18.0, Node 26.13.0, and Deno 2.9.7 with `--allow-all` on Linux arm64. It uses a real temporary SQLite file and a small legacy string snapshot to check exact keys and values, destination precedence, persisted completion/reset markers, checkpoint save ordering, and reopening. Its rejected checkpoint write uses a disposed store. It exercises package API composition; legacy storage enumeration and complete application workflows need consumer-owned integration tests.
+
+A separate ValueStore package run passed all 226 tests on Node 26.13.0. The coverage percentages above remain the Node 24.18.0 measurements.
+
+This is local candidate evidence. No consumer adoption, registry release, or complete application integration is claimed. The earlier consumer and Obsidian evidence below retains its original scope.
+
 `@vrtmrz/value-store` has an unreleased integration in [Commonlib](https://github.com/vrtmrz/livesync-commonlib) and [Self-hosted LiveSync](https://github.com/vrtmrz/obsidian-livesync), tested with an immutable development tarball. This is candidate integration evidence, not adoption in a published consumer release. [ADR 0003](adr/0003-value-store-capabilities.md) separates value operations, the secret profile, and storage adapters. Deletion is explicit; empty string writes remain values, and the official Obsidian raw adapter rejects physical empty output which the host would delete.
 
 Fresh validation on 2026-10-19 passed the complete workspace and packed-consumer gate. The [ValueStore package tests](../packages/value-store/test) cover defaults used only for absence, snapshots, stored falsy values, serializers, sanitised errors, capability boundaries, and adapter failure paths. ValueStore, SecretStore, and the Node age adapter passed 123, 114, and 58 tests respectively on Node.js 20.19.0, 22.23.3, and 24.18.0 on Linux arm64; real-file fixtures ran on ext4.

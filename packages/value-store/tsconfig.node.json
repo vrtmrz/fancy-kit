@@ -6,6 +6,7 @@
     ]
   },
   "include": [
-    "src/node/**/*.ts"
+    "src/node/**/*.ts",
+    "src/sqlite/**/*.ts"
   ]
 }
