@@ -474,6 +474,10 @@ qualified, rather than expanding this design's runtime promise.
 
 ## Application integration
 
+A small [executable peer-state example](../../packages/value-store/test/peer-state-example.mjs)
+illustrates the storage calls below using a temporary database and a legacy
+snapshot. Consumer workflow integration remains a separate validation step.
+
 The application owns the selected file path and persistent directory, its
 existing key scheme, migration markers, startup/reset ordering, and logging.
 Kit owns the reusable storage guarantees. Integration should retain existing

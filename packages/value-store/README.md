@@ -178,6 +178,22 @@ For a host-owned connection, use `createSqliteValueStore(database, { prefix, nam
 
 The SQLite entry is qualified separately from the neutral and JSON entries. Current native checks target Node 24.18.0, Node 26.13.0, and Deno 2.9.7 on Linux arm64. Deno checks use `--allow-all`: Deno 2.9.7 incorrectly resolves the existing-only file URI under scoped permissions. Scoped-permission managed SQLite use is therefore not qualified; the adapter does not weaken the existing-only open guarantee as a fallback. See the [design and acceptance conditions](https://github.com/vrtmrz/fancy-kit/blob/main/docs/design/value-store-sqlite.md) for the detailed boundaries. These APIs are an unpublished implementation candidate.
 
+### Try a peer-state example
+
+The small [executable peer-state example](test/peer-state-example.mjs) uses a temporary SQLite file and a captured legacy key/string snapshot. It demonstrates preserving complete keys and raw strings, importing with destination precedence, persisting before advancing a checkpoint, reopening, and keeping a reset marker outside the cleared state namespace.
+
+Run it from the repository root after building:
+
+```sh
+npm run build --workspace @vrtmrz/value-store
+node packages/value-store/test/peer-state-example.mjs
+deno run --no-config --allow-all packages/value-store/test/peer-state-example.mjs
+```
+
+The example starts with a new Kit database. Other SQLite schemas require an explicit data migration into the Kit format.
+
+Applications own file selection, legacy storage enumeration, startup, producer coordination, and integration tests. When replacing a synchronous backend, callers need to await reads and writes; synchronous initialisation needs an awaited preparation step, and checkpoint callbacks must return the save Promise. The failed-save assertion uses a disposed store to check callback ordering.
+
 ## Handle failures
 
 Failures use one `ValueStoreError` class with a fixed message and stable `code`. `sanitiseValueStoreError` is exported for adapters and applications composing their own store boundary. Errors do not retain an upstream message or cause, and do not include a file path or stored data. Branch on `code`, not `message`.
