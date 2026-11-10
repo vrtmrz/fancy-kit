@@ -14,9 +14,10 @@ serialisers, and literal key prefixes. Kit manages the normal file connection
 lifecycle; applications choose the file, stop their producers, and await store
 disposal. An additional entry borrows an existing connection from its owner.
 
-This document records the agreed design. The APIs below are implemented as an
-unpublished candidate; the declaration
-sketches describe their public boundary. The implementation passed the complete
+This document records the agreed design. The APIs below are implemented and
+selected for ValueStore 0.1.1. The declaration sketches describe their public
+boundary; registry publication is verified separately through the
+[release process](../releasing.md). The implementation passed the complete
 workspace gate and separate Node/Deno native checks; see
 [recorded candidate evidence](../proven-in-use.md#unpublished-batch-and-sqlite-candidate).
 The baseline is

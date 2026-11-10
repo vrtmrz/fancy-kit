@@ -38,7 +38,8 @@ code or cryptographic dependencies.
 
 The [batch and SQLite design](value-store-sqlite.md) describes additive batch,
 scoped clearing, and disposal capabilities, together with managed and borrowed
-SQLite adapters. Those extensions have an unpublished implementation candidate. The existing
+SQLite adapters. Those extensions are selected for ValueStore 0.1.1; registry
+availability is verified separately through the release process. The existing
 guarantees below remain the baseline for the established adapters.
 
 ## Scope and ownership
