@@ -98,7 +98,7 @@ An exported name is not automatically the preferred choice for new code. Preserv
 - `createUiContext` is a deprecated alias; new composition uses `createObsidianUi`.
 - OW `promiseWithResolver` is deprecated in favour of `promiseWithResolvers`; `concurrency/scopedIteration` is a compatibility re-export of `concurrency/scoped.iteration`.
 - OW versioned lock, semaphore, and processor entries remain for compatibility. Check symbol-level deprecation notes; prefer the current focused entry and scoped wrappers for new lifecycle-aware code.
-- `SimpleStoreIDB` / `SimpleStoreIDBv2` direct constructors are deprecated in favour of asynchronous `open`. This does not deprecate the entire store class.
+- `SimpleStoreIDB` / `SimpleStoreIDBv2` direct constructors are deprecated in favour of static `open`. This does not deprecate the entire store class.
 - Legacy UTF-16 decoding and CRC-derived hashes may be needed to read existing data. Do not substitute an encoding or hash without considering stored-format compatibility.
 - Encryption entry points represent specific payload formats. Follow their format and key contracts; secret storage and key provisioning are separate concerns.
 - A version suffix alone does not establish deprecation. The versioned reactive and signal entries retain their documented contracts.
