@@ -10,6 +10,8 @@ Prefer focused, extensionless imports. A category can export namespaces rather t
 
 These are the principal operations to look for on a returned capability or instance. They are not additional standalone exports.
 
+For new finite workflows, begin with scopes, cooperative cancellation, and scoped iteration. `QueueProcessor`, Clerk / Inbox, StreamInbox, SlipBoard, conduit, channels, actor dispatch, and BackedQueue are listed for specialised requirements and existing implementations. See the [coordination selection guidance](CHEATSHEET.md#specialised-and-existing-coordination-apis) before choosing them. Their methods remain discoverable here independently of their priority for new adoption.
+
 | Capability or instance | Methods | Reference |
 | --- | --- | --- |
 | `Scope` | `defer`; borrowed input is `value` | [Scope](packages/octagonal-wheels/src/resource/scope.ts) |

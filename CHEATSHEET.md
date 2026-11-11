@@ -4,7 +4,7 @@ Start with the operation you need, then choose its lifetime and runtime adapter.
 
 The [API catalogue](API-CATALOGUE.md) lists public entry points and methods. Follow the linked package guides for signatures and complete contracts. These pages describe the source in this checkout; the [installation guidance](README.md#installation) explains package selection and release availability.
 
-[Cleanup and concurrency](#cleanup-and-concurrency) · [Small helpers](#standard-operations-and-small-helpers) · [Queues and communication](#queues-communication-and-specialised-utilities) · [UI](#interaction-and-notification) · [Storage](#state-and-storage) · [Testing](#test-at-the-boundary-you-own)
+[Cleanup and concurrency](#cleanup-and-concurrency) · [Small helpers](#standard-operations-and-small-helpers) · [UI](#interaction-and-notification) · [Storage](#state-and-storage) · [Testing](#test-at-the-boundary-you-own) · [Specialised coordination](#specialised-and-existing-coordination-apis)
 
 ## Choose a package
 
@@ -89,27 +89,12 @@ Choose a helper for the extra contract it provides. Plain synchronous array oper
 | Dispatch typed events and own subscriptions | `events`: `EventHub` | Use returned disposers or supported signals for listener lifetime. `hub.waitFor` is an instance method; its wait has no abort argument. Async listener results are not awaited. |
 | Format a duration, size, or delimited list | `notation/duration`: `formatDuration`; `number`: `sizeToHumanReadable`; `string`: `splitDelimitedList`, `joinDelimitedList` | Reuse the existing representation and delimiter contract. |
 | Support runtimes without native `Promise.withResolvers` | `promises`: `promiseWithResolvers` | Uses the native operation when present and a fallback otherwise. `promiseWithResolver` is the deprecated spelling. |
+| Keep the screen awake during work | `browser/wakeLock`: `createScreenWakeLockManager` | `run` owns the callback's lease; an explicitly acquired lease needs disposal. Unsupported platforms remain best-effort. |
+| Read or produce an established hash/encryption format | `hash` and `encryption` focused entries in the [catalogue](API-CATALOGUE.md#octagonal-wheels) | Preserve the selected format and key contract. `digestHash` switches from a fallback after asynchronous WASM initialisation; review this before using it for persistent identifiers. |
 
 `fireAndForget` deliberately discards promise rejection. Use it only where ignoring the outcome is part of the caller's policy. `cancelableDelay.cancel()` clears its timer without settling its promise; it is not an abortable sleep which rejects on cancellation.
 
 The [runtime guide](packages/octagonal-wheels/guides/imports-and-runtime.md) contains conversion, timing, notification, and formatting examples. The [catalogue](API-CATALOGUE.md#octagonal-wheels) also covers channels, worker queues, reactive values, hashes, and encryption formats.
-
-## Queues, communication, and specialised utilities
-
-These OW tools address different coordination models. The import paths below start with `octagonal-wheels/`; category roots often expose namespaces, so use the focused path when importing a class.
-
-| Need | Focused entry and API | Selection rule |
-| --- | --- | --- |
-| Capacity-limited producer/consumer handoff | `bureau/Inbox`: `Inbox`; `bureau/Clerk`: `Clerk`, `ClerkGroup` | `post` waits for space and `pick` waits for input. Clerks process the inbox. Choose this when the unbounded async queue is insufficient. |
-| Bridge a synchronous producer to a stream | `bureau/StreamInbox`: `StreamInbox` | `post` returns `false` on overflow rather than waiting. The producer owns its overflow policy. |
-| Wait for a keyed result from another operation | `bureau/SlipBoard`: `SlipBoard` | `awaitNext`, `submit`, and `issueAndProceed` provide rendezvous. `messagepassing/signal` re-exports this API. |
-| Connect a function or instance after construction | `conduit/connector`: `Connector.funcOf`, `.instanceOf` | Async invocation can wait for connection; synchronous invocation throws while disconnected. |
-| Combine predicates or regulate repeated work | `conduit/manifold`: `Manifold`; `conduit/regulator`: `Regulator` | `some` / `every` short-circuit. Regulator limits concurrent work; `invokeAll` does not promise input-order results. |
-| Request/reply, broadcast, or query several handlers | `channel/channels`: `Port`, `Broadcaster`, `Pipeline`, `Switch`, `Survey`; `channel/transport` | Select the response model and transport explicitly. Broadcast invocation does not await handlers; a survey returns individual response promises. |
-| Recover and acknowledge queued work | `BackedQueue/MemoryBackedQueue`, `BackedQueue/PersistentIDBBackedQueue`, `BackedQueue/HalfPersistentIDBBackedQueue` | Inspect `process`, `commit`, `requeue`, `revoke`, and dead-letter behaviour. Memory and IndexedDB variants have different persistence lifetimes. |
-| Keep the screen awake during work | `browser/wakeLock`: `createScreenWakeLockManager` | `run` owns the callback's lease; an explicitly acquired lease needs disposal. Unsupported platforms remain best-effort. |
-| Use existing actor dispatch or logging infrastructure | `actor`; `common/logger` | `Actor.hub` and `setGlobalLogFunction` have global state. Keep per-workflow injected capabilities separate from that global lifetime. |
-| Read or produce an established hash/encryption format | `hash` and `encryption` focused entries in the [catalogue](API-CATALOGUE.md#octagonal-wheels) | Preserve the selected format and key contract. In particular, `digestHash` switches from a fallback after asynchronous WASM initialisation; review this before using it for persistent identifiers. |
 
 ## Interaction and notification
 
@@ -170,7 +155,7 @@ Select the value model and lifetime before selecting a backend. Existing OW stor
 | Observable in-memory state | OW `dataobject/reactive` | Use reactive sources and computed subscriptions. |
 | Cache the latest computation or refine a value | OW `dataobject/Computed`, `dataobject/Refiner` | `Computed` caches evaluation for its latest arguments; it does not add reactive subscriptions. |
 | IndexedDB values, key enumeration, or existing OW store formats | OW `databases/KeyValueDB`, `databases/SimpleStoreIDB` | Preserve those APIs' value, enumeration, and persistence contracts. |
-| A persisted map or queue | OW `dataobject/PersistentMap`, `BackedQueue` | Use their map or dequeue/commit semantics; a value store alone does not provide a queue. |
+| A persisted map | OW `dataobject/PersistentMap` | Preserve its map format and delayed-save contract. For acknowledged persistent queues, see [specialised coordination](#specialised-and-existing-coordination-apis). |
 | Ordinary strings and JSON across backends | `@vrtmrz/value-store`: `ValueReader`, `ValueStore` | Neutral asynchronous reads/replacements, validation, snapshots, and fixed error categories. |
 | Inject a raw backend | `createValueReader`, `createValueStore`, `createDeletableValueStore` | Supply only the raw `get`, `set`, and optional `delete` operations required. |
 | Browser Web Storage | `createWebStorageValueStore` from `@vrtmrz/value-store/web-storage` | Explicit Storage object and literal prefix; no automatic global selection. |
@@ -225,3 +210,23 @@ See the [ValueStore README](packages/value-store/README.md), [SecretStore README
 Use the high-level session for the standard bootstrap. Prepare renderer state through `localStorageEntries` or `beforePluginStart` when it must precede the first plug-in load. On successful start, the caller owns stopping the process and then disposing the Vault; see the [session lifecycle example](packages/obsidian-test-session/docs/usage-guide.md#compose-a-consumer-owned-session-fixture).
 
 The [proven-in-use record](docs/proven-in-use.md) distinguishes package-owned guarantees from consumer integration and real-runtime evidence.
+
+## Specialised and existing coordination APIs
+
+For new finite workflows, start with [scopes and bounded iteration](#cleanup-and-concurrency). Use `withScope` for ownership and cleanup, `withCancellation` for cooperative cancellation, and `forEachInScope` / `mapInScope` to await admitted work and its cleanup. Use `createAsyncQueue` when the workflow also needs a transient input queue.
+
+The APIs below address additional coordination contracts or support existing implementations. Consult them when those requirements are present. Their presence in the catalogue does not make them the default building blocks for a new workflow. The import paths start with `octagonal-wheels/`.
+
+| Specific requirement or existing API | Focused entry | Selection rule |
+| --- | --- | --- |
+| Existing batched or multi-stage `QueueProcessor` pipeline | `concurrency/processor` | Prefer scoped iteration for new finite batches. An existing pipeline may additionally depend on batching thresholds, delays, intervals, and termination semantics; preserve those when assessing migration. |
+| Capacity-limited producer/consumer handoff with `Inbox`, `Clerk`, or `ClerkGroup` | `bureau/Inbox`, `bureau/Clerk` | Start with scoped iteration for finite item processing. Construct an inbox/worker arrangement when producers must wait for buffer capacity and consumers must wait for input. Scope cleanup alone does not provide that handoff. |
+| Synchronous producer to `ReadableStream` bridge using `StreamInbox` | `bureau/StreamInbox` | Select it for the stream's pull, close, and overflow contract. `post` returns `false` on overflow; the producer owns that policy. A scope can own its lifetime. |
+| Keyed rendezvous using `SlipBoard` | `bureau/SlipBoard`; re-exported by `messagepassing/signal` | `awaitNext`, `submit`, and `issueAndProceed` coordinate keyed results. A scope can own the surrounding work but does not supply keyed delivery. |
+| Late connection of a function or instance | `conduit/connector`: `Connector.funcOf`, `.instanceOf` | Begin with explicitly passed functions or capabilities. Use a connector when waiting for later connection is itself required; synchronous invocation throws while disconnected. |
+| Named predicate sets or regulated work | `conduit/manifold`: `Manifold`; `conduit/regulator`: `Regulator` | Prefer direct composition or scoped iteration for ordinary workflows. These APIs add predicate registration or a separate work pump; `invokeAll` does not promise input-order results. |
+| Request/reply, broadcast, or multi-handler queries | `channel/channels`, `channel/transport` | Choose the response model and transport explicitly. Broadcast invocation does not await handlers; a survey returns individual response promises. |
+| Acknowledged or recoverable queued work | `BackedQueue/MemoryBackedQueue`, `BackedQueue/PersistentIDBBackedQueue`, `BackedQueue/HalfPersistentIDBBackedQueue` | Prefer scoped iteration for finite work or `createAsyncQueue` for transient input. Queue acknowledgement, `commit` / `requeue` / `revoke`, dead-letter handling, and persistent-backend restart recovery are separate requirements. A scope does not add persistence or recovery. |
+| Existing actor dispatch | `actor` | `Actor.hub` has global state, name-based replacement, and per-instance queues. Prefer explicitly supplied capabilities for a new workflow. |
+
+These selection priorities do not change API availability or deprecation status. Follow the [catalogue's compatibility notes](API-CATALOGUE.md#compatibility-entries) and each symbol's documented contract when maintaining existing code.
