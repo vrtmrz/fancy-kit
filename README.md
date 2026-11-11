@@ -6,6 +6,8 @@ The established libraries are extracted from, and continuously exercised by, mai
 
 The packages use independent `0.x` versions. Use `npm view <package-name> version dist-tags` to check package availability and release tags; `latest` is the default dist-tag. `@vrtmrz/secret-store-node` is an unpublished development package. The workspace root and harness application are never published to npm.
 
+Choose operations in the [consumer cheat sheet](CHEATSHEET.md), or find public imports and methods in the [API catalogue](API-CATALOGUE.md). The cheat sheet covers cleanup, concurrency, UI, storage, and testing, including the contracts to preserve when replacing handwritten code.
+
 ## Packages
 
 - [`@vrtmrz/secret-store`](packages/secret-store): platform-neutral named-secret contracts, validation, sanitised errors, and an in-memory store. The core and the Obsidian adapter in `@vrtmrz/obsidian-plugin-kit/secrets` are available for local testing.
