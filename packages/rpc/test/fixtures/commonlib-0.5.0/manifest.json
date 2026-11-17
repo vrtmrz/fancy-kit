@@ -1,0 +1,22 @@
+{
+  "revision": "52f65bfa6b355fc504ba3ff1bc46b0d775add490",
+  "esbuildVersion": "0.28.1",
+  "dependency": {
+    "name": "octagonal-wheels",
+    "version": "0.1.56"
+  },
+  "sourceHashes": {
+    "src/rpc/RpcRoom.ts": "7ab4a9e9c4b467e6ae094f8693daa011fead85b166a6fd04899884a6e9737e9c",
+    "src/rpc/RpcSession.ts": "f707258f9cd736ef225d342168f29734fff7ff9bbd242e7ead9d15577e9883a3",
+    "src/rpc/types.ts": "ac2c64ddc85fcd6ada3509a6954c8c894a15a8fa9cc3278fe962dc23aaf2f77e",
+    "src/rpc/errors.ts": "76b0c54b9cf445c01189ea5d15a0a089035a1715fc026fe79bbc09a81df26af8",
+    "src/rpc/chunking.ts": "2885d6dc77c7512e8145036026d1c2ea43dcdadf5c3489aa077d53057f951001",
+    "src/rpc/RpcRoom/pendingInvocations.ts": "8dc6ede652d5b38455e7eb4db90363398d3c41fd09d1dee70a9dd6f1c6b46e30",
+    "octagonal-wheels/context": "8d41f4ddd2fb6baf72cc515ab15e7067769a0032147d82bef33dbdb63e317918",
+    "octagonal-wheels/concurrency/deferredAction": "36a946fca3b13c78f5f74671dbe762639524517271d04355be54dde2512b7d49"
+  },
+  "outputHashes": {
+    "reference.mjs": "93006c9472b6b6587f9d151097e36daacc1864dd504e23b9b9b2a6f13d4afe61"
+  },
+  "adaptation": "compatGlobal = globalThis; Node test fixture only"
+}
