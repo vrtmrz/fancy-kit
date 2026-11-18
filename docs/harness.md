@@ -56,6 +56,13 @@ The guided wake-lock review separates three kinds of evidence: whether the wake 
 
 The component showcase and review runner share the same runtime APIs and binary. Keep visual stories safe enough for the public harness. Put deliberately malformed platform hosts, injected failures, and App-free edge cases in unit or contract tests instead.
 
+The Worker RPC scenario runs against the current `@vrtmrz/rpc/worker` workspace
+source. The build embeds a self-contained, classic Worker script in `main.js`.
+The scenario starts it from a temporary Blob URL and releases the pool, ports,
+and URL after the run or when the plug-in unloads. It uses synthetic data and
+has no Vault or network dependency. Its report identifies the runtime that
+actually ran the scenario, including the Obsidian WebView on iOS or iPadOS.
+
 ## Distribution boundary
 
 The Fancy Kit repository root represents an npm monorepo rather than a conventional Obsidian plug-in repository. `npm run release:prepare:harness` builds the application and creates `dist/fancy-kit-harness` containing:

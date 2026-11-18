@@ -14,6 +14,7 @@ const packageNames = [
   "@vrtmrz/ui-interactions",
   "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
+  "@vrtmrz/rpc",
 ];
 const runtimeSafeEntries = [
   "@vrtmrz/obsidian-plugin-kit/command",
@@ -24,6 +25,9 @@ const runtimeSafeEntries = [
   "@vrtmrz/value-store/node-sqlite",
   "@vrtmrz/obsidian-plugin-kit/secrets",
   "@vrtmrz/obsidian-plugin-kit/local-storage",
+  "@vrtmrz/rpc",
+  "@vrtmrz/rpc/p2p",
+  "@vrtmrz/rpc/worker",
   "@vrtmrz/secret-store",
   "@vrtmrz/obsidian-test-session",
   "@vrtmrz/ui-interactions",
@@ -38,6 +42,15 @@ const packagedDocumentation = new Map([
   ["@vrtmrz/ui-interactions", ["docs/usage-guide.md"]],
   ["@vrtmrz/browser-ui-kit", ["docs/usage-guide.md"]],
   ["@vrtmrz/obsidian-plugin-kit", ["docs/usage-guide.md"]],
+  ["@vrtmrz/rpc", [
+    "README.md",
+    "docs/p2p.md",
+    "docs/worker.md",
+    "docs/specification.md",
+    "docs/decisions.md",
+    "docs/worker-transfer-profile.md",
+    "docs/worker-execution.md",
+  ]],
   ["octagonal-wheels", ["guides/imports-and-runtime.md", "guides/execution-scopes.md"]],
 ]);
 
@@ -107,6 +120,19 @@ function verifyPackedDocumentation(packageName, packed) {
     if (!packedFiles.has(documentPath)) {
       throw new Error(`${packageName} tarball omits ${documentPath}`);
     }
+  }
+}
+
+function verifyPackedRpcContents(packed) {
+  const packedFiles = (packed.files ?? []).map((file) => normaliseModulePath(file.path));
+  const allowedFiles = new Set(["LICENSE", "README.md", "package.json"]);
+  const allowedDirectories = ["dist/", "docs/"];
+  const unexpectedFiles = packedFiles.filter((path) =>
+    !allowedFiles.has(path) &&
+    !allowedDirectories.some((directory) => path.startsWith(directory)),
+  );
+  if (unexpectedFiles.length > 0) {
+    throw new Error(`@vrtmrz/rpc tarball contains files outside the expected dist, docs, README, LICENSE, and package.json paths: ${unexpectedFiles.join(", ")}`);
   }
 }
 
@@ -215,6 +241,9 @@ async function main() {
         throw new Error(`npm pack returned no tarball for ${packageName}`);
       }
       verifyPackedDocumentation(packageName, packed[0]);
+      if (packageName === "@vrtmrz/rpc") {
+        verifyPackedRpcContents(packed[0]);
+      }
       const tarballPath = resolve(temporaryRoot, packed[0].filename);
       tarballs.push(tarballPath);
       if (packageName === "@vrtmrz/value-store") {
@@ -368,6 +397,10 @@ async function main() {
       "upstream-primitives-runtime.mjs",
       "upstream-primitives-usage.ts",
       "upstream-primitives-neutral-usage.ts",
+      "rpc-neutral-usage.ts",
+      "rpc-worker-dom-usage.ts",
+      "rpc-installed-runtime.mjs",
+      "rpc-browser-worker.mjs",
     ]) {
       await copyFile(
         join(repositoryRoot, "test", "packed-consumer", filename),
@@ -381,6 +414,7 @@ async function main() {
     run(process.execPath, ["scope-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["notifier-runtime.mjs"], { cwd: temporaryRoot });
     run(process.execPath, ["upstream-primitives-runtime.mjs"], { cwd: temporaryRoot });
+    run(process.execPath, ["rpc-installed-runtime.mjs"], { cwd: temporaryRoot });
     await writeFile(
       join(temporaryRoot, "tsconfig.timeout.json"),
       JSON.stringify({
@@ -388,12 +422,26 @@ async function main() {
           lib: ["ES2022"], module: "NodeNext", moduleResolution: "NodeNext",
           noEmit: true, strict: true, target: "ES2022", types: [],
         },
-        files: ["notifier-neutral-usage.ts", "json-usage.ts", "timeout-neutral-usage.ts", "semaphore-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "scope-neutral-usage.ts", "upstream-primitives-neutral-usage.ts"],
+        files: ["notifier-neutral-usage.ts", "json-usage.ts", "timeout-neutral-usage.ts", "semaphore-neutral-usage.ts", "runtime-tools-neutral-usage.ts", "scope-neutral-usage.ts", "upstream-primitives-neutral-usage.ts", "rpc-neutral-usage.ts"],
       }, null, 2),
     );
     run(process.execPath, [
       join(temporaryRoot, "node_modules", "typescript", "bin", "tsc"),
       "-p", "tsconfig.timeout.json",
+    ], { cwd: temporaryRoot });
+    await writeFile(
+      join(temporaryRoot, "tsconfig.rpc-dom.json"),
+      JSON.stringify({
+        compilerOptions: {
+          lib: ["ES2022", "DOM", "DOM.Iterable"], module: "NodeNext", moduleResolution: "NodeNext",
+          noEmit: true, strict: true, target: "ES2022", types: [],
+        },
+        files: ["rpc-worker-dom-usage.ts"],
+      }, null, 2),
+    );
+    run(process.execPath, [
+      join(temporaryRoot, "node_modules", "typescript", "bin", "tsc"),
+      "-p", "tsconfig.rpc-dom.json",
     ], { cwd: temporaryRoot });
     for (const filename of ["secret-store-node-usage.ts", "secret-store-node-runtime.mjs"]) {
       await copyFile(
@@ -606,6 +654,39 @@ for (const length of [65, 128]) {
 
     await verifyTreeShakenBundle({
       temporaryRoot,
+      entryName: "rpc-p2p.ts",
+      source: 'export { RpcRoom } from "@vrtmrz/rpc/p2p";',
+      requiredModules: ["node_modules/@vrtmrz/rpc/dist/p2p/RpcRoom.js"],
+      excludedModules: [
+        "node_modules/@vrtmrz/rpc/dist/worker.js",
+        "node_modules/@vrtmrz/rpc/dist/worker.transfer.js",
+        "node_modules/@vrtmrz/rpc/dist/worker.transport.js",
+        "node_modules/@vrtmrz/rpc/dist/worker.types.js",
+        "node_modules/@vrtmrz/rpc/dist/worker/connection.js",
+        "node_modules/@vrtmrz/rpc/dist/worker/pool.js",
+        "node_modules/@vrtmrz/rpc/dist/worker/stream.js",
+        "node_modules/@vrtmrz/rpc/dist/worker/stream.budget.js",
+      ],
+      externalImports: [],
+      allowedPackages: ["@vrtmrz/rpc", "octagonal-wheels"],
+    });
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
+      entryName: "rpc-worker-connection.ts",
+      source: 'export { connectWorkerRpc } from "@vrtmrz/rpc/worker";',
+      requiredModules: ["node_modules/@vrtmrz/rpc/dist/worker/connection.js"],
+      excludedModules: [
+        "node_modules/@vrtmrz/rpc/dist/worker/pool.js",
+        "node_modules/@vrtmrz/rpc/dist/worker/stream.js",
+        "node_modules/@vrtmrz/rpc/dist/worker/stream.budget.js",
+      ],
+      externalImports: [],
+      allowedPackages: ["@vrtmrz/rpc", "octagonal-wheels"],
+    });
+
+    await verifyTreeShakenBundle({
+      temporaryRoot,
       entryName: "neutral-secret-store.ts",
       source: `export { MemorySecretStore, validateSecretName } from "@vrtmrz/secret-store";
 export { ValueStoreError } from "@vrtmrz/value-store";`,
@@ -805,7 +886,7 @@ export const createFrontmatterAccess = createObsidianVaultFrontmatterAccess;
     });
 
     console.log(
-      `Verified ${packageNames.length + 1} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, the Blob, DeferredAction, semaphore, operation scope, callback utility, and runtime utility type and runtime fixtures, and 18 tree-shaking bundle checks.`,
+      `Verified ${packageNames.length + 1} installed packed packages, documentation in ${packagedDocumentation.size} packed packages, ${publicEntries.length} public export entries, the browser-kit, plug-in-kit, scripted-step, and test-session layout fixtures, ${runtimeSafeEntries.length} runtime-safe imports, the neutral, Obsidian, and Node secret-store type and runtime fixtures, the neutral and Node value-store type fixtures and runtime fixture, the Blob, DeferredAction, semaphore, operation scope, callback utility, runtime utility, and RPC type and runtime fixtures, and 20 tree-shaking bundle checks.`,
     );
   } finally {
     await rm(temporaryRoot, { force: true, recursive: true });

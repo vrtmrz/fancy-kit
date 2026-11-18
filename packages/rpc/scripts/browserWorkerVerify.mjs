@@ -8,6 +8,46 @@ import { chromium, firefox, webkit } from "playwright";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(scriptDir, "..");
 
+const managedContractSource = `
+const managedContract = defineContract({
+  echo: call<[string], string>(),
+  split: call<[Blob, boolean], MessagePort>().transfer({ result: "required" }),
+  crash: notify<[]>(),
+});
+`;
+
+const managedWorkerSource = `
+import { call, defineContract, notify } from "./src/index.js";
+import { serveWorkerRpc, serveWorkerStream } from "./src/worker.js";
+${managedContractSource}
+
+serveWorkerRpc({
+  contract: managedContract,
+  port: self,
+  register(endpoint, lifetime) {
+    endpoint.handle("echo", (_ctx, value) => value.toUpperCase());
+    endpoint.handle("split", (_ctx, input, stall) => serveWorkerStream({
+      createChannel: () => new MessageChannel(),
+      maxChunkBytes: 4,
+      transferChunks: true,
+      signal: lifetime,
+      async *createSource(signal) {
+        if (stall) {
+          await new Promise((resolve) => signal.addEventListener("abort", resolve, { once: true }));
+          return;
+        }
+        const bytes = new Uint8Array(await input.arrayBuffer());
+        yield bytes.slice(0, 3);
+        yield bytes.slice(3);
+      },
+    }));
+    endpoint.handle("crash", () => {
+      setTimeout(() => { throw new Error("Managed Worker crash fixture."); }, 0);
+    });
+  },
+});
+`;
+
 const workerSource = `
 import {
   call,
@@ -22,6 +62,7 @@ import {
 
 const workerContract = defineContract({
   echoCopy: call<[blob: Blob], number>(),
+  lastResultBufferLength: call<[], number>(),
   reverseTransfer: call<[bytes: Uint8Array], Uint8Array>().transfer({
     input: "required",
     result: "required",
@@ -74,13 +115,16 @@ endpoint.handle("echoCopy", async (_ctx, blob) => {
   return buf.byteLength;
 });
 
+let lastResult: ArrayBuffer | undefined;
 endpoint.handle("reverseTransfer", (_ctx, bytes) => {
   const out = new Uint8Array(bytes.length);
   for (let i = 0; i < bytes.length; i += 1) {
     out[i] = bytes[bytes.length - 1 - i];
   }
-  return withTransfer(out, [out.buffer]);
+  lastResult = out.buffer;
+  return withTransfer(out, [lastResult]);
 });
+endpoint.handle("lastResultBufferLength", () => lastResult?.byteLength ?? -1);
 
 endpoint.handle("bounceObject", (_ctx, bytes, tag) => {
   const out = new Uint8Array(bytes);
@@ -101,16 +145,25 @@ import {
   call,
   createRpcEndpoint,
   defineContract,
+  notify,
+  RpcError,
   withTransfer,
 } from "./src/index.js";
 import {
   assertReachableTransferables,
+  connectWorkerRpc,
   createIdentityCodec,
   createMessagePortTransport,
+  createWorkerPool,
+  createWorkerStreamBudget,
+  readWorkerStream,
 } from "./src/worker.js";
+
+${managedContractSource}
 
 const workerContract = defineContract({
   echoCopy: call<[blob: Blob], number>(),
+  lastResultBufferLength: call<[], number>(),
   reverseTransfer: call<[bytes: Uint8Array], Uint8Array>().transfer({
     input: "required",
     result: "required",
@@ -171,6 +224,7 @@ window.__runRpcBrowserSuite = async () => {
       const input = new Uint8Array([10, 20, 30, 40]);
       const reversed = await client.call.reverseTransfer([withTransfer(input, [input.buffer])]);
       assert(input.byteLength === 0, "input buffer not detached on main thread");
+      assert(await client.call.lastResultBufferLength([]) === 0, "result buffer not detached in Worker");
       assert(
         JSON.stringify([...reversed]) === JSON.stringify([40, 30, 20, 10]),
         "reversed result mismatch",
@@ -225,15 +279,18 @@ window.__runRpcBrowserSuite = async () => {
       localPeer: workerPeer,
       transportOwnership: "owned",
     });
+    let resultBuffer: ArrayBuffer | undefined;
     ep2.handle("reverseTransfer", (_ctx, bytes) => {
       const out = new Uint8Array(bytes.length);
       for (let i = 0; i < bytes.length; i += 1) out[i] = bytes[i] + 1;
-      return withTransfer(out, [out.buffer]);
+      resultBuffer = out.buffer;
+      return withTransfer(out, [resultBuffer]);
     });
     const c = ep1.bindPeer(workerPeer);
     const mcIn = new Uint8Array([5, 6]);
     const mcOut = await c.call.reverseTransfer([withTransfer(mcIn, [mcIn.buffer])]);
     assert(mcIn.byteLength === 0, "MessageChannel sender not detached");
+    assert(resultBuffer?.byteLength === 0, "MessageChannel result buffer not detached");
     assert(JSON.stringify([...mcOut]) === JSON.stringify([6, 7]), "MessageChannel output mismatch");
 
     // Default profile rejects MessagePort forwarding before postMessage.
@@ -399,35 +456,90 @@ window.__runRpcBrowserSuite = async () => {
     cases.ownedVsBorrowedShutdown = "passed";
   }
 
+  // Managed Worker control and a copied Blob request with a transferred result port.
+  {
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection: () => connectWorkerRpc({
+        contract: managedContract,
+        createWorker: () => new Worker("/managed-worker.js", { type: "module" }),
+      }),
+    });
+    const budget = createWorkerStreamBudget(4);
+    const callOptions = { timeoutMs: 5000 };
+    const deadline = setTimeout(() => pool.close(new RpcError("timeout", "Managed Worker fixture timed out.")), 10000);
+    try {
+      await pool.start();
+      const lease = await pool.acquire();
+      const { client, connection } = lease;
+      try {
+        const original = [1, 2, 3, 4, 5];
+        const input = new Blob([new Uint8Array(original)]);
+        const stream = readWorkerStream({
+          port: await client.call.split([input, false], callOptions),
+          maxChunkBytes: 4,
+          signal: connection.signal,
+          budget,
+        });
+        const first = await stream.next();
+        assert(!first.done && first.value instanceof Uint8Array, "missing first streamed chunk");
+        const bytes = [...first.value];
+        assert(await client.call.echo(["between pulls"], callOptions) === "BETWEEN PULLS", "unary call stalled behind stream");
+        for await (const chunk of stream) {
+          assert(chunk instanceof Uint8Array, "expected a binary chunk");
+          bytes.push(...chunk);
+        }
+        assert(JSON.stringify(bytes) === JSON.stringify(original), "streamed Blob content changed");
+
+        const stalled = readWorkerStream({
+          port: await client.call.split([input, true], callOptions),
+          maxChunkBytes: 4,
+          signal: connection.signal,
+          budget,
+        });
+        const pending = stalled.next().then(
+          () => false,
+          (error) => error === connection.signal.reason && error.code === "disconnected",
+        );
+        await client.notify.crash([]);
+        assert(await pending, "waiting stream did not fail with the Worker crash reason");
+      } finally {
+        lease.release();
+      }
+      const replacement = await pool.acquire();
+      try {
+        assert(replacement.connection !== connection, "crashed connection was reused");
+        assert(await replacement.client.call.echo(["replaced"], callOptions) === "REPLACED", "replacement failed");
+      } finally {
+        replacement.release();
+      }
+      cases.managedWorkerStreamAndReplacement = "passed";
+    } finally {
+      clearTimeout(deadline);
+      pool.close();
+    }
+  }
+
   return cases;
 };
 `;
 
 async function compileBrowserBundles() {
-  const [workerBuild, pageBuild] = await Promise.all([
-    build({
-      absWorkingDir: packageRoot,
-      stdin: { contents: workerSource, resolveDir: packageRoot, loader: "ts" },
-      bundle: true,
-      format: "esm",
-      platform: "browser",
-      target: "es2022",
-      write: false,
+  const [workerCode, pageCode, managedWorkerCode] = await Promise.all(
+    [workerSource, pageSource, managedWorkerSource].map(async (contents) => {
+      const result = await build({
+        absWorkingDir: packageRoot,
+        stdin: { contents, resolveDir: packageRoot, loader: "ts" },
+        bundle: true,
+        format: "esm",
+        platform: "browser",
+        target: "es2022",
+        write: false,
+      });
+      return result.outputFiles[0].text;
     }),
-    build({
-      absWorkingDir: packageRoot,
-      stdin: { contents: pageSource, resolveDir: packageRoot, loader: "ts" },
-      bundle: true,
-      format: "esm",
-      platform: "browser",
-      target: "es2022",
-      write: false,
-    }),
-  ]);
-  return {
-    workerCode: workerBuild.outputFiles[0].text,
-    pageCode: pageBuild.outputFiles[0].text,
-  };
+  );
+  return { workerCode, pageCode, managedWorkerCode };
 }
 
 async function runForEngine(name, launcher, url) {
@@ -486,7 +598,7 @@ const targets =
         ? [["firefox", firefox]]
         : [["webkit", webkit]];
 
-const { workerCode, pageCode } = await compileBrowserBundles();
+const { workerCode, pageCode, managedWorkerCode } = await compileBrowserBundles();
 const htmlDoc =
   '<!doctype html><html><head><meta charset="utf-8"></head><body><script type="module" src="/page.js"></script></body></html>';
 
@@ -495,6 +607,11 @@ const server = createServer((req, res) => {
   if (reqPath === "/worker.js") {
     res.writeHead(200, { "content-type": "application/javascript; charset=utf-8" });
     res.end(workerCode);
+    return;
+  }
+  if (reqPath === "/managed-worker.js") {
+    res.writeHead(200, { "content-type": "application/javascript; charset=utf-8" });
+    res.end(managedWorkerCode);
     return;
   }
   if (reqPath === "/page.js") {

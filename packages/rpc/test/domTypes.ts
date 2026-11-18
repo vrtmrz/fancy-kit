@@ -13,8 +13,15 @@ import {
 } from "../src/index.js";
 import {
   assertReachableTransferables,
+  connectWorkerRpc,
   createIdentityCodec,
   createMessagePortTransport,
+  createWorkerPool,
+  createWorkerStreamBudget,
+  readWorkerStream,
+  serveWorkerRpc,
+  serveWorkerStream,
+  type WorkerStreamPort,
   type WorkerTransferData,
   type WorkerTransferPort,
   type WorkerTransferProfile,
@@ -74,6 +81,53 @@ const cPorts = epPorts.bindPeer(peer);
 void cPorts.call.forwardPort([withTransfer(channel.port2, [channel.port2])]);
 void cPorts.call.copyRich([sampleBlob, sampleMap]);
 
+const managed = connectWorkerRpc({ contract: domContract, createWorker: () => worker });
+void managed.ready.then((client) => client.call.forwardPort([withTransfer(channel.port2, [channel.port2])]));
+const managedServer = serveWorkerRpc({
+  contract: domContract,
+  port,
+  register(endpoint) {
+    endpoint.handle("copyRich", (_context, blob, map) => String(blob.size + map.size));
+  },
+});
+managedServer.close();
+
+const streamContract = defineContract({
+  read: call<[input: Blob], WorkerStreamPort>().transfer({ result: "required" }),
+});
+const streamServer = serveWorkerRpc({
+  contract: streamContract,
+  port,
+  register(endpoint, signal) {
+    endpoint.handle("read", (_context, input) => serveWorkerStream({
+      createChannel: () => new MessageChannel(),
+      maxChunkBytes: 1024,
+      signal,
+      async *createSource() {
+        yield new Uint8Array(await input.arrayBuffer());
+      },
+    }));
+  },
+});
+const streamPool = createWorkerPool({
+  size: 1,
+  createConnection: () => connectWorkerRpc({ contract: streamContract, createWorker: () => worker }),
+});
+void streamPool.acquire().then(async ({ client, connection, release }) => {
+  try {
+    const reader = readWorkerStream({
+      port: await client.call.read([sampleBlob]),
+      maxChunkBytes: 1024,
+      budget: createWorkerStreamBudget(1024),
+      signal: connection.signal,
+    });
+    await reader.return?.();
+  } finally {
+    release();
+  }
+});
+streamServer.close();
+
 // Narrowing a union profile enables explicit port forwarding cleanly.
 if (profileUnion === "binary-data-and-ports") {
   const narrowedTransport = createMessagePortTransport({
@@ -122,4 +176,10 @@ const invalidBroadcastAsPort: WorkerTransferPort = broadcast;
 // @ts-expect-error DOM Blob is excluded from WorkerTransferData.
 const invalidBlobData: WorkerTransferData = sampleBlob;
 
-void [invalidWorkerAsPort, invalidBroadcastAsPort, invalidBlobData];
+const sharedBacking = new SharedArrayBuffer(8);
+// @ts-expect-error Shared-memory-backed typed arrays are excluded from transfer-bearing data.
+const invalidSharedBytes: WorkerTransferData = new Uint8Array(sharedBacking);
+// @ts-expect-error Shared-memory-backed DataView is excluded as well.
+const invalidSharedDataView: WorkerTransferData = new DataView(sharedBacking);
+
+void [invalidWorkerAsPort, invalidBroadcastAsPort, invalidBlobData, invalidSharedBytes, invalidSharedDataView];

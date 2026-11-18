@@ -18,7 +18,7 @@ describe("harness settings", () => {
         mode: "automation",
         pendingRun: {
           requestId: " run-1 ",
-          scenarios: ["vault-text", "wake-lock-nested", "vault-text"],
+          scenarios: ["vault-text", "wake-lock-nested", "worker-rpc", "vault-text"],
         },
       }),
     ).toEqual({
@@ -27,7 +27,7 @@ describe("harness settings", () => {
         mode: "automation",
         pendingRun: {
           requestId: "run-1",
-          scenarios: ["vault-text", "wake-lock-nested"],
+          scenarios: ["vault-text", "wake-lock-nested", "worker-rpc"],
         },
       },
     });

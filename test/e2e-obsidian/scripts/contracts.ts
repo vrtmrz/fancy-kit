@@ -8,6 +8,8 @@ import {
   type HarnessTestSession,
 } from "../runner/harness.ts";
 
+const initialScenarios = ["vault-text", "vault-frontmatter", "wake-lock-nested"];
+
 async function main(): Promise<void> {
   let testSession: HarnessTestSession | undefined;
   try {
@@ -16,7 +18,7 @@ async function main(): Promise<void> {
       mode: "automation",
       pendingRun: {
         requestId: "automatic-contracts",
-        scenarios: ["vault-text", "vault-frontmatter", "wake-lock-nested"],
+        scenarios: initialScenarios,
       },
     });
     const { session } = testSession;
@@ -51,12 +53,35 @@ async function main(): Promise<void> {
         !state.suite.running,
       "automatic contract completion",
     );
-    for (const id of ["vault-text", "vault-frontmatter", "wake-lock-nested"]) {
+    for (const id of initialScenarios) {
       if (automatic.suite.results[id]?.status !== "passed") {
         throw new Error(
           `Automatic contract did not pass: ${id}: ${JSON.stringify(automatic.suite.results[id])}`,
         );
       }
+    }
+
+    await withObsidianPage(session.remoteDebuggingPort, async (page) => {
+      for (const id of initialScenarios) {
+        await page.getByTestId(`scenario-select-${id}`).click();
+      }
+      await page.getByTestId("scenario-select-worker-rpc").click();
+      await page.getByTestId("scenario-run-selected").click();
+      const result = page.locator(
+        '[data-testid="scenario-result-worker-rpc"]:is(.is-passed, .is-failed, .is-inconclusive, .is-cancelled)',
+      );
+      await result.waitFor({ state: "visible", timeout: 25_000 });
+      if (!await result.evaluate((element) => element.classList.contains("is-passed"))) {
+        throw new Error(`Worker RPC review did not pass. ${await result.textContent()}`);
+      }
+    });
+    const worker = await waitForHarnessState(
+      session,
+      (state) => !state.suite.running && state.suite.results["worker-rpc"]?.status === "passed",
+      "Worker RPC review completion",
+    );
+    if (worker.suite.selected.join(",") !== "worker-rpc") {
+      throw new Error("The Worker RPC review did not run on its own");
     }
 
     await executeHarnessCommand(session, "e2e-start-guided-short-test");
@@ -123,13 +148,14 @@ async function main(): Promise<void> {
       "Post-release display",
       "Optional post-release visibility evidence",
       "wake-lock-guided",
+      "Worker RPC contract (worker-rpc) | automatic | passed",
     ]) {
       if (!markdownReport.includes(expected)) {
         throw new Error(`Markdown report omitted ${expected}`);
       }
     }
     console.log(
-      "Real Obsidian Vault, wake-lock, one-shot automation, and guided instruction contracts passed.",
+      "Real Obsidian Vault, wake-lock, Worker RPC, one-shot automation, and guided instruction contracts passed.",
     );
   } finally {
     if (testSession !== undefined) await stopHarnessTestSession(testSession);

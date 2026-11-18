@@ -193,6 +193,7 @@ describe("Focused endpoint owners", () => {
         dispatchBestEffort: async () => undefined,
       },
       emitDiagnostic: (e) => diagnostics.push(e),
+      getCloseReason: () => undefined,
       isEndpointClosed: () => false,
     });
 

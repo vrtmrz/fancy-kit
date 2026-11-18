@@ -53,18 +53,18 @@ export type WorkerTransferPrimitive =
 /** Ordinary platform binary leaves accepted inside `binary-data`. */
 export type WorkerBinaryLeaf =
   | ArrayBuffer
-  | DataView
-  | Int8Array
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | Float32Array
-  | Float64Array
-  | BigInt64Array
-  | BigUint64Array;
+  | DataView<ArrayBuffer>
+  | Int8Array<ArrayBuffer>
+  | Uint8Array<ArrayBuffer>
+  | Uint8ClampedArray<ArrayBuffer>
+  | Int16Array<ArrayBuffer>
+  | Uint16Array<ArrayBuffer>
+  | Int32Array<ArrayBuffer>
+  | Uint32Array<ArrayBuffer>
+  | Float32Array<ArrayBuffer>
+  | Float64Array<ArrayBuffer>
+  | BigInt64Array<ArrayBuffer>
+  | BigUint64Array<ArrayBuffer>;
 
 /**
  * Structural data shape accepted on transfer-bearing Worker sends under the

@@ -450,8 +450,8 @@ export type RpcEndpoint<
   ): () => void;
   /** Signals that a remote peer instance has departed; fails its in-flight operations. */
   retirePeer(peer: PeerAddress): void;
-  /** Synchronously rejects local waits, aborts handlers, and detaches listeners. */
-  close(): void;
-  /** Closes the endpoint and awaits owned transport teardown when `transportOwnership` is `"owned"`. */
-  closeAsync(): Promise<void>;
+  /** Rejects local waits, aborts handlers, and detaches listeners. The first close sets the reason. */
+  close(reason?: RpcError): void;
+  /** Closes with the supplied reason and waits for teardown of an owned transport. */
+  closeAsync(reason?: RpcError): Promise<void>;
 } & EndpointStreamMethods<StreamExt>;

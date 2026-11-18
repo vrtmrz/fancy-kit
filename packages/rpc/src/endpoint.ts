@@ -16,6 +16,7 @@ import {
 } from "./endpoint/inboundOperations.js";
 import { createPendingCallRegistry } from "./endpoint/pendingCalls.js";
 import { createEndpointSender } from "./endpoint/sending.js";
+import { createDefaultScheduler } from "./scheduler.js";
 import type {
   CreateRpcEndpointOptions,
   PeerAddress,
@@ -28,35 +29,9 @@ import type {
   RpcMethodHandler,
   RpcNotifyOptions,
   RpcPeerClient,
-  RpcScheduler,
   RpcTransport,
   ValidateEndpointCapabilities,
 } from "./types.js";
-
-interface GlobalTimerHost {
-  setTimeout?: (callback: () => void, delayMs: number) => unknown;
-  clearTimeout?: (handle: unknown) => void;
-}
-
-function createDefaultScheduler(): RpcScheduler {
-  return {
-    setTimeout(callback: () => void, delayMs: number): () => void {
-      const host = globalThis as GlobalTimerHost;
-      if (typeof host.setTimeout !== "function") {
-        throw new RpcError(
-          "unsupported-profile",
-          "No timer facility is available in this runtime; supply an explicit scheduler.",
-        );
-      }
-      const handle = host.setTimeout(callback, delayMs);
-      return () => {
-        if (typeof host.clearTimeout === "function") {
-          host.clearTimeout(handle);
-        }
-      };
-    },
-  };
-}
 
 function createDefaultIdGenerator(): RpcIdGenerator {
   let sequence = 0;
@@ -159,6 +134,7 @@ export function createRpcEndpoint<
   const supportsTransfer = transport.capabilities.supportsTransfer;
 
   let endpointClosed = false;
+  let endpointCloseReason: RpcError | undefined;
   let transportClosePromise: Promise<void> | undefined;
   const handlers = new Map<
     string,
@@ -196,6 +172,7 @@ export function createRpcEndpoint<
     sender,
     emitDiagnostic,
     isEndpointClosed: () => endpointClosed,
+    getCloseReason: () => endpointCloseReason,
   });
 
   const inboundRegistry = createInboundOperationRegistry({
@@ -263,11 +240,12 @@ export function createRpcEndpoint<
   ): Promise<void> {
     if (endpointClosed || isBindingDisposed()) {
       return Promise.reject(
-        new RpcError(
-          "disconnected",
-          "RPC peer binding or endpoint is closed.",
-          { peer: target },
-        ),
+        endpointCloseReason ??
+          new RpcError(
+            "disconnected",
+            "RPC peer binding or endpoint is closed.",
+            { peer: target },
+          ),
       );
     }
     const descriptor = getDescriptor(method);
@@ -481,15 +459,16 @@ export function createRpcEndpoint<
     inboundRegistry.retirePeer(key, disconnectError);
   }
 
-  function teardownLocal(): void {
+  function teardownLocal(reason?: RpcError): void {
     if (endpointClosed) return;
     endpointClosed = true;
+    endpointCloseReason = reason;
     try {
       unsubscribeTransport();
     } catch {
       // Unsubscribe failure must not leave pending calls or inbound handlers dangling.
     }
-    const closeError = new RpcError("disconnected", "RPC endpoint closed.");
+    const closeError = reason ?? new RpcError("disconnected", "RPC endpoint closed.");
     pendingRegistry.closeAll(closeError);
     inboundRegistry.closeAll(closeError);
     handlers.clear();
@@ -509,8 +488,8 @@ export function createRpcEndpoint<
     return transportClosePromise;
   }
 
-  function close(): void {
-    teardownLocal();
+  function close(reason?: RpcError): void {
+    teardownLocal(reason);
     void closeOwnedTransport().catch((error: unknown) => {
       void emitDiagnostic({
         type: "transport-close-failed",
@@ -520,8 +499,8 @@ export function createRpcEndpoint<
     });
   }
 
-  async function closeAsync(): Promise<void> {
-    teardownLocal();
+  async function closeAsync(reason?: RpcError): Promise<void> {
+    teardownLocal(reason);
     await closeOwnedTransport();
   }
 

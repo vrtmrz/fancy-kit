@@ -52,6 +52,7 @@ export interface PendingCallRegistryOptions<
   readonly sender: Pick<EndpointSender<Wire, PostOptions, TransferResource>, "dispatchBestEffort">;
   readonly emitDiagnostic: (event: RpcDiagnosticEvent) => void;
   readonly isEndpointClosed: () => boolean;
+  readonly getCloseReason: () => RpcError | undefined;
 }
 
 /** Owner for outbound unary call registration, cancellation, and response matching. */
@@ -94,6 +95,7 @@ export function createPendingCallRegistry<
     sender,
     emitDiagnostic,
     isEndpointClosed,
+    getCloseReason,
   } = options;
   const supportsTransfer = transport.capabilities.supportsTransfer;
   const pendingCalls = new Map<string, PendingCallEntry>();
@@ -136,7 +138,8 @@ export function createPendingCallRegistry<
   ): Promise<unknown> {
     if (isEndpointClosed() || isBindingDisposed()) {
       return Promise.reject(
-        new RpcError("disconnected", "RPC peer binding or endpoint is closed.", { peer: target }),
+        getCloseReason() ??
+          new RpcError("disconnected", "RPC peer binding or endpoint is closed.", { peer: target }),
       );
     }
     if (!descriptor || descriptor.kind !== "call") {

@@ -104,8 +104,8 @@ Worker implementation.
 ## Validation scope
 
 The package tests use the pinned Commonlib reference and an independently
-controlled transport. A separate [LiveSync compatibility check](../../../docs/proven-in-use.md#p2p-rpc-compatibility)
-verified a fetch and return edit between a Fancy Kit test build and a standard
+controlled transport. A separate LiveSync compatibility check verified a fetch
+and return edit between a Fancy Kit test build and a standard
 LiveSync peer in two real Obsidian Vaults. A downstream integration must
 verify its provider and database facade, admission policy, connection freshness,
 and room lifecycle, including callbacks from retired connections.

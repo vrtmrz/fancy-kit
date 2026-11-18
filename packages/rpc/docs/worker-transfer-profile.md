@@ -80,7 +80,7 @@ class instances, Proxy objects, functions, and other host objects are outside
 RPC error replies use the existing plain `RpcSerializedError` representation.
 
 **[WD-3]** MessagePort forwarding is an explicit extension, selected with the
-planned `transferProfile: "binary-data-and-ports"` transport option. The default
+`transferProfile: "binary-data-and-ports"` transport option. The default
 is `"binary-data"`. The extension adds genuine platform MessagePort objects as
 opaque leaves and designated resources; it does not enable arbitrary Transferable
 classes. Ports in the payload must be designated for transfer. A TypeScript
@@ -162,8 +162,10 @@ Structural compatibility alone does not prove a resource is a genuine MessagePor
 Keep runtime profile and host-object checks, with the final transfer performed by
 the platform. Verify type compatibility using actual browser and Node port types.
 The transport retains `Wire = unknown` to support mixed copy-only and transfer
-methods. `WorkerTransferData<Extra = never>` is an explicit shape helper for
-producers, not a constraint on all methods in the neutral core.
+methods. `WorkerTransferData<Extra = never>` lets producers describe the shape
+of transfer-bearing payloads explicitly. Its typed arrays and `DataView` use
+`ArrayBuffer` backing in TypeScript. Copy-only contracts choose their own data
+types and use the platform's structured clone operation.
 
 `assertReachableTransferables` takes an optional third argument
 `{ readonly transferProfile?: WorkerTransferProfile }`. Its omitted/default

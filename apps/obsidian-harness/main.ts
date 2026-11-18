@@ -46,6 +46,7 @@ import {
   describeOptionalVisibilityEvidence,
   formatHarnessMarkdownReport,
 } from "./report.js";
+import { runWorkerRpcReview } from "./worker-rpc/review.js";
 
 const VIEW_TYPE = "fancy-kit-harness-wake-lock";
 const MAX_TRANSCRIPT_ENTRIES = 200;
@@ -117,6 +118,16 @@ const SCENARIOS: readonly ScenarioDefinition[] = [
     action: "Acquire two logical leases and dispose of them independently.",
     expected:
       "The lease count returns to its original value without a leaked lease.",
+    mode: "automatic",
+  },
+  {
+    id: "worker-rpc",
+    title: "Worker RPC contract",
+    description:
+      "Checks a dedicated Worker, binary transfer, and a streamed result in the current Obsidian runtime.",
+    action: "Run the scenario while Obsidian is in the foreground.",
+    expected:
+      "The pool prewarms, buffers detach at both senders, stream bytes match, and a new Worker answers after shutdown.",
     mode: "automatic",
   },
   {
@@ -1123,7 +1134,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
   private activeProgress: ProgressNotice | undefined;
   private readonly notices = new KeyedNoticeManager();
   private readonly groupedNotices = new KeyedNoticeGroupManager();
-  private readonly dialogueController = new AbortController();
+  private readonly lifetimeController = new AbortController();
   private timedController: AbortController | undefined;
   private explicitController: AbortController | undefined;
   private explicitLease: ScreenWakeLockLease | undefined;
@@ -1267,7 +1278,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
   }
 
   override onunload(): void {
-    this.dialogueController.abort();
+    this.lifetimeController.abort();
     this.modeModal?.close();
     this.modeModal = undefined;
     this.activeProgress?.hide();
@@ -1376,7 +1387,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
               initialValue: "desktop",
               selectInitialValue: true,
             },
-            { signal: this.dialogueController.signal },
+            { signal: this.lifetimeController.signal },
           ),
         );
         break;
@@ -1387,7 +1398,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
             title: "Passphrase",
             label: "Passphrase",
           },
-          { signal: this.dialogueController.signal },
+          { signal: this.lifetimeController.signal },
         );
         this.setResult(result === null ? null : "password-entered");
         break;
@@ -1407,7 +1418,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
               getDescription: (item) => item.path,
               placeholder: "Select a target",
             },
-            { signal: this.dialogueController.signal },
+            { signal: this.lifetimeController.signal },
           ),
         );
         break;
@@ -1423,7 +1434,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
               labels: { restore: "Restore", cancel: "Cancel" },
               defaultAction: "cancel",
             },
-            { signal: this.dialogueController.signal },
+            { signal: this.lifetimeController.signal },
           ),
         );
         break;
@@ -1449,7 +1460,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
                 story === "confirm-action-long" ? "vertical" : "auto",
               defaultAction: "pause",
             },
-            { signal: this.dialogueController.signal },
+            { signal: this.lifetimeController.signal },
           ),
         );
         break;
@@ -1461,7 +1472,7 @@ export default class FancyKitHarnessPlugin extends Plugin {
             message: "The showcase is **ready**.",
             closeLabel: "OK",
           },
-          { signal: this.dialogueController.signal },
+          { signal: this.lifetimeController.signal },
         );
         this.setResult("closed");
         break;
@@ -1640,6 +1651,8 @@ export default class FancyKitHarnessPlugin extends Plugin {
           return await this.runVaultFrontmatterContract();
         case "wake-lock-nested":
           return await this.runNestedLeaseContract();
+        case "worker-rpc":
+          return await runWorkerRpcReview(this.lifetimeController.signal);
         case "wake-lock-guided":
           return await this.runGuidedWakeLockScenario();
       }

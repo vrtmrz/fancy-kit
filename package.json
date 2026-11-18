@@ -21,7 +21,7 @@
     "build:workspace": "npm run build && npm run build:octagonal-wheels",
     "build:harness": "node apps/obsidian-harness/esbuild.config.mjs production",
     "check": "npm run check --workspace @vrtmrz/value-store && npm run build --workspace @vrtmrz/value-store && npm run check --workspace @vrtmrz/secret-store && npm run build --workspace @vrtmrz/secret-store && npm run check --workspace @vrtmrz/secret-store-node && npm run check --workspace @vrtmrz/obsidian-test-session && npm run build --workspace @vrtmrz/obsidian-test-session && npm run check --workspace @vrtmrz/ui-interactions && npm run build --workspace @vrtmrz/ui-interactions && npm run check --workspace @vrtmrz/browser-ui-kit && npm run check --workspace @vrtmrz/obsidian-plugin-kit && npm run build --workspace @vrtmrz/obsidian-plugin-kit && npm run check --workspace @vrtmrz/rpc && npm run build --workspace @vrtmrz/rpc",
-    "check:harness": "tsc -p apps/obsidian-harness/tsconfig.json",
+    "check:harness": "tsc -p apps/obsidian-harness/tsconfig.json && tsc -p apps/obsidian-harness/tsconfig.worker.json",
     "check:e2e": "tsc -p test/e2e-obsidian/tsconfig.json",
     "check:all": "npm run check && npm run check:harness && npm run check:e2e",
     "check:octagonal-wheels": "npm run check --workspace octagonal-wheels",
