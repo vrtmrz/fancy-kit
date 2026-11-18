@@ -1,8 +1,7 @@
 # RPC (`@vrtmrz/rpc`)
 
-This private, unreleased package offers the Commonlib P2P `RpcRoom` and
-`RpcSession` protocol and an experimental profile for dedicated Workers. Build
-the workspace and pack `@vrtmrz/rpc` to try it as a local tarball.
+The package provides the Commonlib P2P `RpcRoom` and `RpcSession` protocol
+and an experimental profile for dedicated Workers.
 
 - [`@vrtmrz/rpc/p2p`](docs/p2p.md) provides P2P calls and notifications. The host
   supplies the transport and owns peer admission and replication policy.

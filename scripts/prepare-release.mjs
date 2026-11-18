@@ -142,6 +142,7 @@ const releasePreparationOrder = [
   "@vrtmrz/browser-ui-kit",
   "@vrtmrz/obsidian-plugin-kit",
   "@vrtmrz/obsidian-test-session",
+  "@vrtmrz/rpc",
   "octagonal-wheels",
 ];
 

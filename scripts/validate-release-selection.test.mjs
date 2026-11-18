@@ -101,6 +101,18 @@ test("accepts the Node SecretStore adapter as a scoped package", () => {
   assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/secret-store-node");
 });
 
+test("accepts the first RPC release from its workspace directory", () => {
+  const selection = {
+    ...base,
+    packageName: "@vrtmrz/rpc",
+    expectedVersion: "0.1.0",
+    confirmation: `stage @vrtmrz/rpc@0.1.0 to next from ${sha}`,
+    manifest: { name: "@vrtmrz/rpc", version: "0.1.0" },
+    lockEntry: { version: "0.1.0" },
+  };
+  assert.equal(validateReleaseSelection(selection).packageDirectory, "packages/rpc");
+});
+
 test("accepts value-store as an independent scoped package", () => {
   const packageName = "@vrtmrz/value-store";
   const selection = {
