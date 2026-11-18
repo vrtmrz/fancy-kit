@@ -5,6 +5,7 @@ export const HARNESS_SCENARIO_IDS = [
   "vault-text",
   "vault-frontmatter",
   "wake-lock-nested",
+  "worker-rpc",
   "wake-lock-guided",
 ] as const;
 export type ScenarioId = (typeof HARNESS_SCENARIO_IDS)[number];

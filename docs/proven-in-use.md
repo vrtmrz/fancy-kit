@@ -49,6 +49,42 @@ Its compatibility-review workflow also uses the Obsidian `confirmAction` adapter
 
 LiveSync's WebApp and WebPeer create `@vrtmrz/browser-ui-kit` interaction and notification adapters at their browser composition roots. Consumer tests own Root selection, persistence, P2P settings, and runtime composition, while the browser kit owns typed choice mapping, native DOM lifecycle, safe plain-text defaults, and keyed notification expiry. A Compose-backed Playwright scenario then verifies the LiveSync-specific WebApp-to-WebPeer-to-CLI transfer without treating the browser adapter as a Harness or Obsidian substitute.
 
+### P2P RPC compatibility
+
+Two Obsidian 1.12.7 instances on Linux arm64 ran Self-hosted LiveSync 1.0.50.
+One test build used `RpcRoom` from `@vrtmrz/rpc/p2p`. Its peer ran the standard
+Commonlib 0.5.0 implementation. With a local signalling relay and data E2EE
+disabled, the peers fetched a note and synchronised an edit back over WebRTC.
+Both directions used chunked RPC messages. The Vaults retained the expected
+contents and the same metadata ID, and the original revision remained readable.
+This check adapted the [LiveSync P2P scenario](https://github.com/vrtmrz/obsidian-livesync/blob/9a0941647b3ce231a4a381cd91f2d2cf0f738adb/test/e2e-obsidian/scripts/p2p-nfc-sync.ts).
+
+### Experimental Worker execution
+
+The [Worker browser fixture](../packages/rpc/scripts/browserWorkerVerify.mjs)
+passed in Chromium and Firefox with a managed connection and pool. It sent a
+copied `Blob` as an RPC argument, returned a transferred port, and checked the
+original bytes after reading the stream. It also exercised a unary call between
+pulls, rejection of a pending read on a Worker crash, and a successful call on
+the replacement connection. Dedicated Worker and MessageChannel cases checked
+that request and response buffers detached at their respective senders. These
+are package-owned checks. The experiment
+guide describes the [Worker lifetime and flow-control contracts](../packages/rpc/docs/worker-execution.md).
+
+The Harness's **Worker RPC contract** scenario ran in Obsidian 1.13.6 on Linux
+arm64. The review starts a Worker from the bundled script, checks buffer
+detachment and streamed bytes, and verifies that a new Worker answers after
+shutdown. The [real Obsidian E2E check](../test/e2e-obsidian/scripts/contracts.ts)
+verifies the visible result and Markdown report.
+
+The same scenario passed twice in Harness 0.1.2 on an iPhone running iOS
+18.7 and Obsidian 1.15.1. Both foreground runs prewarmed a fresh Worker,
+confirmed detachment of request and result buffers, verified streamed bytes,
+and checked that a replacement Worker answered after controlled shutdown.
+The second run started after the WebView became visible again. Backgrounding
+while work is active and the standalone WebKit browser suite remain unverified.
+See the [Worker RPC review instructions](../apps/obsidian-harness/README.md#worker-rpc-review).
+
 ## Disposable asynchronous input
 
 The `octagonal-wheels/iterable/asyncQueue` entry provides a FIFO input

@@ -17,7 +17,7 @@ Real Obsidian E2E is deliberately local-only. Run `npm run test:e2e:obsidian:loc
 
 Current real-Obsidian validation covers Linux and macOS. Do not describe Windows as supported until the same smoke and lifecycle checks have been run successfully there.
 
-Inspect the selected package's entry in the `pack:workspace` output. A scoped package tarball should contain its licence, README, compiled `dist` files and emitted maps, and package metadata only. The harness, tests, private notes, and files outside the package manifest must not leak into it.
+Inspect the selected package's entry in the `pack:workspace` output. A scoped package tarball should contain its licence, README, compiled `dist` files and emitted maps, package metadata, and any guides explicitly listed in the package manifest. The harness, tests, private notes, and other workspace files must stay outside the tarball.
 
 ## Version and dependency order
 

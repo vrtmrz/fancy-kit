@@ -19,6 +19,12 @@
       "@vrtmrz/ui-interactions": [
         "packages/ui-interactions/src/index.ts"
       ],
+      "@vrtmrz/rpc/worker": [
+        "packages/rpc/src/worker.ts"
+      ],
+      "@vrtmrz/rpc": [
+        "packages/rpc/src/index.ts"
+      ],
       "octagonal-wheels/browser/wakeLock": [
         "packages/octagonal-wheels/src/browser/wakeLock.ts"
       ]

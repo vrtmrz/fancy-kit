@@ -1,0 +1,48 @@
+{
+  "name": "@vrtmrz/rpc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Platform-neutral P2P RPC calls and notifications, with experimental Worker connections, pooling and streams",
+  "type": "module",
+  "license": "MIT",
+  "author": "vorotamoroz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vrtmrz/fancy-kit.git",
+    "directory": "packages/rpc"
+  },
+  "homepage": "https://github.com/vrtmrz/fancy-kit/tree/main/packages/rpc#readme",
+  "bugs": {
+    "url": "https://github.com/vrtmrz/fancy-kit/issues"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./worker": {
+      "types": "./dist/worker.d.ts",
+      "import": "./dist/worker.js"
+    },
+    "./p2p": {
+      "types": "./dist/p2p.d.ts",
+      "import": "./dist/p2p.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.types.json && tsc -p tsconfig.dom.json && tsc -p tsconfig.check.json",
+    "test": "vitest run --maxWorkers=1",
+    "prepublishOnly": "node ../../scripts/assert-bootstrap-publish.mjs && npm run check && npm run test && npm run build"
+  },
+  "dependencies": {
+    "octagonal-wheels": "^0.1.56"
+  }
+}

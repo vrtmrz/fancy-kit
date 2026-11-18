@@ -19,9 +19,22 @@ The start-up mode can be changed under **Settings → Community plugins → Fanc
 - Vault text creation, reading, appending, modification, and typed error behaviour.
 - Vault frontmatter persistence and typed error behaviour.
 - Nested logical screen wake-lock leases and cleanup.
+- Dedicated Worker startup, binary transfer, port streams, shutdown, and replacement.
 - A guided mobile display and visibility review.
 
 Vault scenarios create a unique owned fixture folder and remove it whether the scenario passes or fails. They do not scan or modify unrelated Vault content. Use a disposable dedicated test Vault as an additional safety boundary.
+
+## Worker RPC review
+
+In **Test selection**, select **Worker RPC contract** and choose **Run selected**.
+Keep Obsidian in the foreground until the result appears. The scenario uses
+synthetic bytes and creates only temporary Workers and message ports. It
+checks prewarming, the bytes and detachment of transferred buffers, a
+dedicated-port stream with a unary call between pulls, and a replacement
+Worker after the first shuts down.
+
+On iOS or iPadOS, this checks the WebView in the installed Obsidian app. Use
+**Copy Markdown report** to capture the result and the app and device context.
 
 ## Mobile wake-lock review
 
