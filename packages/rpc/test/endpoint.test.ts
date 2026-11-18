@@ -5,6 +5,7 @@ import {
   createRpcEndpoint,
   defineContract,
   notify,
+  withTransfer,
   type PeerAddress,
   type RpcCodec,
   type RpcDiagnosticEvent,
@@ -301,7 +302,7 @@ describe("Unary RPC endpoint core", () => {
     expect(caught).toBeInstanceOf(RpcError);
     expect((caught as RpcError).code).toBe("encode-failed");
     expect((caught as RpcError).code).not.toBe("remote-error");
-    expect(diagB.some((e) => e.type === "late-send-failure" && e.operation === "response-encode")).toBe(
+    expect(diagB.some((e) => e.type === "encode-failed" && e.operation === "response-encode")).toBe(
       true,
     );
     expect(diagA).toEqual([]);
@@ -604,6 +605,78 @@ describe("Unary RPC endpoint core", () => {
     });
   });
 
+  it("transfers optional resources to one target even when the transport implements sendMany", async () => {
+    const target: PeerAddress = { peerId: "peer-transfer", instanceId: "inst-transfer" };
+    const secondTarget: PeerAddress = {
+      peerId: "peer-transfer-second",
+      instanceId: "inst-transfer-second",
+    };
+    const localPeer: PeerAddress = { peerId: "peer-local", instanceId: "inst-local" };
+    const buffer = new Uint8Array([4, 5, 6]).buffer;
+    const codec = {
+      encode: vi.fn((envelope: RpcEnvelope) => envelope),
+      decode: vi.fn((input: unknown) => input as RpcEnvelope),
+    };
+    const sentPayloads: RpcEnvelope[] = [];
+    const send = vi.fn(
+      (
+        _target: PeerAddress,
+        payload: RpcEnvelope,
+        _options: undefined,
+        transfer?: readonly ArrayBuffer[],
+      ) => {
+        sentPayloads.push(
+          structuredClone(payload, { transfer: [...(transfer ?? [])] }),
+        );
+      },
+    );
+    const sendMany = vi.fn(
+      async (targets: readonly PeerAddress[]) =>
+        targets.map((peer) => ({ peer, status: "sent" as const })),
+    );
+    const transport = {
+      capabilities: {
+        supportsTransfer: true,
+        guaranteesRequestBeforeCancel: true,
+      },
+      send,
+      sendMany,
+      subscribe: () => () => undefined,
+    };
+    const endpoint = createRpcEndpoint({
+      contract: defineContract({
+        sendBytes: notify<[bytes: Uint8Array]>().transfer({ input: "optional" }),
+      }),
+      codec,
+      transport,
+      localPeer,
+    });
+    cleanups.push(() => endpoint.close());
+
+    const args = [withTransfer(new Uint8Array(buffer), [buffer])] as const;
+    await expect(
+      endpoint.notifyMany([target, secondTarget], "sendBytes", args),
+    ).rejects.toMatchObject({ code: "transfer-failed" });
+    expect(codec.encode).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(sendMany).not.toHaveBeenCalled();
+    expect(buffer.byteLength).toBe(3);
+
+    await endpoint.notifyMany([target, { ...target }], "sendBytes", args);
+
+    expect(sendMany).not.toHaveBeenCalled();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0]![3]).toEqual([buffer]);
+    expect(buffer.byteLength).toBe(0);
+    expect(sentPayloads[0]).toMatchObject({ target });
+    expect(
+      sentPayloads[0]!.kind === "notify"
+        ? sentPayloads[0]!.args[0]
+        : undefined,
+    ).toEqual(new Uint8Array([4, 5, 6]));
+    expect(codec.encode).toHaveBeenCalledTimes(1);
+  });
+
   it("disposes single binding independently and honours owned vs borrowed transport disposal", async () => {
     const scheduler = createControllableScheduler();
     const pair = createPairedFakeTransport<RpcEnvelope, undefined, never, false>({
@@ -686,6 +759,62 @@ describe("Unary RPC endpoint core", () => {
     expect(ownedCloseSpy).toHaveBeenCalledTimes(1);
     expect(pair.b.listenerCount).toBe(0);
 
+    pair.dispose();
+  });
+
+  it("reports owned transport close failures even when the diagnostic observer rejects", async () => {
+    const pair = createPairedFakeTransport<RpcEnvelope>();
+    const failure = new Error("close failed");
+    const diagnostics: RpcDiagnosticEvent[] = [];
+    const endpoint = createRpcEndpoint({
+      contract: coreContract,
+      localPeer: pair.a.localPeer,
+      codec: createIdentityCodec(),
+      transport: { ...pair.a, close: () => Promise.reject(failure) },
+      transportOwnership: "owned",
+      async onDiagnostic(event) {
+        diagnostics.push(event);
+        throw new Error("observer failed");
+      },
+    });
+
+    endpoint.close();
+    await expect(endpoint.closeAsync()).rejects.toBe(failure);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    expect(pair.a.listenerCount).toBe(0);
+    expect(pair.a.sentMessages).toHaveLength(0);
+    expect(diagnostics).toMatchObject([{
+      type: "transport-close-failed",
+      operation: "transport-close",
+    }]);
+    pair.dispose();
+  });
+
+  it.each([{}, { streams: {} }])("rejects unavailable stream methods before subscribing", (extra) => {
+    const pair = createPairedFakeTransport<RpcEnvelope>();
+    const options = {
+      ...extra,
+      contract: { changes: { kind: "stream", inputTransfer: "none", outputTransfer: "none" } },
+      localPeer: pair.a.localPeer,
+      transport: pair.a,
+      codec: createIdentityCodec(),
+    };
+    // Exercise the runtime boundary as a JavaScript caller with a structural descriptor.
+    expect(() => Reflect.apply(createRpcEndpoint, undefined, [options])).toThrow(
+      /stream method "changes" is unsupported/i,
+    );
+    expect(pair.a.listenerCount).toBe(0);
+    pair.dispose();
+  });
+
+  it("rejects a supplied stream extension on a unary contract", () => {
+    const pair = createPairedFakeTransport<RpcEnvelope>();
+    const options = {
+      contract: coreContract, streams: {}, localPeer: pair.a.localPeer,
+      transport: pair.a, codec: createIdentityCodec(),
+    };
+    expect(() => Reflect.apply(createRpcEndpoint, undefined, [options])).toThrow(/stream extensions are unsupported/i);
+    expect(pair.a.listenerCount).toBe(0);
     pair.dispose();
   });
 

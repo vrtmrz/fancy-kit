@@ -145,14 +145,29 @@ export function createMessagePortTransport(
       if (closed) {
         return () => undefined;
       }
+      let subscribed = true;
       const onMessage = (event: MessageEventLike<unknown>) => {
-        if (closed) return;
+        if (closed || !subscribed) {
+          return;
+        }
         handler(remotePeer, event.data);
       };
       activeListeners.add(onMessage);
       port.addEventListener("message", onMessage);
-      port.start?.();
+      try {
+        port.start?.();
+      } catch (error) {
+        subscribed = false;
+        try {
+          port.removeEventListener("message", onMessage);
+          activeListeners.delete(onMessage);
+        } catch {
+          // Keep tracking the listener so close() can retry its removal.
+        }
+        throw error;
+      }
       return () => {
+        subscribed = false;
         activeListeners.delete(onMessage);
         port.removeEventListener("message", onMessage);
       };

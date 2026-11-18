@@ -28,12 +28,21 @@ Calls wait for a remote result. The default deadline is 30 seconds; pass a numbe
 or `{ timeoutMs, signal }` as the third call argument to override it. Non-positive
 timeouts disable the deadline, while leaving cancellation active. The generic
 result type is a caller assertion, not a method schema or runtime validation.
-Arguments and wire error details use JSON values.
+Arguments and wire error details use JSON values. If registering the deadline or
+abort listener throws, the call rejects before sending the request.
+
+A handler can complete an update even if sending its result fails. The receiving
+room reports that failure through `onProtocolWarning` and, while the request is
+active, attempts an error reply identifying the completed method. If neither
+reply reaches the caller, the caller cannot infer whether the update happened.
 
 A call returning `void` still waits for a response. Notifications resolve after
 local sending, without acknowledging remote handler completion. They create no
-response wait or deadline. Fan-out is an explicit host loop over approved peers;
-there is no required multicast API.
+response wait or deadline. If the room closes or the peer leaves during a
+chunked notification, the current transport send may still complete. If chunks
+remain to be sent, the notification then rejects with `NOT_CONNECTED`.
+
+Fan-out is an explicit host loop over approved peers; there is no required multicast API.
 
 Registering the same namespaced method replaces its handler. Set
 `{ serial: true }` on registration to serialise that method across callers.
@@ -62,8 +71,8 @@ stopped. A cancelled handler's result is not sent as a late reply.
 
 `canAcceptRequest(peerId, method, context)` may await a host decision. Returning
 `false` intentionally sends no reply, preserving existing timeout semantics.
-Do not interpret this as a negative acknowledgement. Diagnostic observers may
-throw without interrupting protocol cleanup.
+Do not interpret this as a negative acknowledgement. RPC continues cleanup when a diagnostic observer throws or returns a rejected
+promise.
 
 ## Injection and wire compatibility
 
@@ -95,8 +104,9 @@ Worker implementation.
 ## Validation scope
 
 The package tests use the pinned Commonlib reference and an independently
-controlled transport. They are not evidence of a deployed LiveSync migration,
-browser P2P networking, or Worker performance. A downstream integration must
+controlled transport. A separate [LiveSync compatibility check](../../../docs/proven-in-use.md#p2p-rpc-compatibility)
+verified a fetch and return edit between a Fancy Kit test build and a standard
+LiveSync peer in two real Obsidian Vaults. A downstream integration must
 verify its provider and database facade, admission policy, connection freshness,
 and room lifecycle, including callbacks from retired connections.
 

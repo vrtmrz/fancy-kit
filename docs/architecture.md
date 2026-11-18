@@ -20,9 +20,7 @@ This repository contains eight independently versioned packages, one private unr
           ↑                         ↑
 @vrtmrz/browser-ui-kit      @vrtmrz/obsidian-plugin-kit  ──peer──> obsidian
 
-octagonal-wheels             (independent shared utilities)
-
-@vrtmrz/rpc                  (private unreleased neutral RPC core; zero runtime dependencies)
+@vrtmrz/rpc/p2p ──> octagonal-wheels (shared utilities maintained in this workspace)
 
 @vrtmrz/obsidian-test-session  ──peer──> playwright
           ↑ dev-time
@@ -39,7 +37,7 @@ consumer E2E suites and the public harness
 
 `octagonal-wheels` owns reusable utilities and structural algorithms that do not express Obsidian UI or LiveSync domain policy. It retains its existing package name, history, version, browser-compatible modules, and independent release lifecycle.
 
-`@vrtmrz/rpc` provides the P2P Room/Session protocol through `@vrtmrz/rpc/p2p`, with injectable codecs, transports, and runtime facilities. It reuses Octagonal Wheels context and deferred-action utilities, and imports neither `livesync-commonlib` nor Obsidian. The package remains private and unreleased; its experimental endpoint and Worker exports are separate from the P2P implementation. See the [RPC specification](../packages/rpc/docs/specification.md) and [design decisions](../packages/rpc/docs/decisions.md) for the current scope and ownership boundaries.
+`@vrtmrz/rpc` provides the P2P Room/Session protocol through `@vrtmrz/rpc/p2p`, with injectable codecs, transports, and runtime facilities. Its only direct runtime dependency is `octagonal-wheels`, maintained in this workspace. P2P uses its context binding, deferred actions, and promise resolvers and imports neither `livesync-commonlib` nor Obsidian. The package remains private and unreleased; its experimental endpoint and Worker exports are separate from the P2P implementation. See the [RPC specification](../packages/rpc/docs/specification.md) and [design decisions](../packages/rpc/docs/decisions.md) for the current scope and ownership boundaries.
 
 `@vrtmrz/obsidian-test-session` is Node-only development infrastructure. It owns local Obsidian binary discovery and preparation, isolated vault and profile state, process lifecycle, CLI bootstrap, Playwright/CDP readiness, and generic layout measurements and assertions for consumer-selected locators. It does not belong in a plug-in runtime bundle.
 

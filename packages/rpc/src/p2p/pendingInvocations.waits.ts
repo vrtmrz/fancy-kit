@@ -9,6 +9,21 @@ import type {
   RegisterPendingWaitContext,
 } from "./pendingInvocations.types.js";
 
+function reportWaitCleanupFailure(
+  context: Pick<RegisterPendingWaitContext, "onProtocolWarning">,
+  peerId: string,
+  error: unknown,
+): void {
+  try {
+    context.onProtocolWarning?.(
+      "Failed to release RPC pending wait: " + String(error),
+      peerId,
+    );
+  } catch {
+    // Diagnostics must not prevent invocation settlement or further cleanup.
+  }
+}
+
 /**
  * Removes a wait and synchronously releases its deadline and abort listener
  * before returning the invocation to its caller.
@@ -73,8 +88,9 @@ export function rejectPending(
 }
 
 /**
- * Creates a wait record, deadline, and abort listener. The creation callback
- * retains the current Promise executor boundary before deadline setup can throw.
+ * Creates a wait record, deadline, and abort listener before the caller sends.
+ * The record is registered before injected hooks run so re-entrant peer
+ * retirement can release it; a setup exception removes it before propagating.
  */
 export function registerPendingWait(
   context: RegisterPendingWaitContext,
@@ -83,15 +99,13 @@ export function registerPendingWait(
   method: string,
   options: RpcCallOptions,
   timeoutMs: number,
-  onInvocationCreated: (invocation: PendingInvocation) => void,
   resolve: PendingInvocation["resolve"],
   reject: PendingInvocation["reject"],
-): void {
+): PendingInvocation {
   const { pending, scheduleTimeout, rejectPending } = context;
   const signal = options.signal;
   const onAbort = () => {
-    const current = pending.get(requestId);
-    if (!current) {
+    if (pending.get(requestId) !== invocation) {
       return;
     }
     rejectPending(
@@ -111,25 +125,46 @@ export function registerPendingWait(
           );
         }, scheduleTimeout)
       : undefined;
+  const releaseWait = () => {
+    const cleanups = [
+      () => deadline?.dispose(),
+      () => signal?.removeEventListener("abort", onAbort),
+    ];
+    for (const cleanup of cleanups) {
+      try {
+        cleanup();
+      } catch (error) {
+        reportWaitCleanupFailure(context, peerId, error);
+      }
+    }
+  };
   const invocation: PendingInvocation = {
     peerId,
     resolve,
     reject,
-    releaseWait: () => {
-      deadline?.dispose();
-      signal?.removeEventListener("abort", onAbort);
-    },
+    releaseWait,
     requestSent: false,
     cancelRequested: false,
   };
-  onInvocationCreated(invocation);
-  deadline?.schedule(timeoutMs);
   pending.set(requestId, invocation);
-  if (signal) {
-    signal.addEventListener("abort", onAbort, { once: true });
-    // An embedding host can abort between the check above and listener registration.
-    if (signal.aborted) {
-      onAbort();
+
+  try {
+    deadline?.schedule(timeoutMs);
+    if (signal && pending.get(requestId) === invocation) {
+      signal.addEventListener("abort", onAbort, { once: true });
+      if (pending.get(requestId) !== invocation) {
+        // A re-entrant hook may have retired the wait before attaching the listener.
+        invocation.releaseWait();
+      } else if (signal.aborted) {
+        onAbort();
+      }
     }
+  } catch (error) {
+    if (pending.get(requestId) === invocation) {
+      pending.delete(requestId);
+    }
+    invocation.releaseWait();
+    throw error;
   }
+  return invocation;
 }

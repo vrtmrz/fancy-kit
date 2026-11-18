@@ -48,7 +48,9 @@ export class RpcRoom<
   /** Subscribes to the borrowed transport; does not create or own its connection. */
   constructor(options: RpcRoomOptions<S, PostOptions>) {
     this.options = options;
-    this.runtime = createRuntime(options.runtime);
+    this.runtime = createRuntime(options.runtime, (error) => {
+      void this.warn(`Failed to cancel RPC timer: ${String(error)}`);
+    });
     this.codec = options.codec ?? createJsonCodec();
     this.inbound = createInboundCalls({
       createAbortController:
@@ -105,9 +107,9 @@ export class RpcRoom<
       throw error;
     }
   }
-  private warn(message: string, peerId?: string): void {
+  private async warn(message: string, peerId?: string): Promise<void> {
     try {
-      this.options.onProtocolWarning?.(message, peerId);
+      await this.options.onProtocolWarning?.(message, peerId);
     } catch {
       /* Diagnostics never interrupt protocol cleanup. */
     }

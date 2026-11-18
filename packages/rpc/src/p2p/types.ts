@@ -146,7 +146,7 @@ export interface RpcRoomOptions<
     method: string,
     context: RpcRequestContext<S>,
   ) => boolean | Promise<boolean>;
-  /** Diagnostic observer; exceptions do not interrupt protocol cleanup. */
+  /** Receives protocol, handler, and transport warnings. Throws and rejected observer promises are isolated. */
   onProtocolWarning?: (message: string, peerId?: string) => void;
 }
 /** Handler without cancellation context. */

@@ -117,7 +117,7 @@ export interface Transport<Wire, PostOptions = undefined> {
 
 /** Timing and identity dependencies shared by invocation and framing owners. */
 export interface Runtime {
-  /** Schedules a callback; returns an idempotent cancellation function. */
+  /** Schedules the callback to run after registration returns. The returned cancellation function is idempotent. */
   scheduleTimeout(callback: () => void, delayMs: number): () => void;
   /** Produces IDs unique within the active protocol scope; tests may inject deterministic values. */
   createId(kind: "request" | "chunk"): string;

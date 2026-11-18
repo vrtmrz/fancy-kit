@@ -73,6 +73,41 @@ async function reportFailure<S extends CancellationSignal>(
     });
   }
 }
+async function reportResponseSendFailure<S extends CancellationSignal>(
+  state: State<S>,
+  deps: Pick<Dependencies<S>, "sendEnvelope" | "warn">,
+  peerId: string,
+  envelope: RpcRequestEnvelope,
+  op: Operation<S>,
+  error: unknown,
+): Promise<void> {
+  const failure = asRpcErrorShape(error);
+  const contextualFailure: RpcErrorShape = {
+    ...failure,
+    message:
+      `RPC method ${envelope.method} completed successfully, but sending its ` +
+      `success response failed: ${failure.message}`,
+  };
+  deps.warn(`${contextualFailure.message} (request ${envelope.requestId})`, peerId);
+  if (
+    op.signal.aborted ||
+    state.closed ||
+    state.operations.get(operationKey(peerId, envelope.requestId)) !== op
+  ) {
+    return;
+  }
+  try {
+    await reportFailure(deps, peerId, envelope, contextualFailure);
+  } catch (deliveryError) {
+    const deliveryFailure = asRpcErrorShape(deliveryError);
+    deps.warn(
+      `RPC method ${envelope.method} completed successfully, but sending its ` +
+        `fallback error response also failed (request ${envelope.requestId}): ` +
+        deliveryFailure.message,
+      peerId,
+    );
+  }
+}
 async function runMethod<S extends CancellationSignal>(
   state: State<S>,
   deps: Dependencies<S>,
@@ -81,18 +116,36 @@ async function runMethod<S extends CancellationSignal>(
   peerId: string,
   op: Operation<S>,
 ): Promise<void> {
+  let data: unknown;
   try {
     if (op.signal.aborted || state.closed) {
       return;
     }
-    const data = await method.invoke(op, peerId, envelope.args);
-    if (
-      op.signal.aborted ||
-      state.closed ||
-      envelope.expectsResponse === false
-    ) {
-      return;
+    data = await method.invoke(op, peerId, envelope.args);
+  } catch (error) {
+    if (!op.signal.aborted && !state.closed) {
+      try {
+        await reportFailure(deps, peerId, envelope, asRpcErrorShape(error));
+      } catch (deliveryError) {
+        const deliveryFailure = asRpcErrorShape(deliveryError);
+        deps.warn(
+          `RPC method ${envelope.method} failed, and sending its error response ` +
+            `also failed (request ${envelope.requestId}): ` +
+            deliveryFailure.message,
+          peerId,
+        );
+      }
     }
+    return;
+  }
+  if (
+    op.signal.aborted ||
+    state.closed ||
+    envelope.expectsResponse === false
+  ) {
+    return;
+  }
+  try {
     await deps.sendEnvelope(peerId, {
       kind: "response",
       requestId: envelope.requestId,
@@ -101,10 +154,15 @@ async function runMethod<S extends CancellationSignal>(
     });
   } catch (error) {
     if (!op.signal.aborted && !state.closed) {
-      await reportFailure(deps, peerId, envelope, asRpcErrorShape(error));
+      await reportResponseSendFailure(
+        state,
+        deps,
+        peerId,
+        envelope,
+        op,
+        error,
+      );
     }
-  } finally {
-    retire(state, envelope.requestId, op);
   }
 }
 async function handleRequest<S extends CancellationSignal>(

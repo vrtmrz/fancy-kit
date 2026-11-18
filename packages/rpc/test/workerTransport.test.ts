@@ -45,6 +45,106 @@ describe("Worker and MessagePort transport (@vrtmrz/rpc/worker)", () => {
     }
   });
 
+  it("rolls back only the failed subscription when port.start() throws", () => {
+    const remotePeer: PeerAddress = { peerId: "worker", instanceId: "w-1" };
+    const listeners = new Set<(event: MessageEventLike<unknown>) => void>();
+    const startError = new Error("port-start-failed");
+    const priorHandler = vi.fn();
+    const failedHandler = vi.fn();
+    let startCalls = 0;
+    let removeCalls = 0;
+    const port: MessagePortLike<ArrayBuffer> = {
+      postMessage: vi.fn(),
+      addEventListener(_type, listener) {
+        listeners.add(listener);
+      },
+      removeEventListener(_type, listener) {
+        removeCalls += 1;
+        listeners.delete(listener);
+      },
+      start() {
+        startCalls += 1;
+        if (startCalls === 2) {
+          throw startError;
+        }
+      },
+      close: vi.fn(),
+    };
+    const transport = createMessagePortTransport({ port, remotePeer });
+
+    transport.subscribe(priorHandler);
+
+    let caught: unknown;
+    try {
+      transport.subscribe(failedHandler);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBe(startError);
+    expect(listeners.size).toBe(1);
+    expect(removeCalls).toBe(1);
+    const priorListener = [...listeners][0]!;
+    priorListener({ data: "prior-subscription-still-active" });
+    expect(priorHandler).toHaveBeenCalledWith(
+      remotePeer,
+      "prior-subscription-still-active",
+    );
+    expect(failedHandler).not.toHaveBeenCalled();
+
+    transport.close?.();
+    transport.close?.();
+    expect(listeners.size).toBe(0);
+    expect(removeCalls).toBe(2);
+    expect(port.close).not.toHaveBeenCalled();
+  });
+
+  it("keeps a failed startup callback inactive if listener removal throws", () => {
+    const listeners = new Set<(event: MessageEventLike<unknown>) => void>();
+    const startError = new Error("port-start-failed");
+    const removeError = new Error("listener-remove-failed");
+    const handler = vi.fn();
+    let removeCalls = 0;
+    const port: MessagePortLike<ArrayBuffer> = {
+      postMessage: vi.fn(),
+      addEventListener(_type, listener) {
+        listeners.add(listener);
+      },
+      removeEventListener(_type, listener) {
+        removeCalls += 1;
+        if (removeCalls === 1) {
+          throw removeError;
+        }
+        listeners.delete(listener);
+      },
+      start() {
+        throw startError;
+      },
+      close: vi.fn(),
+    };
+    const transport = createMessagePortTransport({
+      port,
+      remotePeer: { peerId: "worker", instanceId: "w-1" },
+    });
+
+    let caught: unknown;
+    try {
+      transport.subscribe(handler);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBe(startError);
+    expect(listeners.size).toBe(1);
+    [...listeners][0]!({ data: "failed-subscription" });
+    expect(handler).not.toHaveBeenCalled();
+
+    transport.close?.();
+    expect(listeners.size).toBe(0);
+    expect(removeCalls).toBe(2);
+    expect(port.close).not.toHaveBeenCalled();
+  });
+
   it("installs message listener before calling port.start() and detaches on close", async () => {
     const events: string[] = [];
     const listeners = new Set<(event: MessageEventLike<unknown>) => void>();

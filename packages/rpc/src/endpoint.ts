@@ -95,10 +95,10 @@ function validateEndpointSetup<
   }
   for (const key of Object.keys(options.contract)) {
     const descriptor = options.contract[key]!;
-    if (descriptor.kind === "stream" && options.streams === undefined) {
+    if (descriptor.kind === "stream") {
       throw new RpcError(
         "unsupported-profile",
-        `Contract method "${key}" requires @vrtmrz/rpc/streams.`,
+        `Stream method "${key}" is unsupported by this RPC endpoint.`,
       );
     }
     if (
@@ -112,6 +112,9 @@ function validateEndpointSetup<
       );
     }
   }
+  if (options.streams !== undefined) {
+    throw new RpcError("unsupported-profile", "Stream extensions are unsupported by this RPC endpoint.");
+  }
   return localPeer;
 }
 
@@ -119,7 +122,7 @@ function validateEndpointSetup<
  * Creates a typed RPC endpoint connecting a contract, codec, and transport.
  *
  * Rejects capability mismatches (such as required transfer on BroadcastChannel,
- * missing stream extensions, or transports lacking request-before-cancel order)
+ * stream methods, or transports lacking request-before-cancel order)
  * at compile time and runtime.
  */
 export function createRpcEndpoint<
@@ -139,7 +142,7 @@ export function createRpcEndpoint<
     StreamExt
   > &
     ValidateEndpointCapabilities<C, SupportsTransfer, StreamExt>,
-): RpcEndpoint<C, PostOptions, TransferResource, StreamExt> {
+): RpcEndpoint<C, PostOptions, TransferResource> {
   const localPeer = validateEndpointSetup(options);
 
   const contract = options.contract;
@@ -162,12 +165,11 @@ export function createRpcEndpoint<
     RpcMethodHandler<RpcMethodDescriptor, TransferResource>
   >();
 
-  function emitDiagnosticSafe(event: RpcDiagnosticEvent): void {
-    if (!options.onDiagnostic) return;
+  async function emitDiagnostic(event: RpcDiagnosticEvent): Promise<void> {
     try {
-      options.onDiagnostic(event);
+      await options.onDiagnostic?.(event);
     } catch {
-      // Throwing diagnostic callbacks must never interfere with cleanup or settlement.
+      // Observer failures must not interrupt cleanup or settlement.
     }
   }
 
@@ -182,7 +184,7 @@ export function createRpcEndpoint<
     codec,
     transport,
     localPeer,
-    emitDiagnostic: emitDiagnosticSafe,
+    emitDiagnostic,
   });
 
   const pendingRegistry = createPendingCallRegistry({
@@ -192,7 +194,7 @@ export function createRpcEndpoint<
     scheduler,
     generateId,
     sender,
-    emitDiagnostic: emitDiagnosticSafe,
+    emitDiagnostic,
     isEndpointClosed: () => endpointClosed,
   });
 
@@ -201,7 +203,7 @@ export function createRpcEndpoint<
     getHandler: (method) =>
       handlers.get(method) as InboundOperationHandler | undefined,
     sender,
-    emitDiagnostic: emitDiagnosticSafe,
+    emitDiagnostic,
     isEndpointClosed: () => endpointClosed,
   });
 
@@ -212,7 +214,7 @@ export function createRpcEndpoint<
       try {
         decoded = codec.decode(rawPayload);
       } catch (error) {
-        emitDiagnosticSafe({
+        void emitDiagnostic({
           type: "invalid-envelope",
           peer: from,
           error: toRpcError("decode-failed", error, from),
@@ -221,7 +223,7 @@ export function createRpcEndpoint<
       }
 
       if (!isValidEnvelope(decoded, from, localPeer)) {
-        emitDiagnosticSafe({
+        void emitDiagnostic({
           type: "invalid-envelope",
           peer: from,
           error: new RpcError(
@@ -315,20 +317,11 @@ export function createRpcEndpoint<
       return Promise.reject(toRpcError("transfer-failed", error, target));
     }
 
-    const envelope: RpcEnvelope = {
-      kind: "notify",
-      version: 1,
-      sender: localPeer,
-      target,
-      method,
-      args: prepared.values,
-    };
-
     let encoded: Wire;
     try {
-      encoded = codec.encode(envelope);
+      encoded = sender.encodeNotify(method, prepared.values, target);
     } catch (error) {
-      return Promise.reject(toRpcError("encode-failed", error, target));
+      return Promise.reject(error);
     }
 
     try {
@@ -431,7 +424,7 @@ export function createRpcEndpoint<
     isEndpointClosed: () => endpointClosed,
     getDescriptor,
     supportsTransfer,
-    encodeSharedNotify: sender.encodeSharedNotify,
+    encodeNotify: sender.encodeNotify,
     transport,
     invokeNotify,
   };
@@ -519,8 +512,8 @@ export function createRpcEndpoint<
   function close(): void {
     teardownLocal();
     void closeOwnedTransport().catch((error: unknown) => {
-      emitDiagnosticSafe({
-        type: "late-send-failure",
+      void emitDiagnostic({
+        type: "transport-close-failed",
         operation: "transport-close",
         error: toRpcError("internal-error", error),
       });
@@ -532,24 +525,12 @@ export function createRpcEndpoint<
     await closeOwnedTransport();
   }
 
-  const endpoint: RpcEndpoint<C, PostOptions, TransferResource, StreamExt> = {
+  return {
     bindPeer,
-    notifyMany: notifyMany as RpcEndpoint<
-      C,
-      PostOptions,
-      TransferResource,
-      StreamExt
-    >["notifyMany"],
-    handle: handle as RpcEndpoint<
-      C,
-      PostOptions,
-      TransferResource,
-      StreamExt
-    >["handle"],
+    notifyMany: notifyMany as RpcEndpoint<C, PostOptions, TransferResource>["notifyMany"],
+    handle: handle as RpcEndpoint<C, PostOptions, TransferResource>["handle"],
     retirePeer,
     close,
     closeAsync,
-  } as RpcEndpoint<C, PostOptions, TransferResource, StreamExt>;
-
-  return endpoint;
+  };
 }

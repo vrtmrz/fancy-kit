@@ -6,17 +6,29 @@ interface TimerHost {
   clearTimeout(handle: unknown): void;
 }
 /** Creates platform defaults without scheduling anything or acquiring a connection. */
-export function createRuntime(overrides: Partial<Runtime> = {}): Runtime {
+export function createRuntime(
+  overrides: Partial<Runtime> | undefined,
+  onCancelError: (error: unknown) => void,
+): Runtime {
+  const scheduleTimeout = overrides?.scheduleTimeout?.bind(overrides) ?? ((callback, delayMs) => {
+    const host = globalThis as unknown as TimerHost;
+    const handle = host.setTimeout(callback, delayMs);
+    return () => host.clearTimeout(handle);
+  });
   return {
-    scheduleTimeout:
-      overrides.scheduleTimeout ??
-      ((callback, delayMs) => {
-        const host = globalThis as unknown as TimerHost;
-        const handle = host.setTimeout(callback, delayMs);
-        return () => host.clearTimeout(handle);
-      }),
+    scheduleTimeout(callback, delayMs) {
+      const cancel = scheduleTimeout(callback, delayMs);
+      return () => {
+        try {
+          cancel();
+        } catch (error) {
+          // The deferred action has already invalidated this callback. Continue cleaning up other waits.
+          onCancelError(error);
+        }
+      };
+    },
     createId:
-      overrides.createId ??
+      overrides?.createId?.bind(overrides) ??
       ((kind) =>
         `${kind}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`),
   };

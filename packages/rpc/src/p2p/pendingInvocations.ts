@@ -54,7 +54,12 @@ export function createPendingInvocations({
     rejectPending,
   );
   const registerPendingWaitOperation = bindContext(
-    { pending: state.pending, scheduleTimeout, rejectPending: rejectOperation },
+    {
+      pending: state.pending,
+      scheduleTimeout,
+      rejectPending: rejectOperation,
+      onProtocolWarning,
+    },
     registerPendingWait,
   );
   const invoke = bindContext(

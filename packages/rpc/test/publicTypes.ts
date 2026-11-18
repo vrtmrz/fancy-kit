@@ -198,6 +198,17 @@ const copyOnlyContract = defineContract({
 declare const numberCodec: RpcCodec<RpcEnvelope, number>;
 declare const transferTransport: RpcTransport<string, { readonly tag?: string }, ArrayBuffer, true>;
 
+const streamOptions = {
+  contract: defineContract({
+    changes: { kind: "stream", inputTransfer: "none", outputTransfer: "none" },
+  }),
+  codec: neutralCodec,
+  transport: neutralTransport,
+  localPeer: peerAddress,
+};
+// @ts-expect-error The experimental root has no runtime implementation for stream methods.
+createRpcEndpoint({ ...streamOptions, streams: {} });
+
 const neutralEndpoint = createRpcEndpoint({
   contract: copyOnlyContract,
   codec: neutralCodec,
@@ -218,6 +229,10 @@ const boundTransferClient = transferEndpoint.bindPeer(peerAddress);
 const boundTransferCall: Promise<Uint8Array> = boundTransferClient.call.binaryRequired([
   withTransfer(sample, [sample.buffer]),
 ]);
+const optionalTransferNotifyMany: Promise<readonly PeerSendOutcome[]> =
+  transferEndpoint.notifyMany([peerAddress], "binaryOptional", [
+    withTransfer(sample, [sample.buffer]),
+  ]);
 
 declare const portLike: MessagePortLike<ArrayBuffer>;
 declare const workerTransferPort: WorkerTransferPort;

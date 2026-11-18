@@ -68,7 +68,7 @@ describe("Focused endpoint owners", () => {
     ).toThrowError(RpcError);
   });
 
-  it("handles encode fallback and late send diagnostics without retries in sending.ts", async () => {
+  it("handles encode fallback and send diagnostics without retries in sending.ts", async () => {
     const diagnostics: RpcDiagnosticEvent[] = [];
     const sentPayloads: RpcEnvelope[] = [];
     let failNextSend: unknown = undefined;
@@ -111,7 +111,7 @@ describe("Focused endpoint owners", () => {
     });
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]).toMatchObject({
-      type: "late-send-failure",
+      type: "encode-failed",
       operation: "response-encode",
     });
 
@@ -119,7 +119,7 @@ describe("Focused endpoint owners", () => {
     sender.sendErrorResponse(remotePeer, "req-2", new Error("boom"));
     await Promise.resolve();
     expect(diagnostics.at(-1)).toMatchObject({
-      type: "late-send-failure",
+      type: "send-failed",
       operation: "response-error",
       error: { code: "send-failed" },
     });

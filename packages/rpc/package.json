@@ -2,7 +2,7 @@
   "name": "@vrtmrz/rpc",
   "version": "0.0.0",
   "private": true,
-  "description": "Platform-neutral typed RPC contracts, codecs, transports, ownership transfer, and optional streams",
+  "description": "Platform-neutral P2P RPC calls and notifications, with experimental Worker transport and ownership transfer",
   "type": "module",
   "license": "MIT",
   "author": "vorotamoroz",

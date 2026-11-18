@@ -49,6 +49,16 @@ Its compatibility-review workflow also uses the Obsidian `confirmAction` adapter
 
 LiveSync's WebApp and WebPeer create `@vrtmrz/browser-ui-kit` interaction and notification adapters at their browser composition roots. Consumer tests own Root selection, persistence, P2P settings, and runtime composition, while the browser kit owns typed choice mapping, native DOM lifecycle, safe plain-text defaults, and keyed notification expiry. A Compose-backed Playwright scenario then verifies the LiveSync-specific WebApp-to-WebPeer-to-CLI transfer without treating the browser adapter as a Harness or Obsidian substitute.
 
+### P2P RPC compatibility
+
+Two Obsidian 1.12.7 instances on Linux arm64 ran Self-hosted LiveSync 1.0.50.
+One test build used `RpcRoom` from `@vrtmrz/rpc/p2p`. Its peer ran the standard
+Commonlib 0.5.0 implementation. With a local signalling relay and data E2EE
+disabled, the peers fetched a note and synchronised an edit back over WebRTC.
+Both directions used chunked RPC messages. The Vaults retained the expected
+contents and the same metadata ID, and the original revision remained readable.
+This check adapted the [LiveSync P2P scenario](https://github.com/vrtmrz/obsidian-livesync/blob/9a0941647b3ce231a4a381cd91f2d2cf0f738adb/test/e2e-obsidian/scripts/p2p-nfc-sync.ts).
+
 ## Disposable asynchronous input
 
 The `octagonal-wheels/iterable/asyncQueue` entry provides a FIFO input

@@ -13,12 +13,19 @@ import type {
   RpcTransport,
 } from "./types.js";
 
-interface NotifyManyContext<Wire, PostOptions> {
+interface NotifyManyContext<Wire, PostOptions, TransferResource> {
   isEndpointClosed: () => boolean;
   getDescriptor: (method: string) => RpcMethodDescriptor | undefined;
   supportsTransfer: boolean;
-  encodeSharedNotify: (method: string, values: readonly unknown[]) => Wire;
-  transport: Pick<RpcTransport<Wire, PostOptions>, "sendMany">;
+  encodeNotify: (
+    method: string,
+    values: readonly unknown[],
+    target?: PeerAddress,
+  ) => Wire;
+  transport: Pick<
+    RpcTransport<Wire, PostOptions, TransferResource>,
+    "send" | "sendMany"
+  >;
   invokeNotify: (
     peer: PeerAddress,
     isDisposed: () => boolean,
@@ -29,8 +36,8 @@ interface NotifyManyContext<Wire, PostOptions> {
 }
 
 /** Sends a deduplicated peer snapshot through native multicast or individual notifications. */
-export async function notifyMany<Wire, PostOptions>(
-  context: NotifyManyContext<Wire, PostOptions>,
+export async function notifyMany<Wire, PostOptions, TransferResource>(
+  context: NotifyManyContext<Wire, PostOptions, TransferResource>,
   targets: readonly PeerAddress[],
   method: string,
   args: readonly unknown[],
@@ -40,7 +47,7 @@ export async function notifyMany<Wire, PostOptions>(
     isEndpointClosed,
     getDescriptor,
     supportsTransfer,
-    encodeSharedNotify,
+    encodeNotify,
     transport,
   } = context;
   if (isEndpointClosed()) {
@@ -67,14 +74,35 @@ export async function notifyMany<Wire, PostOptions>(
     descriptor.inputTransfer,
     supportsTransfer,
   );
-  if (prepared.transfer.length > 0 && snapshotTargets.length > 1) {
-    throw new RpcError(
-      "transfer-failed",
-      "Cannot transfer the same designated resources to multiple peers.",
-    );
+  if (prepared.transfer.length > 0) {
+    if (snapshotTargets.length > 1) {
+      throw new RpcError(
+        "transfer-failed",
+        "Cannot transfer the same designated resources to multiple peers.",
+      );
+    }
+    const peer = snapshotTargets[0]!;
+    const encoded = encodeNotify(method, prepared.values, peer);
+    try {
+      await transport.send(
+        peer,
+        encoded,
+        notifyOptions?.postOptions,
+        prepared.transfer as TransferResource[],
+      );
+      return [{ peer, status: "sent" }];
+    } catch (error) {
+      return [
+        {
+          peer,
+          status: "failed",
+          error: toRpcError("send-failed", error, peer),
+        },
+      ];
+    }
   }
 
-  const sharedEncoded = encodeSharedNotify(method, prepared.values);
+  const sharedEncoded = encodeNotify(method, prepared.values);
 
   if (transport.sendMany) {
     try {
@@ -129,8 +157,8 @@ function isNeverDisposed(): boolean {
   return false;
 }
 
-async function sendIndividualNotification<Wire, PostOptions>(
-  context: NotifyManyContext<Wire, PostOptions>,
+async function sendIndividualNotification<Wire, PostOptions, TransferResource>(
+  context: NotifyManyContext<Wire, PostOptions, TransferResource>,
   peer: PeerAddress,
   method: string,
   args: readonly unknown[],

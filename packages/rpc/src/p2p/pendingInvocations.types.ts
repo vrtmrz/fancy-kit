@@ -20,7 +20,7 @@ export type PendingInvocationsOptions = {
   createRequestId: () => string;
   /** Uses RpcRoom's compatibility timer scheduler; non-positive timeout values do not schedule a deadline. */
   scheduleTimeout: TimeoutScheduler;
-  /** Reports failures from background cancellation sends. */
+  /** Reports background cancellation-send and pending-wait cleanup failures. */
   onProtocolWarning?: ((message: string, peerId: string) => void) | undefined;
 };
 
@@ -59,7 +59,7 @@ export type RegisterPendingWaitContext = Pick<
   PendingInvocationState,
   "pending"
 > &
-  Pick<PendingInvocationsOptions, "scheduleTimeout"> & {
+  Pick<PendingInvocationsOptions, "scheduleTimeout" | "onProtocolWarning"> & {
     rejectPending: RejectPendingOperation;
   };
 
@@ -69,10 +69,9 @@ export type RegisterPendingWaitOperation = (
   method: string,
   options: RpcCallOptions,
   timeoutMs: number,
-  onInvocationCreated: (invocation: PendingInvocation) => void,
   resolve: PendingInvocation["resolve"],
   reject: PendingInvocation["reject"],
-) => void;
+) => PendingInvocation;
 
 export type InvokePendingInvocationContext = Pick<
   PendingInvocationState,

@@ -187,7 +187,10 @@ export type RpcIdGenerator = () => string;
 export type RpcDiagnosticEvent =
   | { readonly type: "invalid-envelope"; readonly peer?: PeerAddress; readonly error: RpcError }
   | { readonly type: "unmatched-response"; readonly requestId: string; readonly peer: PeerAddress }
-  | { readonly type: "late-send-failure"; readonly operation: string; readonly error: RpcError }
+  | { readonly type: "encode-failed"; readonly operation: string; readonly error: RpcError }
+  | { readonly type: "send-failed"; readonly operation: string; readonly error: RpcError }
+  | { readonly type: "transport-close-failed"; readonly operation: "transport-close"; readonly error: RpcError }
+  | { readonly type: "late-send-failure"; readonly operation: "request-send"; readonly error: RpcError }
   | { readonly type: "handler-error"; readonly method: string; readonly peer: PeerAddress; readonly error: unknown };
 
 /** Context supplied to every registered RPC method handler. */
@@ -382,9 +385,9 @@ export interface CreateRpcEndpointOptions<
   readonly scheduler?: RpcScheduler;
   /** Optional deterministic ID generator for unit tests. */
   readonly generateId?: RpcIdGenerator;
-  /** Optional non-throwing diagnostic observer. */
+  /** Receives local diagnostics. Throws and rejected observer promises are isolated from RPC operations. */
   readonly onDiagnostic?: (event: RpcDiagnosticEvent) => void;
-  /** Optional stream extension imported from `@vrtmrz/rpc/streams`. */
+  /** Reserved for a future extension. The current endpoint rejects stream extensions. */
   readonly streams?: StreamExt;
 }
 
@@ -393,19 +396,15 @@ export type ValidateEndpointCapabilities<
   C extends ContractShape,
   SupportsTransfer extends boolean,
   StreamExt,
-> = ContractRequiresTransfer<C> extends true
-  ? SupportsTransfer extends true
-    ? ContractUsesStreams<C> extends true
-      ? [StreamExt] extends [never]
-        ? "Error: Contract contains stream methods; pass streams from '@vrtmrz/rpc/streams'."
-        : unknown
+> = ContractUsesStreams<C> extends true
+  ? "Error: Stream methods are unsupported by this RPC endpoint."
+  : [StreamExt] extends [never]
+    ? ContractRequiresTransfer<C> extends true
+      ? SupportsTransfer extends true
+        ? unknown
+        : "Error: Contract requires ownership transfer, which this transport does not support."
       : unknown
-    : "Error: Contract requires ownership transfer, which this transport does not support."
-  : ContractUsesStreams<C> extends true
-    ? [StreamExt] extends [never]
-      ? "Error: Contract contains stream methods; pass streams from '@vrtmrz/rpc/streams'."
-      : unknown
-    : unknown;
+    : "Error: Stream extensions are unsupported by this RPC endpoint.";
 
 /** Stream endpoint methods propagated from `StreamExt` when streams are enabled. */
 export type EndpointStreamMethods<StreamExt> = [StreamExt] extends [never]
@@ -428,13 +427,19 @@ export type RpcEndpoint<
   /**
    * Sends a notification to an explicit snapshot of peers in target order.
    *
-   * Rejects transfer-required methods before any posting occurs.
+   * Optional ownership transfer is supported only when the deduplicated target
+   * snapshot contains one peer; transfer-required methods are excluded.
    */
   notifyMany<K extends MultiNotifiableKeys<C>>(
     targets: readonly PeerAddress[],
     method: K,
-    args: C[K] extends RpcMethodDescriptor<"call" | "notify", infer Args>
-      ? Args
+    args: C[K] extends RpcMethodDescriptor<
+      "call" | "notify",
+      infer Args,
+      unknown,
+      infer InT
+    >
+      ? ClientArgs<Args, InT, TransferResource>
       : never,
     options?: RpcNotifyOptions<PostOptions>,
   ): Promise<readonly PeerSendOutcome[]>;

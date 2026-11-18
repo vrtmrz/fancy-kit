@@ -91,6 +91,50 @@ it("settles codec failures and removes the outbound wait", async () => {
   expect(pair.wire.a.sentMessages).toHaveLength(0);
 });
 
+it("preserves the receiver of injected runtime methods", async () => {
+  const pair = createLegacyPair();
+  cleanup.push(() => pair.wire.dispose());
+  class HostRuntime {
+    registrations = 0;
+    requests = 0;
+
+    scheduleTimeout() {
+      this.registrations++;
+      return () => { this.registrations--; };
+    }
+
+    createId() {
+      return String(++this.requests);
+    }
+  }
+  const runtime = new HostRuntime();
+  const caller = new RpcRoom({ transport: pair.a.transport, runtime });
+  const receiver = new RpcRoom({ transport: pair.b.transport });
+  cleanup.push(() => caller.close(), () => receiver.close());
+  receiver.register("db.read", () => 42);
+  await expect(caller.session("peer-b").call("db.read")).resolves.toBe(42);
+  expect(runtime.requests).toBe(1);
+  expect(runtime.registrations).toBe(0);
+});
+
+it("isolates a rejected asynchronous warning observer", async () => {
+  const pair = createLegacyPair();
+  cleanup.push(() => pair.wire.dispose());
+  let warnings = 0;
+  const room = new RpcRoom({
+    transport: pair.a.transport,
+    async onProtocolWarning() {
+      warnings++;
+      throw new Error("warning observer rejected");
+    },
+  });
+  cleanup.push(() => room.close());
+  pair.wire.a.injectInbound(pair.wire.b.localPeer, { wire: "raw", payload: "invalid JSON" });
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  expect(warnings).toBe(1);
+  expect(pair.wire.a.listenerCount).toBe(1);
+});
+
 it("keeps P2P bundles free of experimental Worker and stream machinery", async () => {
   const result = await build({
     entryPoints: [fileURLToPath(new URL("../src/p2p.ts", import.meta.url))],

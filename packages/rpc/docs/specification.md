@@ -36,6 +36,7 @@ Worker, transfer, stream, Trystero, PouchDB, or Commonlib imports.
   result or rejects with an error. A numeric timeout and `{ timeoutMs, signal }`
   are accepted. The default is 30 seconds; a non-positive timeout disables the
   deadline without disabling cancellation. A `void` result still requires a reply.
+  Failure to register a deadline or abort listener rejects the call before sending.
 - `notify(method, args?)` resolves when local sending completes. It creates no
   response wait or response deadline, and does not acknowledge remote execution.
   Large notifications still participate in framing acknowledgements.
@@ -71,6 +72,10 @@ Responses must match the expected peer and request ID. Inbound contexts are
 scoped to peer and request ID. Peer departure rejects that peer's pending calls,
 aborts its active contexts, releases its incomplete framing state and waits,
 and removes its cached session/version state. Other peers remain independent.
+After departure or room closure, framing stops sending remaining chunks, including
+retransmissions. A notification interrupted between chunk sends rejects with
+`NOT_CONNECTED`. A completed payload awaiting its acknowledgement send is
+discarded if the peer leaves or the room closes before dispatch.
 Transport adapters remain responsible for excluding callbacks from obsolete
 connections; the legacy wire contains no connection-instance identifier.
 
@@ -96,12 +101,18 @@ Notifications do not receive RPC error replies.
 Legacy errors preserve `code`, `message`, and optional JSON `details`. Categories
 remain `TIMEOUT`, `NOT_CONNECTED`, `REMOTE_ERROR`, `CANCELLED`, and `PROTOCOL_ERROR`.
 Local send failures remain observable. Unexpected handler exceptions are converted
-without serialising arbitrary exception properties. Diagnostic observer failures
-must not interrupt settlement or cleanup.
+without serialising arbitrary exception properties. If sending a successful result fails,
+the receiver reports the completed method and send failure through
+`onProtocolWarning`. While the request is active it attempts one error reply
+with the original error code and details and a message identifying the completed
+method. An undelivered reply leaves the outcome unknown to the caller.
+Synchronous exceptions and rejected promises from diagnostic observers must
+not interrupt settlement or cleanup.
 
 Physical messages use `raw`, `chunk`, and `chunk-ack`. Default chunk payload size
 is 32 KiB. A 350 ms quiet-period wait requests missing indices; new partial
-fragments schedule another wait. Acknowledgements must come from the peer owning the outgoing stream. An empty
+fragments restart the wait. Reassembly cancels the wait before acknowledging
+completion. Only the owning peer may acknowledge an outgoing stream. An empty
 missing list acknowledges completion.
 This is framing recovery, not an automatic retry of application operations.
 
@@ -117,7 +128,9 @@ P2P uses the legacy wire union and forwards room-level typed `postOptions` on
 each physical send. Encoding happens once per logical envelope, before framing.
 
 `Runtime` supplies timeout scheduling/cancellation and request/chunk ID generation.
-Custom ID generators must maintain uniqueness within the active protocol scope.
+A timer cancellation failure is reported as a warning. The cancelled callback
+remains inactive and the room continues releasing other waits. Custom ID
+generators must maintain uniqueness within the active protocol scope.
 Native `AbortController` is the default at request time. Its factory can be injected
 for host-specific signal typing and deterministic tests. Importing the package
 must not establish connections or schedule work.

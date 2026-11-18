@@ -27,7 +27,7 @@ export interface EndpointSenderOptions<
 
 /** Focused codec/transport sending boundary for an RPC endpoint. */
 export interface EndpointSender<Wire, PostOptions, TransferResource> {
-  /** Encodes and dispatches an envelope, reporting late/async failures via diagnostics. */
+  /** Encodes and dispatches an envelope, reporting encoding and transport failures via diagnostics. */
   dispatchBestEffort(
     target: PeerAddress,
     envelope: RpcEnvelope,
@@ -44,8 +44,12 @@ export interface EndpointSender<Wire, PostOptions, TransferResource> {
   ): void;
   /** Encodes and sends a serialised error response frame. */
   sendErrorResponse(target: PeerAddress, requestId: string, error: unknown): void;
-  /** Encodes a shared notification envelope for preflight validation or `sendMany`. */
-  encodeSharedNotify(method: string, values: readonly unknown[]): Wire;
+  /** Encodes a notification for a single target or for a shared send when the target is omitted. */
+  encodeNotify(
+    method: string,
+    values: readonly unknown[],
+    target?: PeerAddress,
+  ): Wire;
 }
 
 /** Creates the codec/send boundary for an RPC endpoint. */
@@ -72,7 +76,7 @@ export function createEndpointSender<
       encoded = codec.encode(envelope);
     } catch (error) {
       const rpcError = toRpcError("encode-failed", error, target);
-      emitDiagnostic({ type: "late-send-failure", operation, error: rpcError });
+      emitDiagnostic({ type: "encode-failed", operation, error: rpcError });
       return Promise.resolve();
     }
 
@@ -86,7 +90,7 @@ export function createEndpointSender<
       if (isPromiseLike(result)) {
         return Promise.resolve(result).catch((error: unknown) => {
           emitDiagnostic({
-            type: "late-send-failure",
+            type: "send-failed",
             operation,
             error: toRpcError("send-failed", error, target),
           });
@@ -95,7 +99,7 @@ export function createEndpointSender<
       return Promise.resolve();
     } catch (error) {
       emitDiagnostic({
-        type: "late-send-failure",
+        type: "send-failed",
         operation,
         error: toRpcError("send-failed", error, target),
       });
@@ -149,7 +153,7 @@ export function createEndpointSender<
     } catch (error) {
       const encodeError = toRpcError("encode-failed", error, target);
       emitDiagnostic({
-        type: "late-send-failure",
+        type: "encode-failed",
         operation: "response-encode",
         error: encodeError,
       });
@@ -180,7 +184,7 @@ export function createEndpointSender<
     const handleResponseSendFailure = (error: unknown) => {
       const sendError = toRpcError("send-failed", error, target);
       emitDiagnostic({
-        type: "late-send-failure",
+        type: "send-failed",
         operation: "response-send",
         error: sendError,
       });
@@ -217,18 +221,23 @@ export function createEndpointSender<
     void dispatchBestEffort(target, envelope, undefined, undefined, "response-error");
   }
 
-  function encodeSharedNotify(method: string, values: readonly unknown[]): Wire {
-    const sharedEnvelope: RpcEnvelope = {
+  function encodeNotify(
+    method: string,
+    values: readonly unknown[],
+    target?: PeerAddress,
+  ): Wire {
+    const envelope: RpcEnvelope = {
       kind: "notify",
       version: 1,
       sender: localPeer,
+      ...(target !== undefined ? { target } : {}),
       method,
       args: values,
     };
     try {
-      return codec.encode(sharedEnvelope);
+      return codec.encode(envelope);
     } catch (error) {
-      throw toRpcError("encode-failed", error);
+      throw toRpcError("encode-failed", error, target);
     }
   }
 
@@ -236,6 +245,6 @@ export function createEndpointSender<
     dispatchBestEffort,
     sendSuccessResponse,
     sendErrorResponse,
-    encodeSharedNotify,
+    encodeNotify,
   };
 }

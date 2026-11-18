@@ -1,3 +1,4 @@
+import { promiseWithResolvers } from "octagonal-wheels/promises";
 import { RpcError } from "./RpcError.js";
 import type {
   JsonLike,
@@ -55,21 +56,27 @@ export async function invokePendingInvocation(
     throw new RpcError("CANCELLED", "RPC cancelled: " + method);
   }
   const requestId = createRequestId();
-  let invocation!: PendingInvocation;
-  const result = new Promise<JsonLike>((resolve, reject) => {
-    registerPendingWait(
+  const result = promiseWithResolvers<JsonLike>();
+  let invocation: PendingInvocation;
+  try {
+    invocation = registerPendingWait(
       requestId,
       peerId,
       method,
       options,
       timeoutMs,
-      (created) => {
-        invocation = created;
-      },
-      resolve,
-      reject,
+      result.resolve,
+      result.reject,
     );
-  });
+  } catch (error) {
+    // A re-entrant hook can settle before throwing; consume that intermediate outcome.
+    void result.promise.catch(() => undefined);
+    throw error;
+  }
+
+  if (pending.get(requestId) !== invocation) {
+    return await result.promise;
+  }
 
   const sendTask = sendEnvelope(peerId, {
     kind: "request",
@@ -101,7 +108,7 @@ export async function invokePendingInvocation(
     },
   );
 
-  return await result;
+  return await result.promise;
 }
 
 /**

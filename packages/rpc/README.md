@@ -5,12 +5,18 @@ This private, unreleased package provides P2P calls and notifications through
 protocol. Start with the [P2P guide](docs/p2p.md) for usage, admission,
 cancellation, serial handlers, and dependency injection.
 
-The host owns connections, peer approval, and replication policy. The package
-has not been adopted by downstream LiveSync automatically. Worker communication,
-transfer, and streams are extensions and may use an interface-compatible engine.
+The host owns connections, peer approval, and replication policy. Downstream
+LiveSync still uses its Commonlib runtime. The experimental Worker adapter
+supports calls, notifications, and ownership transfer. Stream methods are
+reserved for a future extension.
 
 The earlier root `createRpcEndpoint` and `@vrtmrz/rpc/worker` exports remain
-experimental. P2P does not import their Worker, transfer, or stream machinery.
+experimental. The root endpoint accepts unary call and notification contracts.
+Its `onDiagnostic` observer distinguishes encoding errors (`encode-failed`),
+transport send errors (`send-failed`), and owned transport close errors
+(`transport-close-failed`). A request send that fails after the call has
+already settled reports `late-send-failure`.
+
 The Worker adapter's non-empty transfer lists follow the
 [Worker transfer profile](docs/worker-transfer-profile.md); copy-only sends use
 platform structured cloning. Static rejection of shared-memory-backed views and
