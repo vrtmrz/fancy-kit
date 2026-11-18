@@ -32,6 +32,7 @@ once. The endpoint's `close` and `closeAsync` accept an optional `RpcError` for
 reason propagation. Closing the server explicitly reports shutdown to the host.
 Unexpected external termination without a Worker error event requires the
 owner to close the connection. Per-call deadlines still govern individual waits.
+Disposing a managed client closes its owned connection.
 
 ## Worker pool
 
@@ -46,6 +47,9 @@ ties in slot order, and waits for startup only when no slot is ready. The pool
 replaces an ended connection on subsequent demand and leaves interrupted work
 to the caller. Closing the pool closes every current connection once and
 prevents new acquisition.
+Demand made synchronously by a connection factory shares the current slot
+creation pass. Acquisition checks whether an existing connection has already
+ended before placing work.
 
 A lease exposes the connection, its ready client, and an idempotent `release()`.
 The placement count tracks the leases held by the caller. An application can

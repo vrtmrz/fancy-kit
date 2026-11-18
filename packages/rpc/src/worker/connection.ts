@@ -55,7 +55,11 @@ export interface WorkerRpcWorker extends MessagePortLike<never> {
 }
 
 /** Typed client for one managed Worker, with binary and port transfer. */
-export type WorkerRpcClient<C extends ContractShape> = RpcPeerClient<C, WorkerPostOptions, Resource>;
+export interface WorkerRpcClient<C extends ContractShape>
+  extends RpcPeerClient<C, WorkerPostOptions, Resource> {
+  /** Closes the owned Worker connection. Use a pool lease's `release()` to return the lease. */
+  dispose(): void;
+}
 
 interface WorkerRpcOptions<C extends ContractShape> {
   /** Shared unary and notification contract. */
@@ -209,6 +213,10 @@ export function connectWorkerRpc<const C extends ContractShape>(
     close(new RpcError("decode-failed", "Worker RPC received a message that could not be decoded."));
   }
 
+  function bindClient(active: Endpoint<C>): WorkerRpcClient<C> {
+    return { ...active.bindPeer(workerPeer), dispose: () => close() };
+  }
+
   function onControl(frame: ControlFrame): void {
     if (frame.kind === "worker-rpc-closed") {
       const { code, message, remoteName } = frame.error;
@@ -217,7 +225,7 @@ export function connectWorkerRpc<const C extends ContractShape>(
       receivedReady = true;
       clearStartupTimer();
       if (endpoint) {
-        ready.resolve(endpoint.bindPeer(workerPeer));
+        ready.resolve(bindClient(endpoint));
       }
     }
   }
@@ -229,7 +237,7 @@ export function connectWorkerRpc<const C extends ContractShape>(
     if (closeReason) {
       endpoint.close(closeReason);
     } else if (receivedReady) {
-      ready.resolve(endpoint.bindPeer(workerPeer));
+      ready.resolve(bindClient(endpoint));
     } else {
       stopTimeout = scheduler.setTimeout(() => {
         if (!receivedReady) {

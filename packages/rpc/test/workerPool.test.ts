@@ -5,6 +5,7 @@ import { RpcError } from "../src/RpcError.js";
 import {
   createWorkerPool,
   type WorkerPoolConnection,
+  type WorkerPoolLease,
 } from "../src/worker/pool.js";
 
 function makeConnection<Client>(
@@ -128,6 +129,110 @@ describe("createWorkerPool", () => {
 
     pool.close();
     expect(removeListener).toHaveBeenCalledTimes(2);
+  });
+
+  it("shares slot creation with start and acquire calls made inside the factory", async () => {
+    const first = makeConnection("first");
+    const duplicate = makeConnection("duplicate");
+    type Connection = typeof first.connection;
+    let nestedStart: Promise<Connection[]> | undefined;
+    let nestedAcquire: Promise<WorkerPoolLease<Connection, string>> | undefined;
+    let calls = 0;
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection(): Connection {
+        calls += 1;
+        if (calls === 1) {
+          nestedStart = pool.start();
+          nestedAcquire = pool.acquire();
+          return first.connection;
+        }
+        return duplicate.connection;
+      },
+    });
+
+    try {
+      const starting = pool.start();
+      const all = Promise.all([starting, nestedStart!, nestedAcquire!]);
+      void all.catch(() => undefined);
+      expect(calls).toBe(1);
+      const [outer, inner, lease] = await all;
+      expect(outer).toEqual([first.connection]);
+      expect(inner).toEqual([first.connection]);
+      expect(lease.connection).toBe(first.connection);
+      lease.release();
+    } finally {
+      pool.close();
+    }
+    expect(first.close).toHaveBeenCalledTimes(1);
+    expect(duplicate.close).not.toHaveBeenCalled();
+  });
+
+  it("preserves a re-entrant start's factory failure across later demand", async () => {
+    const replacement = makeConnection("replacement");
+    const creationError = new Error("worker factory failed");
+    type Connection = typeof replacement.connection;
+    let nested: Promise<Connection[]> | undefined;
+    let calls = 0;
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection(): Connection {
+        calls += 1;
+        if (calls === 1) {
+          nested = pool.start();
+          throw creationError;
+        }
+        return replacement.connection;
+      },
+    });
+
+    try {
+      const failed = pool.start();
+      const retry = pool.start();
+      const outcomes = await Promise.allSettled([failed, nested!, retry]);
+      expect(outcomes).toEqual([
+        { status: "rejected", reason: creationError },
+        { status: "rejected", reason: creationError },
+        { status: "fulfilled", value: [replacement.connection] },
+      ]);
+      expect(calls).toBe(2);
+    } finally {
+      pool.close();
+    }
+  });
+
+  it("replaces an aborted slot when an earlier abort listener acquires again", async () => {
+    const first = makeConnection("first");
+    const replacement = makeConnection("replacement");
+    type Connection = typeof first.connection;
+    let reacquiring: Promise<WorkerPoolLease<Connection, string>> | undefined;
+    let calls = 0;
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection(): Connection {
+        calls += 1;
+        if (calls === 1) {
+          first.connection.signal.addEventListener("abort", () => {
+            reacquiring = pool.acquire();
+          }, { once: true });
+          return first.connection;
+        }
+        return replacement.connection;
+      },
+    });
+
+    try {
+      const initial = await pool.acquire();
+      initial.release();
+      first.controller.abort(new RpcError("disconnected", "worker stopped"));
+      const lease = await reacquiring!;
+      expect(lease.connection).toBe(replacement.connection);
+      expect(lease.client).toBe("replacement");
+      expect(calls).toBe(2);
+      lease.release();
+    } finally {
+      pool.close();
+    }
   });
 
   it("rejects prewarming if a ready slot ends while another is still starting", async () => {

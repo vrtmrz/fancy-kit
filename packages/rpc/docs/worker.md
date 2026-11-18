@@ -116,7 +116,9 @@ For a single Worker, call `connectWorkerRpc` directly, await `connection.ready`,
 and close the connection when finished. Call `pool.start()` inside the pool's
 owned lifetime to start all connections before the first acquisition. The host
 can then use the clients to prepare application caches. Keep a lease until the
-work on that connection ends. Release it even if a handler or consumer fails.
+work on that connection ends. Call its `release()` even if a handler or
+consumer fails. The managed client's `dispose()` closes the connection for
+every lease using it.
 
 `readWorkerStream` requests one chunk at a time and checks its size against
 `maxChunkBytes`. Pick the limit from the largest chunk your producer can emit.

@@ -1,7 +1,7 @@
 import { promiseWithResolvers } from "octagonal-wheels/promises";
 import { describe, expect, it } from "vitest";
 import { call, defineContract, notify, RpcError } from "../src/index.js";
-import { connectWorkerRpc, serveWorkerRpc } from "../src/worker.js";
+import { connectWorkerRpc, createWorkerPool, serveWorkerRpc } from "../src/worker.js";
 import { createControllableScheduler } from "./facilities/controllableScheduler.js";
 import { createWorkerFixture } from "./facilities/workerFixture.js";
 
@@ -136,6 +136,48 @@ describe("Managed Worker RPC connection", () => {
     await closed.promise;
     expect(connection.signal.reason).toMatchObject({ code: "disconnected", message: "Worker service stopped." });
     expect(fixture.terminationCount).toBe(1);
+  });
+
+  it("replaces an owned pooled connection after its managed client is disposed", async () => {
+    const fixtures = [createWorkerFixture(), createWorkerFixture()];
+    const servers: ReturnType<typeof serveWorkerRpc>[] = [];
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection() {
+        const fixture = fixtures[servers.length]!;
+        const connection = connectWorkerRpc({ contract, createWorker: () => fixture.worker });
+        servers.push(serveWorkerRpc({
+          contract,
+          port: fixture.port,
+          register(endpoint) {
+            endpoint.handle("transform", (_context, text) => text.toUpperCase());
+          },
+        }));
+        return connection;
+      },
+    });
+
+    try {
+      const lease = await pool.acquire();
+      await expect(lease.client.call.transform(["first"])).resolves.toBe("FIRST");
+      lease.client.dispose();
+      lease.release();
+
+      const next = await pool.acquire();
+      try {
+        await expect(next.client.call.transform(["replacement"])).resolves.toBe("REPLACEMENT");
+        expect(next.connection).not.toBe(lease.connection);
+        expect(lease.connection.signal.aborted).toBe(true);
+        expect(fixtures[0]!.terminationCount).toBe(1);
+      } finally {
+        next.release();
+      }
+    } finally {
+      pool.close();
+      for (const server of servers) {
+        server.close();
+      }
+    }
   });
 
   it("closes on a message that cannot be deserialised", async () => {
