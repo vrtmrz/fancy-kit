@@ -194,6 +194,89 @@ describe("P2P behavioural regressions", () => {
     });
   });
 
+  it("invokes a legacy room through the namespaced session proxy", async () => {
+    const pair = createLegacyPair();
+    const caller = createP2PRoom({ transport: pair.a.transport });
+    const receiver = new LegacyRpcRoom({ transport: pair.b.transport });
+    try {
+      receiver.register("db.lookup", (peerId, key: string, revision: number) => ({ peerId, key, revision }));
+      const proxy = caller.session(pair.wire.a.remotePeer.peerId).createProxy<{
+        lookup(key: string, revision: number): Promise<{ peerId: string; key: string; revision: number }>;
+      }>("db");
+
+      await expect(proxy.lookup("note", 7)).resolves.toEqual({
+        peerId: pair.wire.a.localPeer.peerId,
+        key: "note",
+        revision: 7,
+      });
+    } finally {
+      caller.close();
+      receiver.close();
+      pair.wire.dispose();
+    }
+  });
+
+  it("rejects calls and notifications for an empty peer without sending", async () => {
+    const pair = createLegacyPair();
+    const room = createP2PRoom({ transport: pair.a.transport });
+    try {
+      const unbound = room.session("");
+      await expect(unbound.call("db.lookup")).rejects.toMatchObject({ code: "NOT_CONNECTED" });
+      await expect(unbound.notify("db.progress")).rejects.toMatchObject({ code: "NOT_CONNECTED" });
+      expect(pair.wire.a.sentMessages).toEqual([]);
+    } finally {
+      room.close();
+      pair.wire.dispose();
+    }
+  });
+
+  it("cancels locally before the request send settles and forwards cancellation afterwards", async () => {
+    const pair = createLegacyPair();
+    pair.wire.a.setSendSettlementMode("manual");
+    const caller = createP2PRoom({ transport: pair.a.transport });
+    const receiver = createP2PRoom({ transport: pair.b.transport });
+    const started = deferred<AbortSignal>();
+    const cancelled = deferred<void>();
+    const finish = deferred<null>();
+
+    try {
+      receiver.registerCancellable("db.wait", (context) => {
+        context.signal.addEventListener("abort", () => cancelled.resolve(), { once: true });
+        started.resolve(context.signal);
+        return finish.promise;
+      });
+      const peerId = pair.wire.a.remotePeer.peerId;
+      const call = caller.session(peerId).call("db.wait", [], 0);
+      void call.catch(() => undefined);
+      const signal = await started.promise;
+      const [request] = pair.wire.a.sentMessages;
+      if (request?.payload.wire !== "raw") {
+        throw new Error("Expected a raw outbound request.");
+      }
+      const { requestId } = JSON.parse(request.payload.payload) as { requestId: string };
+
+      await caller.cancel(peerId, requestId);
+      await expect(call).rejects.toMatchObject({ code: "CANCELLED" });
+      expect(signal.aborted).toBe(false);
+      expect(pair.wire.a.sentMessages).toHaveLength(1);
+
+      pair.wire.a.setSendSettlementMode("immediate");
+      expect(pair.wire.a.resolveNextSend()).toBe(true);
+      await cancelled.promise;
+      expect(pair.wire.a.sentMessages.map(({ payload }) =>
+        payload.wire === "raw" ? JSON.parse(payload.payload) : payload,
+      )).toEqual([
+        expect.objectContaining({ kind: "request", requestId }),
+        { kind: "cancel", requestId },
+      ]);
+    } finally {
+      finish.resolve(null);
+      caller.close();
+      receiver.close();
+      pair.wire.dispose();
+    }
+  });
+
   it("ignores a response from a peer other than the session target", async () => {
     const pair = createLegacyPair();
     const peerId = pair.wire.a.remotePeer.peerId;

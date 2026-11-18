@@ -59,7 +59,9 @@ export interface WorkerPool<
   start(): Promise<Connection[]>;
   /**
    * Acquires one ready connection, preferring the slot with the fewest live
-   * leases and rotating ties. It waits only when no slot is ready.
+   * leases and rotating ties. It waits only when no slot is ready. Each
+   * acquisition uses the connections from its own startup pass and rejects
+   * with that pass's latest failure if none becomes usable.
    */
   acquire(): Promise<WorkerPoolLease<Connection, Client>>;
   /**
@@ -70,6 +72,11 @@ export interface WorkerPool<
   close(reason?: RpcError): void;
 }
 
+interface PoolFailure {
+  readonly reason: unknown;
+  readonly sequence: number;
+}
+
 interface CandidateWaits<Client> {
   readonly ready: PromiseWithResolvers<Client>;
 }
@@ -77,7 +84,7 @@ interface CandidateWaits<Client> {
 type CandidateState<Client> =
   | (CandidateWaits<Client> & { readonly phase: "starting" })
   | (CandidateWaits<Client> & { readonly phase: "ready"; readonly client: Client })
-  | (CandidateWaits<Client> & { readonly phase: "ended"; readonly reason: unknown });
+  | (CandidateWaits<Client> & { readonly phase: "ended"; readonly failure: PoolFailure });
 
 interface Candidate<Connection extends WorkerPoolConnection<unknown>> {
   readonly connection: Connection;
@@ -134,9 +141,14 @@ export function createWorkerPool<
   }
 
   type Client = Awaited<Connection["ready"]>;
-  type StartupSnapshot =
-    | { readonly candidates: readonly Candidate<Connection>[] }
-    | { readonly failure: unknown };
+  interface StartupSnapshot {
+    readonly candidates: readonly (Candidate<Connection> | undefined)[];
+    readonly failure: PoolFailure | undefined;
+  }
+  interface SlotFill {
+    failure: PoolFailure | undefined;
+    waiter: PromiseWithResolvers<StartupSnapshot> | undefined;
+  }
 
   const slots: Array<Slot<Connection>> = Array.from(
     { length: options.size },
@@ -145,22 +157,32 @@ export function createWorkerPool<
   let closed = false;
   let closeReason: RpcError | undefined;
   let nextTieStart = 0;
-  let hasFailure = false;
-  let lastFailure: unknown;
-  let fillingSlots = false;
-  let slotFillWait: PromiseWithResolvers<StartupSnapshot> | undefined;
+  let failureSequence = 0;
+  let slotFill: SlotFill | undefined;
 
   function closeReasonOrDefault(): RpcError {
     return closeReason ?? disconnectedError("Worker pool is closed.");
   }
 
-  function recordFailure(reason: unknown): void {
-    hasFailure = true;
-    lastFailure = reason;
+  function recordFailure(reason: unknown): PoolFailure {
+    failureSequence += 1;
+    const failure = { reason, sequence: failureSequence };
+    if (slotFill !== undefined) {
+      slotFill.failure = failure;
+    }
+    return failure;
   }
 
-  function newestFailure(): unknown {
-    return hasFailure ? lastFailure : disconnectedError("No Worker connection is available.");
+  function newestFailure(snapshot: StartupSnapshot): unknown {
+    let newest = snapshot.failure;
+    for (const candidate of snapshot.candidates) {
+      const lifecycle = candidate?.lifecycle;
+      if (lifecycle?.phase === "ended" &&
+        (newest === undefined || lifecycle.failure.sequence > newest.sequence)) {
+        newest = lifecycle.failure;
+      }
+    }
+    return newest === undefined ? disconnectedError("No Worker connection is available.") : newest.reason;
   }
 
   function closeConnection(connection: Connection, reason?: RpcError): void {
@@ -181,10 +203,11 @@ export function createWorkerPool<
     }
   }
 
-  function getReadyCandidate(): ReadyCandidate<Connection> | undefined {
+  function getReadyCandidate(
+    candidates: StartupSnapshot["candidates"],
+  ): ReadyCandidate<Connection> | undefined {
     let minimum = Number.POSITIVE_INFINITY;
-    for (const slot of slots) {
-      const candidate = slot.current;
+    for (const candidate of candidates) {
       if (!isReadyCandidate(candidate)) {
         continue;
       }
@@ -197,7 +220,7 @@ export function createWorkerPool<
     }
     for (let offset = 0; offset < slots.length; offset += 1) {
       const slotIndex = (nextTieStart + offset) % slots.length;
-      const candidate = slots[slotIndex]!.current;
+      const candidate = candidates[slotIndex];
       if (isReadyCandidate(candidate) && candidate.leases === minimum) {
         nextTieStart = (slotIndex + 1) % slots.length;
         return candidate;
@@ -232,9 +255,8 @@ export function createWorkerPool<
     if (slot.current !== candidate || previous.phase === "ended") {
       return;
     }
-    candidate.lifecycle = { ...previous, phase: "ended", reason };
+    candidate.lifecycle = { ready: previous.ready, phase: "ended", failure: recordFailure(reason) };
     slot.current = undefined;
-    recordFailure(reason);
     removeAbortListener(candidate);
     previous.ready.reject(reason);
     if (closeFailedStartup) {
@@ -335,36 +357,27 @@ export function createWorkerPool<
     }
   }
 
-  function snapshotStartup(): StartupSnapshot {
-    const candidates: Array<Candidate<Connection>> = [];
-    for (const { current } of slots) {
-      if (current === undefined) {
-        return { failure: newestFailure() };
-      }
-      candidates.push(current);
-    }
-    return { candidates };
-  }
-
   function waitForSlotFill(): Promise<StartupSnapshot> | undefined {
-    if (fillingSlots) {
-      slotFillWait ??= promiseWithResolvers<StartupSnapshot>();
-      return slotFillWait.promise;
+    if (slotFill !== undefined) {
+      slotFill.waiter ??= promiseWithResolvers<StartupSnapshot>();
+      return slotFill.waiter.promise;
     }
   }
 
-  function ensureSlots(): void {
-    fillingSlots = true;
+  function ensureSlots(): StartupSnapshot {
+    const fill: SlotFill = { failure: undefined, waiter: undefined };
+    slotFill = fill;
+    let snapshot: StartupSnapshot;
     try {
       for (let slotIndex = 0; slotIndex < slots.length; slotIndex += 1) {
         startSlot(slots[slotIndex]!, slotIndex);
       }
     } finally {
-      const waiter = slotFillWait;
-      slotFillWait = undefined;
-      fillingSlots = false;
-      waiter?.resolve(snapshotStartup());
+      slotFill = undefined;
+      snapshot = { candidates: slots.map((slot) => slot.current), failure: fill.failure };
+      fill.waiter?.resolve(snapshot);
     }
+    return snapshot;
   }
 
   function start(): Promise<Connection[]> {
@@ -375,18 +388,17 @@ export function createWorkerPool<
     if (fill !== undefined) {
       return fill.then(waitForStartedSlots);
     }
-    ensureSlots();
-    return waitForStartedSlots(snapshotStartup());
+    return waitForStartedSlots(ensureSlots());
   }
 
   function waitForStartedSlots(snapshot: StartupSnapshot): Promise<Connection[]> {
     if (closed) {
       return Promise.reject(closeReasonOrDefault());
     }
-    if ("failure" in snapshot) {
-      return Promise.reject(snapshot.failure);
+    const candidates = snapshot.candidates.filter((candidate) => candidate !== undefined);
+    if (candidates.length !== slots.length) {
+      return Promise.reject(newestFailure(snapshot));
     }
-    const { candidates } = snapshot;
     const startFailure = promiseWithResolvers<unknown>();
     const failure = startFailure.promise.then((reason) => {
       throw reason;
@@ -423,12 +435,12 @@ export function createWorkerPool<
         const signal = candidate.connection.signal;
         if (slot.current !== candidate || lifecycle.phase !== "ready" || signal.aborted) {
           if (lifecycle.phase === "ended") {
-            throw lifecycle.reason;
+            throw lifecycle.failure.reason;
           }
           if (signal.aborted) {
             throw signalEndReason(signal, "Worker connection ended during pool startup.");
           }
-          throw newestFailure();
+          throw newestFailure(snapshot);
         }
       }
       return candidates.map((candidate) => candidate.connection);
@@ -450,21 +462,17 @@ export function createWorkerPool<
       throw closeReasonOrDefault();
     }
     const fill = waitForSlotFill();
-    if (fill !== undefined) {
-      await fill;
-    } else {
-      ensureSlots();
-    }
+    const snapshot = fill === undefined ? ensureSlots() : await fill;
     while (!closed) {
-      const candidate = getReadyCandidate();
+      const candidate = getReadyCandidate(snapshot.candidates);
       if (candidate !== undefined) {
         return createLease(candidate);
       }
-      const starting = slots.flatMap((slot) =>
-        slot.current?.lifecycle.phase === "starting" ? [slot.current] : [],
+      const starting = snapshot.candidates.flatMap((item) =>
+        item?.lifecycle.phase === "starting" ? [item] : [],
       );
       if (starting.length === 0) {
-        throw newestFailure();
+        throw newestFailure(snapshot);
       }
       await Promise.race(starting.map((item) =>
         item.lifecycle.ready.promise.then(() => undefined, () => undefined),
@@ -479,6 +487,7 @@ export function createWorkerPool<
     }
     closed = true;
     closeReason = reason ?? disconnectedError("Worker pool is closed.");
+    const failure = recordFailure(closeReason);
     for (const slot of slots) {
       const candidate = slot.current;
       slot.current = undefined;
@@ -486,7 +495,7 @@ export function createWorkerPool<
         continue;
       }
       const lifecycle = candidate.lifecycle;
-      candidate.lifecycle = { ...lifecycle, phase: "ended", reason: closeReason };
+      candidate.lifecycle = { ready: lifecycle.ready, phase: "ended", failure };
       removeAbortListener(candidate);
       if (lifecycle.phase === "starting") {
         lifecycle.ready.reject(closeReason);

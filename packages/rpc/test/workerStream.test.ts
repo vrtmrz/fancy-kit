@@ -1,3 +1,4 @@
+import { setImmediate } from "node:timers/promises";
 import { MessageChannel } from "node:worker_threads";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createCancelController } from "../src/cancelSignal.js";
@@ -211,6 +212,92 @@ describe("Worker stream ports", () => {
       code: "invalid-contract",
     });
     expect(backing.byteLength).toBe(8);
+  });
+
+  it("releases a shared budget reservation on delivery while the first stream remains open", async () => {
+    const firstPullStarted = createDeferred<void>();
+    const firstChunk = createDeferred<Uint8Array<ArrayBuffer>>();
+    const budget = createWorkerStreamBudget(4);
+    const first = createTestStream({
+      maxChunkBytes: 4,
+      budget,
+      async *createSource() {
+        firstPullStarted.resolve(undefined);
+        yield await firstChunk.promise;
+      },
+    });
+    const createSecondSource = vi.fn(() => oneChunk(new Uint8Array([5, 6, 7, 8])));
+    const second = createTestStream({
+      maxChunkBytes: 4,
+      budget,
+      createSource: createSecondSource,
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]);
+
+    try {
+      const firstRead = first.reader.next();
+      await firstPullStarted.promise;
+      const secondRead = second.reader.next();
+      await setImmediate();
+      expect(createSecondSource).not.toHaveBeenCalled();
+
+      firstChunk.resolve(bytes);
+      await expect(firstRead).resolves.toEqual({ done: false, value: bytes });
+      await expect(secondRead).resolves.toEqual({
+        done: false,
+        value: new Uint8Array([5, 6, 7, 8]),
+      });
+      expect(createSecondSource).toHaveBeenCalledTimes(1);
+      await expect(first.reader.next()).resolves.toEqual({ done: true, value: undefined });
+    } finally {
+      firstChunk.resolve(bytes);
+      await first.reader.return?.();
+      await second.reader.return?.();
+    }
+  });
+
+  it("reports a failed chunk send, returns the source, and releases its reservation", async () => {
+    const budget = createWorkerStreamBudget(4);
+    const sourceReturned = createDeferred<void>();
+    const first = createTestStream({
+      maxChunkBytes: 4,
+      budget,
+      async *createSource() {
+        try {
+          yield new Uint8Array([1, 2, 3, 4]);
+        } finally {
+          sourceReturned.resolve(undefined);
+        }
+      },
+    });
+    const nextChunk = new Uint8Array([5, 6, 7, 8]);
+    const second = createTestStream({
+      maxChunkBytes: 4,
+      budget,
+      createSource: () => oneChunk(nextChunk),
+    });
+    const originalPost = first.channel.port1.postMessage.bind(first.channel.port1);
+    const post = vi.spyOn(first.channel.port1, "postMessage").mockImplementation(
+      (message, transferList) => {
+        if (message?.type === "chunk") {
+          throw new Error("Could not deliver the chunk");
+        }
+        originalPost(message, transferList);
+      },
+    );
+
+    try {
+      const firstRead = first.reader.next();
+      const secondRead = second.reader.next();
+      await expect(firstRead).rejects.toMatchObject({ code: "send-failed" });
+      await sourceReturned.promise;
+      await expect(secondRead).resolves.toEqual({ done: false, value: nextChunk });
+      await expect(first.reader.next()).rejects.toMatchObject({ code: "send-failed" });
+    } finally {
+      await first.reader.return?.();
+      await second.reader.return?.();
+      post.mockRestore();
+    }
   });
 
   it("releases a cancelled read reservation so the next reader can pull", async () => {

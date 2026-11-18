@@ -49,7 +49,9 @@ to the caller. Closing the pool closes every current connection once and
 prevents new acquisition.
 Demand made synchronously by a connection factory shares the current slot
 creation pass. Acquisition checks whether an existing connection has already
-ended before placing work.
+ended before placing work. Each acquisition uses the connections from its
+own pass, including healthy slots when a sibling fails. If none becomes
+usable, the acquisition reports the latest failure from its own pass.
 
 A lease exposes the connection, its ready client, and an idempotent `release()`.
 The placement count tracks the leases held by the caller. An application can

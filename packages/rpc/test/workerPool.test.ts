@@ -1,3 +1,4 @@
+import { setImmediate } from "node:timers/promises";
 import { describe, expect, it, vi } from "vitest";
 import { promiseWithResolvers } from "octagonal-wheels/promises";
 import { createCancelController } from "../src/cancelSignal.js";
@@ -199,6 +200,137 @@ describe("createWorkerPool", () => {
     } finally {
       pool.close();
     }
+  });
+
+  it("rejects a re-entrant acquire with its own factory failure while a later start waits", async () => {
+    const retryReady = promiseWithResolvers<string>();
+    const replacement = makeConnection("replacement", retryReady.promise);
+    const failed = new Error("original factory failed");
+    const pending = Symbol("acquire is still pending");
+    type Connection = typeof replacement.connection;
+    let nestedOutcome: Promise<unknown> | undefined;
+    let calls = 0;
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection(): Connection {
+        calls += 1;
+        if (calls === 1) {
+          nestedOutcome = pool.acquire().then(
+            (lease) => {
+              lease.release();
+              return lease.client;
+            },
+            (error: unknown) => error,
+          );
+          throw failed;
+        }
+        return replacement.connection;
+      },
+    });
+
+    try {
+      const original = pool.start();
+      const retry = pool.start();
+      void retry.catch(() => undefined);
+      await expect(original).rejects.toBe(failed);
+      await expect(Promise.race([nestedOutcome!, setImmediate(pending)])).resolves.toBe(failed);
+      expect(calls).toBe(2);
+      retryReady.resolve("replacement");
+      await expect(retry).resolves.toEqual([replacement.connection]);
+    } finally {
+      pool.close();
+    }
+  });
+
+  it("retains the latest failure among the initial acquire's slots when later demand fails", async () => {
+    const firstReady = promiseWithResolvers<string>();
+    const secondReady = promiseWithResolvers<string>();
+    const first = makeConnection("first", firstReady.promise);
+    const second = makeConnection("second", secondReady.promise);
+    const laterFailure = new Error("later factory failed");
+    const latestOriginalFailure = new RpcError("disconnected", "first slot ended last");
+    const initialConnections = [first.connection, second.connection];
+    const pool = createWorkerPool({
+      size: 2,
+      createConnection() {
+        const initial = initialConnections.shift();
+        if (initial === undefined) {
+          throw laterFailure;
+        }
+        return initial;
+      },
+    });
+
+    try {
+      const acquiring = pool.acquire();
+      second.controller.abort(new RpcError("disconnected", "second slot ended first"));
+      first.controller.abort(latestOriginalFailure);
+      const retry = pool.start();
+      await expect(Promise.allSettled([acquiring, retry])).resolves.toEqual([
+        { status: "rejected", reason: latestOriginalFailure },
+        { status: "rejected", reason: laterFailure },
+      ]);
+    } finally {
+      pool.close();
+    }
+  });
+
+  it("leases a healthy slot from the same pass after a different factory throws", async () => {
+    const readiness = promiseWithResolvers<string>();
+    const healthy = makeConnection("healthy", readiness.promise);
+    const failed = new Error("sibling factory failed");
+    type Connection = typeof healthy.connection;
+    let nestedAcquire: Promise<WorkerPoolLease<Connection, string>> | undefined;
+    let calls = 0;
+    const pool = createWorkerPool({
+      size: 2,
+      createConnection(): Connection {
+        calls += 1;
+        if (calls === 1) {
+          nestedAcquire = pool.acquire();
+          void nestedAcquire.catch(() => undefined);
+          throw failed;
+        }
+        return healthy.connection;
+      },
+    });
+
+    try {
+      await expect(pool.start()).rejects.toBe(failed);
+      readiness.resolve("healthy");
+      const lease = await nestedAcquire!;
+      expect(lease.connection).toBe(healthy.connection);
+      expect(lease.client).toBe("healthy");
+      expect(calls).toBe(2);
+      lease.release();
+    } finally {
+      pool.close();
+    }
+  });
+
+  it("settles re-entrant demand when the factory synchronously closes the pool", async () => {
+    const created = makeConnection("closed before ready");
+    const reason = new RpcError("disconnected", "pool shut down in factory");
+    type Connection = typeof created.connection;
+    let nestedAcquire: Promise<WorkerPoolLease<Connection, string>> | undefined;
+    let nestedStart: Promise<Connection[]> | undefined;
+    const pool = createWorkerPool({
+      size: 1,
+      createConnection(): Connection {
+        nestedAcquire = pool.acquire();
+        nestedStart = pool.start();
+        pool.close(reason);
+        return created.connection;
+      },
+    });
+
+    const start = pool.start();
+    await expect(Promise.allSettled([start, nestedStart!, nestedAcquire!])).resolves.toEqual([
+      { status: "rejected", reason },
+      { status: "rejected", reason },
+      { status: "rejected", reason },
+    ]);
+    expect(created.close).toHaveBeenCalledExactlyOnceWith(reason);
   });
 
   it("replaces an aborted slot when an earlier abort listener acquires again", async () => {
