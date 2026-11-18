@@ -22,6 +22,7 @@ function fixture(packageName = "octagonal-wheels") {
     "@vrtmrz/secret-store": "packages/secret-store",
     "@vrtmrz/secret-store-node": "packages/secret-store-node",
     "@vrtmrz/value-store": "packages/value-store",
+    "@vrtmrz/rpc": "packages/rpc",
     "octagonal-wheels": "packages/octagonal-wheels",
   };
   const packageDirectory = directories[packageName];
@@ -75,10 +76,30 @@ test("accepts every publishable package", () => {
     "@vrtmrz/secret-store",
     "@vrtmrz/secret-store-node",
     "@vrtmrz/value-store",
+    "@vrtmrz/rpc",
     "octagonal-wheels",
   ]) {
     assert.doesNotThrow(() => planReleasePreparation(fixture(packageName)));
   }
+});
+
+test("prepares the first RPC release without changing its runtime dependency", () => {
+  const input = fixture("@vrtmrz/rpc");
+  input.version = "0.1.0";
+  input.manifest.version = "0.0.0";
+  input.manifest.dependencies = { "octagonal-wheels": "^0.1.56" };
+  input.lockfile.packages["packages/rpc"] = {
+    version: "0.0.0",
+    dependencies: { ...input.manifest.dependencies },
+  };
+  const result = planReleasePreparation(input);
+  assert.equal(result.packageDirectory, "packages/rpc");
+  assert.equal(result.manifest.version, "0.1.0");
+  assert.deepEqual(result.lockfile.packages["packages/rpc"], {
+    version: "0.1.0",
+    dependencies: { "octagonal-wheels": "^0.1.56" },
+  });
+  assert.deepEqual(result.manifest.dependencies, input.manifest.dependencies);
 });
 
 test("prepares value-store independently without adding runtime dependencies", () => {

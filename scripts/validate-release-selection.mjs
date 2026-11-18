@@ -16,6 +16,7 @@ export const publishablePackages = Object.freeze({
   "@vrtmrz/secret-store": "packages/secret-store",
   "@vrtmrz/secret-store-node": "packages/secret-store-node",
   "@vrtmrz/value-store": "packages/value-store",
+  "@vrtmrz/rpc": "packages/rpc",
   "octagonal-wheels": "packages/octagonal-wheels",
 });
 

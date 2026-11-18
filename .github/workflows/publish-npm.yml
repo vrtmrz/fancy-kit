@@ -15,6 +15,7 @@ on:
           - "@vrtmrz/secret-store"
           - "@vrtmrz/secret-store-node"
           - "@vrtmrz/value-store"
+          - "@vrtmrz/rpc"
           - octagonal-wheels
       version:
         description: Exact version in the selected package manifest

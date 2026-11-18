@@ -1,8 +1,8 @@
 # P2P RPC
 
 `@vrtmrz/rpc/p2p` provides the initial P2P implementation derived from Commonlib
-0.5.0. The package remains private and unreleased. It speaks the existing JSON
-RPC protocol; adopting it in LiveSync is a separate integration change.
+0.5.0. It speaks the existing JSON RPC protocol. LiveSync can adopt it by
+providing a transport adapter at its P2P composition root.
 
 ```ts
 import { RpcRoom, type TransportAdapter } from "@vrtmrz/rpc/p2p";

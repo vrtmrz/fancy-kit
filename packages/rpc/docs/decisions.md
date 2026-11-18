@@ -58,6 +58,5 @@ owners through narrow dependencies and retain composition tests. Distinguish
 Node transport simulations, actual browser transport checks, downstream adoption,
 and performance evidence. None substitutes automatically for the others.
 
-The package remains private and unreleased. Existing experimental root/Worker
-exports are retained separately while the P2P implementation is validated;
-they are not the recommended P2P integration.
+Use the focused `@vrtmrz/rpc/p2p` entry for P2P integrations. The experimental
+root and Worker entries serve the separate endpoint and Worker profiles.

@@ -1,7 +1,6 @@
 {
   "name": "@vrtmrz/rpc",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Platform-neutral P2P RPC calls and notifications, with experimental Worker connections, pooling and streams",
   "type": "module",
   "license": "MIT",
@@ -16,6 +15,9 @@
     "url": "https://github.com/vrtmrz/fancy-kit/issues"
   },
   "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "docs",
