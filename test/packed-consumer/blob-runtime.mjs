@@ -16,7 +16,7 @@ for (const name of [
     },
   });
 }
-const { createTextBlob, createBinaryBlob, toBlob, isBlobContentEqual } =
+const { createTextBlob, createBinaryBlob, toBlob, isBlobContentEqual, iterateBlobBlocks } =
   await import("octagonal-wheels/binary/blob");
 Object.defineProperty(globalThis, "Blob", {
   configurable: true,
@@ -24,6 +24,13 @@ Object.defineProperty(globalThis, "Blob", {
 });
 
 const original = new Blob(["payload"], { type: "application/custom" });
+
+const blocks = [];
+for await (const block of iterateBlobBlocks(createBinaryBlob(new Uint8Array([1, 2, 3])), 2)) {
+  blocks.push([...block]);
+}
+assert.deepEqual(blocks, [[1, 2], [3]]);
+
 assert.equal(toBlob(original), original);
 assert.equal(toBlob(original).type, "application/custom");
 const text = createTextBlob(["first\r", "\n日本語"]);

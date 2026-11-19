@@ -45,6 +45,34 @@ export function toBlob(data: string | string[] | Uint8Array<ArrayBuffer> | Array
     return createTextBlob(data);
 }
 
+function readBlobRange(blob: Blob, offset: number, length: number): Promise<ArrayBuffer> {
+    return blob.slice(offset, offset + length).arrayBuffer();
+}
+
+/**
+ * Reads a Blob sequentially as blocks with an explicit byte limit.
+ *
+ * @param blob - The source Blob.
+ * @param maxBlockBytes - Maximum bytes per block, as a positive safe integer.
+ * @returns An async generator yielding independent byte buffers in source order.
+ * @remarks Each request reads only the next range. The final block may be
+ * shorter. Empty Blobs yield nothing. Stopping iteration stops further reads.
+ * An invalid limit rejects the first request with a RangeError.
+ */
+export async function* iterateBlobBlocks(
+    blob: Blob,
+    maxBlockBytes: number
+): AsyncGenerator<Uint8Array<ArrayBuffer>, void, unknown> {
+    if (!Number.isSafeInteger(maxBlockBytes) || maxBlockBytes <= 0) {
+        throw new RangeError("The Blob block limit must be a positive safe integer.");
+    }
+
+    const size = blob.size;
+    for (let offset = 0; offset < size; offset += maxBlockBytes) {
+        yield new Uint8Array(await readBlobRange(blob, offset, maxBlockBytes));
+    }
+}
+
 /**
  * Tests whether two ArrayBuffers contain equal bytes.
  *
@@ -98,8 +126,8 @@ export async function isBlobContentEqual(
     const length = left.size;
     let offset = 0;
     while (offset < length) {
-        const leftPart = await left.slice(offset, offset + checkQuantum).arrayBuffer();
-        const rightPart = await right.slice(offset, offset + checkQuantum).arrayBuffer();
+        const leftPart = await readBlobRange(left, offset, checkQuantum);
+        const rightPart = await readBlobRange(right, offset, checkQuantum);
         offset += checkQuantum;
         if (!(await isArrayBufferEqual(leftPart, rightPart))) return false;
     }

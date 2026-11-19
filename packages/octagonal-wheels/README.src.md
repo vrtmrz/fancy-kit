@@ -55,12 +55,14 @@ The shared runtime utilities include `createOwnedResource`, `withOwnedResource`,
 
 The [generated API index](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/docs/modules.md) links to per-module and per-symbol TSDoc. The [import and runtime guide](https://github.com/vrtmrz/fancy-kit/blob/main/packages/octagonal-wheels/guides/imports-and-runtime.md) explains entry-point selection, platform dependencies, testing boundaries, and maintained examples.
 
-## Blob conversion and comparison
+## Blob conversion, reading, and comparison
 
 `binary/blob` provides `createTextBlob`, `createBinaryBlob`, and `toBlob` for
 standard Blob inputs. Creation returns a new Blob; `toBlob` preserves an
 existing Blob's identity and MIME type. `isBlobContentEqual` compares bytes in
 bounded parts, with an optional synchronous or asynchronous equality predicate.
+`iterateBlobBlocks(blob, maxBlockBytes)` yields a byte block on each async
+iterator request, with the caller choosing the maximum read size.
 See the [Blob guide](guides/imports-and-runtime.md#blob-creation-and-normalisation)
 for input types, line endings, binary view ranges, comparison, and runtime requirements.
 

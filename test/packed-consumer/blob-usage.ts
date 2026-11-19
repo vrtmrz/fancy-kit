@@ -2,6 +2,7 @@ import {
   createBinaryBlob,
   createTextBlob,
   isBlobContentEqual,
+  iterateBlobBlocks,
   toBlob,
 } from "octagonal-wheels/binary/blob";
 import type { ArrayBufferContentEquality } from "octagonal-wheels/binary/blob";
@@ -23,6 +24,7 @@ const buffer: Blob = toBlob(bytes.buffer);
 const normalised: Blob = toBlob(text);
 const alias: Blob = toBlobAlias("text");
 const category: Blob = toBlobFromBinary(bytes);
+const blockStream: AsyncIterable<Uint8Array<ArrayBuffer>> = iterateBlobBlocks(binary, 2);
 const isBufferContentEqual: ArrayBufferContentEquality = (left, right) => {
   if (left.byteLength !== right.byteLength) return false;
   const leftBytes = new Uint8Array(left);
@@ -60,6 +62,7 @@ void [
   focusedComparison,
   aliasComparison,
   categoryComparison,
+  blockStream,
 ];
 
 // @ts-expect-error Plain objects are outside the supported conversion contract.

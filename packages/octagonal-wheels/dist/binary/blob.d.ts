@@ -34,6 +34,17 @@ export declare function createBinaryBlob(data: Uint8Array<ArrayBuffer> | ArrayBu
  */
 export declare function toBlob(data: string | string[] | Uint8Array<ArrayBuffer> | ArrayBuffer | Blob): Blob;
 /**
+ * Reads a Blob sequentially as blocks with an explicit byte limit.
+ *
+ * @param blob - The source Blob.
+ * @param maxBlockBytes - Maximum bytes per block, as a positive safe integer.
+ * @returns An async generator yielding independent byte buffers in source order.
+ * @remarks Each request reads only the next range. The final block may be
+ * shorter. Empty Blobs yield nothing. Stopping iteration stops further reads.
+ * An invalid limit rejects the first request with a RangeError.
+ */
+export declare function iterateBlobBlocks(blob: Blob, maxBlockBytes: number): AsyncGenerator<Uint8Array<ArrayBuffer>, void, unknown>;
+/**
  * Tests whether two ArrayBuffers contain equal bytes.
  *
  * Used by {@link isBlobContentEqual} for pairs of equally sized parts containing
