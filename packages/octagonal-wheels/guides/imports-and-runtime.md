@@ -102,6 +102,10 @@ the `to` prefix. It does not decode bytes, inspect file extensions, or interpret
 application document metadata. Instance checks use the current realm's global
 constructors.
 
+Use `iterateBlobBlocks(blob, maxBlockBytes)` to iterate over bytes in order.
+Each request reads one range and yields its bytes in a separate buffer. The
+final block may be shorter, and ending iteration early stops further reads.
+
 To compare content independently of MIME types, pass two Blobs to
 `isBlobContentEqual`:
 

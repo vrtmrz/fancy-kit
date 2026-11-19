@@ -3,7 +3,7 @@ export { arrayBufferToBase64Browser, arrayBufferToBase64Native, arrayBufferToBas
 import { _decodeToArrayBuffer, decodeToArrayBuffer } from './encodedUTF16.js';
 export { toArrayBuffer } from './arrayBuffer.js';
 export { hexStringToUint8Array, hexStringToUint8ArrayBrowser, hexStringToUint8ArrayNative, uint8ArrayToHexString, uint8ArrayToHexStringBrowser, uint8ArrayToHexStringNative } from './hex.js';
-export { createBinaryBlob, createTextBlob, isBlobContentEqual, toBlob } from './blob.js';
+export { createBinaryBlob, createTextBlob, isBlobContentEqual, iterateBlobBlocks, toBlob } from './blob.js';
 export { concatUInt8Array, createTypedArrayReader } from './typedArray.js';
 export { _encodeBinary, encodeBinaryEach } from './encodedUTF16.deprecated.js';
 

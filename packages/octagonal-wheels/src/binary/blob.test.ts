@@ -3,6 +3,7 @@ import {
     createBinaryBlob,
     createTextBlob,
     isBlobContentEqual,
+    iterateBlobBlocks,
     toBlob,
     type ArrayBufferContentEquality,
 } from "./blob.ts";
@@ -101,6 +102,56 @@ function observeBlobReads(blob: Blob, label: string, events: string[] = []) {
     });
     return { blob, read, slice, parts };
 }
+
+describe("Blob block reading", () => {
+    it("reads one range per request, including the final short block", async () => {
+        const source = observeBlobReads(new Blob([new Uint8Array([1, 2, 3, 4, 5])]), "source");
+        const blocks = iterateBlobBlocks(source.blob, 2);
+
+        expect(source.slice).not.toHaveBeenCalled();
+        const first = await blocks.next();
+        expect(first).toEqual({ done: false, value: new Uint8Array([1, 2]) });
+        expect(source.slice).toHaveBeenCalledTimes(1);
+        expect(await blocks.next()).toEqual({ done: false, value: new Uint8Array([3, 4]) });
+        expect(source.slice).toHaveBeenCalledTimes(2);
+        expect(await blocks.next()).toEqual({ done: false, value: new Uint8Array([5]) });
+        expect(await blocks.next()).toEqual({ done: true, value: undefined });
+
+        expect(first.value).toEqual(new Uint8Array([1, 2]));
+        expect(source.parts.map((part) => part.size)).toEqual([2, 2, 1]);
+        expect(source.read).not.toHaveBeenCalled();
+    });
+
+    it("stops reading when iteration ends early", async () => {
+        const source = observeBlobReads(new Blob(["abcdef"]), "source");
+
+        for await (const block of iterateBlobBlocks(source.blob, 2)) {
+            expect(block).toEqual(new Uint8Array([0x61, 0x62]));
+            break;
+        }
+
+        expect(source.slice).toHaveBeenCalledTimes(1);
+    });
+
+    it("finishes an empty Blob without reading", async () => {
+        const source = observeBlobReads(new Blob(), "source");
+
+        expect(await iterateBlobBlocks(source.blob, 2).next()).toEqual({ done: true, value: undefined });
+        expect(source.slice).not.toHaveBeenCalled();
+        expect(source.read).not.toHaveBeenCalled();
+    });
+
+    it.each([0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+        "rejects an invalid block limit %s before reading",
+        async (limit) => {
+            const source = observeBlobReads(new Blob(["abc"]), "source");
+
+            await expect(iterateBlobBlocks(source.blob, limit).next()).rejects.toThrow(RangeError);
+            expect(source.slice).not.toHaveBeenCalled();
+            expect(source.read).not.toHaveBeenCalled();
+        }
+    );
+});
 
 describe("Blob content equality", () => {
     it("does not read or invoke the predicate when sizes differ", async () => {
