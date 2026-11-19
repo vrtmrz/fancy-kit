@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.57
+
+### New features
+
+- Process large Blobs a block at a time with `iterateBlobBlocks` from `octagonal-wheels/binary/blob`. Set the maximum block size in bytes and iterate with `for await...of`. Each request reads the next range, and stopping the loop stops further reads.
+
 ## 0.1.56
 
 ### New features
