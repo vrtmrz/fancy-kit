@@ -5,11 +5,64 @@ Worker. `connectWorkerRpc` takes ownership of a Worker created by the host.
 Its `ready` promise resolves with the typed client after `serveWorkerRpc`
 finishes registering the handlers. Close the connection when the host stops.
 
-## Share a contract
+Compile the Worker with WebWorker declarations and the host with DOM
+declarations. Use a build that resolves package imports and makes `worker.js`
+available as a dedicated module Worker.
+
+## Call a single Worker
+
+Share the same contract between the host and the Worker. This example sends a
+`Blob` in one request and receives its size in bytes.
+
+```ts
+// contract.ts
+import { call, defineContract } from "@vrtmrz/rpc";
+
+export const contract = defineContract({
+  length: call<[input: Blob], number>(),
+});
+```
+
+```ts
+// worker.ts
+import { serveWorkerRpc } from "@vrtmrz/rpc/worker";
+import { contract } from "./contract.js";
+
+serveWorkerRpc({
+  contract,
+  port: self,
+  register(endpoint) {
+    endpoint.handle("length", (_context, input) => input.size);
+  },
+});
+```
+
+```ts
+// host.ts
+import { connectWorkerRpc } from "@vrtmrz/rpc/worker";
+import { contract } from "./contract.js";
+
+const connection = connectWorkerRpc({
+  contract,
+  createWorker: () =>
+    new Worker(new URL("./worker.js", import.meta.url), { type: "module" }),
+});
+
+try {
+  const client = await connection.ready;
+  console.log(await client.call.length([new Blob(["hello"])])); // 5
+} finally {
+  connection.close();
+}
+```
+
+## Stream results from a Worker pool
 
 The following example uses a pool and returns a stream of bytes from a copied
 `Blob`. The contract also has a single-result call to show how both kinds of
 work share a connection.
+
+### Share a contract
 
 ```ts
 // contract.ts
@@ -23,7 +76,7 @@ export const contract = defineContract({
 });
 ```
 
-## Register the Worker handlers
+### Register the Worker handlers
 
 ```ts
 // worker.ts
@@ -54,10 +107,7 @@ serveWorkerRpc({
 });
 ```
 
-## Use the connection in the host
-
-Compile the Worker with WebWorker declarations and make `worker.js` available
-as a dedicated module Worker. The host uses DOM declarations.
+### Use the connection in the host
 
 ```ts
 // host.ts
@@ -112,13 +162,11 @@ try {
 }
 ```
 
-For a single Worker, call `connectWorkerRpc` directly, await `connection.ready`,
-and close the connection when finished. Call `pool.start()` inside the pool's
-owned lifetime to start all connections before the first acquisition. The host
-can then use the clients to prepare application caches. Keep a lease until the
-work on that connection ends. Call its `release()` even if a handler or
-consumer fails. The managed client's `dispose()` closes the connection for
-every lease using it.
+Call `pool.start()` inside the pool's owned lifetime to start all connections
+before the first acquisition. The host can then use the clients to prepare
+application caches. Keep a lease until the work on that connection ends. Call
+its `release()` even if a handler or consumer fails. The managed client's
+`dispose()` closes the connection for every lease using it.
 
 `readWorkerStream` requests one chunk at a time and checks its size against
 `maxChunkBytes`. Pick the limit from the largest chunk your producer can emit.
