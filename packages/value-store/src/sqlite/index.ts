@@ -36,7 +36,7 @@ export type { SqliteFileValueStoreOptions, SqliteValueStoreOptions, SqliteValueS
  *
  * @param database - An open native connection whose lifetime remains with the caller.
  * @param options - Exact namespace, literal physical-key prefix, and optional serialiser.
- * @returns A store with SQL batches, scoped clear, and per-store disposal.
+ * @returns A store with SQL batches, scoped clear, key listing, and per-store disposal.
  * @throws {@link index.ValueStoreError | ValueStoreError} Synchronously for invalid options or missing
  * native capabilities. Initialisation and I/O failures instead reject operation
  * or disposal promises with fixed errors, without leaking native diagnostics.
@@ -58,7 +58,8 @@ export type { SqliteFileValueStoreOptions, SqliteValueStoreOptions, SqliteValueS
 export function createSqliteValueStore(database: DatabaseSync, options: SqliteValueStoreOptions): SqliteValueStore {
   try {
     const { prefix, namespace } = captureScope(options);
-    if (!database || typeof database.prepare !== "function" || typeof database.exec !== "function") throw new ValueStoreError("unavailable");
+    if (!database || typeof database.prepare !== "function" || typeof database.exec !== "function"
+      || typeof database.isTransaction !== "boolean") throw new ValueStoreError("unavailable");
     const coordinator = coordinatorFor(database);
     let ready: Promise<void>;
     const bytes = encodeString(namespace);
@@ -69,6 +70,7 @@ export function createSqliteValueStore(database: DatabaseSync, options: SqliteVa
       delete: key => access(() => coordinator.write(bytes, prefix, [{ type: "delete", key }])),
       writeBatch: operations => access(() => coordinator.write(bytes, prefix, operations)),
       clear: () => access(() => coordinator.clear(bytes, prefix)),
+      listKeys: options => access(() => coordinator.listKeys(bytes, prefix, options)),
     }, options, { onStart() {}, onFinish() {}, dispose: async () => { await ready; if (coordinator.fault) throw coordinator.fault; } });
     ready = coordinator.run(() => coordinator.validateSchema(true));
     void ready.catch(() => undefined);
@@ -112,7 +114,7 @@ export function createSqliteValueStore(database: DatabaseSync, options: SqliteVa
  * outside this adapter's contract.
  *
  * @param options - Explicit file path, literal prefix, namespace, serialiser, and managed policy.
- * @returns A reusable facade with SQL batches, scoped clear, and terminal disposal.
+ * @returns A reusable facade with SQL batches, scoped clear, key listing, and terminal disposal.
  * @throws {@link index.ValueStoreError | ValueStoreError} Synchronously for invalid options or conflicting
  * shared-file settings. File initialisation and later I/O failures reject the
  * asynchronous operations or disposal instead of making construction awaitable.
@@ -155,6 +157,7 @@ export function createSqliteFileValueStore(options: SqliteFileValueStoreOptions)
       delete: key => write([{ type: "delete", key }]),
       writeBatch: operations => write(operations),
       clear: () => manager.access(false, undefined, connection => connection.clear(namespace, scope.prefix)),
+      listKeys: options => manager.access(false, [], connection => connection.listKeys(namespace, scope.prefix, options)),
     }, options, {
       onStart: () => manager.start(),
       onFinish: () => manager.finish(),

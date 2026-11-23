@@ -14,6 +14,27 @@ export function encodeString(value: string): Uint8Array {
   return bytes;
 }
 
+/** Compares unsigned bytes in the same lexicographic order SQLite uses for BLOBs. */
+export function compareBytes(left: Uint8Array, right: Uint8Array): number {
+  const length = Math.min(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    if (left[index] !== right[index]) return left[index] - right[index];
+  }
+  return left.length - right.length;
+}
+
+/** Returns the exclusive byte ceiling for all BLOBs beginning with `bytes`. */
+export function nextBlobPrefix(bytes: Uint8Array): Uint8Array | undefined {
+  for (let index = bytes.length - 1; index >= 0; index -= 1) {
+    if (bytes[index] < 0xff) {
+      const next = bytes.slice(0, index + 1);
+      next[index] += 1;
+      return next;
+    }
+  }
+  return undefined;
+}
+
 /** Requires an even-length BLOB so native TEXT or truncated code units cannot be decoded silently. */
 export function decodeString(value: unknown): string {
   if (!(value instanceof Uint8Array) || value.length % 2 !== 0) throw new ValueStoreError("invalid-data");

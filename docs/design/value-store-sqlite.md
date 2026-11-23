@@ -1,5 +1,5 @@
 ---
-date: 2026-11-10
+date: 2026-11-23
 value-store-version: "0.1.0"
 status: implementation-candidate
 ---
@@ -14,12 +14,14 @@ serialisers, and literal key prefixes. Kit manages the normal file connection
 lifecycle; applications choose the file, stop their producers, and await store
 disposal. An additional entry borrows an existing connection from its owner.
 
-This document records the agreed design. The APIs below are implemented and
-selected for ValueStore 0.1.1. The declaration sketches describe their public
-boundary; registry publication is verified separately through the
-[release process](../releasing.md). The implementation passed the complete
-workspace gate and separate Node/Deno native checks; see
-[recorded candidate evidence](../proven-in-use.md#unpublished-batch-and-sqlite-candidate).
+This document records the agreed design. Ordered batches, scoped clearing,
+disposal, and the SQLite adapters are in the published ValueStore 0.1.1.
+`ValueKeyLister` and SQLite's B-tree prefix-range `clear()` implementation are
+unreleased additions on this branch and are not included in 0.1.1. The
+declaration sketches describe their public boundary; registry publication is
+verified separately through the [release process](../releasing.md). The dated
+workspace-gate result and package-owned evidence are recorded in
+[proven-in-use](../proven-in-use.md#valuestore-package-and-consumer-evidence).
 The baseline is
 `@vrtmrz/value-store` 0.1.0 at Fancy Kit commit
 `0a0476a658af5e2fa89cb58b67748cafe2a016bc`. It extends the
@@ -33,10 +35,11 @@ processing. A shared SQLite adapter removes that storage ceiling; applications
 retain responsibility for delivery checkpoints and error recovery.
 
 The initial scope covers ordered batches for SQLite, JSON files, Web Storage,
-and memory; scoped clearing where supported; and explicit completion of a
-store's accepted work. General read transactions, enumeration, compare-and-swap,
-cross-namespace transactions, worker offloading, automatic backend fallback,
-and changes to the secret profile or age adapter are outside this design.
+and memory; scoped clearing where supported; key listing for adapters that can
+enumerate their own keys; and explicit completion of a store's accepted work.
+General read transactions, compare-and-swap, cross-namespace transactions,
+worker offloading, automatic backend fallback, and changes to the secret
+profile or age adapter are outside this design.
 
 ## Public capabilities and placement
 
@@ -61,6 +64,19 @@ interface ValueClearer {
   clear(): Promise<void>;
 }
 
+interface ValueKeyLister {
+  listKeys(options?: ValueKeyListOptions): Promise<string[]>;
+}
+
+interface ValueKeyListOptions {
+  prefix?: string;
+  lower?: string;
+  lowerExclusive?: boolean;
+  upper?: string;
+  upperExclusive?: boolean;
+  limit?: number;
+}
+
 interface ValueStoreDisposer {
   dispose(): Promise<void>;
 }
@@ -71,26 +87,42 @@ been applied. It does not promise rollback on every backend. There is no public
 `atomic` option in this version. A future generic atomic capability would need
 its own explicit contract.
 
+`ValueKeyLister` and `ValueKeyListOptions` are an independent capability. They
+add `listKeys()` without changing the existing `ValueStore` or `ValueBackend`
+contracts. Listing returns logical keys in ascending UTF-16 code-unit order,
+with optional literal-prefix, inclusive or exclusive lower and upper bounds,
+and a result limit. It returns only keys and does not invoke serialisers;
+SQLite queries only the primary-key index, while the JSON-file adapter reads
+and validates its bounded document. Memory,
+JSON-file, and SQLite stores provide it; Web Storage remains unchanged because
+`WebStorageAccess` has no enumeration method.
+
 | Entry or factory | Additions and responsibility |
 | --- | --- |
-| `@vrtmrz/value-store` | Neutral capability types and shared preparation; `MemoryValueStore` gains batch, clear, and disposal capabilities. |
-| `@vrtmrz/value-store/web-storage` | `createWebStorageValueStore` gains batches and disposal, retaining explicit injection and raw per-key storage. |
-| `@vrtmrz/value-store/node-json-file` | `createJsonFileValueStore` gains batches, prefix-scoped clear, and disposal; existing arguments and file format remain valid. |
-| `@vrtmrz/value-store/node-sqlite` | New managed-file and borrowed-connection factories, both exposing value operations, delete, batch, clear, and disposal. |
+| `@vrtmrz/value-store` | Neutral capability types and shared preparation; `MemoryValueStore` gains batch, clear, key listing, and disposal capabilities. |
+| `@vrtmrz/value-store/web-storage` | `createWebStorageValueStore` gains batches and disposal, retaining explicit injection and raw per-key storage. `WebStorageAccess` is unchanged and does not expose listing or clear. |
+| `@vrtmrz/value-store/node-json-file` | `createJsonFileValueStore` gains batches, prefix-scoped clear and key listing, and disposal; existing arguments and file format remain valid. |
+| `@vrtmrz/value-store/node-sqlite` | New managed-file and borrowed-connection factories, both exposing value operations, delete, batch, clear, key listing, and disposal. |
 
 The existing minimal `WebStorageAccess` contains only `getItem`, `setItem`, and
-`removeItem`. Those methods suffice for batches, but not for enumerating a
-prefix. Its factory therefore does not advertise `ValueClearer`. Do not widen
-that injected interface or call the host's global `clear()` implicitly. An
-explicit enumeration capability can support scoped clearing in a later change.
-Memory clears its instance-owned map; JSON clears its captured prefix; SQLite
-clears its captured namespace and prefix.
+`removeItem`. Those methods suffice for batches, but not for enumerating keys or
+a prefix. Its factory therefore does not advertise `ValueClearer` or
+`ValueKeyLister`. Keep that injected interface unchanged and do not call the
+host's global `clear()` implicitly. Memory lists and clears its instance-owned
+map; JSON lists and clears its captured prefix; SQLite lists and clears its
+captured namespace and prefix.
 
 Keep `node:sqlite`, filesystem modules, and `DatabaseSync` types inside the new
 Node subpath. The neutral root and Web Storage entry remain independent of Node,
 DOM globals, Obsidian, and runtime, optional, or peer package dependencies.
-The SQLite subpath requires a runtime providing the native API it uses; adding
-it does not raise the runtime floor of the existing JSON or neutral entries.
+The SQLite subpath requires a runtime whose `node:sqlite` provides
+`DatabaseSync.isTransaction` and supports the `mode=rw` URI parameter. Supported
+Node.js examples are 22.22.0 and later on the 22.x LTS line, 24.x, and 26.x.
+End-of-life Node.js 23.x, including 23.11.1, lacks `DatabaseSync.isTransaction`
+and is rejected with `unavailable`. Node.js 22.22.0 emits the standard
+experimental SQLite warning. Deno 2.9.7 is qualified for managed-file checks
+with `--allow-all`. Adding the SQLite subpath does not raise the runtime floor
+of the existing JSON or neutral entries.
 
 ## SQLite construction
 
@@ -115,7 +147,7 @@ interface SqliteFileValueStoreOptions extends SqliteValueStoreOptions {
 }
 
 type SqliteValueStore = ValueStore & ValueDeleter & ValueBatchWriter
-  & ValueClearer & ValueStoreDisposer;
+  & ValueClearer & ValueKeyLister & ValueStoreDisposer;
 
 function createSqliteFileValueStore(
   options: SqliteFileValueStoreOptions,
@@ -182,6 +214,23 @@ prefixes deliberately share entries, so clearing one can affect another view.
 Other namespaces, schema metadata, and the database file remain intact. A
 namespace is a logical partition, not an access-control boundary. Consumers
 sharing entries must agree on serialisation; Kit adds no serialiser registry.
+
+`listKeys()` returns logical keys and never invokes the caller's serialiser.
+The SQLite implementation selects only the `key` column through the composite
+`(namespace, key)` primary-key index; it does not read stored value BLOBs. The
+JSON-file implementation reads, parses, and validates its bounded whole
+document, including when `limit` is zero.
+
+SQLite listing and the unreleased B-tree prefix-range implementation of
+`clear()` use bounded index range operations over the existing UTF-16BE BLOB
+key in the composite `(namespace, key)` primary key. The schema and key
+representation do not change in SQLite v1. Compute the range's upper boundary
+as the byte-prefix successor of the UTF-16BE encoded prefix; when every byte is
+`0xFF`, there is no upper bound. SQLite's BLOB ordering matches ascending
+UTF-16 code-unit order. Listing intersects the literal prefix range with
+optional logical bounds before selecting keys. Clear deletes rows only within
+the selected namespace and encoded byte-prefix range, leaving malformed BLOB
+keys outside that range untouched.
 
 Generic ValueStore strings include embedded NULs and lone UTF-16 surrogates.
 Native TEXT bindings must not silently change these strings. Store namespaces,
@@ -513,8 +562,8 @@ and validation of the complete workflow with the selected storage backend.
 
 ## Verification and implementation sequence
 
-The design has limited native feasibility evidence on Linux arm64 with Node
-24.18.0 / SQLite 3.53.1 and Deno 2.9.7 / SQLite 3.53.2:
+Initial native feasibility probes ran on Linux arm64 with Node 24.18.0 /
+SQLite 3.53.1 and Deno 2.9.7 / SQLite 3.53.2:
 
 | Probe | Observed result | Limit |
 | --- | --- | --- |
@@ -523,12 +572,26 @@ The design has limited native feasibility evidence on Linux arm64 with Node
 | Abrupt process exit | After SIGKILL with one committed and one uncommitted write, reopening exposed only the committed row; later normal close removed WAL/SHM. | Not a power-loss or storage-device durability test. |
 | Existing-only open | `mode=rw` read an existing database and rejected a missing path without creating it in both runtimes. | Special paths, identity changes, and creation races remain unverified. |
 
-These probes establish feasibility, not implementation correctness or a minimum
-supported runtime matrix. The design and publication status of existing
-[proven-in-use evidence](../proven-in-use.md#valuestore-package-and-consumer-evidence)
-remain unchanged. Do not present PR-reported load tests as Kit validation.
+These probes establish feasibility, not implementation correctness. The
+runtime boundary requires `DatabaseSync.isTransaction` and `mode=rw` URI
+support. End-of-life Node.js 23.x (including 23.11.1) has `node:sqlite` but
+lacks `DatabaseSync.isTransaction`. On this unreleased branch (not in published
+0.1.1), `createSqliteValueStore` checks `typeof database.isTransaction === 'boolean'`
+synchronously at construction and rejects with `unavailable`, while
+`createSqliteFileValueStore` checks it when opening SQLite (during
+initialisation for an existing file, or on the first prepared value write for
+an initially absent file, where absent-file reads/listing/clear/delete do not
+open SQLite and a first write reserves the file and opens SQLite; if the opened
+connection lacks a boolean `isTransaction`, the adapter closes it and rejects
+the write with `unavailable`). Current
+package-owned runtime checks cover Node.js 22.22.0, 24.18.0, and 26.13.1, plus
+Deno 2.9.7 with `--allow-all`, on Linux arm64. Node.js 22.22.0 emits the
+standard experimental SQLite warning and bundles SQLite 3.50.4. See the dated
+[candidate evidence](../proven-in-use.md#unreleased-key-listing-and-sqlite-range-candidate)
+for package tests, runtime checks, and their limits. Do not present consumer
+integration or PR-reported load tests as Kit validation.
 
-Implementation should proceed through these bounded steps:
+Implementation proceeded through these bounded steps:
 
 1. Add neutral capability declarations and shared preparation/tracking, then
    extend memory, JSON, and Web Storage with their documented guarantees.
@@ -542,14 +605,14 @@ Implementation should proceed through these bounded steps:
 | --- | --- |
 | Compatibility | Existing contract cases still pass for absence, defaults, JSON snapshots, exact keys and strings, serialiser receiver/call counts, deletion, and sanitised errors. Old minimal custom backends still compile. |
 | Batches | Inputs are captured before await; preparation failures perform no data writes; repeated keys and `ifAbsent` follow array order; no cross-call FIFO promise; empty batches observe lifecycle. Test SQLite rollback, JSON single replacement and whole-document limit, memory publication, and Web Storage failure after an earlier successful write. |
-| Visibility and scope | A blocked serialiser does not expose queued values; separate reads can see separate generations; overlapping prefixes and empty namespace/prefix behave literally; clear preserves other scopes and schema metadata. |
+| Visibility and scope | A blocked serialiser does not expose queued values; separate reads can see separate generations; listing uses UTF-16 code-unit order and intersects literal prefixes with bounds; overlapping prefixes and empty namespace/prefix behave literally; clear preserves other scopes and schema metadata. |
 | Coordination | All operations share a connection lock across stores; own batches wait normally; external transactions reject without mutation; failure continuation, confirmed rollback, poisoned state, and independent-connection busy results are tested. |
 | Initialisation | Existing open/validate/migrate/close completes before public I/O; multiple stores share startup; missing reads/delete/clear/delete-only batches do not create files; first prepared write creates; later appearance is detected; known-file disappearance, unknown schema, and failed migration reject. |
 | Schema and codec | Exact UTF-16 strings including NUL, BOM, lone surrogates, and prefix wildcard characters round-trip on both runtimes. Test malformed BLOBs, missing/conflicting metadata, transactional version changes, and competing migration attempts. |
 | Lifecycle | Pending preparation/decoding counts as work; disposal drains successes and failures and stops admission; borrowed databases remain open; shared managed disposal never closes another store's active work; normal idle close permits reopen. |
 | Timer and failure races | Use an injected clock/native boundary to test new work at timer expiry, stale generation callbacks, init/dispose overlap, unref, background hook failures, retained faults, and subscriber release. Verify selected cases against native connections. |
 | Filesystem and durability | Test encoded path characters, aliases, replacement/deletion, permissions, create races, persistent volume placement, close failure, WAL recovery, and option conflicts. Separate process-exit evidence from power-loss claims. |
-| Packaging | Packed consumers exercise the new subpath and both factories. Neutral/browser graphs remain Node-free and dependency-free. Qualify the declared Node/Deno versions, leaving older entries' compatibility unchanged. |
+| Packaging | Packed consumers exercise the new subpath and both factories. Neutral/browser graphs remain Node-free and dependency-free. Qualify Node.js 22.22.0, 24.18.0, and 26.13.1, and Deno 2.9.7 with `--allow-all`, leaving older entries' compatibility unchanged. |
 | Application integration | Awaited persistence, rerunnable partial imports, destination precedence, separate reset marker, interruption ordering, and storage errors are covered by consumer tests. Confirm the application workflow with representative state volumes. |
 | Cost | Measure startup/reopen, idle churn, peak batch memory, event-loop stalls, and representative large imports. Compare durability settings under an explicit recovery policy; the 1-second grace period is still provisional. |
 
@@ -559,7 +622,9 @@ the affected packed-consumer and workspace gates required by
 those gates. The candidate source and native tests are in `packages/value-store/src/sqlite`
 and `packages/value-store/test/sqlite.test.ts`; `test/sqlite-runtime.mjs` exercises
 the built entry on Node and Deno with an 11 MiB value. Application integration and
-release qualification remain separate. Deno 2.9.7 managed-file checks require
+release qualification remain separate. The dated workspace-gate result is
+recorded in [proven-in-use](../proven-in-use.md#valuestore-package-and-consumer-evidence).
+Deno 2.9.7 managed-file checks require
 `--allow-all`: scoped permissions incorrectly resolve the
 existing-only URI as an ordinary path. The adapter retains existing-only opening
 and reports failure instead of falling back to a create-capable open.

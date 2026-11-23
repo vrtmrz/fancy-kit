@@ -1,10 +1,11 @@
 import { constants, type BigIntStats } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
-import type { ValueClearer } from "../contracts.js";
+import type { ValueClearer, ValueKeyLister } from "../contracts.js";
 import type { EnhancedValueStore } from "../enhanced-store.js";
 import { createEnhancedValueStore } from "../enhanced-store.js";
 import { ValueStoreError, sanitiseValueStoreError } from "../errors.js";
+import { listKeysFromIterable, type PreparedValueKeyListOptions } from "../key-listing.js";
 import { validateValueKey, validateValuePrefix, validateValueString } from "../validation.js";
 import { decodeDocument, encodeDocument, MAX_DOCUMENT_BYTES } from "./format.js";
 import type { JsonFileOperations } from "./operations.js";
@@ -40,7 +41,7 @@ function regularFile(stat: BigIntStats, allowUnlinked = false): void {
 }
 
 /** Private injected constructor; the public entry uses only real Node I/O. */
-export function createJsonFileValueStoreWithOperations(options: JsonFileValueStoreOptions, operations: JsonFileOperations): EnhancedValueStore & ValueClearer {
+export function createJsonFileValueStoreWithOperations(options: JsonFileValueStoreOptions, operations: JsonFileOperations): EnhancedValueStore & ValueClearer & ValueKeyLister {
   try {
     const prefix = options?.prefix;
     validateValuePrefix(prefix);
@@ -216,6 +217,12 @@ export function createJsonFileValueStoreWithOperations(options: JsonFileValueSto
             }
           }
           if (changed) replace(entries);
+        } catch (error) { throw sanitiseFileError(error); }
+      },
+      listKeys(listOptions: PreparedValueKeyListOptions) {
+        try {
+          const entries = readEntries();
+          return listKeysFromIterable(entries.keys(), prefix, listOptions);
         } catch (error) { throw sanitiseFileError(error); }
       },
     }, options);

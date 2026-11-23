@@ -10,6 +10,8 @@ export type {
   ValueReader,
   ValueStore,
   ValueStoreOptions,
+  ValueKeyListOptions,
+  ValueKeyLister,
   ObjectValue,
   ValueSerializer,
 } from "./contracts.js";

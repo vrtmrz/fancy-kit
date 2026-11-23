@@ -235,6 +235,45 @@ export interface ValueClearer {
   clear(): Promise<void>;
 }
 
+/**
+ * Options for listing logical keys within a store's captured scope.
+ *
+ * @remarks
+ * Only own data properties are read and snapshotted before asynchronous work.
+ * Inherited properties are ignored, and accessor properties reject with
+ * `invalid-value` without invoking their getters.
+ */
+export interface ValueKeyListOptions {
+  /** Literal logical prefix matched by UTF-16 code units; empty or omitted matches every key in scope. Invalid values reject with `invalid-value`. */
+  prefix?: string;
+  /** Lower bound in ascending UTF-16 code-unit order, inclusive unless `lowerExclusive` is true; invalid keys reject with `invalid-key`. */
+  lower?: string;
+  /** Excludes `lower` when true; defaults to false and rejects with `invalid-value` when true without `lower`. */
+  lowerExclusive?: boolean;
+  /** Upper bound in ascending UTF-16 code-unit order, inclusive unless `upperExclusive` is true; invalid keys reject with `invalid-key`. */
+  upper?: string;
+  /** Excludes `upper` when true; defaults to false and rejects with `invalid-value` when true without `upper`. */
+  upperExclusive?: boolean;
+  /** Non-negative safe integer maximum count; zero returns `[]` after validation and lifecycle checks; invalid values reject with `invalid-value`. */
+  limit?: number;
+}
+
+/** Capability for listing logical keys without invoking the value serialiser. */
+export interface ValueKeyLister {
+  /**
+   * Lists logical keys in ascending UTF-16 code-unit order, intersecting the
+   * literal prefix with the optional bounds. Own data fields of `options` are
+   * snapshotted before asynchronous work (ignoring inherited properties and
+   * rejecting accessors without invoking them); each result is a fresh array
+   * and serialisers are never called. An empty intersection returns an empty array.
+   * @param options - Optional literal prefix, logical bounds, and result limit.
+   * @returns A promise resolving to a fresh, sorted array of logical keys.
+   * @throws The returned promise rejects with `ValueStoreError` for invalid
+   * options, a backend failure, or a lifecycle failure.
+   */
+  listKeys(options?: ValueKeyListOptions): Promise<string[]>;
+}
+
 /** Explicit completion of a store's accepted operations and owned resources. */
 export interface ValueStoreDisposer {
   /**

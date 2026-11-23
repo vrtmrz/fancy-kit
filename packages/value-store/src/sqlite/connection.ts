@@ -1,7 +1,8 @@
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 import type { PreparedValueOperation } from "../enhanced-store.js";
+import type { PreparedValueKeyListOptions } from "../key-listing.js";
 import { ValueStoreError } from "../errors.js";
-import { encodeString, decodeString } from "./codec.js";
+import { compareBytes, decodeString, encodeString, nextBlobPrefix } from "./codec.js";
 import { sanitiseSqliteError } from "./errors.js";
 
 // BLOBs preserve exact JavaScript code units; the composite key keeps namespaces
@@ -49,6 +50,7 @@ export class SqliteCoordinator {
 
   /** Reject host-owned transactions so Kit never commits or exposes their uncommitted work. */
   checkTransaction(): void {
+    if (typeof this.database.isTransaction !== "boolean") throw new ValueStoreError("unavailable");
     if (this.database.isTransaction) throw new ValueStoreError("operation-failed");
   }
 
@@ -177,6 +179,69 @@ export class SqliteCoordinator {
     });
   }
 
+  /** Lists logical keys with a key-only query over encoded BLOB bounds. */
+  listKeys(namespace: Uint8Array, prefix: string, options: PreparedValueKeyListOptions): string[] {
+    this.checkTransaction();
+    const prefixBytes = encodeString(prefix + options.prefix);
+    let lower: Uint8Array | undefined;
+    let lowerExclusive = false;
+    let upper: Uint8Array | undefined;
+    let upperExclusive = false;
+    if (prefixBytes.length > 0) {
+      lower = prefixBytes;
+      const next = nextBlobPrefix(prefixBytes);
+      if (next !== undefined) {
+        upper = next;
+        upperExclusive = true;
+      }
+    }
+    if (options.lower !== undefined) {
+      const candidate = encodeString(prefix + options.lower);
+      const comparison = lower === undefined ? 1 : compareBytes(candidate, lower);
+      if (lower === undefined || comparison > 0) {
+        lower = candidate;
+        lowerExclusive = options.lowerExclusive;
+      } else if (comparison === 0) {
+        lowerExclusive ||= options.lowerExclusive;
+      }
+    }
+    if (options.upper !== undefined) {
+      const candidate = encodeString(prefix + options.upper);
+      const comparison = upper === undefined ? -1 : compareBytes(candidate, upper);
+      if (upper === undefined || comparison < 0) {
+        upper = candidate;
+        upperExclusive = options.upperExclusive;
+      } else if (comparison === 0) {
+        upperExclusive ||= options.upperExclusive;
+      }
+    }
+    if (options.limit === 0 || (lower !== undefined && upper !== undefined
+      && (compareBytes(lower, upper) > 0 || (compareBytes(lower, upper) === 0 && (lowerExclusive || upperExclusive))))) return [];
+    let sql = "SELECT key FROM fancy_kit_values WHERE namespace = ?";
+    const parameters: (Uint8Array | number)[] = [namespace];
+    if (lower !== undefined) {
+      sql += lowerExclusive ? " AND key > ?" : " AND key >= ?";
+      parameters.push(lower);
+    }
+    if (upper !== undefined) {
+      sql += upperExclusive ? " AND key < ?" : " AND key <= ?";
+      parameters.push(upper);
+    }
+    sql += " ORDER BY key ASC";
+    if (options.limit !== undefined) {
+      sql += " LIMIT ?";
+      parameters.push(options.limit);
+    }
+    const rows = this.statement(sql).all(...parameters);
+    const keys: string[] = [];
+    for (const row of rows) {
+      const decoded = decodeString(row.key);
+      if (!decoded.startsWith(prefix)) throw new ValueStoreError("invalid-data");
+      keys.push(decoded.slice(prefix.length));
+    }
+    return keys;
+  }
+
   /**
    * Deletes only the encoded namespace's literal-prefix rows in one transaction.
    *
@@ -186,12 +251,20 @@ export class SqliteCoordinator {
    */
   clear(namespace: Uint8Array, prefix: string): void {
     this.checkTransaction();
-    const bytes = encodeString(prefix);
+    const start = encodeString(prefix);
     this.transaction(() => {
-      // BLOB substr plus byte equality implements a literal prefix, avoiding LIKE wildcards and TEXT collation.
-      // Its length is bytes, and the empty prefix needs a separate whole-namespace delete.
-      if (bytes.length === 0) this.statement("DELETE FROM fancy_kit_values WHERE namespace = ?").run(namespace);
-      else this.statement("DELETE FROM fancy_kit_values WHERE namespace = ? AND substr(key, 1, ?) = ?").run(namespace, bytes.length, bytes);
+      if (prefix.length === 0) {
+        this.statement("DELETE FROM fancy_kit_values WHERE namespace = ?").run(namespace);
+      } else {
+        const end = nextBlobPrefix(start);
+        if (end !== undefined) {
+          this.statement("DELETE FROM fancy_kit_values WHERE namespace = ? AND key >= ? AND key < ?")
+            .run(namespace, start, end);
+        } else {
+          this.statement("DELETE FROM fancy_kit_values WHERE namespace = ? AND key >= ?")
+            .run(namespace, start);
+        }
+      }
     });
   }
 

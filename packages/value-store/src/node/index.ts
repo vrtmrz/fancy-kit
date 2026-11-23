@@ -1,4 +1,4 @@
-import type { ValueBatchWriter, ValueClearer, ValueDeleter, ValueStore, ValueStoreDisposer } from "../contracts.js";
+import type { ValueBatchWriter, ValueClearer, ValueDeleter, ValueKeyLister, ValueStore, ValueStoreDisposer } from "../contracts.js";
 import { createJsonFileValueStoreWithOperations } from "./files.js";
 import { jsonFileOperations } from "./operations.js";
 import type { JsonFileValueStoreOptions } from "./types.js";
@@ -31,6 +31,11 @@ export type { JsonFileValueStoreOptions } from "./types.js";
  * instance's literal prefix; overlapping prefixes can share entries, and a
  * write still preparing is not cancelled by clear.
  *
+ * `listKeys()` returns logical keys in ascending UTF-16 code-unit order without
+ * invoking the value serialiser. Listing reads and parses the complete bounded
+ * JSON document. A missing document is treated as an empty store and is not
+ * created by listing; a file already observed and later lost remains an error.
+ *
  * Writes use synchronous native filesystem calls: they exclusively create a
  * mode-0600 temporary file beside the destination, flush and close it, then
  * rename it over the destination. A failure after replacement starts has an
@@ -46,13 +51,13 @@ export type { JsonFileValueStoreOptions } from "./types.js";
  *
  * @param options - Existing-directory file path, required complete physical key
  * prefix, and optional paired serialiser.
- * @returns Value operations, ordered batches, prefix-scoped clearing, and disposal.
+ * @returns Value operations, ordered batches, prefix-scoped clearing and key listing, and disposal.
  * @throws `ValueStoreError` is thrown synchronously for invalid construction
  * options, an unavailable or invalid parent, or an invalid existing document.
  * Later operation failures reject their returned promises with a fixed
  * `ValueStoreError` code and no upstream cause or path. A rejection after
  * replacement begins does not establish whether the file changed.
  */
-export function createJsonFileValueStore(options: JsonFileValueStoreOptions): ValueStore & ValueDeleter & ValueBatchWriter & ValueClearer & ValueStoreDisposer {
+export function createJsonFileValueStore(options: JsonFileValueStoreOptions): ValueStore & ValueDeleter & ValueBatchWriter & ValueClearer & ValueKeyLister & ValueStoreDisposer {
   return createJsonFileValueStoreWithOperations(options, jsonFileOperations);
 }
