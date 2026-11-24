@@ -1,4 +1,4 @@
-import type { ValueStoreOptions, ValueStore, ValueDeleter, ValueBatchWriter, ValueClearer, ValueStoreDisposer } from "../contracts.js";
+import type { ValueStoreOptions, ValueStore, ValueDeleter, ValueBatchWriter, ValueClearer, ValueKeyLister, ValueStoreDisposer } from "../contracts.js";
 import type { ValueStoreError } from "../errors.js";
 
 /**
@@ -87,7 +87,7 @@ export interface SqliteFileValueStoreOptions extends SqliteValueStoreOptions {
 }
 
 /**
- * SQLite value operations, ordered transactions, scoped clear, and store disposal.
+ * SQLite value operations, ordered transactions, scoped clear and key listing, and store disposal.
  *
  * @remarks
  * `writeBatch()` commits its prepared operations in one SQL transaction. An
@@ -96,9 +96,15 @@ export interface SqliteFileValueStoreOptions extends SqliteValueStoreOptions {
  * `clear()` removes only the selected namespace and literal prefix, preserving
  * other scopes and Kit metadata. `dispose()` stops and drains this store; it
  * never closes a borrowed connection or waits for another store's work.
+ * `listKeys()` returns logical keys in ascending UTF-16 code-unit order using a
+ * key-only query over the namespace's B-tree range; stored value BLOBs are not
+ * selected or decoded. Omitting `limit` fetches and decodes every matching key
+ * synchronously in one call; for large key sets, paginate with a bounded
+ * `limit` and `lower` plus `lowerExclusive: true` to limit memory use, event-loop
+ * blocking, and connection-lock duration.
  *
  * Read and write methods return promises, but native SQLite I/O is synchronous
  * and can block the event loop. There is no queued-value cache, cross-call FIFO
  * guarantee, automatic retry, public SQL transaction callback, or public pool.
  */
-export type SqliteValueStore = ValueStore & ValueDeleter & ValueBatchWriter & ValueClearer & ValueStoreDisposer;
+export type SqliteValueStore = ValueStore & ValueDeleter & ValueBatchWriter & ValueClearer & ValueKeyLister & ValueStoreDisposer;

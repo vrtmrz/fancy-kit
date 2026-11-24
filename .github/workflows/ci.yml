@@ -8,6 +8,32 @@ permissions:
   contents: read
 
 jobs:
+  verify-sqlite-node22:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.22.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build value-store
+        run: npm run build --workspace @vrtmrz/value-store
+
+      - name: Test value-store
+        run: npm run test --workspace @vrtmrz/value-store
+
+      - name: Test native SQLite runtime
+        run: npm run test:sqlite:node --workspace @vrtmrz/value-store
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -2,7 +2,7 @@
 
 `@vrtmrz/value-store` provides asynchronous string and JSON-value operations, optional paired serialisers, an instance-scoped memory store, an injected Web Storage adapter, an isolated Node JSON-file adapter, and managed or borrowed SQLite adapters. It has no package dependencies. Its platform-neutral root entry does not load browser globals, Node modules, Obsidian APIs, or secret-store code.
 
-The root exports `ObjectValue`, `ValueSerializer`, `ValueStoreOptions`, `ValueReader`, `ValueStore`, `ValueDeleter`, the raw backend capability types, `ValueStoreError`, `sanitiseValueStoreError`, `MemoryValueStore`, `ValueBatchOperation`, `ValueBatchWriter`, `ValueClearer`, and `ValueStoreDisposer`. Import Web Storage from `@vrtmrz/value-store/web-storage`, the JSON adapter from `@vrtmrz/value-store/node-json-file`, and SQLite from `@vrtmrz/value-store/node-sqlite`.
+The root exports `ObjectValue`, `ValueSerializer`, `ValueStoreOptions`, `ValueReader`, `ValueStore`, `ValueDeleter`, the raw backend capability types, `ValueStoreError`, `sanitiseValueStoreError`, `MemoryValueStore`, `ValueBatchOperation`, `ValueBatchWriter`, `ValueClearer`, `ValueKeyListOptions`, `ValueKeyLister`, and `ValueStoreDisposer`. Import Web Storage from `@vrtmrz/value-store/web-storage`, the JSON adapter from `@vrtmrz/value-store/node-json-file`, and SQLite from `@vrtmrz/value-store/node-sqlite`.
 
 ## Read, write, and delete values
 
@@ -129,7 +129,7 @@ The parent directory must already exist and remain the same directory. Select a 
 
 ## Apply batches and end store use
 
-Memory, Web Storage, JSON-file, and SQLite stores expose `writeBatch` and `dispose` as additional capabilities. Existing custom backends still require only their original methods. `ValueStore` itself does not imply batch, clear, or disposal support.
+Memory, Web Storage, JSON-file, and SQLite stores expose `writeBatch` and `dispose` as additional capabilities. Existing custom backends still require only their original methods. `ValueStore` itself does not imply batch, clear, listing, or disposal support.
 
 ```ts
 await settings.writeBatch([
@@ -143,9 +143,35 @@ The complete input is validated and snapshotted before asynchronous preparation.
 
 Ordinary reads expose stored state, never queued values. Separate reads have no shared snapshot, and concurrent calls have no invocation-order guarantee. Await dependent writes. `clear()` does not cancel a write still preparing. Stop producers and await their work before using it as a reset boundary.
 
-Memory, JSON, and SQLite expose `ValueClearer`. Memory clears its own map; JSON clears only keys with the captured literal prefix; SQLite clears the selected namespace and prefix. Overlapping prefixes share entries. The minimal injected Web Storage interface cannot enumerate a prefix, so its factory does not expose clear.
+Memory, JSON, and SQLite expose `ValueClearer`. Memory clears its own map; JSON clears only keys with the captured literal prefix; SQLite clears the selected namespace and prefix. Overlapping prefixes share entries. The minimal injected Web Storage interface cannot enumerate a prefix, so its factory does not expose clear or key listing.
 
 `dispose()` stops new admission synchronously and waits for every accepted operation, including asynchronous preparation and decoding, to settle. Individual operation Promises report their own results; disposal does not certify that every write succeeded. Repeated disposal calls share one terminal result. Later operations reject with `unavailable`. A serialiser must not await its own store's disposal, which would wait on itself.
+
+## List keys
+
+`ValueKeyLister` is an independent, unreleased capability on this repository branch. `ValueKeyLister` and `listKeys()` are not included in the published `@vrtmrz/value-store@0.1.1`. It returns logical keys without invoking the caller's serialiser, in ascending JavaScript UTF-16 code-unit order. `ValueKeyListOptions` accepts a literal `prefix`, inclusive `lower` and `upper` bounds, `lowerExclusive` and `upperExclusive` flags, and a non-negative safe-integer `limit`. Setting `lowerExclusive` or `upperExclusive` to `true` requires its corresponding bound; `false` is accepted when that bound is omitted. Options are validated and snapshotted before asynchronous work; each result is a fresh array. An empty intersection returns no keys.
+
+The memory store and the `node-json-file` and `node-sqlite` adapters expose `ValueKeyLister` on this branch. The Web Storage adapter does not: its injected interface has no key-enumeration method, and the adapter does not access browser globals or enumerate unrelated storage. SQLite's B-tree prefix-range implementation of `clear()` is also an unreleased branch addition; published 0.1.1 includes scoped clearing but not this range implementation.
+
+Bounds and returned keys use UTF-16 code-unit ordering, including for non-ASCII keys. Bounds are logical keys in the store's key space; the adapter's configured prefix is removed from returned keys. SQLite queries only the primary-key index's `key` column and does not select or decode stored value BLOBs. The JSON-file adapter reads, parses, and validates its bounded JSON document to list keys, including when `limit` is `0`. For pagination, use the last key from the previous page as an exclusive lower bound:
+
+```ts
+import type { ValueKeyListOptions, ValueKeyLister } from '@vrtmrz/value-store';
+
+async function listAll(lister: ValueKeyLister) {
+  let options: ValueKeyListOptions = { prefix: 'peer:', limit: 100 };
+  const keys: string[] = [];
+
+  while (true) {
+    const page = await lister.listKeys(options);
+    keys.push(...page);
+    if (page.length < 100) return keys;
+    options = { ...options, lower: page[page.length - 1], lowerExclusive: true };
+  }
+}
+```
+
+`lower` and `upper` are inclusive unless their exclusive flag is true. `limit: 0` returns an empty array after option and lifecycle validation. For large key sets, prefer paginating with a bounded `limit` (for example 500 to 2,000 keys) rather than omitting `limit`: an unbounded call materialises every matching key into one array in memory, and on SQLite it decodes all matched keys synchronously while holding the shared connection lock, which can block the event loop. Stateless keyset pagination releases the connection lock between pages so concurrent writes, idle close, and `dispose()` continue cleanly. Listing does not promise a snapshot across pages; writes between calls can change later results.
 
 ## Use SQLite for growing state
 
@@ -176,7 +202,7 @@ An idle-close failure is retained, reported through the optional `onBackgroundEr
 
 For a host-owned connection, use `createSqliteValueStore(database, { prefix, namespace?, serializer? })`. It installs absent Kit tables without changing unrelated tables or the owner's PRAGMA settings. Kit uses fixed result settings on its own prepared statements and preserves the connection's defaults. Stores on that connection share a lock. Normal operations reject an external transaction without committing or rolling it back. The owner must stop all producers and dispose all users before closing the database. Disposing a borrowed store never closes it.
 
-The SQLite entry is qualified separately from the neutral and JSON entries. Current native checks target Node 24.18.0, Node 26.13.0, and Deno 2.9.7 on Linux arm64. Deno checks use `--allow-all`: Deno 2.9.7 incorrectly resolves the existing-only file URI under scoped permissions. Scoped-permission managed SQLite use is therefore not qualified; the adapter does not weaken the existing-only open guarantee as a fallback. See the [design and acceptance conditions](https://github.com/vrtmrz/fancy-kit/blob/main/docs/design/value-store-sqlite.md) for the detailed boundaries. The SQLite adapters and batch/lifecycle capabilities are included in ValueStore 0.1.1; registry availability follows the selected npm dist-tag.
+The SQLite entry requires a runtime whose `node:sqlite` provides `DatabaseSync.isTransaction` and supports the `mode=rw` URI parameter. Supported Node.js examples are 22.22.0 and later on the 22.x LTS line, 24.x, and 26.x; end-of-life Node.js 23.x, including 23.11.1, lacks `DatabaseSync.isTransaction`. On this unreleased branch, `createSqliteValueStore` checks `typeof database.isTransaction === 'boolean'` synchronously at construction and rejects unsupported connections with `unavailable`; `createSqliteFileValueStore` checks it when opening SQLite (during initialisation for an existing file, or on the first prepared value write for an initially absent file, where reads, listing, clear, and delete return absence without opening SQLite and a first write reserves the file and opens SQLite, and if the opened connection lacks a boolean `isTransaction`, the adapter closes it and rejects the write with `unavailable`). Current native checks cover Node.js 22.22.0, 24.18.0, and 26.13.1 on Linux arm64. Node.js 22.22.0 emits Node's standard experimental SQLite warning. Deno 2.9.7 checks use `--allow-all`: it incorrectly resolves the existing-only file URI under scoped permissions. Scoped-permission managed SQLite use is therefore not qualified; the adapter does not weaken the existing-only open guarantee as a fallback. See the [design and acceptance conditions](https://github.com/vrtmrz/fancy-kit/blob/main/docs/design/value-store-sqlite.md) for the detailed boundaries. Published ValueStore 0.1.1 includes batches, scoped clear, disposal, and the SQLite adapters. Key listing, SQLite's B-tree prefix-range clear, and the explicit `isTransaction` capability guard are unreleased on this branch and are not included in 0.1.1.
 
 ### Try a peer-state example
 

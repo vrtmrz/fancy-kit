@@ -56,6 +56,123 @@ describe("SQLite value storage", () => {
     await store.dispose();
   });
 
+  it("uses primary-key range plans for the actual listing and clear statements", async () => {
+    const db = database();
+    const listingStore = createSqliteValueStore(db, { prefix: "scope:", namespace: "query-plan" });
+    const boundedClearStore = createSqliteValueStore(db, { prefix: "a" });
+    const highClearStore = createSqliteValueStore(db, { prefix: "\uffff" });
+    await Promise.all([listingStore.listKeys(), boundedClearStore.listKeys(), highClearStore.listKeys()]);
+
+    const preparedSql: string[] = [];
+    const prepare = db.prepare.bind(db);
+    db.prepare = ((sql: string) => { preparedSql.push(sql); return prepare(sql); }) as typeof db.prepare;
+    await listingStore.listKeys({ prefix: "a", lower: "aa", lowerExclusive: true, upper: "az", upperExclusive: true, limit: 3 });
+    await boundedClearStore.clear();
+    await highClearStore.clear();
+    db.prepare = prepare;
+
+    const actualListing = preparedSql.find(sql => sql.startsWith("SELECT key FROM fancy_kit_values"));
+    const actualBoundedClear = preparedSql.find(sql => sql.startsWith("DELETE FROM fancy_kit_values") && sql.includes("key < ?"));
+    const actualHighClear = preparedSql.find(sql => sql.startsWith("DELETE FROM fancy_kit_values") && !sql.includes("key < ?"));
+    expect(actualListing).toBeDefined(); expect(actualBoundedClear).toBeDefined(); expect(actualHighClear).toBeDefined();
+
+    const plans = [
+      prepare(`EXPLAIN QUERY PLAN ${actualListing}`).all(encodeString("query-plan"), encodeString("scope:aa"), encodeString("scope:az"), 3).map(row => String(row.detail)).join(" "),
+      prepare(`EXPLAIN QUERY PLAN ${actualBoundedClear}`).all(encodeString(""), encodeString("a"), encodeString("b")).map(row => String(row.detail)).join(" "),
+      prepare(`EXPLAIN QUERY PLAN ${actualHighClear}`).all(encodeString(""), encodeString("\uffff")).map(row => String(row.detail)).join(" "),
+    ];
+    expect(plans[0]).toContain("SEARCH fancy_kit_values USING PRIMARY KEY");
+    expect(plans[0]).toMatch(/namespace=\? AND key>\? AND key<\?/);
+    expect(plans[1]).toContain("SEARCH fancy_kit_values USING PRIMARY KEY");
+    expect(plans[1]).toMatch(/namespace=\? AND key(?:>=|>)\? AND key(?:<=|<)\?/);
+    expect(plans[2]).toContain("SEARCH fancy_kit_values USING PRIMARY KEY");
+    expect(plans[2]).toMatch(/namespace=\? AND key(?:>=|>)\?/);
+    for (const plan of plans) expect(plan).not.toMatch(/SCAN|TEMP B-TREE/);
+    await Promise.all([listingStore.dispose(), boundedClearStore.dispose(), highClearStore.dispose()]);
+  });
+
+  it("uses a UTF-16 byte-prefix ceiling to ignore malformed keys outside the prefix", async () => {
+    const db = database();
+    const raw = createSqliteValueStore(db, { prefix: "" });
+    const selected = createSqliteValueStore(db, { prefix: "\u00ff" });
+    await raw.setValue("\u00ffa", "matching");
+    db.prepare("INSERT INTO fancy_kit_values VALUES (?, ?, ?)").run(encodeString(""), new Uint8Array([0x01]), encodeString("outside"));
+
+    expect(await raw.listKeys({ prefix: "\u00ff" })).toEqual(["\u00ffa"]);
+    await selected.clear();
+    expect(db.prepare("SELECT count(*) AS n FROM fancy_kit_values WHERE namespace = ? AND key = ?").get(encodeString(""), new Uint8Array([0x01]))?.n).toBe(1);
+    expect(db.prepare("SELECT count(*) AS n FROM fancy_kit_values WHERE namespace = ? AND key = ?").get(encodeString(""), encodeString("\u00ffa"))?.n).toBe(0);
+
+    db.prepare("INSERT INTO fancy_kit_values VALUES (?, ?, ?)").run(encodeString(""), new Uint8Array([0x00, 0xff, 0x01]), encodeString("inside"));
+    await expect(raw.listKeys({ prefix: "\u00ff" })).rejects.toMatchObject({ code: "invalid-data" });
+    await Promise.all([raw.dispose(), selected.dispose()]);
+  });
+
+  it("requires a boolean transaction state at construction and before operations", async () => {
+    const fake = { prepare() {}, exec() {} } as unknown as DatabaseSync;
+    let constructionError: unknown;
+    try { createSqliteValueStore(fake, { prefix: "" }); } catch (error) { constructionError = error; }
+    expect(constructionError).toBeInstanceOf(ValueStoreError);
+    expect(constructionError).toMatchObject({ code: "unavailable" });
+
+    const db = database(); let transactionState: boolean | undefined = false;
+    const wrapped = new Proxy(db, {
+      get(target, property) {
+        if (property === "isTransaction") return transactionState;
+        const value = Reflect.get(target, property, target) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const store = createSqliteValueStore(wrapped, { prefix: "" });
+    await store.listKeys();
+    transactionState = undefined;
+    await expect(store.getValue("key")).rejects.toMatchObject({ code: "unavailable" });
+    await expect(store.listKeys()).rejects.toMatchObject({ code: "unavailable" });
+    transactionState = false;
+    await store.dispose();
+  });
+
+  it("clears exact UTF-16 prefix ranges without deleting adjacent keys, namespaces, or metadata", async () => {
+    const db = database();
+    db.exec("CREATE TABLE host_metadata (value TEXT); INSERT INTO host_metadata VALUES ('keep')");
+    const selected = createSqliteValueStore(db, { prefix: "a" });
+    const raw = createSqliteValueStore(db, { prefix: "" });
+    const other = createSqliteValueStore(db, { prefix: "", namespace: "other" });
+    for (const key of ["", "a", "a\ufffe", "a\uffff", "a\uffffx", "b", "\ufffe", "\uffff", "\uffffx", "\uffff\uffff"]) await raw.setValue(key, "v");
+    await other.setValue("a", "other");
+    expect(await raw.listKeys()).toEqual(["", "a", "a\ufffe", "a\uffff", "a\uffffx", "b", "\ufffe", "\uffff", "\uffffx", "\uffff\uffff"]);
+    expect(await other.listKeys()).toEqual(["a"]);
+    await selected.clear();
+    expect(await raw.listKeys()).toEqual(["", "b", "\ufffe", "\uffff", "\uffffx", "\uffff\uffff"]);
+    const suffix = createSqliteValueStore(db, { prefix: "a\uffff" });
+    for (const key of ["a\uffff", "a\uffffx", "a\ufffe", "b"]) await raw.setValue(key, "v");
+    await suffix.clear();
+    expect(await raw.listKeys()).toEqual(["", "a\ufffe", "b", "\ufffe", "\uffff", "\uffffx", "\uffff\uffff"]);
+    const high = createSqliteValueStore(db, { prefix: "\uffff" });
+    await raw.setValue("a", "v");
+    await high.clear();
+    expect(await raw.listKeys()).toEqual(["", "a", "a\ufffe", "b", "\ufffe"]);
+    const highPair = createSqliteValueStore(db, { prefix: "\uffff\uffff" });
+    await raw.setValue("\uffff\uffff", "v"); await raw.setValue("\uffff\uffffx", "v");
+    await highPair.clear();
+    expect(await raw.listKeys()).toEqual(["", "a", "a\ufffe", "b", "\ufffe"]);
+    for (const key of ["", "a", "b"]) await raw.setValue(key, "v");
+    await raw.clear();
+    expect(await raw.listKeys()).toEqual([]);
+    expect(await other.getValue("a")).toBe("other");
+    await Promise.all([selected.dispose(), raw.dispose(), other.dispose(), suffix.dispose(), high.dispose(), highPair.dispose()]);
+    expect(db.prepare("SELECT value FROM host_metadata").get()?.value).toBe("keep");
+    expect(db.prepare("SELECT count(*) AS n FROM fancy_kit_values WHERE namespace = ?").get(encodeString("other"))?.n).toBe(1);
+  });
+
+  it("rejects malformed key BLOBs when listing", async () => {
+    const db = database(); const store = createSqliteValueStore(db, { prefix: "" });
+    await store.listKeys();
+    db.prepare("INSERT INTO fancy_kit_values VALUES (?, ?, ?)").run(encodeString(""), new Uint8Array([0]), encodeString("value"));
+    await expect(store.listKeys()).rejects.toMatchObject({ code: "invalid-data" });
+    await store.dispose();
+  });
+
   it("rolls back every statement of a failed batch, then continues", async () => {
     const db = database(); const store = createSqliteValueStore(db, { prefix: "" });
     await store.setValue("before", "keep");

@@ -18,6 +18,8 @@ import type {
   ValueStore,
   ObjectValue,
   ValueSerializer,
+  ValueKeyLister,
+  ValueKeyListOptions,
 } from "../src/index.js";
 import { createWebStorageValueStore } from "../src/web-storage.js";
 import { createJsonFileValueStore } from "../src/node/index.js";
@@ -52,11 +54,34 @@ const deletableFacade: ValueStore & ValueDeleter = createDeletableValueStore(
   { ...backend, ...backendDeleter },
   { serializer },
 );
-const webStore: ValueStore & ValueDeleter = createWebStorageValueStore({
+const inferredWebStore = createWebStorageValueStore({
   getItem: (_key) => null,
   setItem: (_key, _value) => undefined,
   removeItem: (_key) => undefined,
 }, { prefix: "literal:", serializer });
+const webStore: ValueStore & ValueDeleter = inferredWebStore;
+const listing: ValueKeyLister = new MemoryValueStore();
+const nodeListing: ValueKeyLister = createJsonFileValueStore({ filePath: "state.json", prefix: "" });
+const listOptions: ValueKeyListOptions = { prefix: "scope:", lower: "a", lowerExclusive: true, upper: "z", limit: 5 };
+const listed: Promise<string[]> = listing.listKeys(listOptions);
+const listedDefault: Promise<string[]> = nodeListing.listKeys();
+
+// @ts-expect-error A reader does not expose key listing.
+reader.listKeys();
+// @ts-expect-error The plain store contract does not expose key listing.
+store.listKeys();
+// @ts-expect-error The plain deletable contract does not expose key listing.
+deletableStore.listKeys();
+// @ts-expect-error The generic value-store factory does not expose key listing.
+createValueStore(backend).listKeys();
+// @ts-expect-error The generic deletable factory does not expose key listing.
+createDeletableValueStore({ ...backend, ...backendDeleter }).listKeys();
+// @ts-expect-error Web Storage does not expose key listing.
+inferredWebStore.listKeys();
+// @ts-expect-error Listing limit must be numeric.
+listing.listKeys({ limit: "5" });
+// @ts-expect-error Listing bounds must be strings.
+listing.listKeys({ lower: 123 });
 
 // @ts-expect-error A reader does not expose mutation methods.
 reader.setValue("key", "value");
@@ -88,6 +113,8 @@ void [
   storeFacade,
   deletableFacade,
   webStore,
+  listed,
+  listedDefault,
 ];
 
 const defaultString: Promise<string> = reader.getValue("missing", "");

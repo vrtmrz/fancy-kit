@@ -45,6 +45,11 @@ try {
   const sqlite = createSqliteFileValueStore({ filePath: sqlitePath, prefix: "sqlite:" });
   await sqlite.writeBatch(cases.map(({ key, value }) => ({ type: "setValue", key, value })));
   for (const { key, value } of cases) assert.equal(await sqlite.getValue(key), value);
+  const listingKeys = ["\ue000", "\ud83d\ude00", "\ud800", "a\0", "a"];
+  for (const key of listingKeys) await sqlite.setValue(`listing:${key}`, "v");
+  const sortedListing = listingKeys.map(key => `listing:${key}`).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+  assert.deepEqual(await sqlite.listKeys({ prefix: "listing:" }), sortedListing);
+  assert.deepEqual(await sqlite.listKeys({ prefix: "listing:", lower: "listing:a", lowerExclusive: true }), sortedListing.filter(key => key > "listing:a"));
   await sqlite.dispose();
   const sqliteReopened = createSqliteFileValueStore({ filePath: sqlitePath, prefix: "sqlite:" });
   assert.equal(await sqliteReopened.getValue(cases[0].key), cases[0].value);
@@ -95,6 +100,11 @@ try {
     assert.equal(await store.getObject("nested"), undefined);
   }
   await nodeStore.setValue("empty-value", "");
+  const memoryListing = new MemoryValueStore();
+  for (const key of listingKeys) await memoryListing.setValue(`listing:${key}`, "v");
+  for (const key of listingKeys) await nodeStore.setValue(`listing:${key}`, "v");
+  assert.deepEqual(await memoryListing.listKeys({ prefix: "listing:" }), sortedListing);
+  assert.deepEqual(await nodeStore.listKeys({ prefix: "listing:" }), sortedListing);
   assert.equal(await nodeStore.getValue("empty-value"), "");
   await directLegacy.setValue("empty-value", "");
   assert.equal(await directLegacy.getValue("empty-value"), "");

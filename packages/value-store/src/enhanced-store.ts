@@ -6,11 +6,14 @@ import type {
   ValueBatchWriter,
   ValueClearer,
   ValueDeleter,
+  ValueKeyLister,
+  ValueKeyListOptions,
   ValueStore,
   ValueStoreDisposer,
   ValueStoreOptions,
 } from "./contracts.js";
 import { sanitiseValueStoreError, ValueStoreError } from "./errors.js";
+import { snapshotKeyListOptions, type PreparedValueKeyListOptions } from "./key-listing.js";
 import { createPreparedValueStore } from "./store.js";
 
 /** Internal raw mutation after complete validation, snapshots, and serialisation. */
@@ -24,6 +27,8 @@ export interface EnhancedValueBackend extends ValueBackend, ValueBackendDeleter 
   writeBatch(operations: readonly PreparedValueOperation[]): void | Promise<void>;
   /** Removes only the backend's captured scope when supported. */
   clear?(): void | Promise<void>;
+  /** Lists prepared logical keys in the backend's captured scope. */
+  listKeys?(options: PreparedValueKeyListOptions): string[] | Promise<string[]>;
 }
 
 /**
@@ -71,9 +76,21 @@ type Method = (...args: unknown[]) => unknown;
  * @param backend - Captured raw string, prepared-batch, deletion, and clear capabilities.
  * @param options - Captured paired serialisation; omitted for identity conversion.
  * @param lifecycle - Optional shared-resource admission and teardown hooks.
- * @returns Value operations and explicit batch, clear, and terminal disposal capabilities.
+ * @returns Value operations and explicit batch, clear, key-listing, and terminal disposal capabilities.
  * @throws A fixed `ValueStoreError` for malformed capabilities or serialisation options.
  */
+export function createEnhancedValueStore(
+  backend: EnhancedValueBackend & { clear(): void | Promise<void>; listKeys(options: PreparedValueKeyListOptions): string[] | Promise<string[]> },
+  options?: ValueStoreOptions,
+  lifecycle?: ValueStoreLifecycle,
+): EnhancedValueStore & ValueClearer & ValueKeyLister;
+/** Creates the enhanced facade with key listing but without scoped clearing. */
+export function createEnhancedValueStore(
+  backend: EnhancedValueBackend & { listKeys(options: PreparedValueKeyListOptions): string[] | Promise<string[]> },
+  options?: ValueStoreOptions,
+  lifecycle?: ValueStoreLifecycle,
+): EnhancedValueStore & ValueKeyLister;
+/** Creates the enhanced facade with scoped clearing but without key listing. */
 export function createEnhancedValueStore(
   backend: EnhancedValueBackend & { clear(): void | Promise<void> },
   options?: ValueStoreOptions,
@@ -91,7 +108,7 @@ export function createEnhancedValueStore(
  * @param backend - Captured raw string, deletion, and prepared-batch capabilities.
  * @param options - Captured paired serialisation; omitted for identity conversion.
  * @param lifecycle - Optional shared-resource admission and teardown hooks.
- * @returns Value operations with batch and terminal disposal; clear is not promised.
+ * @returns Value operations with batch and terminal disposal; clear and key listing are not promised.
  * @throws A fixed `ValueStoreError` for malformed capabilities or serialisation options.
  */
 export function createEnhancedValueStore(
@@ -103,10 +120,11 @@ export function createEnhancedValueStore(
   backend: EnhancedValueBackend,
   options?: ValueStoreOptions,
   lifecycle?: ValueStoreLifecycle,
-): EnhancedValueStore & Partial<ValueClearer> {
+): EnhancedValueStore & Partial<ValueClearer> & Partial<ValueKeyLister> {
   const { store, prepareBatch } = createPreparedValueStore(backend, options);
   const writeBatch = captureMethod(backend, "writeBatch");
   const clear = captureMethod(backend, "clear", true);
+  const listKeys = captureMethod(backend, "listKeys", true);
   let accepting = true;
   // Per-facade drain count; lifecycle hooks may also maintain a backend-wide count.
   let pending = 0;
@@ -152,7 +170,7 @@ export function createEnhancedValueStore(
     return disposal;
   }
 
-  const enhanced: EnhancedValueStore & Partial<ValueClearer> = {
+  const enhanced: EnhancedValueStore & Partial<ValueClearer> & Partial<ValueKeyLister> = {
     getValue: ((key: string, defaultValue?: string) => run(() => store.getValue(key, defaultValue))) as ValueStore["getValue"],
     getObject: ((key: string, defaultValue?: ObjectValue) => run(() => store.getObject(key, defaultValue))) as ValueStore["getObject"],
     setValue: (key, value) => run(() => store.setValue(key, value)),
@@ -166,12 +184,24 @@ export function createEnhancedValueStore(
     dispose,
   };
   if (clear !== undefined) enhanced.clear = () => run(async () => { await Reflect.apply(clear, backend, []); });
+  if (listKeys !== undefined) {
+    enhanced.listKeys = (options?: ValueKeyListOptions) => run(async () => {
+      const prepared = snapshotKeyListOptions(options);
+      const keys: unknown = await Reflect.apply(listKeys, backend, [prepared]);
+      if (!Array.isArray(keys)) throw new ValueStoreError("invalid-data");
+      for (let index = 0; index < keys.length; index += 1) {
+        if (typeof keys[index] !== "string") throw new ValueStoreError("invalid-data");
+      }
+      return keys.slice() as string[];
+    });
+  }
   return enhanced;
 }
 
 function captureMethod(target: object, name: string): Method;
 function captureMethod(target: object, name: string, optional: true): Method | undefined;
 function captureMethod(target: object, name: string, optional = false): Method | undefined {
+  if (optional && !Object.hasOwn(target, name)) return undefined;
   let method: unknown;
   try {
     method = Reflect.get(target, name);

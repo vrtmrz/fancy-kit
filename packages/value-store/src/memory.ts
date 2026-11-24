@@ -1,5 +1,6 @@
-import type { ValueBatchOperation, ValueBatchWriter, ValueClearer, ValueDeleter, ValueStore, ValueStoreDisposer, ValueStoreOptions, ObjectValue } from "./contracts.js";
+import type { ValueBatchOperation, ValueBatchWriter, ValueClearer, ValueDeleter, ValueKeyLister, ValueKeyListOptions, ValueStore, ValueStoreDisposer, ValueStoreOptions, ObjectValue } from "./contracts.js";
 import { createEnhancedValueStore, type EnhancedValueStore } from "./enhanced-store.js";
+import { listKeysFromIterable } from "./key-listing.js";
 
 /**
  * Instance-owned in-memory string storage for tests and ephemeral state.
@@ -13,9 +14,9 @@ import { createEnhancedValueStore, type EnhancedValueStore } from "./enhanced-st
  * FIFO guarantee. `clear()` affects only this instance, and `dispose()` closes
  * admission permanently without clearing its map.
  */
-export class MemoryValueStore implements ValueStore, ValueDeleter, ValueBatchWriter, ValueClearer, ValueStoreDisposer {
+export class MemoryValueStore implements ValueStore, ValueDeleter, ValueBatchWriter, ValueClearer, ValueKeyLister, ValueStoreDisposer {
   #entries = new Map<string, string>();
-  readonly #store: EnhancedValueStore & ValueClearer;
+  readonly #store: EnhancedValueStore & ValueClearer & ValueKeyLister;
 
   /**
    * Creates an empty memory store with an optional instance-scoped serialiser.
@@ -44,6 +45,7 @@ export class MemoryValueStore implements ValueStore, ValueDeleter, ValueBatchWri
         this.#entries = candidate;
       },
       clear: () => { this.#entries.clear(); },
+      listKeys: (options) => listKeysFromIterable(this.#entries.keys(), "", options),
     }, options);
   }
 
@@ -166,6 +168,24 @@ export class MemoryValueStore implements ValueStore, ValueDeleter, ValueBatchWri
    */
   clear(): Promise<void> {
     return this.#store.clear();
+  }
+
+  /**
+   * Lists this instance's logical keys in ascending UTF-16 code-unit order
+   * without invoking the serialiser.
+   *
+   * @remarks
+   * For large key sets, paginate with `limit` and the previous page's last key
+   * as `lower` with `lowerExclusive: true`. Separate pages do not share a
+   * snapshot.
+   *
+   * @param options - Optional literal prefix, logical bounds, and result limit.
+   * @returns A promise resolving to a fresh, sorted array of logical keys.
+   * @throws The returned promise rejects with `ValueStoreError` for invalid
+   * options or if disposal has already closed admission.
+   */
+  listKeys(options?: ValueKeyListOptions): Promise<string[]> {
+    return this.#store.listKeys(options);
   }
 
   /**

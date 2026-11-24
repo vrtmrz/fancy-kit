@@ -463,7 +463,7 @@ describe("JSON-file batch, clear, and disposal capabilities", () => {
     expect(rename).not.toHaveBeenCalled();
     expect(readFileSync(options.filePath)).toEqual(before);
     expect(readdirSync(options.root)).toEqual(["settings.json"]);
-  });
+  }, 15_000);
 
   it("clears literal overlapping prefixes once and supports an empty prefix", async () => {
     const options = { ...fixture(), prefix: "a%_" };

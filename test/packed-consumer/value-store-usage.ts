@@ -10,6 +10,8 @@ import type {
   ValueBackendReader,
   ValueBackendDeleter,
   ValueStoreOptions,
+  ValueKeyLister,
+  ValueKeyListOptions,
 } from "@vrtmrz/value-store";
 // @ts-expect-error Root validators are internal implementation details.
 import { validateValueKey } from "@vrtmrz/value-store";
@@ -45,6 +47,9 @@ const deletableFactoryStore: ValueStore & ValueDeleter = createDeletableValueSto
 // @ts-expect-error The ordinary store factory does not add deletion.
 factoryStore.delete("key");
 const memory: ValueStore & ValueDeleter = new MemoryValueStore();
+const keyLister: ValueKeyLister = new MemoryValueStore();
+const keyListOptions: ValueKeyListOptions = { prefix: "scope:", lower: "a", upper: "z", upperExclusive: true, limit: 4 };
+const listedKeys: Promise<string[]> = keyLister.listKeys(keyListOptions);
 const reader: ValueReader = memory;
 const readResult: Promise<string | null> = reader.getValue("key");
 const objectResult: Promise<ObjectValue | undefined> = reader.getObject("key");
@@ -73,7 +78,8 @@ const serializer: ValueSerializer = {
 };
 const storeOptions: ValueStoreOptions = { serializer };
 const webOptions: WebStorageValueStoreOptions = { prefix: "web/", ...storeOptions };
-const webStore: ValueStore & ValueDeleter = createWebStorageValueStore(webStorage, webOptions);
+const inferredWebStore = createWebStorageValueStore(webStorage, webOptions);
+const webStore: ValueStore & ValueDeleter = inferredWebStore;
 
 const officialStorage: ObsidianLocalStorage = {
   loadLocalStorage() {
@@ -81,18 +87,33 @@ const officialStorage: ObsidianLocalStorage = {
   },
   saveLocalStorage() {},
 };
-const officialStore: ValueStore & ValueDeleter = createObsidianLocalStore(
+const inferredOfficialStore = createObsidianLocalStore(
   officialStorage,
   { prefix: "official/", serializer },
 );
+const officialStore: ValueStore & ValueDeleter = inferredOfficialStore;
 const compatibleOptions: CompatibleObsidianLocalStoreOptions = {
   prefix: "compat/",
   legacy: () => ({ storage: webStorage, prefix: "legacy/" }),
 };
-const compatibleStore: ValueStore & ValueDeleter = createCompatibleObsidianLocalStore(
+const inferredCompatibleStore = createCompatibleObsidianLocalStore(
   officialStorage,
   compatibleOptions,
 );
+const compatibleStore: ValueStore & ValueDeleter = inferredCompatibleStore;
+
+// @ts-expect-error Readers do not expose key listing.
+reader.listKeys();
+// @ts-expect-error ValueStore does not expose key listing.
+factoryStore.listKeys();
+// @ts-expect-error ValueStore and ValueDeleter do not expose key listing.
+deletableFactoryStore.listKeys();
+// @ts-expect-error Web Storage does not expose key listing.
+inferredWebStore.listKeys();
+// @ts-expect-error Obsidian local storage does not expose key listing.
+inferredOfficialStore.listKeys();
+// @ts-expect-error Compatible Obsidian local storage does not expose key listing.
+inferredCompatibleStore.listKeys();
 
 // @ts-expect-error A reader exposes no mutation methods.
 reader.setValue("key", "value");
@@ -107,6 +128,7 @@ new ValueStoreError("unknown-code");
 
 void [
   readResult,
+  listedKeys,
   objectResult,
   writeResult,
   deleteResult,

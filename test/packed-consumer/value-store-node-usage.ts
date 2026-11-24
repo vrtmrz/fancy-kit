@@ -28,12 +28,20 @@ void defaultObject;
 
 import { DatabaseSync } from "node:sqlite";
 import { createSqliteFileValueStore, createSqliteValueStore, type SqliteValueStore } from "@vrtmrz/value-store/node-sqlite";
+import type { ValueKeyLister, ValueKeyListOptions } from "@vrtmrz/value-store";
 const sqlite: SqliteValueStore = createSqliteFileValueStore({ filePath: "consumer-owned/state.sqlite", prefix: "plugin:", durability: "full" });
 const batch: Promise<void> = sqlite.writeBatch([{ type: "setObject", key: "key", value: null, ifAbsent: true }]);
 const clear: Promise<void> = sqlite.clear();
 const disposal: Promise<void> = sqlite.dispose();
 const borrowed = createSqliteValueStore(new DatabaseSync(":memory:"), { prefix: "" });
-void [batch, clear, disposal, borrowed];
+const jsonKeys: ValueKeyLister = createJsonFileValueStore({ filePath: "consumer-owned/state.json", prefix: "plugin:" });
+const sqliteFileKeys: ValueKeyLister = createSqliteFileValueStore({ filePath: "consumer-owned/state.sqlite", prefix: "plugin:" });
+const borrowedKeys: ValueKeyLister = borrowed;
+const keyListOptions: ValueKeyListOptions = { prefix: "key-", lower: "key-a", upper: "key-z", upperExclusive: true, limit: 10 };
+const listedJson: Promise<string[]> = jsonKeys.listKeys(keyListOptions);
+const listedSqliteFile: Promise<string[]> = sqliteFileKeys.listKeys(keyListOptions);
+const listedBorrowed: Promise<string[]> = borrowedKeys.listKeys(keyListOptions);
+void [batch, clear, disposal, borrowed, listedJson, listedSqliteFile, listedBorrowed];
 // @ts-expect-error Scope must be explicit.
 createSqliteFileValueStore({ filePath: "state.sqlite" });
 // @ts-expect-error No public atomic switch.
