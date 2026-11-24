@@ -262,10 +262,20 @@ export interface ValueKeyListOptions {
 export interface ValueKeyLister {
   /**
    * Lists logical keys in ascending UTF-16 code-unit order, intersecting the
-   * literal prefix with the optional bounds. Own data fields of `options` are
-   * snapshotted before asynchronous work (ignoring inherited properties and
-   * rejecting accessors without invoking them); each result is a fresh array
-   * and serialisers are never called. An empty intersection returns an empty array.
+   * literal prefix with the optional bounds.
+   *
+   * @remarks
+   * Own data fields of `options` are snapshotted before asynchronous work
+   * (ignoring inherited properties and rejecting accessors without invoking
+   * them); each result is a fresh array and serialisers are never called. An
+   * empty intersection returns an empty array.
+   *
+   * Omitting `limit` materialises every matching key into a single array in
+   * memory and can block the event loop on synchronous backends such as
+   * SQLite. For large key sets, paginate with a bounded `limit` and pass the
+   * previous page's last key as `lower` with `lowerExclusive: true`. Separate
+   * pages do not share a snapshot.
+   *
    * @param options - Optional literal prefix, logical bounds, and result limit.
    * @returns A promise resolving to a fresh, sorted array of logical keys.
    * @throws The returned promise rejects with `ValueStoreError` for invalid

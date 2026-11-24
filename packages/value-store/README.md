@@ -153,7 +153,7 @@ Memory, JSON, and SQLite expose `ValueClearer`. Memory clears its own map; JSON 
 
 The memory store and the `node-json-file` and `node-sqlite` adapters expose `ValueKeyLister` on this branch. The Web Storage adapter does not: its injected interface has no key-enumeration method, and the adapter does not access browser globals or enumerate unrelated storage. SQLite's B-tree prefix-range implementation of `clear()` is also an unreleased branch addition; published 0.1.1 includes scoped clearing but not this range implementation.
 
-Bounds and returned keys use UTF-16 code-unit ordering, including for non-ASCII keys. Bounds are logical keys in the store's key space; the adapter's configured prefix is removed from returned keys. SQLite queries only the primary-key index's `key` column and does not read stored value BLOBs. The JSON-file adapter reads, parses, and validates its bounded JSON document to list keys, including when `limit` is `0`. For pagination, use the last key from the previous page as an exclusive lower bound:
+Bounds and returned keys use UTF-16 code-unit ordering, including for non-ASCII keys. Bounds are logical keys in the store's key space; the adapter's configured prefix is removed from returned keys. SQLite queries only the primary-key index's `key` column and does not select or decode stored value BLOBs. The JSON-file adapter reads, parses, and validates its bounded JSON document to list keys, including when `limit` is `0`. For pagination, use the last key from the previous page as an exclusive lower bound:
 
 ```ts
 import type { ValueKeyListOptions, ValueKeyLister } from '@vrtmrz/value-store';
@@ -171,7 +171,7 @@ async function listAll(lister: ValueKeyLister) {
 }
 ```
 
-`lower` and `upper` are inclusive unless their exclusive flag is true. `limit: 0` returns an empty array after option and lifecycle validation. Listing does not promise a snapshot across pages; writes between calls can change later results.
+`lower` and `upper` are inclusive unless their exclusive flag is true. `limit: 0` returns an empty array after option and lifecycle validation. For large key sets, prefer paginating with a bounded `limit` (for example 500 to 2,000 keys) rather than omitting `limit`: an unbounded call materialises every matching key into one array in memory, and on SQLite it decodes all matched keys synchronously while holding the shared connection lock, which can block the event loop. Stateless keyset pagination releases the connection lock between pages so concurrent writes, idle close, and `dispose()` continue cleanly. Listing does not promise a snapshot across pages; writes between calls can change later results.
 
 ## Use SQLite for growing state
 

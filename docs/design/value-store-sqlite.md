@@ -217,9 +217,23 @@ sharing entries must agree on serialisation; Kit adds no serialiser registry.
 
 `listKeys()` returns logical keys and never invokes the caller's serialiser.
 The SQLite implementation selects only the `key` column through the composite
-`(namespace, key)` primary-key index; it does not read stored value BLOBs. The
-JSON-file implementation reads, parses, and validates its bounded whole
-document, including when `limit` is zero.
+`(namespace, key)` primary-key index; it does not select or decode stored value
+BLOBs. Because `fancy_kit_values` is `WITHOUT ROWID`, small inline values share
+the primary-key B-tree leaf pages (while large values spill to overflow pages),
+and an unbounded `listKeys()` decodes every matching key synchronously in one
+call while holding the shared connection lock. Callers traversing large key sets
+should therefore paginate with a bounded `limit` and `lower` plus
+`lowerExclusive: true`.
+
+Key listing intentionally uses stateless keyset pagination rather than an
+`AsyncIterable` backed by an open SQLite cursor: holding an active native
+statement across `await` would retain the shared connection lock or a read
+transaction, conflicting with concurrent writes, WAL checkpoints, idle close,
+and `dispose()`. Stateless pages release the connection lock after each page,
+preserve the synchronous SQL critical-section rule, and leave room for a future
+key-only covering index or higher-level paginator without changing
+`ValueKeyLister`. The JSON-file implementation reads, parses, and validates its
+bounded whole document, including when `limit` is zero.
 
 SQLite listing and the unreleased B-tree prefix-range implementation of
 `clear()` use bounded index range operations over the existing UTF-16BE BLOB

@@ -170,7 +170,20 @@ export class MemoryValueStore implements ValueStore, ValueDeleter, ValueBatchWri
     return this.#store.clear();
   }
 
-  /** Lists this instance's logical keys in ascending UTF-16 code-unit order. */
+  /**
+   * Lists this instance's logical keys in ascending UTF-16 code-unit order
+   * without invoking the serialiser.
+   *
+   * @remarks
+   * For large key sets, paginate with `limit` and the previous page's last key
+   * as `lower` with `lowerExclusive: true`. Separate pages do not share a
+   * snapshot.
+   *
+   * @param options - Optional literal prefix, logical bounds, and result limit.
+   * @returns A promise resolving to a fresh, sorted array of logical keys.
+   * @throws The returned promise rejects with `ValueStoreError` for invalid
+   * options or if disposal has already closed admission.
+   */
   listKeys(options?: ValueKeyListOptions): Promise<string[]> {
     return this.#store.listKeys(options);
   }

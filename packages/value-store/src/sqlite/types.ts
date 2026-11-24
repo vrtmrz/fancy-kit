@@ -98,7 +98,10 @@ export interface SqliteFileValueStoreOptions extends SqliteValueStoreOptions {
  * never closes a borrowed connection or waits for another store's work.
  * `listKeys()` returns logical keys in ascending UTF-16 code-unit order using a
  * key-only query over the namespace's B-tree range; stored value BLOBs are not
- * selected or decoded.
+ * selected or decoded. Omitting `limit` fetches and decodes every matching key
+ * synchronously in one call; for large key sets, paginate with a bounded
+ * `limit` and `lower` plus `lowerExclusive: true` to limit memory use, event-loop
+ * blocking, and connection-lock duration.
  *
  * Read and write methods return promises, but native SQLite I/O is synchronous
  * and can block the event loop. There is no queued-value cache, cross-call FIFO
