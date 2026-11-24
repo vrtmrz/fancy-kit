@@ -16,11 +16,10 @@ disposal. An additional entry borrows an existing connection from its owner.
 
 This document records the agreed design. Ordered batches, scoped clearing,
 disposal, and the SQLite adapters are in the published ValueStore 0.1.1.
-`ValueKeyLister` and SQLite's B-tree prefix-range `clear()` implementation are
-unreleased additions on this branch and are not included in 0.1.1. The
-declaration sketches describe their public boundary; registry publication is
-verified separately through the [release process](../releasing.md). The dated
-workspace-gate result and package-owned evidence are recorded in
+ValueStore 0.2.0 adds `ValueKeyLister` and SQLite's B-tree prefix-range
+`clear()` implementation. The declaration sketches describe their public
+boundary. The [release process](../releasing.md) verifies registry publication
+separately. The dated workspace-gate result and package-owned checks are recorded in
 [proven-in-use](../proven-in-use.md#valuestore-package-and-consumer-evidence).
 The baseline is
 `@vrtmrz/value-store` 0.1.0 at Fancy Kit commit
@@ -235,7 +234,7 @@ key-only covering index or higher-level paginator without changing
 `ValueKeyLister`. The JSON-file implementation reads, parses, and validates its
 bounded whole document, including when `limit` is zero.
 
-SQLite listing and the unreleased B-tree prefix-range implementation of
+SQLite listing and the B-tree prefix-range implementation of
 `clear()` use bounded index range operations over the existing UTF-16BE BLOB
 key in the composite `(namespace, key)` primary key. The schema and key
 representation do not change in SQLite v1. Compute the range's upper boundary
@@ -589,8 +588,8 @@ SQLite 3.53.1 and Deno 2.9.7 / SQLite 3.53.2:
 These probes establish feasibility, not implementation correctness. The
 runtime boundary requires `DatabaseSync.isTransaction` and `mode=rw` URI
 support. End-of-life Node.js 23.x (including 23.11.1) has `node:sqlite` but
-lacks `DatabaseSync.isTransaction`. On this unreleased branch (not in published
-0.1.1), `createSqliteValueStore` checks `typeof database.isTransaction === 'boolean'`
+lacks `DatabaseSync.isTransaction`. Since 0.2.0, `createSqliteValueStore` checks
+`typeof database.isTransaction === 'boolean'`
 synchronously at construction and rejects with `unavailable`, while
 `createSqliteFileValueStore` checks it when opening SQLite (during
 initialisation for an existing file, or on the first prepared value write for
@@ -601,7 +600,7 @@ the write with `unavailable`). Current
 package-owned runtime checks cover Node.js 22.22.0, 24.18.0, and 26.13.1, plus
 Deno 2.9.7 with `--allow-all`, on Linux arm64. Node.js 22.22.0 emits the
 standard experimental SQLite warning and bundles SQLite 3.50.4. See the dated
-[candidate evidence](../proven-in-use.md#unreleased-key-listing-and-sqlite-range-candidate)
+[ValueStore 0.2.0 evidence](../proven-in-use.md#valuestore-020-key-listing-and-sqlite-range-evidence)
 for package tests, runtime checks, and their limits. Do not present consumer
 integration or PR-reported load tests as Kit validation.
 
